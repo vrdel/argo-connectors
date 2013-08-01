@@ -25,35 +25,35 @@ defaultPoemRequest = '%s/myegi/sam-pi/metrics_in_profiles?vo_name=%s&output=json
 ##############################
 # load config
 ##############################
-def loadConfiguration:
-     #load config
-     configFile = None
-     configFields = dict()
-     if os.path.isfile(defaultConfig):
-         configFile = open(defaultConfig, 'r')
-         lines = configFile.readlines()
+def loadConfiguration():
+    #load config
+    configFile = None
+    configFields = dict()
+    if os.path.isfile(defaultConfig):
+        configFile = open(defaultConfig, 'r')
+        lines = configFile.readlines()
 
-         for line in lines:
-             if line[0] == '#':
-                 continue
-             splitLine = line.split('=')
-             if len(splitLine) > 1:
-                 key = splitLine[0].strip()
-                 value = splitLine[1].strip()
-                 value = value.decode('string_escape')
-                 if value[0] == "'":
-                     if value [-1] == "'":
-                         value = value[1:-1]
-                     else:
-                         continue
-                 elif value[0] == '"':
-                     if value [-1] == '"':
-                         value = value[1:-1]
-                     else:
-                         continue
-                 else:
-                     value = int(value)
-                 configFields[key] = value
+        for line in lines:
+            if line[0] == '#':
+                continue
+            splitLine = line.split('=')
+            if len(splitLine) > 1:
+                key = splitLine[0].strip()
+                value = splitLine[1].strip()
+                value = value.decode('string_escape')
+                if value[0] == "'":
+                    if value [-1] == "'":
+                        value = value[1:-1]
+                    else:
+                        continue
+                elif value[0] == '"':
+                    if value [-1] == '"':
+                        value = value[1:-1]
+                    else:
+                        continue
+                else:
+                    value = int(value)
+                configFields[key] = value
 
         configFile.close()
 

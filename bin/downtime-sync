@@ -19,7 +19,7 @@ defaultOutputFileDowntimes = outputDir + '/downtimes_%s.out'
 # Hostname, Service Type, Start, End
 defaultOutputFileDowntimesFieldFormat = '%s\001%s\001%s\001%s\r\n'
 
-def loadConfiguration:
+def loadConfiguration():
      #load config
      configFile = None
      configFields = dict()
@@ -49,24 +49,24 @@ def loadConfiguration:
                      value = int(value)
                  configFields[key] = value
 
-        configFile.close()
+         configFile.close()
 
-        if 'gocdbHost' in configFields:
-            gocdbHost = configFields['gocdbHost']
+         if 'gocdbHost' in configFields:
+             gocdbHost = configFields['gocdbHost']
 
-        if 'gocdbUrl' in configFields:
-            gocdbUrl = configFields['gocdbUrl']
+         if 'gocdbUrl' in configFields:
+             gocdbUrl = configFields['gocdbUrl']
 
-        if 'hostKey' in configFields:
-            hostKey = configFields['hostKey']
+         if 'hostKey' in configFields:
+             hostKey = configFields['hostKey']
 
-        if 'hostCert' in configFields:
-            hostCert = configFields['hostCert']
+         if 'hostCert' in configFields:
+             hostCert = configFields['hostCert']
 
-        if 'outputDir' in configFields:
-            outputDir = configFields['outputDir']
+         if 'outputDir' in configFields:
+             outputDir = configFields['outputDir']
 
-        defaultOutputFileDowntimes = outputDir + '/downtimes_%s.out'
+         defaultOutputFileDowntimes = outputDir + '/downtimes_%s.out'
 
 def createOutputFilename(filename, timestamp):
     return filename % timestamp

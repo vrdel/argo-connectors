@@ -21,35 +21,35 @@ defaultOutputFileSitesFieldFormat = '%s\001%s\001%s\001%s\001%s\001%s\001%s\001%
 # Hostname, Service Type, Production, Monitored, Service group, Group Monitored, Group Scope
 defaultOutputFileGroupsFieldFormat = '%s\001%s\001%s\001%s\001%s\001%s\001%s\r\n'
 
-def loadConfiguration:
-     #load config
-     configFile = None
-     configFields = dict()
-     if os.path.isfile(defaultConfig):
-         configFile = open(defaultConfig, 'r')
-         lines = configFile.readlines()
+def loadConfiguration():
+    #load config
+    configFile = None
+    configFields = dict()
+    if os.path.isfile(defaultConfig):
+        configFile = open(defaultConfig, 'r')
+        lines = configFile.readlines()
 
-         for line in lines:
-             if line[0] == '#':
-                 continue
-             splitLine = line.split('=')
-             if len(splitLine) > 1:
-                 key = splitLine[0].strip()
-                 value = splitLine[1].strip()
-                 value = value.decode('string_escape')
-                 if value[0] == "'":
-                     if value [-1] == "'":
-                         value = value[1:-1]
-                     else:
-                         continue
-                 elif value[0] == '"':
-                     if value [-1] == '"':
-                         value = value[1:-1]
-                     else:
-                         continue
-                 else:
-                     value = int(value)
-                 configFields[key] = value
+        for line in lines:
+            if line[0] == '#':
+                continue
+            splitLine = line.split('=')
+            if len(splitLine) > 1:
+                key = splitLine[0].strip()
+                value = splitLine[1].strip()
+                value = value.decode('string_escape')
+                if value[0] == "'":
+                    if value [-1] == "'":
+                        value = value[1:-1]
+                    else:
+                        continue
+                elif value[0] == '"':
+                    if value [-1] == '"':
+                        value = value[1:-1]
+                    else:
+                        continue
+                else:
+                    value = int(value)
+                configFields[key] = value
 
         configFile.close()
 
@@ -155,7 +155,7 @@ getServiceEndpoints(serviceList, 'Local')
 getServiceGroups(groupList, 'EGI')
 getServiceGroups(groupList, 'Local')
 
-timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S')
+timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
 filename = createOutputFilename(defaultOutputFileSites, timestamp)
 outFile = open(filename, 'w')

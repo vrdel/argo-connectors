@@ -41,35 +41,35 @@ vofqanIdx = consumerFileFields.index('voFqan')
 ##############################
 # load config
 ##############################
-def loadConfiguration:
-     #load config
-     configFile = None
-     configFields = dict()
-     if os.path.isfile(defaultConfig):
-         configFile = open(defaultConfig, 'r')
-         lines = configFile.readlines()
+def loadConfiguration():
+    #load config
+    configFile = None
+    configFields = dict()
+    if os.path.isfile(defaultConfig):
+        configFile = open(defaultConfig, 'r')
+        lines = configFile.readlines()
 
-         for line in lines:
-             if line[0] == '#':
-                 continue
-             splitLine = line.split('=')
-             if len(splitLine) > 1:
-                 key = splitLine[0].strip()
-                 value = splitLine[1].strip()
-                 value = value.decode('string_escape')
-                 if value[0] == "'":
-                     if value [-1] == "'":
-                         value = value[1:-1]
-                     else:
-                         continue
-                 elif value[0] == '"':
-                     if value [-1] == '"':
-                         value = value[1:-1]
-                     else:
-                         continue
-                 else:
-                     value = int(value)
-                 configFields[key] = value
+        for line in lines:
+            if line[0] == '#':
+                continue
+            splitLine = line.split('=')
+            if len(splitLine) > 1:
+                key = splitLine[0].strip()
+                value = splitLine[1].strip()
+                value = value.decode('string_escape')
+                if value[0] == "'":
+                    if value [-1] == "'":
+                        value = value[1:-1]
+                    else:
+                        continue
+                elif value[0] == '"':
+                    if value [-1] == '"':
+                        value = value[1:-1]
+                    else:
+                        continue
+                else:
+                    value = int(value)
+                configFields[key] = value
 
         configFile.close()
 
@@ -132,7 +132,7 @@ def loadNGIs(year, month, day):
 
         profileFieldNames = poemFileFields.split(';')
 
-        poemProfileFile = open(poemFileDirectory + poemFilename % (year, month, day), 'r')
+        poemProfileFile = open(poemFileDirectory + '/' + poemFilename % (year, month, day), 'r')
         poemProfiles = poemProfileFile.read().splitlines()
         poemProfileFile.close();
 
@@ -158,7 +158,7 @@ def loadFilteredProfiles(year, month, day):
 
 	profileFieldNames = poemFileFields.split(';')
 
-        poemProfileFile = open(poemFileDirectory + poemFilename % (year, month, day), 'r')
+        poemProfileFile = open(poemFileDirectory + '/' + poemFilename % (year, month, day), 'r')
         poemProfiles = poemProfileFile.read().splitlines()
         poemProfileFile.close();
 
@@ -301,7 +301,7 @@ filename = outputFilename % (year, month, day)
 outputFile = open(filename, 'w')
 
 rejected = 0
-with open(consumerFileDirectory + consumerFilename % (year, month, day), 'r') as consumerFile:
+with open(consumerFileDirectory  + '/' + consumerFilename % (year, month, day), 'r') as consumerFile:
 	for line in consumerFile:
 		if len(line) == 0 or line[0] == '#':
                         continue
