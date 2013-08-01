@@ -9,11 +9,11 @@ import httplib
 import sys
 import urlparse
 
-defaultConfig = '/etc/ar-sync/poem_sync.conf'
+defaultConfig = '/etc/ar-sync/poem-sync.conf'
 
 defaultPoemFile = '/etc/ar-sync/poem.conf'
-defaultPoemProfileFile = '/etc/ar-sync/poem_profile.conf'
-defaultPoemServerFile = '/etc/ar-sync/poem_server.conf'
+defaultPoemProfileFile = '/etc/ar-sync/poem-profile.conf'
+defaultPoemServerFile = '/etc/ar-sync/poem-server.conf'
 defaultOutputDir = '/var/lib/ar-sync'
 hostKey = '/etc/grid-security/hostkey.pem'
 hostCert = '/etc/grid-security/hostcert.pem'
