@@ -1,0 +1,12 @@
+#!/bin/sh
+
+
+/usr/bin/poem-sync
+/usr/bin/topology-sync
+
+# get date 2 days before
+DATE=`date --date="-1 day" +%Y-%m-%d`
+
+/usr/bin/downtime-sync -d $DATE
+/usr/bin/prefilter -d $DATE
+
