@@ -298,7 +298,7 @@ ngis = loadNGIs(year, month, day)
 profiles = loadFilteredProfiles(year, month, day)
 
 filename = outputFilename % (year, month, day)
-outputFile = open(filename, 'w')
+outputFile = open(outputFileDirectory  + '/' + filename, 'w')
 
 rejected = 0
 with open(consumerFileDirectory  + '/' + consumerFilename % (year, month, day), 'r') as consumerFile:
