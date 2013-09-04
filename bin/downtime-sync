@@ -76,7 +76,7 @@ def getDowntimes(start, end):
     filteredDowntimes = list()
 
     conn = httplib.HTTPSConnection(gocdbHost, 443, hostKey, hostCert)
-    conn.request('GET', '/gocdbpi/private/' + '?method=get_downtime&startdate=%s&enddate=%s' % (start, end))
+    conn.request('GET', '/gocdbpi/private/' + '?method=get_downtime&windowstart=%s&windowend=%s' % (start, end))
     res = conn.getresponse()
     if res.status == 200:
         doc = xml.dom.minidom.parseString(res.read())
