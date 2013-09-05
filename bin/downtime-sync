@@ -18,6 +18,8 @@ outputDir = '/var/lib/ar-sync'
 defaultOutputFileDowntimes = outputDir + '/downtimes_%s.out'
 # Hostname, Service Type, Start, End
 defaultOutputFileDowntimesFieldFormat = '%s\001%s\001%s\001%s\r\n'
+defaultArgDateFormat = "%Y-%m-%d"
+defaultWSDateFormat = "%Y-%m-%d %H:%M"
 
 def loadConfiguration():
      #load config
@@ -76,7 +78,7 @@ def getDowntimes(start, end):
     filteredDowntimes = list()
 
     conn = httplib.HTTPSConnection(gocdbHost, 443, hostKey, hostCert)
-    conn.request('GET', '/gocdbpi/private/' + '?method=get_downtime&windowstart=%s&windowend=%s' % (start, end))
+    conn.request('GET', '/gocdbpi/private/' + '?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')))
     res = conn.getresponse()
     if res.status == 200:
         doc = xml.dom.minidom.parseString(res.read())
@@ -85,18 +87,26 @@ def getDowntimes(start, end):
         for downtime in downtimes:
             classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
             hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-            serviceType = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-            startTime = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-            endTime = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
+            serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
+            startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
+            endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data       
             severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
+
+            startTime = datetime.datetime.strptime(startStr, defaultWSDateFormat)
+            endTime = datetime.datetime.strptime(endStr, defaultWSDateFormat)
+
+            if (startTime < start):
+                startTime = start
+            if (endTime > end):
+                endTime = end
 
             dt = dict()
             dt['classification'] = classification
             dt['severity'] = severity
             dt['hostname'] = hostname
             dt['serviceType'] = serviceType
-            dt['startTime'] = startTime
-            dt['endTime'] = endTime
+            dt['startTime'] = startTime.strftime('%Y-%m-%d %H:%M')
+            dt['endTime'] = endTime.strftime('%Y-%m-%d %H:%M')
             filteredDowntimes.append(dt)
     else:
         print('ERROR: Connection to GOCDB failed: ' + res.reason)
@@ -118,8 +128,10 @@ if not argsOk:
         print "\n\nUsage:\n\tpython downtime.py -d <date>"
         sys.exit()
 
-start = date
-end = date
+start = datetime.datetime.strptime(date, defaultArgDateFormat)
+end = datetime.datetime.strptime(date, defaultArgDateFormat)
+start = start.replace(hour=0, minute=0, second=0)
+end = end.replace(hour=23, minute=59, second=59)
 
 downtimes = getDowntimes(start, end)
 
