@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.0.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -53,7 +53,7 @@ install --mode 755 bin/prefilter %{buildroot}/usr/libexec/ar-sync
 %attr(0750,root,root) /var/log/ar-sync
 
 %changelog
-* Mon Sep 9 2013 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.0.0-3%{?dist}
+* Mon Sep 9 2013 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.0.0-4%{?dist}
 - Rebuilt with fixed downtimes issue
 * Thu Aug 29 2013 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.0.0-2%{?dist}
 - Minor change in prefilter script
