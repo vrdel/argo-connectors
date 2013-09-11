@@ -1,5 +1,0 @@
-#!/bin/bash
-
-/usr/libexec/ar-sync/poem-sync
-/usr/libexec/ar-sync/topology-sync
-
