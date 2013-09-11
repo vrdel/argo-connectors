@@ -5,6 +5,7 @@ import os
 import datetime
 import xml.dom.minidom
 import httplib
+from operator import itemgetter
 
 defaultConfig = '/etc/ar-sync/topology-sync.conf'
 
@@ -91,6 +92,7 @@ def getServiceEndpoints(serviceList, scope):
         serviceList[serviceId]['site'] = service.getElementsByTagName('SITENAME')[0].childNodes[0].data
         serviceList[serviceId]['roc'] = service.getElementsByTagName('ROC_NAME')[0].childNodes[0].data
         serviceList[serviceId]['scope'] = scope
+        serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
     urlFile.close();
 
 def getSites(siteList, scope):
@@ -157,13 +159,17 @@ getServiceGroups(groupList, 'Local')
 
 timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
+sortedSrvices = sorted(serviceList.iteritems(), key=lambda (x, y): y['sortId'])
+
 filename = createOutputFilename(defaultOutputFileSites, timestamp)
 outFile = open(filename, 'w')
-for key, service in serviceList.iteritems():
+lastId = ''
+for key, service in sortedSrvices:
     if service['site'] in siteList:
         site = siteList[service['site']]
         
-        outFile.write(defaultOutputFileSitesFieldFormat % ( service['hostname'],
+        if lastId != service['sortId']: 
+            outFile.write(defaultOutputFileSitesFieldFormat % ( service['hostname'],
                    service['type'],
                    service['production'],
                    service['monitored'],
@@ -173,6 +179,8 @@ for key, service in serviceList.iteritems():
                    site['infrastructure'],
                    site['certification'],
                    site['scope']))
+
+        lastId = service['sortId']                   
     else:
         print('ERROR: found service endpoint (%s, %s) associated to non-existing site %s' % (service['hostname'], service['type'], service['site']))
 outFile.close();
