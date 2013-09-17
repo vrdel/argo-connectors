@@ -145,7 +145,13 @@ def loadNGIs(year, month, day):
                 for i in range(0,len(profileFieldNames)):
                 	profile[profileFieldNames[i]] = profileFields[i]
 
-		ngiTree[profile['server']] = profile['ngi']
+		if profile['server'] not in ngiTree:
+			ngiTree[profile['server']] = list()
+		
+		if profile['ngi'] not in  ngiTree[profile['server']]:
+			ngiTree[profile['server']].append(profile['ngi'])
+
+		# ngiTree[profile['server']] = profile['ngi']
 
 	return ngiTree
 
@@ -221,7 +227,7 @@ def loadFilteredProfiles(year, month, day):
 # get message profiles
 ##############################
 def getProfilesForConsumerMessage(profileTree, fields):
-	
+
 	removeFqan = False
 	
 	#find server tree
@@ -309,7 +315,13 @@ with open(consumerFileDirectory  + '/' + consumerFilename % (year, month, day), 
 		consumerFields = line.split(consumerFileFieldDelimiter)	
 
 		#ngi check
-		if consumerFields[serverIdx] in ngis.keys() and (ngis[consumerFields[serverIdx]] == 'ALL' or consumerFields[ngiIdx] == ngis[consumerFields[serverIdx]]):
+		ngiOk = False
+		if consumerFields[serverIdx] in ngis.keys():
+                	ngiList = ngis[consumerFields[serverIdx]]
+                        if 'ALL' in ngiList or consumerFields[ngiIdx] in ngiList:
+				ngiOk = True
+					
+		if ngiOk:
 			
 			#profile check
 			msgprofiles = getProfilesForConsumerMessage(profiles, consumerFields)
