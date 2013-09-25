@@ -285,7 +285,7 @@ for line in poemServers:
 			
 			ngis = urlLine.split(':')[0].split(',')
 			servers = urlLine.split(':')[2].split(',')
-		
+
 			for vo in availableVOs:
 				serverProfiles = []
 				if len(defaultProfiles) > 0:

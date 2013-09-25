@@ -1,0 +1,36 @@
+import urllib
+import urllib2
+import os
+import json
+import datetime
+import httplib
+import sys
+import urlparse
+
+defaultOutputFile = os.path.dirname(os.path.abspath(__file__)) + '/hepspec_sync_%s.out'
+defaultOutputFileFieldFormat = '%s\001%s\r\n'
+defaultGstatRequest = 'http://gstat2.grid.sinica.edu.tw/gstat/summary/json/'
+
+##############################
+# create output filename
+##############################
+def createOutputFilename(timestamp):
+	return defaultOutputFile % timestamp
+
+##############################
+# main
+##############################
+
+urlFile = urllib2.urlopen(defaultGstatRequest)
+json_data = json.load(urlFile)
+
+# load server data
+
+timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
+filename = createOutputFilename(timestamp)
+outputFile = open(filename, 'w')
+for site in json_data:
+	 outputFile.write(defaultOutputFileFieldFormat % (site['Sitename'], site['HEPSPEC06']))	
+urlFile.close();
+outputFile.close()	
+
