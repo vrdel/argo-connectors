@@ -1,0 +1,3 @@
+#!/bin/bash
+python /usr/libexec/ar-sync/poem-sync
+
