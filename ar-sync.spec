@@ -30,11 +30,13 @@ install --mode 644 etc/ar-sync/poem-server.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/topology-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/downtime-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/vo-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 755 bin/poem-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/topology-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/downtime-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/hepspec_sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/prefilter %{buildroot}/usr/libexec/ar-sync
+install --mode 755 bin/vo-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 cronjobs/poem %{buildroot}/etc/cron.daily/poem
 install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
 
@@ -48,6 +50,7 @@ install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
 %attr(0755,root,root) /usr/libexec/ar-sync/downtime-sync
 %attr(0755,root,root) /usr/libexec/ar-sync/hepspec_sync
 %attr(0755,root,root) /usr/libexec/ar-sync/prefilter
+%attr(0755,root,root) /usr/libexec/ar-sync/vo-sync
 %config(noreplace) /etc/ar-sync/poem-sync.conf
 %config(noreplace) /etc/ar-sync/poem.conf
 %config(noreplace) /etc/ar-sync/poem-profile.conf
@@ -55,12 +58,15 @@ install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
 %config(noreplace) /etc/ar-sync/topology-sync.conf
 %config(noreplace) /etc/ar-sync/downtime-sync.conf
 %config(noreplace) /etc/ar-sync/prefilter.conf
+%config(noreplace) /etc/ar-sync/vo-sync.conf
 %attr(0750,root,root) /var/lib/ar-sync
 %attr(0750,root,root) /var/log/ar-sync
 %attr(0755,root,root) /etc/cron.daily/poem
 %attr(0755,root,root) /etc/cron.daily/topology
 
 %changelog
+* Thu Nov 13 2013 Luko Gjenero <lgjenero@srce.hr> - 1.0.0-1%{?dist}
+- VO Sync component
 * Fri Nov 8 2013 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.1.0-1%{?dist}
 - Inclusion of hepspec sync plus cronjobs
 * Mon Nov 4 2013 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.0.0-6%{?dist}
