@@ -13,7 +13,7 @@ rpm: dist
 dist:
 	rm -rf dist
 	mkdir -p dist/${PKGNAME}-${PKGVERSION}
-	cp -pr ${FILES} etc bin dist/${PKGNAME}-${PKGVERSION}/.
+	cp -pr ${FILES} etc bin cronjobs dist/${PKGNAME}-${PKGVERSION}/.
 	cd dist ; tar cfz ../${PKGNAME}-${PKGVERSION}.tar.gz ${PKGNAME}-${PKGVERSION}
 	rm -rf dist
 
