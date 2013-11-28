@@ -1,6 +1,6 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
-Version: 1.1.0
+Version: 1.1.16
 Release: 1%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
@@ -31,6 +31,7 @@ install --mode 644 etc/ar-sync/topology-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/downtime-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/vo-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/poem_name_mapping.cfg %{buildroot}/var/lib/ar-sync/
 install --mode 755 bin/poem-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/topology-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/downtime-sync %{buildroot}/usr/libexec/ar-sync
@@ -60,12 +61,15 @@ install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
 %config(noreplace) /etc/ar-sync/prefilter.conf
 %config(noreplace) /etc/ar-sync/vo-sync.conf
 %attr(0750,root,root) /var/lib/ar-sync
+%config(noreplace) /var/lib/ar-sync/poem_name_mapping.cfg
 %attr(0750,root,root) /var/log/ar-sync
 %attr(0755,root,root) /etc/cron.daily/poem
 %attr(0755,root,root) /etc/cron.daily/topology
 
 %changelog
-* Thu Nov 13 2013 Luko Gjenero <lgjenero@srce.hr> - 1.0.0-1%{?dist}
+* Thu Nov 28 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.16-1%{?dist}
+- Updated prefilter
+* Thu Nov 13 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.15-1%{?dist}
 - VO Sync component
 * Fri Nov 8 2013 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.1.0-1%{?dist}
 - Inclusion of hepspec sync plus cronjobs
