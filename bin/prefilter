@@ -244,8 +244,8 @@ def loadNameMapping(year, month, day):
 
                 nameMappingFields = line.split(':')
 		if len(nameMappingFields) > 1:
-			oldName = nameMappingFileds[0].strip()
-			newName = nameMappingFileds[1].strip()
+			oldName = nameMappingFields[0].strip()
+			newName = nameMappingFields[1].strip()
 			nameMappingDict[oldName] = newName
 
 	return nameMappingDict
@@ -274,11 +274,13 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, fields):
 		metricTree = typeTree[fields[metricIdx]]
 	else:
 		# check name mapping
-		if fields[metrixIdx] in nameMapping:
+		if fields[metricIdx] in nameMapping:
 			if nameMapping[fields[metricIdx]] in typeTree.keys():
-                		metricTree = typeTree[nameMapping[fields[metricIdx]]
+                		metricTree = typeTree[nameMapping[fields[metricIdx]]]
 			else:
 				return -1
+		else:
+			return -1
 
         #find vo tree
 	if len(fields[voIdx]) > 0:
@@ -336,6 +338,8 @@ ngis = loadNGIs(year, month, day)
 profiles = loadFilteredProfiles(year, month, day)
 nameMapping = loadNameMapping(year, month, day)
 
+print "%r" % nameMapping
+
 filename = outputFilename % (year, month, day)
 outputFile = open(outputFileDirectory  + '/' + filename, 'w')
 
@@ -366,7 +370,7 @@ with open(consumerFileDirectory  + '/' + consumerFilename % (year, month, day), 
 			if len(msgprofiles) > 0:
 				for profile in msgprofiles:
 					outputFile.write(outputFileFormat % (consumerFields[timestampIdx], \
-										consumerFields[metricIdx], \
+										profile['metric'], \
 										consumerFields[typeIdx], \
                                                                                 consumerFields[hostIdx], \
                                                                                 consumerFields[statusIdx], \
