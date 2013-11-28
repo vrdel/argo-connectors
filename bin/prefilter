@@ -29,6 +29,9 @@ outputFileFormat = '%s\001%s\001%s\001%s\001%s\001%s\001%s\001%s\r\n'
 # indexes
 consumerFileFields = consumerFileFields.split(';')
 
+# standard output
+writeToStd = 0
+
 timestampIdx = consumerFileFields.index('timestamp')
 ngiIdx = consumerFileFields.index('ROC')
 serverIdx = consumerFileFields.index('nagios_host')
@@ -113,6 +116,9 @@ def loadConfiguration():
         if 'outputFileFormat' in configFields:
             outputFileFormat = configFields['outputFileFormat']
 
+	if 'writeToStd' in configFields:
+            writeToStd = int(configFields['writeToStd'])
+	
         consumerFileFields = consumerFileFields.split(';')
 
         timestampIdx = consumerFileFields.index('timestamp')
@@ -338,8 +344,6 @@ ngis = loadNGIs(year, month, day)
 profiles = loadFilteredProfiles(year, month, day)
 nameMapping = loadNameMapping(year, month, day)
 
-print "%r" % nameMapping
-
 filename = outputFilename % (year, month, day)
 outputFile = open(outputFileDirectory  + '/' + filename, 'w')
 
@@ -363,7 +367,8 @@ with open(consumerFileDirectory  + '/' + consumerFilename % (year, month, day), 
 			#profile check
 			msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, consumerFields)
 			if type(msgprofiles) is int:
-				print line.replace(consumerFileFieldDelimiter, '\t')
+				if writeToStd > 0:
+					print line.replace(consumerFileFieldDelimiter, '\t')
 				rejected += 1
 				continue
 			
@@ -379,7 +384,8 @@ with open(consumerFileDirectory  + '/' + consumerFilename % (year, month, day), 
                                                                                 profile['profile'] ))
 			else:
 				rejected += 1
-				print line.replace(consumerFileFieldDelimiter, '\t')
+				if writeToStd > 0:
+					print line.replace(consumerFileFieldDelimiter, '\t')
 	
 
 consumerFile.close()
