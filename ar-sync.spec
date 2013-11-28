@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.1.16
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -67,6 +67,8 @@ install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
 %attr(0755,root,root) /etc/cron.daily/topology
 
 %changelog
+* Thu Nov 28 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.16-3%{?dist}
+- Fixed prefilter
 * Thu Nov 28 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.16-2%{?dist}
 - Fixed prefilter
 * Thu Nov 28 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.16-1%{?dist}
