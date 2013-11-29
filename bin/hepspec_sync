@@ -1,3 +1,4 @@
+#!/bin/env python
 import urllib
 import urllib2
 import os
@@ -18,19 +19,95 @@ def createOutputFilename(timestamp):
 	return defaultOutputFile % timestamp
 
 ##############################
+# load name mapping
+##############################
+def loadOldData(filename):
+
+        oldDataDict = dict()
+
+        oldDataFile = open(filename, 'r')
+        oldData = oldDataFile.read().splitlines()
+        oldDataFile.close();
+
+        for line in oldData:
+                if len(line) == 0 or line[0] == '#':
+                        continue
+
+                oldDataFields = line.split('\001')
+                if len(oldDataFields) > 1:
+                        key = oldDataFields[0].strip()
+                        val = int(oldDataFields[1].strip())
+                        oldDataDict[key] = val
+
+        return oldDataDict
+
+##############################
 # main
 ##############################
 
-urlFile = urllib2.urlopen(defaultGstatRequest)
-json_data = json.load(urlFile)
+timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
+newFilename = createOutputFilename(timestamp)
+
+oldDate = datetime.datetime.utcnow()
+oldFilename = createOutputFilename(oldDate.strftime('%Y_%m_%d'))
+
+# find old data
+i = 0;
+oldDataExists = True
+while not os.path.isfile(oldFilename):
+	oldDate = oldDate - datetime.timedelta(days=1)
+	oldFilename = createOutputFilename(oldDate.strftime('%Y_%m_%d'))
+	i = i+1
+	if i >= 30:
+		oldDataExists = False
+		break
+
+#load old data
+if oldDataExists:
+	oldData = loadOldData(oldFilename)
+else:
+	oldData = dict()
 
 # load server data
-
-timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
-filename = createOutputFilename(timestamp)
-outputFile = open(filename, 'w')
-for site in json_data:
-	 outputFile.write(defaultOutputFileFieldFormat % (site['Sitename'], site['HEPSPEC06']))	
+urlFile = urllib2.urlopen(defaultGstatRequest)
+json_data = json.load(urlFile)
 urlFile.close();
-outputFile.close()	
+
+# fill new list
+newData = dict()
+for site in json_data:
+	key = site['Sitename']
+	newVal = int(site['HEPSPEC06'])
+	if newVal <= 0:
+		if key in oldData:
+			newVal = oldData[key]
+	if key not in oldData:
+		oldData[key] = newVal
+	newData[key] = newVal
+
+# fill old list
+for key in oldData:
+	oldVal = oldData[key]
+	if oldVal <= 0:
+                if key in newData:
+                        oldData[key] = newData[key]
+	if key not in newData:
+		newData[key] = oldData[key]
+
+# write output
+newOutputFile = open(newFilename, 'w')
+if oldDataExists:
+	if oldFilename == newFilename:
+		oldDataExists = False
+	else:
+		oldOutputFile = open(oldFilename, 'w')
+
+for key in newData:
+	newOutputFile.write(defaultOutputFileFieldFormat % (key, newData[key]))
+	if oldDataExists:
+		oldOutputFile.write(defaultOutputFileFieldFormat % (key, oldData[key]))
+	
+newOutputFile.close()
+if oldDataExists:
+	oldOutputFile.close()	
 
