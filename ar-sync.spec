@@ -1,13 +1,14 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
-Version: 1.1.16
-Release: 3%{?dist}
+Version: 1.1.18
+Release: 1%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
 BuildArch: noarch
 Source0:   %{name}-%{version}.tar.gz
-Requires: crontabs, anacron
+Requires:  crontabs, anacron
+Requires:  hive
 
 %description
 Installs the service for syncing A/R Comp Engine
@@ -40,6 +41,7 @@ install --mode 755 bin/prefilter %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/vo-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 cronjobs/poem %{buildroot}/etc/cron.daily/poem
 install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
+install --mode 755 cronjobs/hepspec %{buildroot}/etc/cron.daily/hepspec
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -65,8 +67,11 @@ install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
 %attr(0750,root,root) /var/log/ar-sync
 %attr(0755,root,root) /etc/cron.daily/poem
 %attr(0755,root,root) /etc/cron.daily/topology
+%attr(0755,root,root) /etc/cron.daily/hepspec
 
 %changelog
+* Tue Jan 14 2014 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.1.18-1%{?dist}
+- Added daily cronjob for hepspec values
 * Thu Nov 28 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.16-3%{?dist}
 - Fixed prefilter
 * Thu Nov 28 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.16-2%{?dist}
