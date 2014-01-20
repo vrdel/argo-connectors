@@ -33,7 +33,9 @@ import httplib
 import sys
 import urlparse
 
-defaultOutputFile = os.path.dirname(os.path.abspath(__file__)) + '/hepspec_sync_%s.out'
+defaultOutputDir = '/var/lib/ar-sync'
+
+defaultOutputFile = defaultOutputDir + '/hepspec_sync_%s.out'
 defaultOutputFileFieldFormat = '%s\001%s\r\n'
 defaultGstatRequest = 'http://gstat2.grid.sinica.edu.tw/gstat/summary/json/'
 
