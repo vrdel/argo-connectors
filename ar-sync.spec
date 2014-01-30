@@ -1,6 +1,6 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
-Version: 1.1.18
+Version: 1.1.19
 Release: 1%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
@@ -23,7 +23,7 @@ install --directory %{buildroot}/usr/libexec/ar-sync
 install --directory %{buildroot}/etc/ar-sync/
 install --directory %{buildroot}/var/lib/ar-sync
 install --directory %{buildroot}/var/log/ar-sync
-install --directory %{buildroot}/etc/cron.daily
+install --directory %{buildroot}/etc/cron.d
 install --mode 644 etc/ar-sync/poem-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem-profile.conf %{buildroot}/etc/ar-sync/
@@ -39,9 +39,9 @@ install --mode 755 bin/downtime-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/hepspec_sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/prefilter %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/vo-sync %{buildroot}/usr/libexec/ar-sync
-install --mode 755 cronjobs/poem %{buildroot}/etc/cron.daily/poem
-install --mode 755 cronjobs/topology %{buildroot}/etc/cron.daily/topology
-install --mode 755 cronjobs/hepspec %{buildroot}/etc/cron.daily/hepspec
+install --mode 644 cronjobs/poem %{buildroot}/etc/cron.d/poem
+install --mode 644 cronjobs/topology %{buildroot}/etc/cron.d/topology
+install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -65,11 +65,13 @@ install --mode 755 cronjobs/hepspec %{buildroot}/etc/cron.daily/hepspec
 %attr(0750,root,root) /var/lib/ar-sync
 %config(noreplace) /var/lib/ar-sync/poem_name_mapping.cfg
 %attr(0750,root,root) /var/log/ar-sync
-%attr(0755,root,root) /etc/cron.daily/poem
-%attr(0755,root,root) /etc/cron.daily/topology
-%attr(0755,root,root) /etc/cron.daily/hepspec
+%attr(0644,root,root) /etc/cron.d/poem
+%attr(0644,root,root) /etc/cron.d/topology
+%attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Thu Jan 30 2014 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.1.19-1%{?dist}
+- Updated daily cronjobs to run within first hour of each day
 * Tue Jan 14 2014 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.1.18-1%{?dist}
 - Added daily cronjob for hepspec values
 * Thu Nov 28 2013 Luko Gjenero <lgjenero@srce.hr> - 1.1.16-3%{?dist}

@@ -1,3 +1,2 @@
-#!/bin/bash
-python /usr/libexec/ar-sync/hepspec_sync
+25 0 * * * root /usr/libexec/ar-sync/hepspec_sync
 
