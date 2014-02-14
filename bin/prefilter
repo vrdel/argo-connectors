@@ -44,6 +44,12 @@ poemFileFields = 'server;ngi;profile;service_flavour;metric;vo;fqan'
 poemFileFieldDelimiter = '\001'
 poemNameMappingFilename = 'poem_name_mapping.cfg'
 
+#topology
+topologyFileDirectory = '/var/lib/ar-sync'
+topologyFilename = 'sites_%s_%s_%s.out'
+topologyFileFields = 'Hostname;ServiceType;Production;Monitored;Scope;Site;NGI;Infrastructure;CertificationStatus;SiteScope'
+topologyFileFieldDelimiter = '\001'
+
 #output
 outputFileDirectory = '/var/lib/ar-sync'
 outputFilename = 'prefilter_%s_%s_%s.out'
@@ -264,21 +270,55 @@ def loadNameMapping(year, month, day):
 
         nameMappingDict = dict()
 
-        nameMappingFile = open(poemFileDirectory + '/' + poemNameMappingFilename, 'r')
-        nameMappings = nameMappingFile.read().splitlines()
-        nameMappingFile.close();
+	nameMappingFile = None
+	try:
+       		nameMappingFile = open(poemFileDirectory + '/' + poemNameMappingFilename, 'r')	
+	except IOError:
+   		nameMappingDict = None
 
-        for line in nameMappings:
+	if nameMappingFile <> None:
+
+        	nameMappings = nameMappingFile.read().splitlines()
+        	nameMappingFile.close();
+
+        	for line in nameMappings:
+                	if len(line) == 0 or line[0] == '#':
+                        	continue
+
+                	nameMappingFields = line.split(':')
+			if len(nameMappingFields) > 1:
+				oldName = nameMappingFields[0].strip()
+				newName = nameMappingFields[1].strip()
+				nameMappingDict[oldName] = newName
+
+	return nameMappingDict
+
+##############################
+# load name mapping
+##############################
+def loadTopology(year, month, day):
+	
+	topologyHosts = list()
+
+        topologyFieldNames = topologyFileFields.split(';')
+
+        topologySitesFile = open(topologyFileDirectory + '/' + topologyFilename % (year, month, day), 'r')
+        topologySites = topologySitesFile.read().splitlines()
+        topologySitesFile.close();
+
+        for line in topologySites:
                 if len(line) == 0 or line[0] == '#':
                         continue
 
-                nameMappingFields = line.split(':')
-		if len(nameMappingFields) > 1:
-			oldName = nameMappingFields[0].strip()
-			newName = nameMappingFields[1].strip()
-			nameMappingDict[oldName] = newName
+                topologyFields = line.split(topologyFileFieldDelimiter)
+                site = dict()
+                for i in range(0,len(topologyFieldNames)):
+                        site[topologyFieldNames[i]] = topologyFields[i]
 
-	return nameMappingDict
+                if site['Hostname'] not in topologyHosts:
+                        topologyHosts.append(site['Hostname']);
+
+        return topologyHosts
 
 ##############################
 # get message profiles
@@ -367,6 +407,7 @@ if not argsOk:
 ngis = loadNGIs(year, month, day)
 profiles = loadFilteredProfiles(year, month, day)
 nameMapping = loadNameMapping(year, month, day)
+topologyHosts = loadTopology(year, month, day)
 
 filename = outputFilename % (year, month, day)
 outputFile = open(outputFileDirectory  + '/' + filename, 'w')
@@ -385,8 +426,11 @@ with open(consumerFileDirectory  + '/' + consumerFilename % (year, month, day), 
                 	ngiList = ngis[consumerFields[serverIdx]]
                         if 'ALL' in ngiList or consumerFields[ngiIdx] in ngiList:
 				ngiOk = True
-					
-		if ngiOk:
+		
+		#topology check
+		topologyOk = consumerFields[hostIdx] in topologyHosts
+		
+		if ngiOk and topologyOk:
 			
 			#profile check
 			msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, consumerFields)
