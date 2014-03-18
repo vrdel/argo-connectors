@@ -1,2 +1,1 @@
-20 0 * * * root /usr/libexec/ar-sync/poem-sync
-
+3 0 * * * root /usr/libexec/ar-sync/poem-sync
