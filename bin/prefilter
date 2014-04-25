@@ -62,6 +62,9 @@ consumerFileFields = consumerFileFields.split(';')
 # standard output
 writeToStd = 0
 
+# past files checking
+checkInputFileForDays = 1
+
 timestampIdx = consumerFileFields.index('timestamp')
 ngiIdx = consumerFileFields.index('ROC')
 serverIdx = consumerFileFields.index('nagios_host')
@@ -167,7 +170,7 @@ def loadConfiguration():
 ##############################
 def poemProfileFilenameCheck(year, month, day):
 
-	count = 1
+	count = 0
 	dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
 	while True:
 		year = dt.strftime("%Y")
@@ -176,7 +179,7 @@ def poemProfileFilenameCheck(year, month, day):
 		fileName = poemFileDirectory + '/' + poemFilename % (year, month, day)
 		if os.path.isfile(fileName):
 			break
-		if count >= 7: 
+		if count >= checkInputFileForDays: 
 			fileName = None
 			break
 		count = count+1
@@ -189,7 +192,7 @@ def poemProfileFilenameCheck(year, month, day):
 ##############################
 def topologyFilenameCheck(year, month, day):
 
-        count = 1
+        count = 0
         dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
         while True:
                 year = dt.strftime("%Y")
@@ -198,7 +201,7 @@ def topologyFilenameCheck(year, month, day):
                 fileName = topologyFileDirectory + '/' + topologyFilename % (year, month, day)
                 if os.path.isfile(fileName):
                         break
-                if count >= 7:
+                if count >= checkInputFileForDays:
                         fileName = None
                         break
                 count = count+1
