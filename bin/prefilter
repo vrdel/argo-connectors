@@ -162,6 +162,50 @@ def loadConfiguration():
         vofqanIdx = consumerFileFields.index('voFqan')
 
 
+##############################
+# find poem profile file name
+##############################
+def poemProfileFilenameCheck(year, month, day):
+
+	count = 1
+	dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
+	while True:
+		year = dt.strftime("%Y")
+		month = dt.strftime("%m")
+		day = dt.strftime("%d")
+		fileName = poemFileDirectory + '/' + poemFilename % (year, month, day)
+		if os.path.isfile(fileName):
+			break
+		if count >= 7: 
+			fileName = None
+			break
+		count = count+1
+		dt = dt - datetime.timedelta(days=1)
+
+	return fileName
+
+##############################
+# find topology file name
+##############################
+def topologyFilenameCheck(year, month, day):
+
+        count = 1
+        dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
+        while True:
+                year = dt.strftime("%Y")
+                month = dt.strftime("%m")
+                day = dt.strftime("%d")
+                fileName = topologyFileDirectory + '/' + topologyFilename % (year, month, day)
+                if os.path.isfile(fileName):
+                        break
+                if count >= 7:
+                        fileName = None
+                        break
+                count = count+1
+		dt = dt - datetime.timedelta(days=1)
+
+        return fileName
+
 
 ##############################
 # load ngis
@@ -172,7 +216,7 @@ def loadNGIs(year, month, day):
 
         profileFieldNames = poemFileFields.split(';')
 
-        poemProfileFile = open(poemFileDirectory + '/' + poemFilename % (year, month, day), 'r')
+        poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
         poemProfiles = poemProfileFile.read().splitlines()
         poemProfileFile.close();
 
@@ -204,7 +248,7 @@ def loadFilteredProfiles(year, month, day):
 
 	profileFieldNames = poemFileFields.split(';')
 
-        poemProfileFile = open(poemFileDirectory + '/' + poemFilename % (year, month, day), 'r')
+        poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
         poemProfiles = poemProfileFile.read().splitlines()
         poemProfileFile.close();
 
@@ -274,7 +318,7 @@ def loadNameMapping(year, month, day):
 	try:
        		nameMappingFile = open(poemFileDirectory + '/' + poemNameMappingFilename, 'r')	
 	except IOError:
-   		nameMappingDict = None
+   		nameMappingFile = None
 
 	if nameMappingFile <> None:
 
@@ -294,7 +338,7 @@ def loadNameMapping(year, month, day):
 	return nameMappingDict
 
 ##############################
-# load name mapping
+# load topology
 ##############################
 def loadTopology(year, month, day):
 	
@@ -302,7 +346,7 @@ def loadTopology(year, month, day):
 
         topologyFieldNames = topologyFileFields.split(';')
 
-        topologySitesFile = open(topologyFileDirectory + '/' + topologyFilename % (year, month, day), 'r')
+        topologySitesFile = open(topologyFilenameCheck(year, month, day), 'r')
         topologySites = topologySitesFile.read().splitlines()
         topologySitesFile.close();
 
