@@ -1,1 +1,1 @@
-2 0 * * * root /usr/libexec/ar-sync/hepspec_sync
+2 0 * * * root /usr/libexec/ar-sync/hepspec_sync >> /var/log/ar-sync/hepspec.log 2>&1
