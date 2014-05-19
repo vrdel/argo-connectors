@@ -1,1 +1,1 @@
-3 0 * * * root /usr/libexec/ar-sync/poem-sync
+3 0 * * * root /usr/libexec/ar-sync/poem-sync >> /var/log/ar-sync/poem.log 2>&1
