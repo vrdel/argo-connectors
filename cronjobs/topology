@@ -1,1 +1,1 @@
-4 0 * * * root /usr/libexec/ar-sync/topology-sync
+4 0 * * * root /usr/libexec/ar-sync/topology-sync  >> /var/log/ar-sync/topology.log 2>&1
