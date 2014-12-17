@@ -1,6 +1,6 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
-Version: 1.3.0
+Version: 1.3.1
 Release: 2%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
@@ -8,7 +8,7 @@ Group:     EGI/SA4
 BuildArch: noarch
 Source0:   %{name}-%{version}.tar.gz
 Requires:  crontabs, anacron
-Requires:  hive
+Requires:  hive, avro
 
 %description
 Installs the service for syncing A/R Comp Engine
@@ -80,6 +80,9 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Wed Nov 17 2014 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-0%{?dist}
+- ar-sync is missing avro dependency
+- poem-sync is missing data for servers listed in URL
 * Thu Nov 27 2014 Luko Gjenero <lgjenero@srce.hr> - 1.3.0-0%{?dist}
 - Avro format for poem, downtimes, topology and hepspec
 * Tue May 13 2014 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.2.3-1%{?dist}
