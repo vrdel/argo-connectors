@@ -1,0 +1,16 @@
+{"namespace": "argo.avro",
+ "type": "record",
+ "name": "group_groups",
+ "fields": [
+    {"name": "type", "type": "string"},
+    {"name": "group", "type": "string"},
+    {"name": "subgroup", "type": "string"},
+    {"name": "tags", "type": {"name" : "Tags",
+                               "type" : "record",
+                               "fields" : [
+                                  {"name" : "scope", "type" : "string"},
+                                  {"name" : "infrastructure", "type" : "string"},
+                                  {"name" : "certification", "type" : "string"}
+                                ]}}
+ ]
+}
