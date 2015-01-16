@@ -13,16 +13,16 @@
 # IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
-# 
+#
 # The views and conclusions contained in the software and
 # documentation are those of the authors and should not be
 # interpreted as representing official policies, either expressed
 # or implied, of either GRNET S.A., SRCE or IN2P3 CNRS Computing
 # Centre
-# 
+#
 # The work represented by this source file is partially funded by
 # the EGI-InSPIRE project through the European Commission's 7th
-# Framework Programme (contract # INFSO-RI-261323) 
+# Framework Programme (contract # INFSO-RI-261323)
 
 import urllib
 import urllib2
@@ -63,7 +63,7 @@ def loadConfiguration():
          for line in lines:
              if line[0] == '#':
                  continue
-             splitLine = line.split('=')
+             splitLine = line.split('=', 1)
              if len(splitLine) > 1:
                  key = splitLine[0].strip()
                  value = splitLine[1].strip()
@@ -116,7 +116,7 @@ class ProfileReader(object):
 
     def loadConfiguration(self, configFields):
         """Loading config"""
-    
+
     def getProfiles(self):
         """Getting profiles"""
 
@@ -162,7 +162,7 @@ class PoemReader(ProfileReader):
         #sys.stdout.write("vp:  " + pp.pformat(validProfiles) + '\n\n')
         #sys.stdout.flush()
 
-        profileList = list() 
+        profileList = list()
         for line in poemServers:
             if len(line) == 0 or line[0] == '#':
                 continue
@@ -172,12 +172,12 @@ class PoemReader(ProfileReader):
                 url = ''
                 defaultProfiles = []
                 if len(line.split('=')[1].split(';')) > 1:
-                    url = line.split('=')[1].split(';')[0]          
+                    url = line.split('=')[1].split(';')[0]
                     defaultProfiles = line.split('=')[1].split(';')[1].split(',')
                 else:
                     url = line.split('=')[1]
 
-                profiles = line.split('=')[1].split(';')[1] 
+                profiles = line.split('=')[1].split(';')[1]
 
                 urlFile = urllib.urlopen(url)
                 urlLines = urlFile.read().splitlines()
@@ -185,7 +185,7 @@ class PoemReader(ProfileReader):
                 for urlLine in urlLines:
                     if len(urlLine) == 0 or urlLine[0] == '#':
                         continue
-                    
+
                     ngis = urlLine.split(':')[0].split(',')
                     servers = urlLine.split(':')[2].split(',')
 
@@ -207,14 +207,14 @@ class PoemReader(ProfileReader):
             else:
                 ngis = line.split(':')[0].split(',')
                 servers = []
-                        
+
                 defaultProfiles = []
                 if len(line.split(':')[1].split(';')) > 1:
                     servers = line.split(':')[1].split(';')[0].split(',')
                     defaultProfiles = line.split(':')[1].split(';')[1].split(',')
                 else:
                     servers = line.split(':')[1].split(';')[0].split(',')
-                
+
                 for vo in availableVOs:
                     serverProfiles = []
                     if len(defaultProfiles) > 0:
@@ -226,7 +226,7 @@ class PoemReader(ProfileReader):
                             for ngi in ngis:
                                 for server in servers:
                                     profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
-                
+
         return profileList
 
     def loadFilteredProfiles(self):
@@ -234,7 +234,7 @@ class PoemReader(ProfileReader):
         poemProfileFile = open(self.poemProfileFile, 'r')
         poemProfiles = poemProfileFile.read().splitlines()
         poemProfileFile.close();
-        
+
         filterProfiles = []
         for line in poemProfiles:
             if len(line) == 0 or line[0] == '#':
@@ -256,7 +256,7 @@ class PoemReader(ProfileReader):
 
             url = line.split(';')[0]
             vos = line.split(';')[1].split(',')
-            
+
             for vo in vos:
                 if not vo in avaliableVOs:
                     avaliableVOs.append(vo)
@@ -297,7 +297,7 @@ class PoemReader(ProfileReader):
             doFilterProfiles = True
 
         print server
-        print self.poemRequest % ('',vo)  
+        print self.poemRequest % ('',vo)
 
         url = resolve_http_redirect('https://' + self.poemRequest % (server,vo), self.hostKey, self.hostCert)
         print url
@@ -305,11 +305,11 @@ class PoemReader(ProfileReader):
         o = urlparse.urlparse(url,allow_fragments=True)
         try:
             conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert)
-            conn.request('GET', o.path + '?' + o.query)     
+            conn.request('GET', o.path + '?' + o.query)
 
             #conn = httplib.HTTPSConnection(server, 443, hostKey, hostCert)
             #conn.request('GET', defaultPoemRequest % ('',vo))
-            res = conn.getresponse()  
+            res = conn.getresponse()
             if res.status == 200:
                 json_data = json.loads(res.read())
                 for profile in json_data[0]['profiles']:
@@ -337,7 +337,7 @@ class PoemReader(ProfileReader):
             entry["server"] = server
             entry["ngi"] = ngi
             entry["vo"] = profile['vo']
-            entry["fqan"] = metric['fqan']  
+            entry["fqan"] = metric['fqan']
             entries.append(entry)
         return entries
 
@@ -348,7 +348,7 @@ class ProfileWriter(object):
 
     def loadConfiguration(self, configFields):
         """Loading config"""
-    
+
     def writeProfiles(self, profiles, date):
         """Writting downtimes"""
 
@@ -403,7 +403,12 @@ class AvroWritter(ProfileWriter):
         writer = DataFileWriter(avroFile, DatumWriter(), schema)
 
         for p in profiles:
-            writer.append(p)
+            pt = dict()
+            pt['metric'] = p['metric']
+            pt['profile'] = p['profile']
+            pt['service'] = p['service']
+            pt['tags'] = {'vo' : p['vo'], 'fqan' : p['fqan']}
+            writer.append(pt)
 
         writer.close()
         avroFile.close()
