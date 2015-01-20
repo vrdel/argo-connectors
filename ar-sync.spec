@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -43,6 +43,7 @@ install --mode 755 bin/topology-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/downtime-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/hepspec_sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/prefilter %{buildroot}/usr/libexec/ar-sync
+install --mode 755 bin/prefilter-avro %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/vo-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 644 cronjobs/poem %{buildroot}/etc/cron.d/poem
 install --mode 644 cronjobs/topology %{buildroot}/etc/cron.d/topology
@@ -58,6 +59,7 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0755,root,root) /usr/libexec/ar-sync/downtime-sync
 %attr(0755,root,root) /usr/libexec/ar-sync/hepspec_sync
 %attr(0755,root,root) /usr/libexec/ar-sync/prefilter
+%attr(0755,root,root) /usr/libexec/ar-sync/prefilter-avro
 %attr(0755,root,root) /usr/libexec/ar-sync/vo-sync
 %config(noreplace) /etc/ar-sync/poem-sync.conf
 %config(noreplace) /etc/ar-sync/poem.conf
@@ -80,6 +82,13 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Mon Jan 19 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-5%(?dist)
+- topology-sync: avro schemas updated with tags and filtering by tags values
+- poem-sync: avro schema updated with tags
+- poem-sync: output profiles per customer and job
+  https://github.com/ARGOeu/ARGO/issues/85
+* Thu Jan 15 2015 Luko Gjenero <lgjenero@srce.hr> - 1.3.1-3%{?dist}
+- avro prefiltering
 * Wed Dec 17 2014 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-2%{?dist}
 - ar-sync is missing avro dependency
 - poem-sync is missing data for servers listed in URL
