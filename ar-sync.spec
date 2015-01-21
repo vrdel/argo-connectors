@@ -1,14 +1,14 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
 BuildArch: noarch
 Source0:   %{name}-%{version}.tar.gz
 Requires:  crontabs, anacron
-Requires:  hive, avro
+Requires:  avro
 
 %description
 Installs the service for syncing A/R Comp Engine
