@@ -34,6 +34,7 @@ install --mode 644 etc/ar-sync/downtime-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/vo-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/hepspec-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/prefilter-avro.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem_name_mapping.cfg %{buildroot}/var/lib/ar-sync/
 install --mode 644 etc/ar-sync/downtimes.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/metric_profiles.avsc %{buildroot}/etc/ar-sync/
@@ -75,6 +76,7 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %config(noreplace) /etc/ar-sync/prefilter.conf
 %config(noreplace) /etc/ar-sync/vo-sync.conf
 %config(noreplace) /etc/ar-sync/hepspec-sync.conf
+%config(noreplace) /etc/ar-sync/prefilter-avro.conf
 %config(noreplace) /etc/ar-sync/downtimes.avsc
 %config(noreplace) /etc/ar-sync/metric_profiles.avsc
 %config(noreplace) /etc/ar-sync/group_endpoints.avsc
