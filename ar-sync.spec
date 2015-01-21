@@ -38,6 +38,8 @@ install --mode 644 etc/ar-sync/poem_name_mapping.cfg %{buildroot}/var/lib/ar-syn
 install --mode 644 etc/ar-sync/downtimes.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/metric_profiles.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/group_endpoints.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/group_groups.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/group_services.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/sites.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/weight_sites.avsc %{buildroot}/etc/ar-sync/
 install --mode 755 bin/poem-sync %{buildroot}/usr/libexec/ar-sync
@@ -76,6 +78,8 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %config(noreplace) /etc/ar-sync/downtimes.avsc
 %config(noreplace) /etc/ar-sync/metric_profiles.avsc
 %config(noreplace) /etc/ar-sync/group_endpoints.avsc
+%config(noreplace) /etc/ar-sync/group_groups.avsc
+%config(noreplace) /etc/ar-sync/group_services.avsc
 %config(noreplace) /etc/ar-sync/sites.avsc
 %config(noreplace) /etc/ar-sync/weight_sites.avsc
 %attr(0750,root,root) /var/lib/ar-sync
