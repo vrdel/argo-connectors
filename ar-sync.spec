@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -28,14 +28,18 @@ install --mode 644 etc/ar-sync/poem-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem-profile.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem-server.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/poem-customer.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/topology-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/downtime-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/vo-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/hepspec-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem_name_mapping.cfg %{buildroot}/var/lib/ar-sync/
 install --mode 644 etc/ar-sync/downtimes.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/metric_profiles.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/group_endpoints.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/group_groups.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/group_services.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/sites.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/weight_sites.avsc %{buildroot}/etc/ar-sync/
 install --mode 755 bin/poem-sync %{buildroot}/usr/libexec/ar-sync
@@ -65,13 +69,17 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %config(noreplace) /etc/ar-sync/poem.conf
 %config(noreplace) /etc/ar-sync/poem-profile.conf
 %config(noreplace) /etc/ar-sync/poem-server.conf
+%config(noreplace) /etc/ar-sync/poem-customer.conf
 %config(noreplace) /etc/ar-sync/topology-sync.conf
 %config(noreplace) /etc/ar-sync/downtime-sync.conf
 %config(noreplace) /etc/ar-sync/prefilter.conf
 %config(noreplace) /etc/ar-sync/vo-sync.conf
+%config(noreplace) /etc/ar-sync/hepspec-sync.conf
 %config(noreplace) /etc/ar-sync/downtimes.avsc
 %config(noreplace) /etc/ar-sync/metric_profiles.avsc
 %config(noreplace) /etc/ar-sync/group_endpoints.avsc
+%config(noreplace) /etc/ar-sync/group_groups.avsc
+%config(noreplace) /etc/ar-sync/group_services.avsc
 %config(noreplace) /etc/ar-sync/sites.avsc
 %config(noreplace) /etc/ar-sync/weight_sites.avsc
 %attr(0750,root,root) /var/lib/ar-sync
