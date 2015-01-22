@@ -56,42 +56,45 @@ def loadCustomerConfiguration():
     if os.path.isfile(defaultConfig):
         configFile = open(defaultConfig, 'r')
         for line in configFile:
-            if 'poemCustomerFile' in line:
+            if line[0] != '#' and 'poemCustomerFile' in line:
                 customerConfigFile = line.split('=', 1)[1].strip()
                 customerConfigFile = customerConfigFile.strip("'")
 
-    try:
-        config = ConfigParser.ConfigParser()
-        config.read(customerConfigFile)
+    if customerConfigFile:
+        try:
+            config = ConfigParser.ConfigParser()
+            config.read(customerConfigFile)
 
-        for section in config.sections():
-            if section.startswith('CUSTOMER'):
-                if config.has_option(section, 'Jobs'):
-                    customerjobs = config.get(section, 'Jobs').split(',')
-                    customerjobs = [job.strip() for job in customerjobs]
-                    customers.append({section : customerjobs})
-            elif section.startswith('JOB'):
-                if config.has_option(section, 'Profiles'):
-                    profiles = config.get(section, 'Profiles').split(',')
-                    profiles = [profile.strip() for profile in profiles]
-                    jobsinconf.append({section : {"PROFILE" : profiles}})
-            elif section == 'DIR':
-                if config.has_option(section, 'OutputDir'):
-                    outputdir = config.get(section, 'OutputDir')
+            for section in config.sections():
+                if section.startswith('CUSTOMER'):
+                    if config.has_option(section, 'Jobs'):
+                        customerjobs = config.get(section, 'Jobs').split(',')
+                        customerjobs = [job.strip() for job in customerjobs]
+                        customers.append({section : customerjobs})
+                elif section.startswith('JOB'):
+                    if config.has_option(section, 'Profiles'):
+                        profiles = config.get(section, 'Profiles').split(',')
+                        profiles = [profile.strip() for profile in profiles]
+                        jobsinconf.append({section : {"PROFILE" : profiles}})
+                elif section == 'DIR':
+                    if config.has_option(section, 'OutputDir'):
+                        outputdir = config.get(section, 'OutputDir')
 
-        for cus in customers:
-            for key, value in cus.items():
-                for v in value:
-                    for job in jobsinconf:
-                        if v in job:
-                            cus[key][value.index(v)] = jobsinconf[jobsinconf.index(job)]
+            for cus in customers:
+                for key, value in cus.items():
+                    for v in value:
+                        for job in jobsinconf:
+                            if v in job:
+                                cus[key][value.index(v)] = jobsinconf[jobsinconf.index(job)]
 
-    except ConfigParser.MissingSectionHeaderError as e:
-        print e.filename + " is not a valid configuration file"
-        print e.message
-        sys.exit(1)
+        except ConfigParser.MissingSectionHeaderError as e:
+            print e.filename + " is not a valid configuration file"
+            print e.message
+            sys.exit(1)
+    else:
+        return None, None
 
-    return (customers, outputdir)
+    return customers, outputdir
 
 ##############################
 # load config
@@ -519,4 +522,5 @@ for writer in writers:
         writerInstance = AvroWritter()
         writerInstance.loadConfiguration(config)
         writerInstance.writeProfiles(profiles, date)
-        writerInstance.writeProfilesForCustomers(customers, customersdir, profiles, date)
+        if customers:
+            writerInstance.writeProfilesForCustomers(customers, customersdir, profiles, date)
