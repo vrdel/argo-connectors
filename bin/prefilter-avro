@@ -176,13 +176,13 @@ def loadNGIs(year, month, day):
         for i in range(0, len(profileFieldNames)):
             profile[profileFieldNames[i]] = profileFields[i]
 
-    if profile['server'] not in ngiTree:
-        ngiTree[profile['server']] = list()
+        if profile['server'] not in ngiTree:
+            ngiTree[profile['server']] = list()
 
-    if profile['ngi'] not in  ngiTree[profile['server']]:
-        ngiTree[profile['server']].append(profile['ngi'])
+        if profile['ngi'] not in  ngiTree[profile['server']]:
+            ngiTree[profile['server']].append(profile['ngi'])
 
-    # ngiTree[profile['server']] = profile['ngi']
+        # ngiTree[profile['server']] = profile['ngi']
 
     return ngiTree
 
@@ -203,54 +203,54 @@ def loadFilteredProfiles(year, month, day):
         if len(line) == 0 or line[0] == '#':
             continue
 
-    profileFields = line.split(poemFileFieldDelimiter)
+        profileFields = line.split(poemFileFieldDelimiter)
 
-    profile = dict()
-    for i in range(0, len(profileFieldNames)):
-        profile[profileFieldNames[i]] = profileFields[i]
+        profile = dict()
+        for i in range(0, len(profileFieldNames)):
+            profile[profileFieldNames[i]] = profileFields[i]
 
-    #find server tree
-    serverTree = dict()
-    if profile['server'] in profileTree.keys():
-        serverTree = profileTree[profile['server']]
-    else:
-        profileTree[profile['server']] = serverTree
+        #find server tree
+        serverTree = dict()
+        if profile['server'] in profileTree.keys():
+            serverTree = profileTree[profile['server']]
+        else:
+            profileTree[profile['server']] = serverTree
 
-    #find type tree
-    typeTree = dict()
-    if profile['service_flavour'] in serverTree.keys():
-        typeTree = serverTree[profile['service_flavour']]
-    else:
-        serverTree[profile['service_flavour']] = typeTree
+        #find type tree
+        typeTree = dict()
+        if profile['service_flavour'] in serverTree.keys():
+            typeTree = serverTree[profile['service_flavour']]
+        else:
+            serverTree[profile['service_flavour']] = typeTree
 
-    #find type metric
-    metricTree = dict()
-    if profile['metric'] in typeTree.keys():
-        metricTree = typeTree[profile['metric']]
-    else:
-        typeTree[profile['metric']] = metricTree
+        #find type metric
+        metricTree = dict()
+        if profile['metric'] in typeTree.keys():
+            metricTree = typeTree[profile['metric']]
+        else:
+            typeTree[profile['metric']] = metricTree
 
-    #find vo tree
-    vo = '-'
-    if len(profile['vo']) > 0:
-        vo = profile['vo']
-    voTree = dict()
-    if vo in metricTree.keys():
-        voTree = metricTree[vo]
-    else:
-        metricTree[vo] = voTree
+        #find vo tree
+        vo = '-'
+        if len(profile['vo']) > 0:
+            vo = profile['vo']
+        voTree = dict()
+        if vo in metricTree.keys():
+            voTree = metricTree[vo]
+        else:
+            metricTree[vo] = voTree
 
-    #find fqan tree
-    fqan = '-'
-    if len(profile['fqan']) > 0:
-        vfqan = profile['fqan']
-    fqanTree = dict()
-    if fqan in voTree.keys():
-        fqanTree = voTree[fqan]
-    else:
-        voTree[fqan] = fqanTree
+        #find fqan tree
+        fqan = '-'
+        if len(profile['fqan']) > 0:
+            vfqan = profile['fqan']
+        fqanTree = dict()
+        if fqan in voTree.keys():
+            fqanTree = voTree[fqan]
+        else:
+            voTree[fqan] = fqanTree
 
-    voTree[fqan][profile['profile']] = profile
+        voTree[fqan][profile['profile']] = profile
 
     return profileTree
 
@@ -295,7 +295,7 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
 
     #find server tree
     if logItem['monitoring_host'] in profileTree.keys():
-        serverTree = profileTree[fields[serverIdx]]
+        serverTree = profileTree[logItem[serverIdx]]
     else:
         return -1
 
@@ -391,34 +391,34 @@ for logItem in reader:
             if writeToStd > 0:
                 print logItem
                 print '\n'
-        else:
-            writer.append(logItem)
-        continue
+    else:
+        writer.append(logItem)
+    continue
 
-        #ngi check
-        ngiOk = False
-        if logItem['monitoring_host'] in ngis.keys():
-            ngiList = ngis[logItem['monitoring_host']]
-            if 'ALL' in ngiList or logItem['tags']['roc'] in ngiList:
-                ngiOk = True
+    #ngi check
+    ngiOk = False
+    if logItem['monitoring_host'] in ngis.keys():
+        ngiList = ngis[logItem['monitoring_host']]
+        if 'ALL' in ngiList or logItem['tags']['roc'] in ngiList:
+            ngiOk = True
 
-        if ngiOk:
-            #profile check
-            msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, logItem)
-            if type(msgprofiles) is int:
+    if ngiOk:
+        #profile check
+        msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, logItem)
+        if type(msgprofiles) is int:
+            if writeToStd > 0:
+                print logItem
+                print '\n'
+            rejected += 1
+            continue
+
+            if len(msgprofiles) > 0:
+                    writer.append(logItem)
+            else:
+                rejected += 1
                 if writeToStd > 0:
                     print logItem
-                    print '\n'
-                rejected += 1
-                continue
-
-                if len(msgprofiles) > 0:
-                        writer.append(logItem)
-                else:
-                    rejected += 1
-                    if writeToStd > 0:
-                        print logItem
-                        print '\m'
+                    print '\m'
 
 reader.close()
 writer.close()
