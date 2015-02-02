@@ -13,16 +13,16 @@
 # IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
-# 
+#
 # The views and conclusions contained in the software and
 # documentation are those of the authors and should not be
 # interpreted as representing official policies, either expressed
 # or implied, of either GRNET S.A., SRCE or IN2P3 CNRS Computing
 # Centre
-# 
+#
 # The work represented by this source file is partially funded by
 # the EGI-InSPIRE project through the European Commission's 7th
-# Framework Programme (contract # INFSO-RI-261323) 
+# Framework Programme (contract # INFSO-RI-261323)
 
 import urllib
 import urllib2
@@ -53,39 +53,39 @@ def createOutputFilename(directory, fileTemplate, timestamp):
 ##############################
 # load config
 ##############################
-def loadConfiguration():
-     #load config
-     configFile = None
-     configFields = dict()
-     if os.path.isfile(defaultConfig):
-         configFile = open(defaultConfig, 'r')
-         lines = configFile.readlines()
+def loadConfiguration(confile):
+    #load config
+    configFile = None
+    configFields = dict()
+    if os.path.isfile(confile):
+        configFile = open(confile, 'r')
+        lines = configFile.readlines()
 
-         for line in lines:
-             if line[0] == '#':
-                 continue
-             splitLine = line.split('=')
-             if len(splitLine) > 1:
-                 key = splitLine[0].strip()
-                 value = splitLine[1].strip()
-                 value = value.decode('string_escape')
-                 if value[0] == "'":
-                     if value [-1] == "'":
-                         value = value[1:-1]
-                     else:
-                         continue
-                 elif value[0] == '"':
-                     if value [-1] == '"':
-                         value = value[1:-1]
-                     else:
-                         continue
-                 else:
-                     value = int(value)
-                 configFields[key] = value
+        for line in lines:
+            if line[0] == '#':
+                continue
+            splitLine = line.split('=')
+            if len(splitLine) > 1:
+                key = splitLine[0].strip()
+                value = splitLine[1].strip()
+                value = value.decode('string_escape')
+                if value[0] == "'":
+                    if value [-1] == "'":
+                        value = value[1:-1]
+                    else:
+                        continue
+                elif value[0] == '"':
+                    if value [-1] == '"':
+                        value = value[1:-1]
+                    else:
+                        continue
+                else:
+                    value = int(value)
+                configFields[key] = value
 
-         configFile.close()
+        configFile.close()
 
-     return configFields
+    return configFields
 
 ##############################
 # readers
@@ -94,12 +94,12 @@ class WeightReader(object):
 
     def loadConfiguration(self, configFields):
         """Loading config"""
-    
+
     def getWeights(self):
         """Getting weights"""
 
 class HEPSPECReader(WeightReader):
-     
+
     def __init__(self):
         self.GstatRequest = 'http://gstat2.grid.sinica.edu.tw/gstat/summary/json/'
 
@@ -108,15 +108,15 @@ class HEPSPECReader(WeightReader):
              self.GstatRequest = configFields['GstatRequest']
 
     def getWeights(self):
-    	# load server data
-	urlFile = urllib2.urlopen(self.GstatRequest)
-	json_data = json.load(urlFile)
-	urlFile.close();
-	weights = dict()
-	for site in json_data:
-		key = site['Sitename']
-		val = site['HEPSPEC06']
-		weights[key] = val
+        # load server data
+        urlFile = urllib2.urlopen(self.GstatRequest)
+        json_data = json.load(urlFile)
+        urlFile.close();
+        weights = dict()
+        for site in json_data:
+            key = site['Sitename']
+            val = site['HEPSPEC06']
+            weights[key] = val
         return weights
 
 ##############################
@@ -126,12 +126,12 @@ class WeightWriter(object):
 
     def loadConfiguration(self,configFields):
         """Loading config"""
-    
+
     def outputFilenameForDate(self, date):
-    	"""Output filename for given date"""
+        """Output filename for given date"""
 
     def loadOldData(self, date):
-    	"""Load pre-existing data"""
+        """Load pre-existing data"""
 
     def writeWeights(self, weights, date):
         """Getting downtimes"""
@@ -155,14 +155,14 @@ class FileWritter(WeightWriter):
             self.outputFileDelimiter = configFields['outputFileDelimiter']
 
     def outputFilenameForDate(self, date):
-    	return createOutputFilename(self.outputDir, self.outputFileTemplate, date)
+        return createOutputFilename(self.outputDir, self.outputFileTemplate, date)
 
     def loadOldData(self, date):
-	filename = createOutputFilename(self.outputDir, self.outputFileTemplate, date)
+        filename = createOutputFilename(self.outputDir, self.outputFileTemplate, date)
         oldDataDict = dict()
 
         if not os.path.isfile(filename):
-            return oldDataDict        
+            return oldDataDict
 
         oldDataFile = open(filename, 'r')
         oldData = oldDataFile.read().splitlines()
@@ -211,12 +211,12 @@ class AvroWritter(WeightWriter):
         oldDataDict = dict()
 
         if not os.path.isfile(filename):
-            return oldDataDict        
+            return oldDataDict
 
         reader = DataFileReader(open(filename, "r"), DatumReader())
-	for weight in reader:
+        for weight in reader:
             oldDataDict[weight["site"]] = weight["weight"]
-	reader.close()
+        reader.close()
 
         return oldDataDict
 
@@ -239,7 +239,11 @@ class AvroWritter(WeightWriter):
 ##############################
 
 # load configuration
-config = loadConfiguration()
+# load configuration
+if len(sys.argv) > 1:
+    config = loadConfiguration(sys.argv[1])
+else:
+    config = loadConfiguration(defaultConfig)
 
 # init readers and writters
 readerInstances = list()
@@ -271,12 +275,12 @@ if len(writerInstances) > 0:
     i = 0;
     oldDataExists = True
     while not os.path.isfile(oldFilename):
-	oldDate = oldDate - datetime.timedelta(days=1)
-	oldFilename = writerInstances[0].outputFilenameForDate(oldDate.strftime('%Y_%m_%d'))
-	i = i+1
+        oldDate = oldDate - datetime.timedelta(days=1)
+        oldFilename = writerInstances[0].outputFilenameForDate(oldDate.strftime('%Y_%m_%d'))
+        i = i+1
         if i >= 30:
-	    oldDataExists = False
-	    break
+            oldDataExists = False
+            break
 
 # load old data
 oldData = dict()
@@ -293,24 +297,23 @@ for reader in readerInstances:
 for key in newData:
     newVal = int(newData[key])
     if newVal <= 0:
-	if key in oldData:
-	    newVal = int(oldData[key])
+        if key in oldData:
+            newVal = int(oldData[key])
     if key not in oldData:
-	oldData[key] = str(newVal)
+        oldData[key] = str(newVal)
     newData[key] = str(newVal)
 
 # fill old list
 for key in oldData:
-	oldVal = int(oldData[key])
-	if oldVal <= 0:
-            if key in newData:
-                oldData[key] = newData[key]
-	if key not in newData:
-	    newData[key] = oldData[key]
+    oldVal = int(oldData[key])
+    if oldVal <= 0:
+        if key in newData:
+            oldData[key] = newData[key]
+    if key not in newData:
+        newData[key] = oldData[key]
 
 # write old & new data
 for writer in writerInstances:
-	if oldDataExists:
-	    writer.writeWeights(oldData, oldDate.strftime('%Y_%m_%d'))
-	writer.writeWeights(newData, timestamp)
-
+    if oldDataExists:
+        writer.writeWeights(oldData, oldDate.strftime('%Y_%m_%d'))
+    writer.writeWeights(newData, timestamp)

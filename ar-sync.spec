@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -92,6 +92,10 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Mon Feb 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-10%(?dist)
+- tools can have config file as their argument
+- config files with changed output directory for customer/job
+- modified cronjobs for customer and his two jobs
 * Thu Jan 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-9%(?dist)
 - bug fixes for poem-sync and prefilter
 - typo in plaintext groups filename
