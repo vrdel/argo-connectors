@@ -13,16 +13,16 @@
 # IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
-# 
+#
 # The views and conclusions contained in the software and
 # documentation are those of the authors and should not be
 # interpreted as representing official policies, either expressed
 # or implied, of either GRNET S.A., SRCE or IN2P3 CNRS Computing
 # Centre
-# 
+#
 # The work represented by this source file is partially funded by
 # the EGI-InSPIRE project through the European Commission's 7th
-# Framework Programme (contract # INFSO-RI-261323) 
+# Framework Programme (contract # INFSO-RI-261323)
 
 import urllib
 import os
@@ -47,12 +47,12 @@ writers = ['file', 'avro']
 # configuration loader
 #
 ###################################################
-def loadConfiguration():
+def loadConfiguration(confile):
      #load config
      configFile = None
      configFields = dict()
-     if os.path.isfile(defaultConfig):
-         configFile = open(defaultConfig, 'r')
+     if os.path.isfile(confile):
+         configFile = open(confile, 'r')
          lines = configFile.readlines()
 
          for line in lines:
@@ -98,12 +98,12 @@ class DowntimeReader(object):
 
     def loadConfiguration(configFields):
         """Loading config"""
-    
+
     def getDowntimes(start, end):
         """Getting downtimes"""
 
 class GOCDBReader(DowntimeReader):
-     
+
     def __init__(self):
         self.gocdbHost = 'goc.egi.eu'
         self.gocdbUrl = 'https://'+self.gocdbHost+'/gocdbpi/'
@@ -142,7 +142,7 @@ class GOCDBReader(DowntimeReader):
                 hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
                 serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
                 startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-                endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data       
+                endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
                 severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
 
                 startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
@@ -174,7 +174,7 @@ class DowntimeWriter(object):
 
     def loadConfiguration(configFields):
         """Loading config"""
-    
+
     def writeDowntimes(downtimes, date):
         """Getting downtimes"""
 
@@ -236,14 +236,18 @@ class AvroWritter(DowntimeWriter):
 ##############################
 
 argsOk = False
+configFile = defaultConfig
 for i in range(0,len(sys.argv)-1):
     if sys.argv[i] == '-d':
         if len(sys.argv[i+1].split('-')) == 3:
             date = sys.argv[i+1]
             argsOk = True
+    if sys.argv[1] != '-d' and os.path.isfile(sys.argv[1]):
+        configFile = sys.argv[1]
+        argsOk = True
 
 if not argsOk:
-    print "\n\nUsage:\n\tpython downtime.py -d <date>"
+    print "\n\nUsage:\n\tpython downtime.py [config file] -d <date>"
     sys.exit()
 
 # calculate start and end times
@@ -253,7 +257,7 @@ start = start.replace(hour=0, minute=0, second=0)
 end = end.replace(hour=23, minute=59, second=59)
 
 # load configuration
-config = loadConfiguration()
+config = loadConfiguration(configFile)
 
 # read downtimes
 downtimes = list()

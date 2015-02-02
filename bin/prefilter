@@ -78,12 +78,12 @@ vofqanIdx = consumerFileFields.index('voFqan')
 ##############################
 # load config
 ##############################
-def loadConfiguration():
+def loadConfiguration(confile):
     #load config
     configFile = None
     configFields = dict()
-    if os.path.isfile(defaultConfig):
-        configFile = open(defaultConfig, 'r')
+    if os.path.isfile(confile):
+        configFile = open(confile, 'r')
         lines = configFile.readlines()
 
         for line in lines:
@@ -435,7 +435,7 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, fields):
 ##############################
 
 #load config
-loadConfiguration()
+loadConfiguration(configFile)
 
 argsOk = False
 for i in range(0,len(sys.argv)-1):
@@ -444,11 +444,13 @@ for i in range(0,len(sys.argv)-1):
             year = sys.argv[i+1].split('-')[0]
             month = sys.argv[i+1].split('-')[1]
             day = sys.argv[i+1].split('-')[2]
-
             argsOk = True
+    if sys.argv[1] != '-d' and os.path.isfile(sys.argv[1]):
+        configFile = sys.argv[1]
+        argsOk = True
 
 if not argsOk:
-    print "\n\nUsage:\n\tpython prefilter.py -d <date>"
+    print "\n\nUsage:\n\tpython prefilter -d <date>"
     sys.exit()
 
 ngis = loadNGIs(year, month, day)
