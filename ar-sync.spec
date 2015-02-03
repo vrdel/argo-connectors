@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -30,11 +30,19 @@ install --mode 644 etc/ar-sync/poem-profile.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem-server.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem-customer.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/topology-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/topology-sync.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/topology-sync.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/downtime-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/downtime-sync.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/downtime-sync.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/vo-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/hepspec-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/hepspec-sync.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/hepspec-sync.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter-avro.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/prefilter-avro.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/prefilter-avro.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem_name_mapping.cfg %{buildroot}/var/lib/ar-sync/
 install --mode 644 etc/ar-sync/downtimes.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/metric_profiles.avsc %{buildroot}/etc/ar-sync/
@@ -72,11 +80,19 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %config(noreplace) /etc/ar-sync/poem-server.conf
 %config(noreplace) /etc/ar-sync/poem-customer.conf
 %config(noreplace) /etc/ar-sync/topology-sync.conf
+%config(noreplace) /etc/ar-sync/topology-sync.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/topology-sync.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/downtime-sync.conf
+%config(noreplace) /etc/ar-sync/downtime-sync.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/downtime-sync.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/prefilter.conf
 %config(noreplace) /etc/ar-sync/vo-sync.conf
 %config(noreplace) /etc/ar-sync/hepspec-sync.conf
+%config(noreplace) /etc/ar-sync/hepspec-sync.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/hepspec-sync.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/prefilter-avro.conf
+%config(noreplace) /etc/ar-sync/prefilter-avro.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/prefilter-avro.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/downtimes.avsc
 %config(noreplace) /etc/ar-sync/metric_profiles.avsc
 %config(noreplace) /etc/ar-sync/group_endpoints.avsc
@@ -92,6 +108,9 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Tue Feb 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-11%(?dist)
+- update .spec to deploy new configs
+- removed whitespaces at the end of config lines
 * Mon Feb 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-10%(?dist)
 - tools can have config file as their argument
 - config files with changed output directory for customer/job
