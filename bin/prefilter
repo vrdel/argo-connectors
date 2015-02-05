@@ -78,12 +78,12 @@ vofqanIdx = consumerFileFields.index('voFqan')
 ##############################
 # load config
 ##############################
-def loadConfiguration(confile):
+def loadConfiguration():
     #load config
     configFile = None
     configFields = dict()
-    if os.path.isfile(confile):
-        configFile = open(confile, 'r')
+    if os.path.isfile(defaultConfig):
+        configFile = open(defaultConfig, 'r')
         lines = configFile.readlines()
 
         for line in lines:
@@ -435,7 +435,7 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, fields):
 ##############################
 
 #load config
-loadConfiguration(configFile)
+loadConfiguration()
 
 argsOk = False
 for i in range(0,len(sys.argv)-1):
