@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -108,6 +108,8 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Thu Feb 5 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-12%(?dist)
+- plaintxt prefilter has fixed configuration
 * Tue Feb 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-11%(?dist)
 - update .spec to deploy new configs
 - removed whitespaces at the end of config lines
