@@ -1,14 +1,14 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
-Version: 1.2.3
-Release: 2%{?dist}
+Version: 1.3.1
+Release: 12%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
 BuildArch: noarch
 Source0:   %{name}-%{version}.tar.gz
 Requires:  crontabs, anacron
-Requires:  hive
+Requires:  avro
 
 %description
 Installs the service for syncing A/R Comp Engine
@@ -28,16 +28,35 @@ install --mode 644 etc/ar-sync/poem-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem-profile.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem-server.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/poem-customer.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/topology-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/topology-sync.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/topology-sync.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/downtime-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/downtime-sync.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/downtime-sync.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/vo-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/hepspec-sync.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/hepspec-sync.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/hepspec-sync.EGI.Critical.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/prefilter-avro.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/prefilter-avro.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/prefilter-avro.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem_name_mapping.cfg %{buildroot}/var/lib/ar-sync/
+install --mode 644 etc/ar-sync/downtimes.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/metric_profiles.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/group_endpoints.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/group_groups.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/group_services.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/sites.avsc %{buildroot}/etc/ar-sync/
+install --mode 644 etc/ar-sync/weight_sites.avsc %{buildroot}/etc/ar-sync/
 install --mode 755 bin/poem-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/topology-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/downtime-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/hepspec_sync %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/prefilter %{buildroot}/usr/libexec/ar-sync
+install --mode 755 bin/prefilter-avro %{buildroot}/usr/libexec/ar-sync
 install --mode 755 bin/vo-sync %{buildroot}/usr/libexec/ar-sync
 install --mode 644 cronjobs/poem %{buildroot}/etc/cron.d/poem
 install --mode 644 cronjobs/topology %{buildroot}/etc/cron.d/topology
@@ -53,15 +72,34 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0755,root,root) /usr/libexec/ar-sync/downtime-sync
 %attr(0755,root,root) /usr/libexec/ar-sync/hepspec_sync
 %attr(0755,root,root) /usr/libexec/ar-sync/prefilter
+%attr(0755,root,root) /usr/libexec/ar-sync/prefilter-avro
 %attr(0755,root,root) /usr/libexec/ar-sync/vo-sync
 %config(noreplace) /etc/ar-sync/poem-sync.conf
 %config(noreplace) /etc/ar-sync/poem.conf
 %config(noreplace) /etc/ar-sync/poem-profile.conf
 %config(noreplace) /etc/ar-sync/poem-server.conf
+%config(noreplace) /etc/ar-sync/poem-customer.conf
 %config(noreplace) /etc/ar-sync/topology-sync.conf
+%config(noreplace) /etc/ar-sync/topology-sync.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/topology-sync.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/downtime-sync.conf
+%config(noreplace) /etc/ar-sync/downtime-sync.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/downtime-sync.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/prefilter.conf
 %config(noreplace) /etc/ar-sync/vo-sync.conf
+%config(noreplace) /etc/ar-sync/hepspec-sync.conf
+%config(noreplace) /etc/ar-sync/hepspec-sync.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/hepspec-sync.EGI.Critical.conf
+%config(noreplace) /etc/ar-sync/prefilter-avro.conf
+%config(noreplace) /etc/ar-sync/prefilter-avro.EGI.Cloudmon.conf
+%config(noreplace) /etc/ar-sync/prefilter-avro.EGI.Critical.conf
+%config(noreplace) /etc/ar-sync/downtimes.avsc
+%config(noreplace) /etc/ar-sync/metric_profiles.avsc
+%config(noreplace) /etc/ar-sync/group_endpoints.avsc
+%config(noreplace) /etc/ar-sync/group_groups.avsc
+%config(noreplace) /etc/ar-sync/group_services.avsc
+%config(noreplace) /etc/ar-sync/sites.avsc
+%config(noreplace) /etc/ar-sync/weight_sites.avsc
 %attr(0750,root,root) /var/lib/ar-sync
 %config(noreplace) /var/lib/ar-sync/poem_name_mapping.cfg
 %attr(0750,root,root) /var/log/ar-sync
@@ -70,6 +108,30 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Thu Feb 5 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-12%(?dist)
+- plaintxt prefilter has fixed configuration
+* Tue Feb 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-11%(?dist)
+- update .spec to deploy new configs
+- removed whitespaces at the end of config lines
+* Mon Feb 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-10%(?dist)
+- tools can have config file as their argument
+- config files with changed output directory for customer/job
+- modified cronjobs for customer and his two jobs
+* Thu Jan 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-9%(?dist)
+- bug fixes for poem-sync and prefilter
+- typo in plaintext groups filename
+* Mon Jan 19 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-8%(?dist)
+- topology-sync: avro schemas updated with tags and filtering by tags values
+- poem-sync: avro schema updated with tags
+- poem-sync: output profiles per customer and job
+  https://github.com/ARGOeu/ARGO/issues/85
+* Thu Jan 15 2015 Luko Gjenero <lgjenero@srce.hr> - 1.3.1-3%{?dist}
+- avro prefiltering
+* Wed Dec 17 2014 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-2%{?dist}
+- ar-sync is missing avro dependency
+- poem-sync is missing data for servers listed in URL
+* Thu Nov 27 2014 Luko Gjenero <lgjenero@srce.hr> - 1.3.0-0%{?dist}
+- Avro format for poem, downtimes, topology and hepspec
 * Tue May 13 2014 Paschalis Korosoglou <pkoro@grid.auth.gr> - 1.2.3-1%{?dist}
 - Added logging to sync components
 * Fri Apr 26 2014 Luko Gjenero <lgjenero@srce.hr> - 1.2.2-1%{?dist}
