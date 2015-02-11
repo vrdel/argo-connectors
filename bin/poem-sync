@@ -210,7 +210,9 @@ class PoemReader(ProfileReader):
         #sys.stdout.write("vp:  " + pp.pformat(validProfiles) + '\n\n')
         #sys.stdout.flush()
 
-        profileList = list()
+        profileList = []
+        profileListAvro = []
+
         for line in poemServers:
             if len(line) == 0 or line[0] == '#':
                 continue
@@ -274,7 +276,15 @@ class PoemReader(ProfileReader):
                                 for server in servers:
                                     profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
 
-        return profileList
+        for profile in validProfiles.values():
+            for metric in profile['metrics']:
+                profileListAvro.append({'profile' : profile['namespace'] + '.' + profile['name'], \
+                                        'metric' : metric['name'], \
+                                        'service' : metric['service_flavour'], \
+                                        'vo' : profile['vo'], \
+                                        'fqan' : metric['fqan']})
+
+        return profileList, profileListAvro
 
     def loadFilteredProfiles(self):
 
@@ -503,23 +513,19 @@ config = loadConfiguration()
 customers, customersdir = loadCustomerConfiguration()
 
 # read profiles
-profiles = list()
 for reader in readers:
     if reader == 'poem':
         readerInstance = PoemReader()
         readerInstance.loadConfiguration(config)
-        ps = readerInstance.getProfiles()
-        profiles.extend(ps)
+        ps, psa = readerInstance.getProfiles()
 
 # write profiles
 for writer in writers:
     if writer == 'file':
         writerInstance = FileWritter()
         writerInstance.loadConfiguration(config)
-        writerInstance.writeProfiles(profiles, date)
-    elif writer == 'avro':
+        writerInstance.writeProfiles(ps, date)
+    elif writer == 'avro' and customers:
         writerInstance = AvroWritter()
         writerInstance.loadConfiguration(config)
-        writerInstance.writeProfiles(profiles, date)
-        if customers:
-            writerInstance.writeProfilesForCustomers(customers, customersdir, profiles, date)
+        writerInstance.writeProfilesForCustomers(customers, customersdir, psa, date)

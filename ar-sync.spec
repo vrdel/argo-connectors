@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -108,6 +108,9 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-13%(?dist)
+- different internal handle of avro poem-sync so it doesn't contain duplicated entries
+- special handle of legacy SRM service type
 * Thu Feb 5 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-12%(?dist)
 - plaintxt prefilter has fixed configuration
 * Tue Feb 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-11%(?dist)
