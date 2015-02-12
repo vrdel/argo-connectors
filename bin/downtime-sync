@@ -37,6 +37,8 @@ from avro.datafile import DataFileWriter
 from avro.io import DatumWriter
 
 defaultConfig = '/etc/ar-sync/downtime-sync.conf'
+
+LegMapServType = {'SRM' : 'SRMv2'}
 defaultArgDateFormat = '%Y-%m-%d'
 
 readers = ['gocdb']
@@ -201,6 +203,11 @@ class FileWritter(DowntimeWriter):
                        dt['service'],
                        dt['start_time'],
                        dt['end_time'], ))
+            if dt['service'] in LegMapServType.keys():
+                outFile.write(self.outputFileFormat % (dt['hostname'],
+                        LegMapServType[dt['service']],
+                        dt['start_time'],
+                        dt['end_time'], ))
         outFile.close();
 
 class AvroWritter(DowntimeWriter):
@@ -227,6 +234,9 @@ class AvroWritter(DowntimeWriter):
 
         for dt in downtimes:
             writer.append(dt)
+            if dt['service'] in LegMapServType.keys():
+                dt['service'] = LegMapServType[dt['service']]
+                writer.append(dt)
 
         writer.close()
         avroFile.close()
