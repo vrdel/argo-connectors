@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -104,6 +104,8 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Thu Feb 12 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-15%(?dist)
+- legacy SRM service type handle for downtime syncs
 * Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-14%(?dist)
 - updated .spec with removed configs for a per job prefilter-avro
 * Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-13%(?dist)
