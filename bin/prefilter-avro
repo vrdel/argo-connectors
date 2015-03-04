@@ -61,12 +61,12 @@ checkInputFileForDays = 1
 ##############################
 # load config
 ##############################
-def loadConfiguration(confile):
+def loadConfiguration():
     #load config
     configFile = None
     configFields = dict()
-    if os.path.isfile(confile):
-        configFile = open(confile, 'r')
+    if os.path.isfile(defaultConfig):
+        configFile = open(defaultConfig, 'r')
         lines = configFile.readlines()
 
         for line in lines:
@@ -370,7 +370,7 @@ if not argsOk:
     sys.exit()
 
 #load config
-loadConfiguration(configFile)
+loadConfiguration()
 
 # load poem data
 ngis = loadNGIs(year, month, day)

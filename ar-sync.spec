@@ -1,7 +1,7 @@
 Name: ar-sync
 Summary: A/R Comp Engine sync scripts
 Version: 1.3.1
-Release: 12%{?dist}
+Release: 16%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
 Group:     EGI/SA4
@@ -41,8 +41,6 @@ install --mode 644 etc/ar-sync/hepspec-sync.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/hepspec-sync.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/hepspec-sync.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/prefilter-avro.conf %{buildroot}/etc/ar-sync/
-install --mode 644 etc/ar-sync/prefilter-avro.EGI.Cloudmon.conf %{buildroot}/etc/ar-sync/
-install --mode 644 etc/ar-sync/prefilter-avro.EGI.Critical.conf %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/poem_name_mapping.cfg %{buildroot}/var/lib/ar-sync/
 install --mode 644 etc/ar-sync/downtimes.avsc %{buildroot}/etc/ar-sync/
 install --mode 644 etc/ar-sync/metric_profiles.avsc %{buildroot}/etc/ar-sync/
@@ -91,8 +89,6 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %config(noreplace) /etc/ar-sync/hepspec-sync.EGI.Cloudmon.conf
 %config(noreplace) /etc/ar-sync/hepspec-sync.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/prefilter-avro.conf
-%config(noreplace) /etc/ar-sync/prefilter-avro.EGI.Cloudmon.conf
-%config(noreplace) /etc/ar-sync/prefilter-avro.EGI.Critical.conf
 %config(noreplace) /etc/ar-sync/downtimes.avsc
 %config(noreplace) /etc/ar-sync/metric_profiles.avsc
 %config(noreplace) /etc/ar-sync/group_endpoints.avsc
@@ -108,6 +104,15 @@ install --mode 644 cronjobs/hepspec %{buildroot}/etc/cron.d/hepspec
 %attr(0644,root,root) /etc/cron.d/hepspec
 
 %changelog
+* Tue Feb 17 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-16%(?dist)
+- prefilter-avro has fixed configuration
+* Thu Feb 12 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-15%(?dist)
+- legacy SRM service type handle for downtime syncs
+* Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-14%(?dist)
+- updated .spec with removed configs for a per job prefilter-avro
+* Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-13%(?dist)
+- different internal handle of avro poem-sync so it doesn't contain duplicated entries
+- special handle of legacy SRM service type
 * Thu Feb 5 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-12%(?dist)
 - plaintxt prefilter has fixed configuration
 * Tue Feb 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-11%(?dist)

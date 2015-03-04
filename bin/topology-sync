@@ -39,6 +39,7 @@ from avro.io import DatumWriter
 
 defaultConfig = '/etc/ar-sync/topology-sync.conf'
 
+LegMapServType = {'SRM' : 'SRMv2'}
 SelectGG = dict()
 SelectGE = dict()
 FetchType = ''
@@ -454,6 +455,9 @@ class AvroWritter(TopologyWriter):
 
         for g in groupofendpoints:
             writer.append(g)
+            if g['service'] in LegMapServType.keys():
+                g['service'] = LegMapServType[g['service']]
+                writer.append(g)
 
         writer.close()
         avroFile.close()
