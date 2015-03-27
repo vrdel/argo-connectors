@@ -1,0 +1,1 @@
+7 0 * * * root /usr/bin/topology-gocdb-connector.py >> /var/log/argo-connectors/EGI/topology-gocdb-connector.log 2>&1

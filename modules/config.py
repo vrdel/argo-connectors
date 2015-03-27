@@ -11,6 +11,9 @@ class Global:
     def parse(self):
         config = ConfigParser.ConfigParser()
         config.optionxform = str
+        if not os.path.exists(self._filename):
+            print self.__class__, 'Could not find %s' % self._filename
+            raise SystemExit(1)
         config.read(self._filename)
         options = {}
 
@@ -46,6 +49,9 @@ class PoemConf:
     def parse(self):
         config = ConfigParser.ConfigParser()
         config.optionxform = str
+        if not os.path.exists(self._filename):
+            print self.__class__, 'Could not find %s' % self._filename
+            raise SystemExit(1)
         config.read(self._filename)
 
         try:
@@ -114,12 +120,12 @@ class PrefilterConf(Global):
 class EGIConf:
     _egiattrs = None
     _egi = {}
-    _defjobattrs = {'topology-egi-connector.py' : ['TopoFetchType',
+    _defjobattrs = {'topology-gocdb-connector.py' : ['TopoFetchType',
                                                   'TopoSelectGroupOfGroups',
                                                   'TopoSelectGroupOfEndpoints',
                                                   'Dirname'],
                     'poem-connector.py': ['Dirname'],
-                    'downtime-egi-connector.py': ['Dirname'],
+                    'downtime-gocdb-connector.py': ['Dirname'],
                     'hepspec-connector.py': ['Dirname']}
     _jobs, _jobattrs = {}, None
     tenantdir = ''
@@ -140,6 +146,9 @@ class EGIConf:
     def parse(self):
         config = ConfigParser.ConfigParser()
         config.optionxform = str
+        if not os.path.exists(self._filename):
+            print self.__class__, 'Could not find %s' % self._filename
+            raise SystemExit(1)
         config.read(self._filename)
 
         for section in config.sections():
@@ -276,7 +285,7 @@ class VOConf:
     _defjobattrs = {'topology-vo-connector.py' : ['TopoSelectGroupOfGroups',
                                                   'Dirname'],
                     'poem-connector.py': ['Dirname'],
-                    'downtime-egi-connector.py': ['Dirname'],
+                    'downtime-gocdb-connector.py': ['Dirname'],
                     'hepspec-connector.py': ['Dirname']}
     _vo, _voattrs = {}, None
     _jobs, _jobattrs = {}, None
@@ -298,6 +307,9 @@ class VOConf:
     def parse(self):
         config = ConfigParser.ConfigParser()
         config.optionxform = str
+        if not os.path.exists(self._filename):
+            print self.__class__, 'Could not find %s' % self._filename
+            raise SystemExit(1)
         config.read(self._filename)
 
         for section in config.sections():

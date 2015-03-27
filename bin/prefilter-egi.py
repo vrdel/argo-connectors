@@ -28,6 +28,7 @@ import sys
 import os
 import datetime
 import avro.schema
+import argparse
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
@@ -281,21 +282,17 @@ def main():
     global prefilteropts
     prefilteropts = cprefilter.parse()
 
-    argsOk = False
-    for i in range(0, len(sys.argv)-1):
-        if sys.argv[i] == '-d':
-            if len(sys.argv[i+1].split('-')) == 3:
-                year = sys.argv[i+1].split('-')[0]
-                month = sys.argv[i+1].split('-')[1]
-                day = sys.argv[i+1].split('-')[2]
-                argsOk = True
-        if sys.argv[1] != '-d' and os.path.isfile(sys.argv[1]):
-            configFile = sys.argv[1]
-            argsOk = True
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
+    args = parser.parse_args()
 
-    if not argsOk:
-        print "\n\nUsage:\n\tprefilter-egi.py -d <date>"
-        sys.exit()
+    date = args.date[0].split('-')
+
+    if len(date) == 0 or len(date) != 3:
+        print parser.print_help()
+        raise SystemExit(1)
+
+    year, month, day = date
 
     # load poem data
     ngis = loadNGIs(year, month, day)

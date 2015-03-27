@@ -1,1 +1,0 @@
-7 0 * * * root /usr/bin/topology-egi-connector.py >> /var/log/argo-connectors/EGI/topology-egi-connector.log 2>&1

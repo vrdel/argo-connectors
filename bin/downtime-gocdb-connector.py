@@ -24,11 +24,12 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-import os
+import argparse
 import datetime
-import xml.dom.minidom
 import httplib
+import os
 import sys
+import xml.dom.minidom
 
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.config import VOConf, EGIConf, Global
@@ -105,20 +106,17 @@ def main():
     cegi.parse()
     cegi.make_dirstruct()
 
-    argsOk = False
-    for i in range(0,len(sys.argv)-1):
-        if sys.argv[i] == '-d':
-            if len(sys.argv[i+1].split('-')) == 3:
-                date = sys.argv[i+1]
-                argsOk = True
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
+    args = parser.parse_args()
 
-    if not argsOk:
-        print "\n\nUsage:\n\tdowntime-egi-connector.py -d <date>"
-        sys.exit()
+    if len(args.date) == 0:
+        print parser.print_help()
+        raise SystemExit(1)
 
     # calculate start and end times
-    start = datetime.datetime.strptime(date, defaultArgDateFormat)
-    end = datetime.datetime.strptime(date, defaultArgDateFormat)
+    start = datetime.datetime.strptime(args.date[0], defaultArgDateFormat)
+    end = datetime.datetime.strptime(args.date[0], defaultArgDateFormat)
     start = start.replace(hour=0, minute=0, second=0)
     end = end.replace(hour=23, minute=59, second=59)
 

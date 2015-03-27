@@ -36,11 +36,7 @@ from avro.io import DatumReader
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.config import VOConf, EGIConf, Global
 
-defaultConfig = '/etc/ar-sync/hepspec-sync.conf'
-
 globopts = {}
-
-writers = ['file', 'avro']
 
 # optional attributes for vo and job sections
 vojobopts = ['Dirname']
