@@ -1,4 +1,4 @@
-PKGNAME=ar-sync
+PKGNAME=argo-egi-connectors
 SPECFILE=${PKGNAME}.spec
 FILES=Makefile ${SPECFILE} 
 
@@ -12,9 +12,8 @@ rpm: dist
 
 dist:
 	rm -rf dist
-	mkdir -p dist/${PKGNAME}-${PKGVERSION}
-	cp -pr ${FILES} etc bin cronjobs dist/${PKGNAME}-${PKGVERSION}/.
-	cd dist ; tar cfz ../${PKGNAME}-${PKGVERSION}.tar.gz ${PKGNAME}-${PKGVERSION}
+	python setup.py sdist
+	mv dist/${PKGNAME}-${PKGVERSION}.tar.gz .
 	rm -rf dist
 
 sources: dist

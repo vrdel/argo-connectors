@@ -1,0 +1,1 @@
+9 0 * * * root /usr/bin/topology-vo-connector.py >> /var/log/argo-connectors/EGI/topology-vo-connector.log 2>&1
