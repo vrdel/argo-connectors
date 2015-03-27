@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.0
-Release: 2%{?dist}
+Release: 4%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -45,6 +45,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-connectors/*
 
 %changelog
+* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-4%(?dist)
+- poem server is defined in its config file, not global one
+* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-3%(?dist)
+- prefilter-egi.py cleanups and roll back missing file
 * Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-2%(?dist)
 - deleted leftovers
 * Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-1%(?dist)
