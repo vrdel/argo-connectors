@@ -26,7 +26,6 @@
 
 import sys
 import os
-import time
 import datetime
 import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
@@ -36,20 +35,10 @@ from argo_egi_connectors.config import Global, PrefilterConf
 
 globopts, prefilteropts = {}, {}
 
-#consumer
-consumerFileDirectory = '/var/lib/ar-consumer'
-consumerFilename = 'ar-consumer_log_%s-%s-%s.avro'
-
 #poem
 poemFileDirectory = '/var/lib/ar-sync'
-poemFilename = 'poem_sync_%s_%s_%s.out'
 poemFileFields = 'server;ngi;profile;service_flavour;metric;vo;fqan'
 poemFileFieldDelimiter = '\001'
-poemNameMappingFilename = 'poem_name_mapping.cfg'
-
-#output
-outputFileDirectory = '/var/lib/ar-sync'
-outputFilename = 'prefilter_%s_%s_%s.avro'
 
 writeToStd = 0
 
