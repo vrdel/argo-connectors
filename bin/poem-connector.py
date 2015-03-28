@@ -40,8 +40,6 @@ writers = ['file', 'avro']
 globopts, poemopts = {}, {}
 cpoem = None
 
-fileout = 'poem_sync_%s.avro'
-
 def resolve_http_redirect(url, depth=0):
     if depth > 10:
         raise Exception("Redirected "+depth+" times, giving up.")
@@ -241,7 +239,8 @@ def gen_outprofiles(lprofiles, matched):
 def main():
     certs = {'Authentication': ['HostKey', 'HostCert']}
     schemas = {'AvroSchemas': ['Poem']}
-    cglob = Global(certs, schemas)
+    output = {'Output': ['Poem']}
+    cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
@@ -277,7 +276,7 @@ def main():
             voprofiles = cvo.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, voprofiles)
 
-            filename = jobdir + fileout % timestamp
+            filename = jobdir + globopts['OutputPoem']% timestamp
             avro = AvroWriter(globopts['AvroSchemasPoem'], filename, lfprofiles)
             avro.write()
 
@@ -287,7 +286,7 @@ def main():
         jobprofiles = cegi.get_profiles(job)
         lfprofiles = gen_outprofiles(psa, jobprofiles)
 
-        filename = jobdir + fileout % timestamp
+        filename = jobdir + globopts['OutputPoem'] % timestamp
         avro = AvroWriter(globopts['AvroSchemasPoem'], filename, lfprofiles)
         avro.write()
 

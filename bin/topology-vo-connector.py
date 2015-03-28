@@ -36,8 +36,6 @@ import xml.dom.minidom
 globopts = {}
 lgroups = []
 lendpoints = []
-filegg = 'group_groups_%s.avro'
-filege = 'group_endpoints_%s.avro'
 
 def parse_vofeed(host, path):
     if 'https' in host[0]:
@@ -81,8 +79,9 @@ def parse_vofeed(host, path):
 
 def main():
     certs = {'Authentication': ['HostKey', 'HostCert']}
-    schemas = {'AvroSchemas': ['VOGroupOfEndpoints', 'VOGroupOfGroups']}
-    cglob = Global(certs, schemas)
+    schemas = {'AvroSchemas': ['TopologyVOGroupOfEndpoints', 'TopologyVOGroupOfGroups']}
+    output = {'Output': ['TopologyVOGroupOfEndpoints', 'TopologyVOGroupOfGroups']}
+    cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()
 
@@ -112,12 +111,12 @@ def main():
                 global lgroups
                 lgroups = filter(ismatch, lgroups)
 
-            filename = jobdir + filegg % timestamp
-            avro = AvroWriter(globopts['AvroSchemasVOGroupOfGroups'], filename, lgroups)
+            filename = jobdir + globopts['OutputTopologyVOGroupOfGroups'] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasTopologyVOGroupOfGroups'], filename, lgroups)
             avro.write()
 
-            filename = jobdir + filege % timestamp
-            avro = AvroWriter(globopts['AvroSchemasVOGroupOfEndpoints'], filename, lendpoints)
+            filename = jobdir + globopts['OutputTopologyVOGroupOfEndpoints'] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasTopologyVOGroupOfEndpoints'], filename, lendpoints)
             avro.write()
 
 main()

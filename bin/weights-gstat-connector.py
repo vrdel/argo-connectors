@@ -38,16 +38,9 @@ from argo_egi_connectors.config import VOConf, EGIConf, Global
 
 globopts = {}
 
-# optional attributes for vo and job sections
-vojobopts = ['Dirname']
-voopts = ['Dirname']
-
-fileout = 'weights_sync_%s.avro'
-
-
-class HEPSPECReader:
+class GstatReader:
     def __init__(self):
-        self.GstatRequest = globopts['URLHepSpec']
+        self.GstatRequest = globopts['URLWeightsGstat']
 
     def getWeights(self):
         # load server data
@@ -69,7 +62,7 @@ def gen_outdict(data):
     return datawr
 
 def loadOldData(directory, timestamp):
-    filename = directory+'/'+ fileout % timestamp
+    filename = directory+'/'+ globopts['OutputWeightsGstat'] % timestamp
     oldDataDict = dict()
 
     if not os.path.isfile(filename):
@@ -84,9 +77,10 @@ def loadOldData(directory, timestamp):
 
 
 def main():
-    url = {'URL': ['HepSpec']}
-    schemas = {'AvroSchemas': ['HepSpec']}
-    cglob = Global(url, schemas)
+    url = {'URL': ['WeightsGstat']}
+    schemas = {'AvroSchemas': ['WeightsGstat']}
+    output = {'Output': ['WeightsGstat']}
+    cglob = Global(url, schemas, output)
     global globopts
     globopts = cglob.parse()
 
@@ -98,17 +92,17 @@ def main():
     cegi.parse()
     cegi.make_dirstruct()
 
-    readerInstance = HEPSPECReader()
+    readerInstance = GstatReader()
 
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
     oldDate = datetime.datetime.utcnow()
-    oldFilename = cegi.tenantdir+'/'+fileout % oldDate.strftime('%Y_%m_%d')
+    oldFilename = cegi.tenantdir+'/'+globopts['OutputWeightsGstat'] % oldDate.strftime('%Y_%m_%d')
 
     i = 0;
     oldDataExists = True
     while not os.path.isfile(oldFilename):
         oldDate = oldDate - datetime.timedelta(days=1)
-        oldFilename = cegi.tenantdir+'/'+fileout % oldDate.strftime('%Y_%m_%d')
+        oldFilename = cegi.tenantdir+'/'+globopts['OutputWeightsGstat'] % oldDate.strftime('%Y_%m_%d')
         i = i+1
         if i >= 30:
             oldDataExists = False
@@ -145,28 +139,28 @@ def main():
     for job in cegi.get_jobs():
         jobdir = cegi.get_fulldir(job)
 
-        filename = jobdir + fileout % timestamp
+        filename = jobdir + globopts['OutputWeightsGstat'] % timestamp
         datawr = gen_outdict(newData)
-        avro = AvroWriter(globopts['AvroSchemasHepSpec'], filename, datawr)
+        avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
         avro.write()
 
         if oldDataExists:
             datawr = gen_outdict(oldData)
-            avro = AvroWriter(globopts['AvroSchemasHepSpec'], filename, datawr)
+            avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
             avro.write()
 
     for vo in cvo.get_vos():
         for job in cvo.get_jobs(vo):
             jobdir = cvo.get_fulldir(vo, job)
 
-            filename = jobdir + fileout % timestamp
+            filename = jobdir + globopts['OutputWeightsGstat'] % timestamp
             datawr = gen_outdict(newData)
-            avro = AvroWriter(globopts['AvroSchemasHepSpec'], filename, datawr)
+            avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
             avro.write()
 
             if oldDataExists:
                 datawr = gen_outdict(oldData)
-                avro = AvroWriter(globopts['AvroSchemasHepSpec'], filename, datawr)
+                avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
                 avro.write()
 
 

@@ -34,7 +34,7 @@ class Global:
             print self.__class__, "No section '%s' defined" % (e.args[0])
             raise SystemExit(1)
         except OSError as e:
-            print self.__class__, os.strerror(e.args[0]), e.args[1]
+            print self.__class__, os.strerror(e.args[0]), e.args[1], optget
             raise SystemExit(1)
 
         return options
@@ -125,8 +125,9 @@ class EGIConf:
                                                   'TopoSelectGroupOfEndpoints',
                                                   'Dirname'],
                     'poem-connector.py': ['Dirname'],
-                    'downtime-gocdb-connector.py': ['Dirname'],
-                    'hepspec-connector.py': ['Dirname']}
+                    'downtimes-gocdb-connector.py': ['Dirname'],
+                    'weights-gstat-connector.py': ['Dirname'],
+                    'prefilter-egi.py': []}
     _jobs, _jobattrs = {}, None
     tenantdir = ''
 
@@ -238,7 +239,7 @@ class EGIConf:
                 os.makedirs(d)
             except OSError as e:
                 if e.args[0] != errno.EEXIST:
-                    print self.__class__, os.strerror(e.args[0]), e.args[1]
+                    print self.__class__,  os.strerror(e.args[0]), e.args[1], d
                     raise SystemExit(1)
 
     def get_jobs(self):
@@ -285,8 +286,8 @@ class VOConf:
     _defjobattrs = {'topology-vo-connector.py' : ['TopoSelectGroupOfGroups',
                                                   'Dirname'],
                     'poem-connector.py': ['Dirname'],
-                    'downtime-gocdb-connector.py': ['Dirname'],
-                    'hepspec-connector.py': ['Dirname']}
+                    'downtimes-gocdb-connector.py': ['Dirname'],
+                    'weights-gstat-connector.py': ['Dirname']}
     _vo, _voattrs = {}, None
     _jobs, _jobattrs = {}, None
     tenantdir = ''
@@ -406,7 +407,7 @@ class VOConf:
                 os.makedirs(d)
             except OSError as e:
                 if e.args[0] != errno.EEXIST:
-                    print self.__class__, os.strerror(e.args[0]), e.args[1]
+                    print self.__class__, os.strerror(e.args[0]), e.args[1], d
                     raise SystemExit(1)
 
     def get_feeds(self):

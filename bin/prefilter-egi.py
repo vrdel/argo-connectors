@@ -32,12 +32,11 @@ import argparse
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
-from argo_egi_connectors.config import Global, PrefilterConf
+from argo_egi_connectors.config import Global, EGIConf
 
-globopts, prefilteropts = {}, {}
+globopts, cegi = {}, None
 
 #poem
-poemFileDirectory = '/var/lib/ar-sync'
 poemFileFields = 'server;ngi;profile;service_flavour;metric;vo;fqan'
 poemFileFieldDelimiter = '\001'
 
@@ -60,7 +59,7 @@ def poemProfileFilenameCheck(year, month, day):
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = prefilteropts['PoemDirectory'] + '/' + prefilteropts['PoemFilename'] % (year, month, day)
+        fileName = cegi.tenantdir + '/' + globopts['OutputPrefilterPoem'] % (year+'_'+month+'_'+day)
         if os.path.isfile(fileName):
             break
         if count >= checkInputFileForDays:
@@ -180,7 +179,7 @@ def loadNameMapping(year, month, day):
 
     nameMappingFile = None
     try:
-        nameMappingFile = open(prefilteropts['PoemDirectory'] + '/' + prefilteropts['PoemFilename'], 'r')
+        nameMappingFile = open('/etc/argo-egi-connectors/'+globopts['OutputPrefilterPoemNameMapping'], 'r')
     except IOError:
         nameMappingFile = None
 
@@ -268,19 +267,16 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
 
 
 def main():
+    global cegi
+    cegi = EGIConf(sys.argv[0])
+    cegi.parse()
     schemas = {'AvroSchemas': ['Prefilter']}
-    cglob = Global(schemas, checkpath=True)
+    output = {'Output': ['PrefilterPoem', 'PrefilterConsumer',
+                         'PrefilterConsumerDir', 'Prefilter',
+                         'PrefilterPoemNameMapping']}
+    cglob = Global(schemas, output)
     global globopts
     globopts = cglob.parse()
-
-    opts = {'ArgoConsumer': ['Directory', 'Filename'],
-            'Poem': ['Directory', 'Filename'],
-            'Output': ['Directory', 'Filename'],
-            'NameMapping': ['Filename']}
-
-    cprefilter = PrefilterConf(opts)
-    global prefilteropts
-    prefilteropts = cprefilter.parse()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
@@ -300,8 +296,8 @@ def main():
     nameMapping = loadNameMapping(year, month, day)
 
     # avro files
-    inputFile = prefilteropts['ArgoConsumerDirectory'] + '/' + prefilteropts['ArgoConsumerFilename'] % (year, month, day)
-    outputFile = prefilteropts['OutputDirectory'] + '/' + prefilteropts['OutputFilename'] % (year, month, day)
+    inputFile = globopts['OutputPrefilterConsumerDir']+'/'+globopts['OutputPrefilterConsumer'] % (year+'-'+month+'-'+day)
+    outputFile = cegi.tenantdir+'/'+globopts['OutputPrefilter'] % (year+'_'+month+'_'+day)
 
     schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter']).read())
     writer = DataFileWriter(open(outputFile, "w"), DatumWriter(), schema)

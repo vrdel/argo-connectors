@@ -34,8 +34,6 @@ import xml.dom.minidom
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.config import VOConf, EGIConf, Global
 
-defaultConfig = '/etc/ar-sync/downtime-sync.conf'
-
 globopts = {}
 
 LegMapServType = {'SRM' : 'SRMv2'}
@@ -92,8 +90,9 @@ class GOCDBReader:
 
 def main():
     certs = {'Authentication': ['HostKey', 'HostCert']}
-    schemas = {'AvroSchemas': ['Downtimes']}
-    cglob = Global(certs, schemas)
+    schemas = {'AvroSchemas': ['DowntimesGOCDB']}
+    output = {'Output': ['DowntimesGOCDB']}
+    cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
@@ -127,15 +126,15 @@ def main():
     for vo in cvo.get_vos():
         for job in cvo.get_jobs(vo):
             jobdir = cvo.get_fulldir(vo, job)
-            filename = jobdir + fileout % timestamp
-            avro = AvroWriter(globopts['AvroSchemasDowntimes'], filename,
+            filename = jobdir + globopts['OutputDowntimesGOCDB'] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasDowntimesGOCDB'], filename,
                               dts)
             avro.write()
 
     for job in cegi.get_jobs():
         jobdir = cegi.get_fulldir(job)
-        filename = jobdir + fileout % timestamp
-        avro = AvroWriter(globopts['AvroSchemasDowntimes'], filename,
+        filename = jobdir + globopts['OutputDowntimesGOCDB'] % timestamp
+        avro = AvroWriter(globopts['AvroSchemasDowntimesGOCDB'], filename,
                             dts)
         avro.write()
 
