@@ -9,7 +9,7 @@ setup(name='argo-egi-connectors',
       url='http://argoeu.github.io/guides/sync/',
       package_dir={'argo_egi_connectors': 'modules/'},
       packages=['argo_egi_connectors'],
-      scripts=glob.glob('bin/*.py'),
       data_files=[('/etc/argo-egi-connectors', glob.glob('etc/*.conf')),
+                  ('/usr/libexec/argo-egi-connectors', glob.glob('bin/*.py')),
                   ('/etc/argo-egi-connectors/schemas', glob.glob('etc/schemas/*.avsc')),
                   ('/etc/cron.d', glob.glob('cronjobs/*'))])

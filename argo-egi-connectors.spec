@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -28,23 +28,28 @@ python setup.py build
 
 %install
 python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
-install --directory %{buildroot}/var/lib/argo-connectors/
-install --directory %{buildroot}/var/lib/argo-connectors/EGI
-install --directory %{buildroot}/var/log/argo-connectors/
-install --directory %{buildroot}/var/log/argo-connectors/EGI
+install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/
+install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/EGI
+install --directory %{buildroot}/%{_localstatedir}/log/argo-egi-connectors/
+install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
-%attr(0755,root,root) %{_bindir}/*.py
+%attr(0755,root,root) %dir %{_libexecdir}/argo-egi-connectors/
+%attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/*.py*
 
 %attr(0644,root,root) %{_sysconfdir}/cron.d/*
 
-%attr(0750,root,root) %dir %{_localstatedir}/lib/argo-connectors/*
-%attr(0750,root,root) %dir %{_localstatedir}/log/argo-connectors/*
+%attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
+%attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/EGI
+%attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Sun Mar 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-6%(?dist)
+- renamed weights and more configs refactoring
+- put scripts back into libexec 
 * Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-5%(?dist)
 - minor code cleanups and renamed connectors to reflect the source of data
 * Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-4%(?dist)
