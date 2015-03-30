@@ -1,6 +1,5 @@
 PKGNAME=argo-egi-connectors
 SPECFILE=${PKGNAME}.spec
-FILES=Makefile ${SPECFILE} 
 
 PKGVERSION=$(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')
 
@@ -20,5 +19,5 @@ sources: dist
 
 clean:
 	rm -rf ${PKGNAME}-${PKGVERSION}.tar.gz
+	rm -f MANIFEST
 	rm -rf dist
-

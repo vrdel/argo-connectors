@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -47,6 +47,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Mon Mar 30 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-7%(?dist)
+- added README.md with a basic project info  
 * Sun Mar 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-6%(?dist)
 - renamed weights and more configs refactoring
 - put scripts back into libexec 
