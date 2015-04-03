@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.0
-Release: 7%{?dist}
+Release: 8%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Fri Apr 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-8%(?dist)
+- added Dirname optional option for VO config
+- correctly renamed avro schemas
 * Mon Mar 30 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-7%(?dist)
 - added README.md with a basic project info  
 * Sun Mar 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-6%(?dist)
