@@ -288,6 +288,11 @@ class VOConf:
                     'poem-connector.py': ['Dirname'],
                     'downtimes-gocdb-connector.py': ['Dirname'],
                     'weights-gstat-connector.py': ['Dirname']}
+
+    _defvoattrs = {'topology-vo-connector.py' : ['Dirname'],
+                    'poem-connector.py': ['Dirname'],
+                    'downtimes-gocdb-connector.py': ['Dirname'],
+                    'weights-gstat-connector.py': ['Dirname']}
     _vo, _voattrs = {}, None
     _jobs, _jobattrs = {}, None
     tenantdir = ''
@@ -299,6 +304,7 @@ class VOConf:
                 if c in caller:
                     caller = c
             self._jobattrs = self._defjobattrs[caller]
+            self._voattrs = self._defvoattrs[caller]
         else:
             if 'jobattrs' in kwargs.keys():
                 self._jobattrs = kwargs['jobattrs']
@@ -336,6 +342,7 @@ class VOConf:
                     raise SystemExit(1)
 
                 self._vo.update({section: {'Jobs': vojobs, 'VOFeed': vofeed}})
+
                 if self._voattrs:
                     for attr in self._voattrs:
                         if config.has_option(section, attr):

@@ -271,9 +271,8 @@ def main():
     cegi = EGIConf(sys.argv[0])
     cegi.parse()
     schemas = {'AvroSchemas': ['Prefilter']}
-    output = {'Output': ['PrefilterPoem', 'PrefilterConsumer',
-                         'PrefilterConsumerDir', 'Prefilter',
-                         'PrefilterPoemNameMapping']}
+    output = {'Output': ['PrefilterPoem', 'PrefilterConsumerFilePath',
+                         'Prefilter', 'PrefilterPoemNameMapping']}
     cglob = Global(schemas, output)
     global globopts
     globopts = cglob.parse()
@@ -296,7 +295,7 @@ def main():
     nameMapping = loadNameMapping(year, month, day)
 
     # avro files
-    inputFile = globopts['OutputPrefilterConsumerDir']+'/'+globopts['OutputPrefilterConsumer'] % (year+'-'+month+'-'+day)
+    inputFile = globopts['OutputPrefilterConsumerFilePath'] % (year+'-'+month+'-'+day)
     outputFile = cegi.tenantdir+'/'+globopts['OutputPrefilter'] % (year+'_'+month+'_'+day)
 
     schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter']).read())
