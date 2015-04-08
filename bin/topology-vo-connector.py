@@ -97,6 +97,7 @@ def main():
         path = '/'+'/'.join(urlsplit[2:])
         parse_vofeed(host, path)
 
+        filtlgroups = lgroups
         for job in cvo.get_jobs(vo):
             jobdir = cvo.get_fulldir(vo, job)
 
@@ -108,11 +109,10 @@ def main():
                     for val in values:
                         if e == val.lower():
                             return True
-                global lgroups
-                lgroups = filter(ismatch, lgroups)
+                filtlgroups = filter(ismatch, lgroups)
 
             filename = jobdir + globopts['OutputTopologyVOGroupOfGroups'] % timestamp
-            avro = AvroWriter(globopts['AvroSchemasTopologyVOGroupOfGroups'], filename, lgroups)
+            avro = AvroWriter(globopts['AvroSchemasTopologyVOGroupOfGroups'], filename, filtlgroups)
             avro.write()
 
             filename = jobdir + globopts['OutputTopologyVOGroupOfEndpoints'] % timestamp

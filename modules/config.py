@@ -455,10 +455,10 @@ class VOConf:
                 tvalue = re.split("\s*,\s*", tvalue)
                 return {tkey: tvalue}
             else:
-                match = re.match("\s*(\w+)\s*:\s*(\w+)\s*", t)
+                match = re.match("\s*(\w+)\s*:(.*)", t)
                 if match is not None:
                     tkey = match.group(1)
-                    tvalue = match.group(2)
+                    tvalue = match.group(2).strip()
                     return {tkey: [tvalue]}
                 else:
                     print self.__class__, "Could not parse option TopoSelectGroupOfGroups: %s" % t
