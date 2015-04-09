@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Wed Apr 8 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-9%(?dist)
+- handle group type names with whitespaces
+- fixed bug with filtering VO groups across multiple VO jobs
 * Fri Apr 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-8%(?dist)
 - added Dirname optional option for VO config
 - correctly renamed avro schemas
