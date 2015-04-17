@@ -283,16 +283,16 @@ class EGIConf:
         return self._get_tags(job, 'TopoSelectGroupOfEndpoints')
 
 class VOConf:
-    _defjobattrs = {'topology-vo-connector.py' : ['TopoSelectGroupOfGroups',
-                                                  'Dirname'],
+    _defjobattrs = {'topology-vo-connector.py': ['TopoSelectGroupOfGroups',
+                                                 'Dirname'],
                     'poem-connector.py': ['Dirname'],
                     'downtimes-gocdb-connector.py': ['Dirname'],
                     'weights-gstat-connector.py': ['Dirname']}
 
-    _defvoattrs = {'topology-vo-connector.py' : ['Dirname'],
-                    'poem-connector.py': ['Dirname'],
-                    'downtimes-gocdb-connector.py': ['Dirname'],
-                    'weights-gstat-connector.py': ['Dirname']}
+    _defvoattrs = {'topology-vo-connector.py': [],
+                   'poem-connector.py': [],
+                   'downtimes-gocdb-connector.py': [],
+                   'weights-gstat-connector.py': []}
     _vo, _voattrs = {}, None
     _jobs, _jobattrs = {}, None
     tenantdir = ''
@@ -393,22 +393,18 @@ class VOConf:
 
         return dirname
 
-    def get_vodir(self, vo):
-        return self._dir_from_sect(vo, self._vo)
 
     def get_jobdir(self, job):
         return self._dir_from_sect(job, self._jobs)
 
-    def get_fulldir(self, vo, job):
-        return self.tenantdir + '/' + self.get_vodir(vo) + '/' + self.get_jobdir(job) + '/'
+    def get_fulldir(self, job):
+        return self.tenantdir + '/' + self.get_jobdir(job) + '/'
 
     def make_dirstruct(self):
         dirs = []
         for vo in self._vo.keys():
-            vodir = self.get_vodir(vo)
             for job in self.get_jobs(vo):
-                dirs.append( self.tenantdir+'/'+vodir+
-                            '/'+self.get_jobdir(job))
+                dirs.append(self.tenantdir+'/'+self.get_jobdir(job))
         for d in dirs:
             try:
                 os.makedirs(d)

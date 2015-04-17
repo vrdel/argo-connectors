@@ -125,7 +125,7 @@ def main():
 
     for vo in cvo.get_vos():
         for job in cvo.get_jobs(vo):
-            jobdir = cvo.get_fulldir(vo, job)
+            jobdir = cvo.get_fulldir(job)
             filename = jobdir + globopts['OutputDowntimesGOCDB'] % timestamp
             avro = AvroWriter(globopts['AvroSchemasDowntimesGOCDB'], filename,
                               dts)

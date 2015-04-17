@@ -99,7 +99,7 @@ def main():
 
         filtlgroups = lgroups
         for job in cvo.get_jobs(vo):
-            jobdir = cvo.get_fulldir(vo, job)
+            jobdir = cvo.get_fulldir(job)
 
             tags = cvo.get_ggtags(job)
             if tags:
