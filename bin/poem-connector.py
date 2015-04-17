@@ -271,7 +271,7 @@ def main():
 
     for vo in cvo.get_vos():
         for job in cvo.get_jobs(vo):
-            jobdir = cvo.get_fulldir(vo, job)
+            jobdir = cvo.get_fulldir(job)
 
             voprofiles = cvo.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, voprofiles)
