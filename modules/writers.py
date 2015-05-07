@@ -1,5 +1,4 @@
 import avro.schema
-from argo_egi_connectors.config import VOConf, EGIConf
 from avro.datafile import DataFileWriter
 from avro.io import DatumWriter
 from exceptions import IOError

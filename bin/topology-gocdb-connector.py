@@ -31,7 +31,7 @@ import httplib
 import sys
 
 from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.config import EGIConf, Global
+from argo_egi_connectors.config import Global, CustomerConf
 
 
 LegMapServType = {'SRM' : 'SRMv2'}
@@ -41,14 +41,22 @@ globopts = {}
 
 
 class GOCDBReader:
-    def __init__(self):
-        self.gocdbHost = 'goc.egi.eu'
-        self.gocdbUrl = 'https://' + self.gocdbHost + '/gocdbpi/'
-        self.hostKey = globopts['AuthenticationHostKey']
-        self.hostCert = globopts['AuthenticationHostCert']
+    def __init__(self, feed):
+        self.gocdbUrl = feed
+        self.gocdbHost = self._getHostFeed(feed)
+        self.hostKey = globopts['AuthenticationHostKey'.lower()]
+        self.hostCert = globopts['AuthenticationHostCert'.lower()]
         self.siteList = dict()
         self.serviceList = dict()
         self.groupList = dict()
+
+    def _getHostFeed(self, feed):
+        host = feed
+        if "https://" in feed:
+            host = feed.split("https://")[1]
+            if "/" in host:
+                host = host.split('/')[0]
+        return host
 
     def getGroupOfServices(self):
         self.loadDataIfNeeded()
@@ -64,8 +72,8 @@ class GOCDBReader:
                 g['hostname'] = service['hostname']
                 g['group_monitored'] = group['monitored']
                 g['tags'] = {'scope' : group['scope'], \
-                            'monitored' : 1 if service['monitored'] == "Y" else 0, \
-                            'production' : 1 if service['production'] == "Y" else 0}
+                              'monitored' : 1 if service['monitored'] == "Y" else 0, \
+                              'production' : 1 if service['production'] == "Y" else 0}
                 groups.append(g)
 
         return groups
@@ -81,7 +89,7 @@ class GOCDBReader:
                 g['type'] = 'PROJECT'
                 g['group'] = 'EGI'
                 g['subgroup'] = value['name']
-                g['tags'] = {'monitored' : 1 if value['monitored'] == "Y" else 0, \
+                g['tags'] = {'monitored' : 1 if value['monitored'] == 'Y' else 0, \
                             'scope' : value['scope']}
                 groupofgroups.append(g)
         else:
@@ -94,8 +102,9 @@ class GOCDBReader:
                 g['group'] = gr['ngi']
                 g['subgroup'] = gr['site']
                 g['tags'] = {'certification' : gr['certification'], \
-                            'scope' : gr['scope'], \
-                            'infrastructure' : gr['infrastructure']}
+                             'scope' : gr['scope'], \
+                             'infrastructure' : gr['infrastructure']}
+
                 groupofgroups.append(g)
 
         return groupofgroups
@@ -197,72 +206,69 @@ class GOCDBReader:
         else:
             print('ERROR: Connection to GOCDB failed: ' + res.reason)
 
-
 def filter_by_tags(tags, listofelem):
     for attr in tags.keys():
         def getit(elem):
             value = elem['tags'][attr.lower()]
             if isinstance(value, int):
-                value = "Y" if value else "N"
+                value = 'Y' if value else 'N'
+            #if value == '1': value = 'y'
+            #elif value == '0': value = 'n'
             if value.lower() == tags[attr].lower():
                 return True
         listofelem = filter(getit, listofelem)
     return listofelem
 
-
 def main():
     group_endpoints, group_groups = [], []
 
     certs = {'Authentication': ['HostKey', 'HostCert']}
-    schemas = {'AvroSchemas': ['TopologyGOCDBGroupOfEndpoints', 'TopologyGOCDBGroupOfGroups',
-                               'TopologyGOCDBGroupOfServices']}
-    output = {'Output': ['TopologyGOCDBGroupOfEndpoints', 'TopologyGOCDBGroupOfGroups']}
+    schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
+    output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()
 
-    cegi = EGIConf(sys.argv[0])
-    cegi.parse()
-    cegi.make_dirstruct()
+    confcust = CustomerConf(sys.argv[0])
+    confcust.parse()
+    confcust.make_dirstruct()
+    feeds = confcust.get_mapfeedjobs(sys.argv[0], 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
 
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
-    gocdb = GOCDBReader()
+    for feed, jobcust in feeds.items():
+        gocdb = GOCDBReader(feed)
 
-    for job in cegi.get_jobs():
-        jobdir = cegi.get_fulldir(job)
-        global fetchtype
-        fetchtype = cegi.get_fetchtype(job)
+        for job, cust in jobcust:
+            jobdir = confcust.get_fulldir(cust, job)
+            global fetchtype
+            fetchtype = confcust.get_gocdb_fetchtype(job)
 
-        if fetchtype == 'ServiceGroups':
-            group_endpoints = gocdb.getGroupOfServices()
-        else:
-            group_endpoints = gocdb.getGroupOfEndpoints()
-        group_groups = gocdb.getGroupOfGroups()
+            if fetchtype == 'ServiceGroups':
+                group_endpoints = gocdb.getGroupOfServices()
+            else:
+                group_endpoints = gocdb.getGroupOfEndpoints()
+            group_groups = gocdb.getGroupOfGroups()
 
-        ggtags = cegi.get_ggtags(job)
-        if ggtags:
-            group_groups = filter_by_tags(ggtags, group_groups)
-        filename = jobdir+globopts['OutputTopologyGOCDBGroupOfGroups'] % timestamp
-        if fetchtype == 'ServiceGroups':
-            avro = AvroWriter(globopts['AvroSchemasTopologyGOCDBGroupOfServices'], filename,
-                              group_groups)
-        else:
-            avro = AvroWriter(globopts['AvroSchemasTopologyGOCDBGroupOfGroups'], filename,
-                              group_groups)
-        avro.write()
+            ggtags = confcust.get_gocdb_ggtags(job)
+            if ggtags:
+                group_groups = filter_by_tags(ggtags, group_groups)
+            filename = jobdir+globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
+                            group_groups)
+            avro.write()
 
-        getags = cegi.get_getags(job)
-        if getags:
-            group_endpoints = filter_by_tags(getags, group_endpoints)
-        gelegmap = []
-        for g in group_endpoints:
-            if g['service'] in LegMapServType.keys():
-                gelegmap.append(g)
-                gelegmap[-1]['service'] = LegMapServType[g['service']]
-        filename = jobdir+globopts['OutputTopologyGOCDBGroupOfEndpoints'] % timestamp
-        avro = AvroWriter(globopts['AvroSchemasTopologyGOCDBGroupOfEndpoints'], filename,
-                          group_endpoints + gelegmap)
-        avro.write()
+            getags = confcust.get_gocdb_getags(job)
+            if getags:
+                group_endpoints = filter_by_tags(getags, group_endpoints)
+            gelegmap = []
+            for g in group_endpoints:
+                if g['service'] in LegMapServType.keys():
+                    gelegmap.append(g)
+                    gelegmap[-1]['service'] = LegMapServType[g['service']]
+            filename = jobdir+globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
+                            group_endpoints + gelegmap)
+            avro.write()
 
 main()

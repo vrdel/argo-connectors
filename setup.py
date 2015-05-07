@@ -1,8 +1,20 @@
 from distutils.core import setup
-import glob
+import glob, sys
 
-setup(name='argo-egi-connectors',
-      version='1.4.0',
+NAME='argo-egi-connectors'
+
+def get_ver():
+    try:
+        for line in open(NAME+'.spec'):
+            if "Version:" in line:
+                return line.split()[1]
+    except IOError:
+        print "Make sure that %s is in directory"  % (NAME+'.spec')
+        sys.exit(1)
+
+
+setup(name=NAME,
+      version=get_ver(),
       author='SRCE',
       author_email='dvrcic@srce.hr, lgjenero@gmail.com',
       description='Components generate input for ARGO Compute Engine',
