@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.4.0
-Release: 10%{?dist}
+Version: 1.4.1
+Release: 1%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -29,7 +29,6 @@ python setup.py build
 %install
 python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/
-install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/EGI
 install --directory %{buildroot}/%{_localstatedir}/log/argo-egi-connectors/
 install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
 
@@ -43,10 +42,19 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644,root,root) %{_sysconfdir}/cron.d/*
 
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
-%attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/EGI
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Wed May 6 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-1%(?dist)
+- removed VO as an entity in configuration; only customers and set of jobs
+- multiple customers in config each with own outputdir
+- data feeds for all connectors can be defined per job
+- prefilter-egi.py is aware of multiple customers
+- avro schemas with generic tags
+- case insensitive sections and options
+- setup.py with automatic version catch from spec
+- new default config
+  https://github.com/ARGOeu/ARGO/issues/132
 * Fri Apr 17 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-10%(?dist)
 - VO jobs are moved under customer's directory
 * Wed Apr 8 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-9%(?dist)

@@ -34,13 +34,13 @@ from avro.datafile import DataFileReader
 from avro.io import DatumReader
 
 from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.config import VOConf, EGIConf, Global
+from argo_egi_connectors.config import Global, CustomerConf
 
 globopts = {}
 
 class GstatReader:
-    def __init__(self):
-        self.GstatRequest = globopts['URLWeightsGstat']
+    def __init__(self, feed):
+        self.GstatRequest = feed
 
     def getWeights(self):
         # load server data
@@ -62,7 +62,7 @@ def gen_outdict(data):
     return datawr
 
 def loadOldData(directory, timestamp):
-    filename = directory+'/'+ globopts['OutputWeightsGstat'] % timestamp
+    filename = directory+'/'+ globopts['OutputWeights'.lower()] % timestamp
     oldDataDict = dict()
 
     if not os.path.isfile(filename):
@@ -77,32 +77,26 @@ def loadOldData(directory, timestamp):
 
 
 def main():
-    url = {'URL': ['WeightsGstat']}
-    schemas = {'AvroSchemas': ['WeightsGstat']}
-    output = {'Output': ['WeightsGstat']}
-    cglob = Global(url, schemas, output)
+    schemas = {'AvroSchemas': ['Weights']}
+    output = {'Output': ['Weights']}
+    cglob = Global(schemas, output)
     global globopts
     globopts = cglob.parse()
 
-    cvo = VOConf(sys.argv[0])
-    cvo.parse()
-    cvo.make_dirstruct()
-
-    cegi = EGIConf(sys.argv[0])
-    cegi.parse()
-    cegi.make_dirstruct()
-
-    readerInstance = GstatReader()
+    confcust = CustomerConf(sys.argv[0])
+    confcust.parse()
+    confcust.make_dirstruct()
+    feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='http://gstat2.grid.sinica.edu.tw/gstat/summary/json/')
 
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
     oldDate = datetime.datetime.utcnow()
-    oldFilename = cegi.tenantdir+'/'+globopts['OutputWeightsGstat'] % oldDate.strftime('%Y_%m_%d')
+    oldFilename = confcust.tenantdir+'/'+globopts['OutputWeights'.lower()] % oldDate.strftime('%Y_%m_%d')
 
     i = 0;
     oldDataExists = True
     while not os.path.isfile(oldFilename):
         oldDate = oldDate - datetime.timedelta(days=1)
-        oldFilename = cegi.tenantdir+'/'+globopts['OutputWeightsGstat'] % oldDate.strftime('%Y_%m_%d')
+        oldFilename = confcust.tenantdir+'/'+globopts['OutputWeights'.lower()] % oldDate.strftime('%Y_%m_%d')
         i = i+1
         if i >= 30:
             oldDataExists = False
@@ -111,57 +105,44 @@ def main():
     # load old data
     oldData = dict()
     if oldDataExists:
-        oldData.update(loadOldData(cegi.tenantdir, oldDate.strftime('%Y_%m_%d')))
+        oldData.update(loadOldData(confcust.tenantdir, oldDate.strftime('%Y_%m_%d')))
 
-    # load new data
-    newData = dict()
-    newData.update(readerInstance.getWeights());
+    for feed, jobcust in feeds.items():
+        weights = GstatReader(feed)
+        # load new data
+        newData = dict()
+        newData.update(weights.getWeights());
 
-    # fill new list
-    for key in newData:
-        newVal = int(newData[key])
-        if newVal <= 0:
-            if key in oldData:
-                newVal = int(oldData[key])
-        if key not in oldData:
-            oldData[key] = str(newVal)
-        newData[key] = str(newVal)
+        # fill new list
+        for key in newData:
+            newVal = int(newData[key])
+            if newVal <= 0:
+                if key in oldData:
+                    newVal = int(oldData[key])
+            if key not in oldData:
+                oldData[key] = str(newVal)
+            newData[key] = str(newVal)
 
-    # fill old list
-    for key in oldData:
-        oldVal = int(oldData[key])
-        if oldVal <= 0:
-            if key in newData:
-                oldData[key] = newData[key]
-        if key not in newData:
-            newData[key] = oldData[key]
+        # fill old list
+        for key in oldData:
+            oldVal = int(oldData[key])
+            if oldVal <= 0:
+                if key in newData:
+                    oldData[key] = newData[key]
+            if key not in newData:
+                newData[key] = oldData[key]
 
-    for job in cegi.get_jobs():
-        jobdir = cegi.get_fulldir(job)
+        for job, cust in jobcust:
+            jobdir = confcust.get_fulldir(cust, job)
 
-        filename = jobdir + globopts['OutputWeightsGstat'] % timestamp
-        datawr = gen_outdict(newData)
-        avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
-        avro.write()
-
-        if oldDataExists:
-            datawr = gen_outdict(oldData)
-            avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
-            avro.write()
-
-    for vo in cvo.get_vos():
-        for job in cvo.get_jobs(vo):
-            jobdir = cvo.get_fulldir(job)
-
-            filename = jobdir + globopts['OutputWeightsGstat'] % timestamp
+            filename = jobdir + globopts['OutputWeights'.lower()] % timestamp
             datawr = gen_outdict(newData)
-            avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
+            avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr)
             avro.write()
 
             if oldDataExists:
                 datawr = gen_outdict(oldData)
-                avro = AvroWriter(globopts['AvroSchemasWeightsGstat'], filename, datawr)
+                avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr)
                 avro.write()
-
 
 main()

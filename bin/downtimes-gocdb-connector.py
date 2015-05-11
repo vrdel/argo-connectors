@@ -32,7 +32,7 @@ import sys
 import xml.dom.minidom
 
 from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.config import VOConf, EGIConf, Global
+from argo_egi_connectors.config import Global, CustomerConf
 
 globopts = {}
 
@@ -42,13 +42,21 @@ defaultArgDateFormat = '%Y-%m-%d'
 fileout = 'downtimes_%s.avro'
 
 class GOCDBReader:
-    def __init__(self):
-        self.gocdbHost = 'goc.egi.eu'
-        self.gocdbUrl = 'https://'+self.gocdbHost+'/gocdbpi/'
-        self.hostKey =  globopts['AuthenticationHostKey']
-        self.hostCert = globopts['AuthenticationHostCert']
+    def __init__(self, feed):
+        self.gocdbUrl = feed
+        self.gocdbHost = self._getHostFeed(feed)
+        self.hostKey =  globopts['AuthenticationHostKey'.lower()]
+        self.hostCert = globopts['AuthenticationHostCert'.lower()]
         self.argDateFormat = "%Y-%m-%d"
         self.WSDateFormat = "%Y-%m-%d %H:%M"
+
+    def _getHostFeed(self, feed):
+        host = feed
+        if "https://" in feed:
+            host = feed.split("https://")[1]
+            if "/" in host:
+                host = host.split('/')[0]
+        return host
 
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
@@ -90,20 +98,17 @@ class GOCDBReader:
 
 def main():
     certs = {'Authentication': ['HostKey', 'HostCert']}
-    schemas = {'AvroSchemas': ['DowntimesGOCDB']}
-    output = {'Output': ['DowntimesGOCDB']}
+    schemas = {'AvroSchemas': ['Downtimes']}
+    output = {'Output': ['Downtimes']}
     cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
-    cvo = VOConf(sys.argv[0])
-    cvo.parse()
-    cvo.make_dirstruct()
-
-    cegi = EGIConf(sys.argv[0])
-    cegi.parse()
-    cegi.make_dirstruct()
+    confcust = CustomerConf(sys.argv[0])
+    confcust.parse()
+    confcust.make_dirstruct()
+    feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
@@ -119,23 +124,16 @@ def main():
     start = start.replace(hour=0, minute=0, second=0)
     end = end.replace(hour=23, minute=59, second=59)
 
-    # read downtimes
-    readerInstance = GOCDBReader()
-    dts = readerInstance.getDowntimes(start, end)
+    for feed, jobcust in feeds.items():
+        gocdb = GOCDBReader(feed)
+        dts = gocdb.getDowntimes(start, end)
 
-    for vo in cvo.get_vos():
-        for job in cvo.get_jobs(vo):
-            jobdir = cvo.get_fulldir(job)
-            filename = jobdir + globopts['OutputDowntimesGOCDB'] % timestamp
-            avro = AvroWriter(globopts['AvroSchemasDowntimesGOCDB'], filename,
+        for job, cust in jobcust:
+            jobdir = confcust.get_fulldir(cust, job)
+
+            filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                               dts)
             avro.write()
-
-    for job in cegi.get_jobs():
-        jobdir = cegi.get_fulldir(job)
-        filename = jobdir + globopts['OutputDowntimesGOCDB'] % timestamp
-        avro = AvroWriter(globopts['AvroSchemasDowntimesGOCDB'], filename,
-                            dts)
-        avro.write()
 
 main()

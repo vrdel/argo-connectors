@@ -6,11 +6,8 @@
     {"name": "service", "type": "string"},
     {"name": "metric", "type": "string"},
     {"name": "tags", "type" : ["null", {"name" : "Tags",
-                                        "type" : "record",
-                                        "fields" : [
-                                          {"name" : "vo", "type" : "string"},
-                                          {"name" : "fqan", "type" : "string"}]}
-                              ]
-    }
- ]
+                                        "type" : "map",
+                                        "values" : ["int", "string"]
+                                       }]
+    }]
 }

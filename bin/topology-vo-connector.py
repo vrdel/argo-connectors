@@ -25,7 +25,7 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.config import VOConf, Global
+from argo_egi_connectors.config import Global, CustomerConf
 from exceptions import AssertionError
 import datetime
 import httplib
@@ -34,74 +34,94 @@ import sys
 import xml.dom.minidom
 
 globopts = {}
-lgroups = []
-lendpoints = []
 
-def parse_vofeed(host, path):
-    if 'https' in host[0]:
-        conn = httplib.HTTPSConnection(host[1], 443, globopts['AuthenticationHostKey'], globopts['AuthenticationHostCert'])
-    elif 'http' in host[0]:
-        conn = httplib.HTTPConnection(host[1])
+class VOReader:
+    lendpoints= []
+    lgroups = []
 
-    conn.request('GET', path)
-    res = conn.getresponse()
-    if res.status == 200:
-        try:
-            dom = xml.dom.minidom.parseString(res.read())
-            sites = dom.getElementsByTagName('atp_site')
-            assert len(sites) > 0
-            for site in sites:
-                gg = {}
-                subgroup = site.getAttribute('name')
-                assert subgroup != ''
-                groups = site.getElementsByTagName('group')
-                assert len(groups) > 0
-                for group in groups:
+    def __init__(self, feed):
+        host, path = self._host_path(feed)
+        self._parse(host, path)
+
+    def _host_path(self, feed):
+        urlsplit = re.split('/*', feed)
+        host = (urlsplit[0], urlsplit[1])
+        path = '/'+'/'.join(urlsplit[2:])
+        return host, path
+
+    def _parse(self, host, path):
+        if 'https' in host[0]:
+            conn = httplib.HTTPSConnection(host[1], 443,
+                                           globopts['AuthenticationHostKey'.lower()],
+                                           globopts['AuthenticationHostCert'.lower()])
+        elif 'http' in host[0]:
+            conn = httplib.HTTPConnection(host[1])
+
+        conn.request('GET', path)
+        res = conn.getresponse()
+        if res.status == 200:
+            try:
+                dom = xml.dom.minidom.parseString(res.read())
+                sites = dom.getElementsByTagName('atp_site')
+                assert len(sites) > 0
+                for site in sites:
                     gg = {}
-                    gg['group'] = group.getAttribute('name')
-                    gg['type'] = group.getAttribute('type')
-                    gg['subgroup'] = subgroup
-                    lgroups.append(gg)
+                    subgroup = site.getAttribute('name')
+                    assert subgroup != ''
+                    groups = site.getElementsByTagName('group')
+                    assert len(groups) > 0
+                    for group in groups:
+                        gg = {}
+                        gg['group'] = group.getAttribute('name')
+                        gg['type'] = group.getAttribute('type')
+                        gg['subgroup'] = subgroup
+                        self.lgroups.append(gg)
 
-                endpoints = site.getElementsByTagName('service')
-                assert len(endpoints) > 0
-                for endpoint in endpoints:
-                    ge = {}
-                    ge['group'] = subgroup
-                    ge['hostname'] = endpoint.getAttribute('hostname')
-                    ge['service'] = endpoint.getAttribute('flavour')
-                    ge['type'] = 'SITES'
-                    lendpoints.append(ge)
-        except AssertionError:
-            print parse_vofeed.__name__, "Error parsing VO-feed %s" % ('//'.join(host)+path)
-    else:
-        print parse_vofeed.__name__, 'ERROR: Connection to %s failed: %s' % (host[1],res.reason)
+                    endpoints = site.getElementsByTagName('service')
+                    assert len(endpoints) > 0
+                    for endpoint in endpoints:
+                        ge = {}
+                        ge['group'] = subgroup
+                        ge['hostname'] = endpoint.getAttribute('hostname')
+                        ge['service'] = endpoint.getAttribute('flavour')
+                        ge['type'] = 'SITES'
+                        self.lendpoints.append(ge)
+
+            except AssertionError:
+                print parse_vofeed.__name__, "Error parsing VO-feed %s" % ('//'.join(host)+path)
+        else:
+            print parse_vofeed.__name__, 'ERROR: Connection to %s failed: %s' % (host[1],res.reason)
+
+    def get_groupgroups(self):
+        return self.lgroups
+
+    def get_groupendpoints(self):
+        return self.lendpoints
+
 
 def main():
     certs = {'Authentication': ['HostKey', 'HostCert']}
-    schemas = {'AvroSchemas': ['TopologyVOGroupOfEndpoints', 'TopologyVOGroupOfGroups']}
-    output = {'Output': ['TopologyVOGroupOfEndpoints', 'TopologyVOGroupOfGroups']}
+    schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
+    output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()
 
-    cvo = VOConf(sys.argv[0])
-    cvo.parse()
-    cvo.make_dirstruct()
+    confcust = CustomerConf(sys.argv[0])
+    confcust.parse()
+    confcust.make_dirstruct()
+    feeds = confcust.get_mapfeedjobs(sys.argv[0], 'VOFeed')
 
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
-    for vo, feed in cvo.get_feeds():
-        urlsplit = re.split('/*', feed)
-        host = (urlsplit[0], urlsplit[1])
-        path = '/'+'/'.join(urlsplit[2:])
-        parse_vofeed(host, path)
+    for feed, jobcust in feeds.items():
+        vo = VOReader(feed)
 
-        filtlgroups = lgroups
-        for job in cvo.get_jobs(vo):
-            jobdir = cvo.get_fulldir(job)
+        for job, cust in jobcust:
+            jobdir = confcust.get_fulldir(cust, job)
 
-            tags = cvo.get_ggtags(job)
+            filtlgroups = vo.get_groupgroups()
+            tags = confcust.get_vo_ggtags(job)
             if tags:
                 def ismatch(elem):
                     values = tags['Type']
@@ -109,14 +129,14 @@ def main():
                     for val in values:
                         if e == val.lower():
                             return True
-                filtlgroups = filter(ismatch, lgroups)
+                filtlgroups = filter(ismatch, filtlgroups)
 
-            filename = jobdir + globopts['OutputTopologyVOGroupOfGroups'] % timestamp
-            avro = AvroWriter(globopts['AvroSchemasTopologyVOGroupOfGroups'], filename, filtlgroups)
+            filename = jobdir + globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups)
             avro.write()
 
-            filename = jobdir + globopts['OutputTopologyVOGroupOfEndpoints'] % timestamp
-            avro = AvroWriter(globopts['AvroSchemasTopologyVOGroupOfEndpoints'], filename, lendpoints)
+            filename = jobdir + globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
+            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, vo.get_groupendpoints())
             avro.write()
 
 main()

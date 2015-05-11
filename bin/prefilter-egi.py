@@ -32,9 +32,9 @@ import argparse
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
-from argo_egi_connectors.config import Global, EGIConf
+from argo_egi_connectors.config import Global, CustomerConf
 
-globopts, cegi = {}, None
+globopts, confcust = {}, None
 
 #poem
 poemFileFields = 'server;ngi;profile;service_flavour;metric;vo;fqan'
@@ -48,18 +48,14 @@ rejectMissingMonitoringHost = 0
 # past files checking
 checkInputFileForDays = 1
 
-##############################
-# find poem profile file name
-##############################
-def poemProfileFilenameCheck(year, month, day):
-
+def poemProfileFilenameCheck(custdir, year, month, day):
     count = 0
     dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
     while True:
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = cegi.tenantdir + '/' + globopts['OutputPrefilterPoem'] % (year+'_'+month+'_'+day)
+        fileName = custdir + '/' + globopts['OutputPrefilterPoem'.lower()] % (year+'_'+month+'_'+day)
         if os.path.isfile(fileName):
             break
         if count >= checkInputFileForDays:
@@ -70,16 +66,12 @@ def poemProfileFilenameCheck(year, month, day):
 
     return fileName
 
-##############################
-# load ngis
-##############################
-def loadNGIs(year, month, day):
-
+def loadNGIs(custdir, year, month, day):
     ngiTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
-    poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
+    poemProfileFile = open(poemProfileFilenameCheck(custdir, year, month, day), 'r')
     poemProfiles = poemProfileFile.read().splitlines()
     poemProfileFile.close()
 
@@ -102,16 +94,12 @@ def loadNGIs(year, month, day):
 
     return ngiTree
 
-##############################
-# load profiles
-##############################
-def loadFilteredProfiles(year, month, day):
-
+def loadFilteredProfiles(custdir, year, month, day):
     profileTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
-    poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
+    poemProfileFile = open(poemProfileFilenameCheck(custdir, year, month, day), 'r')
     poemProfiles = poemProfileFile.read().splitlines()
     poemProfileFile.close()
 
@@ -170,16 +158,12 @@ def loadFilteredProfiles(year, month, day):
 
     return profileTree
 
-##############################
-# load name mapping
-##############################
 def loadNameMapping(year, month, day):
-
     nameMappingDict = dict()
 
     nameMappingFile = None
     try:
-        nameMappingFile = open('/etc/argo-egi-connectors/'+globopts['OutputPrefilterPoemNameMapping'], 'r')
+        nameMappingFile = open('/etc/argo-egi-connectors/'+globopts['OutputPrefilterPoemNameMapping'.lower()], 'r')
     except IOError:
         nameMappingFile = None
 
@@ -200,11 +184,7 @@ def loadNameMapping(year, month, day):
 
     return nameMappingDict
 
-##############################
-# get message profiles
-##############################
 def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
-
     #chekc for nagios
     if logItem.get('monitoring_host') == None:
         return -1
@@ -267,9 +247,9 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
 
 
 def main():
-    global cegi
-    cegi = EGIConf(sys.argv[0])
-    cegi.parse()
+    global confcust
+    confcust = CustomerConf(sys.argv[0])
+    confcust.parse()
     schemas = {'AvroSchemas': ['Prefilter']}
     output = {'Output': ['PrefilterPoem', 'PrefilterConsumerFilePath',
                          'Prefilter', 'PrefilterPoemNameMapping']}
@@ -289,60 +269,61 @@ def main():
 
     year, month, day = date
 
-    # load poem data
-    ngis = loadNGIs(year, month, day)
-    profiles = loadFilteredProfiles(year, month, day)
-    nameMapping = loadNameMapping(year, month, day)
+    for cust in confcust.get_customers():
+        # avro files
+        inputFile = globopts['OutputPrefilterConsumerFilePath'.lower()] % (year+'-'+month+'-'+day)
+        outputFile = confcust.get_custdir(cust)+'/'+globopts['OutputPrefilter'.lower()] % (year+'_'+month+'_'+day)
 
-    # avro files
-    inputFile = globopts['OutputPrefilterConsumerFilePath'] % (year+'-'+month+'-'+day)
-    outputFile = cegi.tenantdir+'/'+globopts['OutputPrefilter'] % (year+'_'+month+'_'+day)
+        schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())
+        writer = DataFileWriter(open(outputFile, "w"), DatumWriter(), schema)
 
-    schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter']).read())
-    writer = DataFileWriter(open(outputFile, "w"), DatumWriter(), schema)
+        # load poem data
+        ngis = loadNGIs(confcust.get_custdir(cust), year, month, day)
+        profiles = loadFilteredProfiles(confcust.get_custdir(cust), year, month, day)
+        nameMapping = loadNameMapping(year, month, day)
 
-    rejected = 0
-    reader = DataFileReader(open(inputFile, "r"), DatumReader())
-    for logItem in reader:
-        #check if monitoring_host exists
-        if logItem.get('monitoring_host') == None:
-            if rejectMissingMonitoringHost > 0:
-                rejected += 1
-                if writeToStd > 0:
-                    print logItem
-                    print '\n'
-            else:
-                writer.append(logItem)
-            continue
-
-        #ngi check
-        ngiOk = False
-        if logItem['monitoring_host'] in ngis.keys():
-            ngiList = ngis[logItem['monitoring_host']]
-            if 'ALL' in ngiList or (logItem['tags'] and logItem['tags']['roc'] in ngiList):
-                ngiOk = True
-
-        if ngiOk:
-            #profile check
-            msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, logItem)
-            if type(msgprofiles) is int:
-                if writeToStd > 0:
-                    print logItem
-                    print '\n'
-                rejected += 1
+        rejected = 0
+        reader = DataFileReader(open(inputFile, "r"), DatumReader())
+        for logItem in reader:
+            #check if monitoring_host exists
+            if logItem.get('monitoring_host') == None:
+                if rejectMissingMonitoringHost > 0:
+                    rejected += 1
+                    if writeToStd > 0:
+                        print logItem
+                        print '\n'
+                else:
+                    writer.append(logItem)
                 continue
 
-            if len(msgprofiles) > 0:
+            #ngi check
+            ngiOk = False
+            if logItem['monitoring_host'] in ngis.keys():
+                ngiList = ngis[logItem['monitoring_host']]
+                if 'ALL' in ngiList or (logItem['tags'] and logItem['tags']['roc'] in ngiList):
+                    ngiOk = True
+
+            if ngiOk:
+                #profile check
+                msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, logItem)
+                if type(msgprofiles) is int:
+                    if writeToStd > 0:
+                        print logItem
+                        print '\n'
+                    rejected += 1
+                    continue
+
+                if len(msgprofiles) > 0:
                     writer.append(logItem)
-            else:
-                rejected += 1
-                if writeToStd > 0:
-                    print logItem
-                    print '\m'
+                else:
+                    rejected += 1
+                    if writeToStd > 0:
+                        print logItem
+                        print '\m'
 
-    reader.close()
-    writer.close()
+        reader.close()
+        writer.close()
 
-    print 'Rejected: ' + str(rejected)
+        print 'Rejected: ' + str(rejected)
 
 main()

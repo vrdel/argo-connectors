@@ -33,7 +33,7 @@ import sys
 import urlparse
 import re
 from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.config import VOConf, EGIConf, PoemConf, Global
+from argo_egi_connectors.config import CustomerConf, PoemConf, Global
 
 writers = ['file', 'avro']
 
@@ -46,8 +46,8 @@ def resolve_http_redirect(url, depth=0):
 
     o = urlparse.urlparse(url,allow_fragments=True)
     conn = httplib.HTTPSConnection(o.netloc, 443,
-                                   globopts['AuthenticationHostKey'],
-                                   globopts['AuthenticationHostCert'])
+                                   globopts['AuthenticationHostKey'.lower()],
+                                   globopts['AuthenticationHostCert'.lower()])
     path = o.path
     if o.query:
         path +='?'+o.query
@@ -58,8 +58,8 @@ def resolve_http_redirect(url, depth=0):
         headers = dict(res.getheaders())
         if headers.has_key('location') and headers['location'] != url:
             return resolve_http_redirect(headers['location'],
-                                         globopts['AuthenticationHostKey'],
-                                         globopts['AuthenticationHostCert'],
+                                         globopts['AuthenticationHostKey'.lower()],
+                                         globopts['AuthenticationHostCert'.lower()],
                                          depth+1)
         else:
             return url
@@ -71,7 +71,7 @@ class PoemReader:
         self.poemRequest = '%s/poem/api/0.2/json/metrics_in_profiles?vo_name=%s'
 
     def getProfiles(self):
-        filteredProfiles = re.split('\s*,\s*', poemopts['FetchProfilesList'])
+        filteredProfiles = re.split('\s*,\s*', poemopts['FetchProfilesList'.lower()])
         availableVOs = [vo for k, v in cpoem.get_servers().items() for vo in v]
         validProfiles = self.loadValidProfiles(filteredProfiles)
 
@@ -169,8 +169,8 @@ class PoemReader:
         o = urlparse.urlparse(url,allow_fragments=True)
         try:
             conn = httplib.HTTPSConnection(o.netloc, 443,
-                                           globopts['AuthenticationHostKey'],
-                                           globopts['AuthenticationHostCert'])
+                                           globopts['AuthenticationHostKey'.lower()],
+                                           globopts['AuthenticationHostCert'.lower()])
             conn.request('GET', o.path + '?' + o.query)
 
             res = conn.getresponse()
@@ -252,42 +252,28 @@ def main():
     cpoem = PoemConf(servers, filterprofiles, prefilterdata)
     poemopts = cpoem.parse()
 
-    cvo = VOConf(sys.argv[0])
-    cvo.parse()
-    cvo.make_dirstruct()
-
-    cegi = EGIConf(sys.argv[0])
-    cegi.parse()
-    cegi.make_dirstruct()
+    confcust = CustomerConf(sys.argv[0])
+    confcust.parse()
+    confcust.make_dirstruct()
 
     readerInstance = PoemReader()
     ps, psa = readerInstance.getProfiles()
 
-    # write profiles
-    for writer in writers:
-        if writer == 'file':
-            writerInstance = FileWriter(cegi.tenantdir)
-            writerInstance.writeProfiles(ps, timestamp)
+    for cust in confcust.get_customers():
+        # write profiles
+        for writer in writers:
+            if writer == 'file':
+                writerInstance = FileWriter(confcust.get_custdir(cust))
+                writerInstance.writeProfiles(ps, timestamp)
 
-    for vo in cvo.get_vos():
-        for job in cvo.get_jobs(vo):
-            jobdir = cvo.get_fulldir(job)
+        for job in confcust.get_jobs(cust):
+            jobdir = confcust.get_fulldir(cust, job)
 
-            voprofiles = cvo.get_profiles(job)
-            lfprofiles = gen_outprofiles(psa, voprofiles)
+            profiles = confcust.get_profiles(job)
+            lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = jobdir + globopts['OutputPoem']% timestamp
-            avro = AvroWriter(globopts['AvroSchemasPoem'], filename, lfprofiles)
+            filename = jobdir + globopts['OutputPoem'.lower()]% timestamp
+            avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename, lfprofiles)
             avro.write()
-
-    for job in cegi.get_jobs():
-        jobdir = cegi.get_fulldir(job)
-
-        jobprofiles = cegi.get_profiles(job)
-        lfprofiles = gen_outprofiles(psa, jobprofiles)
-
-        filename = jobdir + globopts['OutputPoem'] % timestamp
-        avro = AvroWriter(globopts['AvroSchemasPoem'], filename, lfprofiles)
-        avro.write()
 
 main()
