@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -45,6 +45,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Mon May 18 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-2%(?dist)
+- GridPP VO job example
+- downtimes filename day timestamp is queried one
+  https://github.com/ARGOeu/ARGO/issues/133
 * Wed May 6 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-1%(?dist)
 - removed VO as an entity in configuration; only customers and set of jobs
 - multiple customers in config each with own outputdir

@@ -35,10 +35,7 @@ from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.config import Global, CustomerConf
 
 globopts = {}
-
 LegMapServType = {'SRM' : 'SRMv2'}
-defaultArgDateFormat = '%Y-%m-%d'
-
 fileout = 'downtimes_%s.avro'
 
 class GOCDBReader:
@@ -103,7 +100,6 @@ def main():
     cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()
-    timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
     confcust = CustomerConf(sys.argv[0])
     confcust.parse()
@@ -119,8 +115,9 @@ def main():
         raise SystemExit(1)
 
     # calculate start and end times
-    start = datetime.datetime.strptime(args.date[0], defaultArgDateFormat)
-    end = datetime.datetime.strptime(args.date[0], defaultArgDateFormat)
+    start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+    end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+    timestamp = start.strftime('%Y_%m_%d')
     start = start.replace(hour=0, minute=0, second=0)
     end = end.replace(hour=23, minute=59, second=59)
 
