@@ -27,15 +27,15 @@ def main():
         reader = DataFileReader(open(f, 'r'), DatumReader())
 
         try:
-            for i, fi in enumerate(reader):
-                out.append(fi)
+            for i, entry in enumerate(reader):
+                out.append(entry)
+
+            for o in out:
+                writer.append(o)
+            writer.close()
+
         except UnicodeDecodeError as e:
             pprint.pprint(e)
-            break
-
-        for o in out:
-            writer.append(o)
-
-        writer.close()
+            print f
 
 main()
