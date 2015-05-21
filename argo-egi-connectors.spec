@@ -47,6 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Thu May 21 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-3%(?dist)
 - migration script to transform old data to new avro schema with map type
+  https://github.com/ARGOeu/ARGO/issues/134
 * Mon May 18 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-2%(?dist)
 - GridPP VO job example
 - downtimes filename day timestamp is queried one
