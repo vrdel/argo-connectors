@@ -45,14 +45,14 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
-* Thu May 21 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-3%(?dist)
+* Thu May 21 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-3%{?dist}
 - migration script to transform old data to new avro schema with map type
   https://github.com/ARGOeu/ARGO/issues/134
-* Mon May 18 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-2%(?dist)
+* Mon May 18 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-2%{?dist}
 - GridPP VO job example
 - downtimes filename day timestamp is queried one
   https://github.com/ARGOeu/ARGO/issues/133
-* Wed May 6 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-1%(?dist)
+* Wed May 6 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-1%{?dist}
 - removed VO as an entity in configuration; only customers and set of jobs
 - multiple customers in config each with own outputdir
 - data feeds for all connectors can be defined per job
@@ -62,55 +62,55 @@ rm -rf $RPM_BUILD_ROOT
 - setup.py with automatic version catch from spec
 - new default config
   https://github.com/ARGOeu/ARGO/issues/132
-* Fri Apr 17 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-10%(?dist)
+* Fri Apr 17 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-10%{?dist}
 - VO jobs are moved under customer's directory
-* Wed Apr 8 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-9%(?dist)
+* Wed Apr 8 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-9%{?dist}
 - handle group type names with whitespaces
 - fixed bug with filtering VO groups across multiple VO jobs
-* Fri Apr 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-8%(?dist)
+* Fri Apr 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-8%{?dist}
 - added Dirname optional option for VO config
 - correctly renamed avro schemas
-* Mon Mar 30 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-7%(?dist)
+* Mon Mar 30 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-7%{?dist}
 - added README.md with a basic project info  
-* Sun Mar 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-6%(?dist)
+* Sun Mar 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-6%{?dist}
 - renamed weights and more configs refactoring
 - put scripts back into libexec 
-* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-5%(?dist)
+* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-5%{?dist}
 - minor code cleanups and renamed connectors to reflect the source of data
-* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-4%(?dist)
+* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-4%{?dist}
 - poem server is defined in its config file, not global one
-* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-3%(?dist)
+* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-3%{?dist}
 - prefilter-egi.py cleanups and roll back missing file
-* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-2%(?dist)
+* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-2%{?dist}
 - deleted leftovers
-* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-1%(?dist)
+* Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-1%{?dist}
 - refactor the configuration of connectors/components
   https://github.com/ARGOeu/ARGO/issues/114
 - fixed topology connector for VO'es to produce correct GE and GG avro files
   https://github.com/ARGOeu/ARGO/issues/121
 - use of distutils for package building
-* Tue Feb 17 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-16%(?dist)
+* Tue Feb 17 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-16%{?dist}
 - prefilter-avro has fixed configuration
-* Thu Feb 12 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-15%(?dist)
+* Thu Feb 12 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-15%{?dist}
 - legacy SRM service type handle for downtime syncs
-* Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-14%(?dist)
+* Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-14%{?dist}
 - updated .spec with removed configs for a per job prefilter-avro
-* Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-13%(?dist)
+* Tue Feb 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-13%{?dist}
 - different internal handle of avro poem-sync so it doesn't contain duplicated entries
 - special handle of legacy SRM service type
-* Thu Feb 5 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-12%(?dist)
+* Thu Feb 5 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-12%{?dist}
 - plaintxt prefilter has fixed configuration
-* Tue Feb 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-11%(?dist)
+* Tue Feb 3 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-11%{?dist}
 - update .spec to deploy new configs
 - removed whitespaces at the end of config lines
-* Mon Feb 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-10%(?dist)
+* Mon Feb 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-10%{?dist}
 - tools can have config file as their argument
 - config files with changed output directory for customer/job
 - modified cronjobs for customer and his two jobs
-* Thu Jan 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-9%(?dist)
+* Thu Jan 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-9%{?dist}
 - bug fixes for poem-sync and prefilter
 - typo in plaintext groups filename
-* Mon Jan 19 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-8%(?dist)
+* Mon Jan 19 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.3.1-8%{?dist}
 - topology-sync: avro schemas updated with tags and filtering by tags values
 - poem-sync: avro schema updated with tags
 - poem-sync: output profiles per customer and job
