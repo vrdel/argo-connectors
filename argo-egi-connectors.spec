@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -45,6 +45,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Thu May 28 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-4%{?dist}
+- migrate.py lower on resources
 * Thu May 21 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-3%{?dist}
 - migration script to transform old data to new avro schema with map type
   https://github.com/ARGOeu/ARGO/issues/134
