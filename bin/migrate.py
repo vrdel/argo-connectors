@@ -28,10 +28,8 @@ def main():
 
         try:
             for i, entry in enumerate(reader):
-                out.append(entry)
+                writer.append(entry)
 
-            for o in out:
-                writer.append(o)
             writer.close()
 
         except UnicodeDecodeError as e:
