@@ -26,29 +26,19 @@
 
 import sys
 import os
-import time
 import datetime
 import avro.schema
+import argparse
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
-defaultConfig = '/etc/ar-sync/prefilter-avro.conf'
+from argo_egi_connectors.config import Global, CustomerConf
 
-#consumer
-consumerFileDirectory = '/var/lib/ar-consumer'
-consumerFilename = 'ar-consumer_log_%s-%s-%s.avro'
+globopts, confcust = {}, None
 
 #poem
-poemFileDirectory = '/var/lib/ar-sync'
-poemFilename = 'poem_sync_%s_%s_%s.out'
 poemFileFields = 'server;ngi;profile;service_flavour;metric;vo;fqan'
 poemFileFieldDelimiter = '\001'
-poemNameMappingFilename = 'poem_name_mapping.cfg'
-
-#output
-outputFileDirectory = '/var/lib/ar-sync'
-outputFilename = 'prefilter_%s_%s_%s.avro'
-outputSchema = '/etc/ar-sync/prefilter.avsc'
 
 writeToStd = 0
 
@@ -58,92 +48,14 @@ rejectMissingMonitoringHost = 0
 # past files checking
 checkInputFileForDays = 1
 
-##############################
-# load config
-##############################
-def loadConfiguration():
-    #load config
-    configFile = None
-    configFields = dict()
-    if os.path.isfile(defaultConfig):
-        configFile = open(defaultConfig, 'r')
-        lines = configFile.readlines()
-
-        for line in lines:
-            if line[0] == '#':
-                continue
-            splitLine = line.split('=')
-            if len(splitLine) > 1:
-                key = splitLine[0].strip()
-                value = splitLine[1].strip()
-                value = value.decode('string_escape')
-                if value[0] == "'":
-                    if value[-1] == "'":
-                        value = value[1:-1]
-                    else:
-                        continue
-                elif value[0] == '"':
-                    if value[-1] == '"':
-                        value = value[1:-1]
-                    else:
-                        continue
-                else:
-                    value = int(value)
-                configFields[key] = value
-
-        configFile.close()
-
-        global consumerFileDirectory, consumerFilename, poemFileDirectory, poemFilename, poemFileFields, poemFileFieldDelimiter, poemNameMappingFilename, outputFileDirectory, outputFilename, outputSchema, writeToStd, rejectMissingMonitoringHost
-
-        if 'consumerFileDirectory' in configFields:
-            consumerFileDirectory = configFields['consumerFileDirectory']
-
-        if 'consumerFilename' in configFields:
-            consumerFilename = configFields['consumerFilename']
-
-        if 'poemFileDirectory' in configFields:
-            poemFileDirectory = configFields['poemFileDirectory']
-
-        if 'poemFilename' in configFields:
-            poemFilename = configFields['poemFilename']
-
-        if 'poemFileFields' in configFields:
-            poemFileFields = configFields['poemFileFields']
-
-        if 'poemFileFieldDelimiter' in configFields:
-            poemFileFieldDelimiter = configFields['poemFileFieldDelimiter']
-
-        if 'poemNameMappingFilename' in configFields:
-            poemNameMappingFilename = configFields['poemNameMappingFilename']
-
-        if 'outputFileDirectory' in configFields:
-            outputFileDirectory = configFields['outputFileDirectory']
-
-        if 'outputFilename' in configFields:
-            outputFilename = configFields['outputFilename']
-
-        if 'outputSchema' in configFields:
-            outputSchema = configFields['outputSchema']
-
-        if 'writeToStd' in configFields:
-            writeToStd = int(configFields['writeToStd'])
-
-        if 'rejectMissingMonitoringHost' in configFields:
-            rejectMissingMonitoringHost = int(configFields['rejectMissingMonitoringHost'])
-
-
-##############################
-# find poem profile file name
-##############################
-def poemProfileFilenameCheck(year, month, day):
-
+def poemProfileFilenameCheck(custdir, year, month, day):
     count = 0
     dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
     while True:
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = poemFileDirectory + '/' + poemFilename % (year, month, day)
+        fileName = custdir + '/' + globopts['OutputPrefilterPoem'.lower()] % (year+'_'+month+'_'+day)
         if os.path.isfile(fileName):
             break
         if count >= checkInputFileForDays:
@@ -154,16 +66,12 @@ def poemProfileFilenameCheck(year, month, day):
 
     return fileName
 
-##############################
-# load ngis
-##############################
-def loadNGIs(year, month, day):
-
+def loadNGIs(custdir, year, month, day):
     ngiTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
-    poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
+    poemProfileFile = open(poemProfileFilenameCheck(custdir, year, month, day), 'r')
     poemProfiles = poemProfileFile.read().splitlines()
     poemProfileFile.close()
 
@@ -186,16 +94,12 @@ def loadNGIs(year, month, day):
 
     return ngiTree
 
-##############################
-# load profiles
-##############################
-def loadFilteredProfiles(year, month, day):
-
+def loadFilteredProfiles(custdir, year, month, day):
     profileTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
-    poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
+    poemProfileFile = open(poemProfileFilenameCheck(custdir, year, month, day), 'r')
     poemProfiles = poemProfileFile.read().splitlines()
     poemProfileFile.close()
 
@@ -254,16 +158,12 @@ def loadFilteredProfiles(year, month, day):
 
     return profileTree
 
-##############################
-# load name mapping
-##############################
 def loadNameMapping(year, month, day):
-
     nameMappingDict = dict()
 
     nameMappingFile = None
     try:
-        nameMappingFile = open(poemFileDirectory + '/' + poemNameMappingFilename, 'r')
+        nameMappingFile = open('/etc/argo-egi-connectors/'+globopts['OutputPrefilterPoemNameMapping'.lower()], 'r')
     except IOError:
         nameMappingFile = None
 
@@ -284,11 +184,7 @@ def loadNameMapping(year, month, day):
 
     return nameMappingDict
 
-##############################
-# get message profiles
-##############################
 def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
-
     #chekc for nagios
     if logItem.get('monitoring_host') == None:
         return -1
@@ -349,81 +245,85 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
 
         return fqanList
 
-##############################
-# main
-##############################
 
-argsOk = False
-for i in range(0, len(sys.argv)-1):
-    if sys.argv[i] == '-d':
-        if len(sys.argv[i+1].split('-')) == 3:
-            year = sys.argv[i+1].split('-')[0]
-            month = sys.argv[i+1].split('-')[1]
-            day = sys.argv[i+1].split('-')[2]
-            argsOk = True
-    if sys.argv[1] != '-d' and os.path.isfile(sys.argv[1]):
-        configFile = sys.argv[1]
-        argsOk = True
+def main():
+    global confcust
+    confcust = CustomerConf(sys.argv[0])
+    confcust.parse()
+    schemas = {'AvroSchemas': ['Prefilter']}
+    output = {'Output': ['PrefilterPoem', 'PrefilterConsumerFilePath',
+                         'Prefilter', 'PrefilterPoemNameMapping']}
+    cglob = Global(schemas, output)
+    global globopts
+    globopts = cglob.parse()
 
-if not argsOk:
-    print "\n\nUsage:\n\tpython prefilter-avro [config file] -d <date>"
-    sys.exit()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
+    args = parser.parse_args()
 
-#load config
-loadConfiguration()
+    date = args.date[0].split('-')
 
-# load poem data
-ngis = loadNGIs(year, month, day)
-profiles = loadFilteredProfiles(year, month, day)
-nameMapping = loadNameMapping(year, month, day)
+    if len(date) == 0 or len(date) != 3:
+        print parser.print_help()
+        raise SystemExit(1)
 
-# avro files
-inputFile = consumerFileDirectory + '/' + consumerFilename % (year, month, day)
-outputFile = outputFileDirectory + '/' + outputFilename % (year, month, day)
+    year, month, day = date
 
-schema = avro.schema.parse(open(outputSchema).read())
-writer = DataFileWriter(open(outputFile, "w"), DatumWriter(), schema)
+    for cust in confcust.get_customers():
+        # avro files
+        inputFile = globopts['OutputPrefilterConsumerFilePath'.lower()] % (year+'-'+month+'-'+day)
+        outputFile = confcust.get_custdir(cust)+'/'+globopts['OutputPrefilter'.lower()] % (year+'_'+month+'_'+day)
 
-rejected = 0
-reader = DataFileReader(open(inputFile, "r"), DatumReader())
-for logItem in reader:
-    #check if monitoring_host exists
-    if logItem.get('monitoring_host') == None:
-        if rejectMissingMonitoringHost > 0:
-            rejected += 1
-            if writeToStd > 0:
-                print logItem
-                print '\n'
-        else:
-            writer.append(logItem)
-        continue
+        schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())
+        writer = DataFileWriter(open(outputFile, "w"), DatumWriter(), schema)
 
-    #ngi check
-    ngiOk = False
-    if logItem['monitoring_host'] in ngis.keys():
-        ngiList = ngis[logItem['monitoring_host']]
-        if 'ALL' in ngiList or (logItem['tags'] and logItem['tags']['roc'] in ngiList):
-            ngiOk = True
+        # load poem data
+        ngis = loadNGIs(confcust.get_custdir(cust), year, month, day)
+        profiles = loadFilteredProfiles(confcust.get_custdir(cust), year, month, day)
+        nameMapping = loadNameMapping(year, month, day)
 
-    if ngiOk:
-        #profile check
-        msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, logItem)
-        if type(msgprofiles) is int:
-            if writeToStd > 0:
-                print logItem
-                print '\n'
-            rejected += 1
-            continue
+        rejected = 0
+        reader = DataFileReader(open(inputFile, "r"), DatumReader())
+        for logItem in reader:
+            #check if monitoring_host exists
+            if logItem.get('monitoring_host') == None:
+                if rejectMissingMonitoringHost > 0:
+                    rejected += 1
+                    if writeToStd > 0:
+                        print logItem
+                        print '\n'
+                else:
+                    writer.append(logItem)
+                continue
 
-        if len(msgprofiles) > 0:
-                writer.append(logItem)
-        else:
-            rejected += 1
-            if writeToStd > 0:
-                print logItem
-                print '\m'
+            #ngi check
+            ngiOk = False
+            if logItem['monitoring_host'] in ngis.keys():
+                ngiList = ngis[logItem['monitoring_host']]
+                if 'ALL' in ngiList or (logItem['tags'] and logItem['tags']['roc'] in ngiList):
+                    ngiOk = True
 
-reader.close()
-writer.close()
+            if ngiOk:
+                #profile check
+                msgprofiles = getProfilesForConsumerMessage(profiles, nameMapping, logItem)
+                if type(msgprofiles) is int:
+                    if writeToStd > 0:
+                        print logItem
+                        print '\n'
+                    rejected += 1
+                    continue
 
-print 'Rejected: ' + str(rejected)
+                if len(msgprofiles) > 0:
+                    writer.append(logItem)
+                else:
+                    rejected += 1
+                    if writeToStd > 0:
+                        print logItem
+                        print '\m'
+
+        reader.close()
+        writer.close()
+
+        print 'Rejected: ' + str(rejected)
+
+main()
