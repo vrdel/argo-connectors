@@ -46,9 +46,9 @@ class GOCDBReader:
         self.gocdbHost = self._getHostFeed(feed)
         self.hostKey = globopts['AuthenticationHostKey'.lower()]
         self.hostCert = globopts['AuthenticationHostCert'.lower()]
-        self.siteList = dict()
-        self.serviceList = dict()
-        self.groupList = dict()
+        self.siteListEGI, self.siteListLocal = dict(), dict()
+        self.serviceListEGI, self.serviceListLocal = dict(), dict()
+        self.groupListEGI, self.groupListLocal = dict(), dict()
 
     def _getHostFeed(self, feed):
         host = feed
@@ -62,19 +62,19 @@ class GOCDBReader:
         self.loadDataIfNeeded()
 
         groups = list()
-        for key, group in self.groupList.iteritems():
-            for service in group['services']:
-
-                g = dict()
-                g['type'] = fetchtype.upper()
-                g['group'] = group['name']
-                g['service'] = service['type']
-                g['hostname'] = service['hostname']
-                g['group_monitored'] = group['monitored']
-                g['tags'] = {'scope' : group['scope'], \
-                              'monitored' : 1 if service['monitored'] == "Y" else 0, \
-                              'production' : 1 if service['production'] == "Y" else 0}
-                groups.append(g)
+        for d in self.groupListEGI, self.groupListLocal:
+            for key, group in d.iteritems():
+                for service in group['services']:
+                    g = dict()
+                    g['type'] = fetchtype.upper()
+                    g['group'] = group['name']
+                    g['service'] = service['type']
+                    g['hostname'] = service['hostname']
+                    g['group_monitored'] = group['monitored']
+                    g['tags'] = {'scope' : group['scope'], \
+                                'monitored' : 1 if service['monitored'] == "Y" else 0, \
+                                'production' : 1 if service['production'] == "Y" else 0}
+                    groups.append(g)
 
         return groups
 
@@ -84,17 +84,18 @@ class GOCDBReader:
         groupofgroups = list()
 
         if fetchtype == "ServiceGroups":
-            for key, value in self.groupList.iteritems():
-                g = dict()
-                g['type'] = 'PROJECT'
-                g['group'] = 'EGI'
-                g['subgroup'] = value['name']
-                g['tags'] = {'monitored' : 1 if value['monitored'] == 'Y' else 0, \
-                            'scope' : value['scope']}
-                groupofgroups.append(g)
+            for d in self.groupListEGI, self.groupListLocal:
+                for key, value in d.iteritems():
+                    g = dict()
+                    g['type'] = 'PROJECT'
+                    g['group'] = 'EGI'
+                    g['subgroup'] = value['name']
+                    g['tags'] = {'monitored' : 1 if value['monitored'] == 'Y' else 0,
+                                'scope' : value['scope']}
+                    groupofgroups.append(g)
         else:
-            gg = sorted([value for key, value in self.siteList.iteritems()], \
-                                    key=lambda s: s['ngi'])
+            gg = sorted([value for d in self.siteListEGI, self.siteListLocal for key, value in d.iteritems()],
+                                        key=lambda s: s['ngi'])
 
             for gr in gg:
                 g = dict()
@@ -113,7 +114,7 @@ class GOCDBReader:
         self.loadDataIfNeeded()
 
         groupofendpoints = list()
-        ge = sorted([value for key, value in self.serviceList.iteritems()], \
+        ge = sorted([value for d in self.serviceListEGI, self.serviceListLocal for key, value in d.iteritems()],
                                  key=lambda s: s['site'])
 
         for gr in ge:
@@ -130,17 +131,17 @@ class GOCDBReader:
         return groupofendpoints
 
     def loadDataIfNeeded(self):
-        if len(self.siteList) == 0:
-            self.getSitesInternal(self.siteList, 'EGI')
-            self.getSitesInternal(self.siteList, 'Local')
+        if len(self.siteListEGI) == 0:
+            self.getSitesInternal(self.siteListEGI, 'EGI')
+            self.getSitesInternal(self.siteListLocal, 'Local')
 
-        if len(self.serviceList) == 0:
-            self.getServiceEndpoints(self.serviceList, 'EGI')
-            self.getServiceEndpoints(self.serviceList, 'Local')
+        if len(self.serviceListEGI) == 0:
+            self.getServiceEndpoints(self.serviceListEGI, 'EGI')
+            self.getServiceEndpoints(self.serviceListLocal, 'Local')
 
-        if len(self.groupList) == 0:
-            self.getServiceGroups(self.groupList, 'EGI')
-            self.getServiceGroups(self.groupList, 'Local')
+        if len(self.groupListEGI) == 0:
+            self.getServiceGroups(self.groupListEGI, 'EGI')
+            self.getServiceGroups(self.groupListLocal, 'Local')
 
     def getServiceEndpoints(self, serviceList, scope):
         urlFile = urllib.urlopen(self.gocdbUrl + '/public/?method=get_service_endpoint&scope=' + scope)
