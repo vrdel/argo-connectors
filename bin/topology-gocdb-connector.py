@@ -63,18 +63,18 @@ class GOCDBReader:
 
         groups = list()
         for d in self.groupListEGI, self.groupListLocal:
-            for key, group in d.iteritems():
-                for service in group['services']:
-                    g = dict()
-                    g['type'] = fetchtype.upper()
-                    g['group'] = group['name']
-                    g['service'] = service['type']
-                    g['hostname'] = service['hostname']
-                    g['group_monitored'] = group['monitored']
-                    g['tags'] = {'scope' : group['scope'], \
-                                'monitored' : 1 if service['monitored'] == "Y" else 0, \
-                                'production' : 1 if service['production'] == "Y" else 0}
-                    groups.append(g)
+            key, group = d.iteritems()
+            for service in group['services']:
+                g = dict()
+                g['type'] = fetchtype.upper()
+                g['group'] = group['name']
+                g['service'] = service['type']
+                g['hostname'] = service['hostname']
+                g['group_monitored'] = group['monitored']
+                g['tags'] = {'scope' : group['scope'], \
+                            'monitored' : 1 if service['monitored'] == "Y" else 0, \
+                            'production' : 1 if service['production'] == "Y" else 0}
+                groups.append(g)
 
         return groups
 
@@ -85,14 +85,14 @@ class GOCDBReader:
 
         if fetchtype == "ServiceGroups":
             for d in self.groupListEGI, self.groupListLocal:
-                for key, value in d.iteritems():
-                    g = dict()
-                    g['type'] = 'PROJECT'
-                    g['group'] = 'EGI'
-                    g['subgroup'] = value['name']
-                    g['tags'] = {'monitored' : 1 if value['monitored'] == 'Y' else 0,
-                                'scope' : value['scope']}
-                    groupofgroups.append(g)
+                key, value = d.iteritems()
+                g = dict()
+                g['type'] = 'PROJECT'
+                g['group'] = 'EGI'
+                g['subgroup'] = value['name']
+                g['tags'] = {'monitored' : 1 if value['monitored'] == 'Y' else 0,
+                            'scope' : value['scope']}
+                groupofgroups.append(g)
         else:
             gg = sorted([value for d in self.siteListEGI, self.siteListLocal for key, value in d.iteritems()],
                                         key=lambda s: s['ngi'])
