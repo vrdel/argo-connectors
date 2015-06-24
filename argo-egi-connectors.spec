@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.4.1
-Release: 5%{?dist}
+Version: 1.4.2
+Release: 1%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -45,6 +45,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Tue Jun 23 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.2-1%{?dist}
+- changed internal parser structure to address entities with doubled scope
+  https://github.com/ARGOeu/ARGO/issues/141
 * Tue Jun 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-5%{?dist}
 - new path and filename for consumer logs
 * Thu May 28 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.1-4%{?dist}
