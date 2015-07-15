@@ -32,7 +32,9 @@ import httplib
 import re
 import sys
 import xml.dom.minidom
+import copy
 
+LegMapServType = {'SRM' : 'SRMv2', 'SRMv2': 'SRM'}
 globopts = {}
 
 class VOReader:
@@ -136,7 +138,13 @@ def main():
             avro.write()
 
             filename = jobdir + globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
-            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, vo.get_groupendpoints())
+            gelegmap = []
+            group_endpoints = vo.get_groupendpoints()
+            for g in group_endpoints:
+                if g['service'] in LegMapServType.keys():
+                    gelegmap.append(copy.copy(g))
+                    gelegmap[-1]['service'] = LegMapServType[g['service']]
+            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap)
             avro.write()
 
 main()

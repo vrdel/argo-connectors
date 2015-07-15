@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -45,6 +45,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Wed Jul 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.2-2%{?dist}
+- fixed bug with duplicating poem profiles info for prefilter
+- fixed bug with SRM service type handling for topology and downtimes connectors
 * Tue Jun 23 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.2-1%{?dist}
 - changed internal parser structure to address entities with doubled scope
   https://github.com/ARGOeu/ARGO/issues/141

@@ -29,6 +29,7 @@ import datetime
 import xml.dom.minidom
 import httplib
 import sys
+import copy
 
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.config import Global, CustomerConf
@@ -265,7 +266,7 @@ def main():
             gelegmap = []
             for g in group_endpoints:
                 if g['service'] in LegMapServType.keys():
-                    gelegmap.append(g)
+                    gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
             filename = jobdir+globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
