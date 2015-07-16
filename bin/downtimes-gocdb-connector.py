@@ -30,6 +30,7 @@ import httplib
 import os
 import sys
 import xml.dom.minidom
+import copy
 
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.config import Global, CustomerConf
@@ -125,12 +126,17 @@ def main():
         gocdb = GOCDBReader(feed)
         dts = gocdb.getDowntimes(start, end)
 
+        dtslegmap = []
+        for dt in dts:
+            if dt['service'] in LegMapServType.keys():
+                dtslegmap.append(copy.copy(dt))
+                dtslegmap[-1]['service'] = LegMapServType[dt['service']]
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
 
             filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
-                              dts)
+                              dts + dtslegmap)
             avro.write()
 
 main()
