@@ -121,11 +121,12 @@ class PoemReader:
                     serverProfiles = defaultProfiles
                 else:
                     serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
-                for profile in serverProfiles:
-                    if profile.upper() in validProfiles.keys():
-                        for ngi in ngis:
-                            for server in servers:
-                                profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
+
+            for profile in serverProfiles:
+                if profile.upper() in validProfiles.keys():
+                    for ngi in ngis:
+                        for server in servers:
+                            profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
 
         for profile in validProfiles.values():
             for metric in profile['metrics']:
