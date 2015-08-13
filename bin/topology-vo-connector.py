@@ -24,18 +24,21 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import AvroWriter, Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from exceptions import AssertionError
 import datetime
 import httplib
 import re
 import sys
+import socket
+import os
 import xml.dom.minidom
 import copy
 
 LegMapServType = {'SRM' : 'SRMv2', 'SRMv2': 'SRM'}
 globopts = {}
+logger = None
 
 class VOReader:
     lendpoints= []
@@ -52,17 +55,22 @@ class VOReader:
         return host, path
 
     def _parse(self, host, path):
-        if 'https' in host[0]:
-            conn = httplib.HTTPSConnection(host[1], 443,
-                                           globopts['AuthenticationHostKey'.lower()],
-                                           globopts['AuthenticationHostCert'.lower()])
-        elif 'http' in host[0]:
-            conn = httplib.HTTPConnection(host[1])
+        try:
+            if 'https' in host[0]:
+                conn = httplib.HTTPSConnection(host[1], 443,
+                                            globopts['AuthenticationHostKey'.lower()],
+                                            globopts['AuthenticationHostCert'.lower()])
+            elif 'http' in host[0]:
+                conn = httplib.HTTPConnection(host[1])
+
+        except (socket.error, httplib.HTTPException) as e:
+            logger.error('Connection to %s failed: ' % (host) + str(e))
+            raise SystemExit(1)
 
         conn.request('GET', path)
         res = conn.getresponse()
-        if res.status == 200:
-            try:
+        try:
+            if res.status == 200:
                 dom = xml.dom.minidom.parseString(res.read())
                 sites = dom.getElementsByTagName('atp_site')
                 assert len(sites) > 0
@@ -88,11 +96,12 @@ class VOReader:
                         ge['service'] = endpoint.getAttribute('flavour')
                         ge['type'] = 'SITES'
                         self.lendpoints.append(ge)
-
-            except AssertionError:
-                print parse_vofeed.__name__, "Error parsing VO-feed %s" % ('//'.join(host)+path)
-        else:
-            print parse_vofeed.__name__, 'ERROR: Connection to %s failed: %s' % (host[1],res.reason)
+            else:
+                logger.error('VOReader._parse(): Connection failed %s, HTTP response: %s %s' % (host[1], str(res.status), res.reason))
+                raise SystemExit(1)
+        except AssertionError:
+            logger.error("Error parsing VO-feed %s" % ('//'.join(host)+path))
+            raise SystemExit(1)
 
     def get_groupgroups(self):
         return self.lgroups
@@ -102,6 +111,9 @@ class VOReader:
 
 
 def main():
+    global logger
+    logger = Logger(os.path.basename(sys.argv[0]))
+
     certs = {'Authentication': ['HostKey', 'HostCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
@@ -123,6 +135,7 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
 
             filtlgroups = vo.get_groupgroups()
+            numgg = len(filtlgroups)
             tags = confcust.get_vo_ggtags(job)
             if tags:
                 def ismatch(elem):
@@ -134,17 +147,31 @@ def main():
                 filtlgroups = filter(ismatch, filtlgroups)
 
             filename = jobdir + globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
-            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups)
+            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups,
+                              os.path.basename(sys.argv[0]), logger)
             avro.write()
 
             filename = jobdir + globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
             gelegmap = []
             group_endpoints = vo.get_groupendpoints()
+            numge = len(group_endpoints)
             for g in group_endpoints:
                 if g['service'] in LegMapServType.keys():
                     gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
-            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap)
+            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap,
+                                                                                       os.path.basename(sys.argv[0]), logger)
             avro.write()
+
+            logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))
+            if tags:
+                selstr = 'Job:%s Selected ' % (job)
+                selgg = ''
+                for key, value in tags.items():
+                    selgg += '%s:%s,' % (key, ','.join(value))
+                selstr += 'Groups(%s):' % selgg[:len(selgg) - 1]
+                selstr += '%d' % (len(filtlgroups))
+
+                logger.info(selstr)
 
 main()
