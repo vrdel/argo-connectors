@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -45,6 +45,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Sat Aug 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.3-2%{?dist}
+- fix poem-connector exception in case of returned HTTP 500
 * Mon Aug 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.3-1%{?dist}
 - generate meaningful statistic messages for every connector
 - messages are written into syslog

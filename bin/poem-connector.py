@@ -184,7 +184,7 @@ class PoemReader:
                 logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
 
             else:
-                logger.error('POEMReader.loadProfilesFromServer(): HTTP response: ' + str(res.status), res.reason)
+                logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except (socket.error, httplib.HTTPException) as e:
             logger.error('Connection to %s failed: ' % (server) + str(e))
