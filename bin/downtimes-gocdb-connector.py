@@ -92,7 +92,7 @@ class GOCDBReader(object):
                         dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
                         filteredDowntimes.append(dt)
             else:
-                logger.error('GOCDBReader.getDowntimes(): HTTP response: ' + str(res.status), res.reason)
+                logger.error('GOCDBReader.getDowntimes(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
             logger.error("GOCDBReader.getDowntimes():", "Error parsing feed")
