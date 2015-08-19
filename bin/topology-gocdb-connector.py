@@ -175,7 +175,7 @@ class GOCDBReader:
                     serviceList[serviceId]['scope'] = scope
                     serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
             else:
-                logger.error('GOCDBReader.getServiceEndpoints(): HTTP response: ' + str(res.status), res.reason)
+                logger.error('GOCDBReader.getServiceEndpoints(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
             logger.error("GOCDBReader.getServiceEndpoints():", "Error parsing feed")
@@ -199,7 +199,7 @@ class GOCDBReader:
                     siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
                     siteList[siteName]['scope'] = scope
             else:
-                logger.error('GOCDBReader.getSitesInternal(): HTTP response: ' + str(res.status), res.reason)
+                logger.error('GOCDBReader.getSitesInternal(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
             logger.error("GOCDBReader.getSitesInternal():", "Error parsing feed")
@@ -231,7 +231,7 @@ class GOCDBReader:
                         serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
                         groupList[groupId]['services'].append(serviceDict)
             else:
-                logger.error('GOCDBReader.getServiceGroups(): HTTP response: ' + str(res.status), res.reason)
+                logger.error('GOCDBReader.getServiceGroups(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
             logger.error("GOCDBReader.getServiceGroups():", "Error parsing feed")
