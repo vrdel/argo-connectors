@@ -301,6 +301,7 @@ def main():
             getags = confcust.get_gocdb_getags(job)
             if getags:
                 group_endpoints = filter_by_tags(getags, group_endpoints)
+                gelegmap = filter_by_tags(getags, gelegmap)
             filename = jobdir+globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
                             group_endpoints + gelegmap, os.path.basename(sys.argv[0]), logger)
