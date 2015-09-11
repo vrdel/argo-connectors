@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.4.2
-Release: 2%{?dist}
+Version: 1.4.3
+Release: 3%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -45,6 +45,14 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Wed Aug 19 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.3-3%{?dist}
+- fix exception in case of returned HTTP 500 for other connectors
+* Sat Aug 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.3-2%{?dist}
+- fix poem-connector exception in case of returned HTTP 500
+* Mon Aug 10 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.3-1%{?dist}
+- generate meaningful statistic messages for every connector
+- messages are written into syslog
+  https://github.com/ARGOeu/ARGO/issues/116
 * Wed Jul 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.2-2%{?dist}
 - fixed bug with duplicating poem profiles info for prefilter
 - fixed bug with SRM service type handling for topology and downtimes connectors

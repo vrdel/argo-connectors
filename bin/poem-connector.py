@@ -31,12 +31,14 @@ import datetime
 import httplib
 import sys
 import urlparse
+import socket
 import re
-from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import AvroWriter, Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
 
 writers = ['file', 'avro']
 
+logger = None
 globopts, poemopts = {}, {}
 cpoem = None
 
@@ -161,11 +163,9 @@ class PoemReader:
         if 'https://' not in server:
             server = 'https://' + server
 
-        print server
-        print self.poemRequest % ('',vo)
+        logger.info('Server:%s VO:%s' % (server, vo))
 
         url = resolve_http_redirect(self.poemRequest % (server,vo))
-        print url
 
         o = urlparse.urlparse(url,allow_fragments=True)
         try:
@@ -181,12 +181,14 @@ class PoemReader:
                     if not doFilterProfiles or (profile['namespace']+'.'+profile['name']).upper() in filterProfiles:
                         validProfiles[(profile['namespace']+'.'+profile['name']).upper()] = profile
             elif res.status in (301, 302):
-                print('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
+                logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
 
             else:
-                print('ERROR: Connection failed: ' + res.reason)
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
+                logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
+                raise SystemExit(1)
+        except (socket.error, httplib.HTTPException) as e:
+            logger.error('Connection to %s failed: ' % (server) + str(e))
+            raise SystemExit(1)
 
         return validProfiles
 
@@ -213,7 +215,9 @@ class FileWriter:
     def writeProfiles(self, profiles, date):
         filename = self.outputDir+'/'+self.outputFileTemplate % date
         outFile = open(filename, 'w')
+        moninstance = set()
         for p in profiles:
+            moninstance.add(p['server'])
             outFile.write(self.outputFileFormat % ( p['server'],
                        p['ngi'],
                        p['profile'],
@@ -222,6 +226,8 @@ class FileWriter:
                        p['vo'],
                        p['fqan']))
         outFile.close();
+
+        logger.info('POEM file(%s): Expanded profiles for %d monitoring instances' % (self.outputFileTemplate % date, len(moninstance)))
 
 def gen_outprofiles(lprofiles, matched):
     lfprofiles = []
@@ -238,6 +244,9 @@ def gen_outprofiles(lprofiles, matched):
     return lfprofiles
 
 def main():
+    global logger
+    logger = Logger(os.path.basename(sys.argv[0]))
+
     certs = {'Authentication': ['HostKey', 'HostCert']}
     schemas = {'AvroSchemas': ['Poem']}
     output = {'Output': ['Poem']}
@@ -274,7 +283,10 @@ def main():
             lfprofiles = gen_outprofiles(psa, profiles)
 
             filename = jobdir + globopts['OutputPoem'.lower()]% timestamp
-            avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename, lfprofiles)
+            avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
+                              lfprofiles, os.path.basename(sys.argv[0]), logger)
             avro.write()
+
+            logger.info('Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
 
 main()
