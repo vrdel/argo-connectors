@@ -32,7 +32,8 @@ import sys
 import xml.dom.minidom
 import copy
 
-from argo_egi_connectors.writers import AvroWriter, Logger
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
 
 logger = None
@@ -144,7 +145,7 @@ def main():
 
             filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
-                              dts + dtslegmap, os.path.basename(sys.argv[0]), logger)
+                              dts + dtslegmap, os.path.basename(sys.argv[0]))
             avro.write()
 
 	logger.info('Fetched Date:%s Endpoints:%d' % (args.date[0], len(dts + dtslegmap)))

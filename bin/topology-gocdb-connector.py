@@ -34,7 +34,8 @@ import socket
 import copy
 from exceptions import AssertionError
 
-from argo_egi_connectors.writers import AvroWriter, Logger
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
 
 
@@ -290,7 +291,7 @@ def main():
                 group_groups = filter_by_tags(ggtags, group_groups)
             filename = jobdir+globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
-                            group_groups, os.path.basename(sys.argv[0]), logger)
+                            group_groups, os.path.basename(sys.argv[0]))
             avro.write()
 
             gelegmap = []
@@ -304,7 +305,7 @@ def main():
                 gelegmap = filter_by_tags(getags, gelegmap)
             filename = jobdir+globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
-                            group_endpoints + gelegmap, os.path.basename(sys.argv[0]), logger)
+                            group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
             avro.write()
 
             logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups(%s):%d' % (fetchtype, numgg))

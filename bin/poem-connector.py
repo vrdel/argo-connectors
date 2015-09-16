@@ -33,10 +33,9 @@ import sys
 import urlparse
 import socket
 import re
-from argo_egi_connectors.writers import AvroWriter, Logger
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-
-writers = ['file', 'avro']
 
 logger = None
 globopts, poemopts = {}, {}
@@ -206,7 +205,7 @@ class PoemReader:
             entries.append(entry)
         return entries
 
-class FileWriter:
+class PrefilterPoem:
     def __init__(self, outdir):
         self.outputDir = outdir
         self.outputFileTemplate = 'poem_sync_%s.out'
@@ -271,10 +270,8 @@ def main():
 
     for cust in confcust.get_customers():
         # write profiles
-        for writer in writers:
-            if writer == 'file':
-                writerInstance = FileWriter(confcust.get_custdir(cust))
-                writerInstance.writeProfiles(ps, timestamp)
+        poempref = PrefilterPoem(confcust.get_custdir(cust))
+        poempref.writeProfiles(ps, timestamp)
 
         for job in confcust.get_jobs(cust):
             jobdir = confcust.get_fulldir(cust, job)
@@ -284,7 +281,7 @@ def main():
 
             filename = jobdir + globopts['OutputPoem'.lower()]% timestamp
             avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
-                              lfprofiles, os.path.basename(sys.argv[0]), logger)
+                              lfprofiles, os.path.basename(sys.argv[0]))
             avro.write()
 
             logger.info('Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))

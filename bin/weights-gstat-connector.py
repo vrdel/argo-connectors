@@ -33,7 +33,8 @@ import sys
 from avro.datafile import DataFileReader
 from avro.io import DatumReader
 
-from argo_egi_connectors.writers import AvroWriter, Logger
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
 
 globopts = {}
@@ -141,12 +142,12 @@ def main():
 
             filename = jobdir + globopts['OutputWeights'.lower()] % timestamp
             datawr = gen_outdict(newData)
-            avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]), logger)
+            avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
             avro.write()
 
             if oldDataExists:
                 datawr = gen_outdict(oldData)
-                avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]), logger)
+                avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
                 avro.write()
 
         logger.info('Jobs:%d Sites:%d' % (len(jobcust), len(datawr)))

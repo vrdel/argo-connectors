@@ -24,7 +24,8 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-from argo_egi_connectors.writers import AvroWriter, Logger
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from exceptions import AssertionError
 import datetime
@@ -148,7 +149,7 @@ def main():
 
             filename = jobdir + globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups,
-                              os.path.basename(sys.argv[0]), logger)
+                              os.path.basename(sys.argv[0]))
             avro.write()
 
             filename = jobdir + globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
@@ -160,7 +161,7 @@ def main():
                     gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap,
-                                                                                       os.path.basename(sys.argv[0]), logger)
+                                                                                       os.path.basename(sys.argv[0]))
             avro.write()
 
             logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))

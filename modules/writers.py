@@ -5,6 +5,7 @@ import logging, logging.handlers
 import sys
 from exceptions import IOError
 
+
 class Logger:
     def __init__(self, connector):
         lfs = '%(name)s[%(process)s]: %(levelname)s %(message)s'
@@ -19,25 +20,28 @@ class Logger:
         sh.setLevel(lv)
         self.logger.addHandler(sh)
 
-    def warn(self, msg):
-        self.logger.warn(msg)
+    for func in ['warn', 'error', 'critical', 'info']:
+        code = """def %s(self, msg):
+                    self.logger.%s(msg)""" % (func, func)
+        exec code
 
-    def error(self, msg):
-        self.logger.error(msg)
+class SingletonLogger:
+    def __init__(self, connector):
+        if not getattr(self.__class__, 'shared_object', None):
+            self.__class__.shared_object = Logger(connector)
 
-    def critical(self, msg):
-        self.logger.critical(msg)
-
-    def info(self, msg):
-        self.logger.info(msg)
+    for func in ['warn', 'error', 'critical', 'info']:
+        code = """def %s(self, msg):
+                    self.__class__.shared_object.%s(msg)""" % (func, func)
+        exec code
 
 class AvroWriter:
     """ AvroWriter """
-    def __init__(self, schema, outfile, listdata, name, logger):
+    def __init__(self, schema, outfile, listdata, name):
+        self.logger = SingletonLogger(name)
         self.schema = schema
         self.listdata = listdata
         self.outfile = outfile
-        self.logger = logger
 
     def write(self):
         try:
