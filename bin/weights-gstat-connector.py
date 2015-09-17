@@ -26,9 +26,12 @@
 
 import urllib2
 import os
+import httplib
 import json
 import datetime
 import sys
+import socket
+from urlparse import urlparse
 
 from avro.datafile import DataFileReader
 from avro.io import DatumReader
@@ -36,6 +39,8 @@ from avro.io import DatumReader
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from OpenSSL.SSL import Error as SSLError
 
 globopts = {}
 logger = None
@@ -43,18 +48,35 @@ logger = None
 class GstatReader:
     def __init__(self, feed):
         self.GstatRequest = feed
+        self.hostKey = globopts['AuthenticationHostKey'.lower()]
+        self.hostCert = globopts['AuthenticationHostCert'.lower()]
 
     def getWeights(self):
         # load server data
-        urlFile = urllib2.urlopen(self.GstatRequest)
-        json_data = json.load(urlFile)
-        urlFile.close();
-        weights = dict()
-        for site in json_data:
-            key = site['Sitename']
-            val = site['HEPSPEC06']
-            weights[key] = val
-        return weights
+        o = urlparse(self.GstatRequest)
+
+        try:
+            if o.scheme == 'https':
+                if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                    verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
+                conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert)
+            else:
+                conn = httplib.HTTPConnection(o.netloc)
+
+        except(SSLError, socket.error, socket.timeout) as e:
+            logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
+            raise SystemExit(1)
+
+        conn.request('GET', o.path)
+        res = conn.getresponse()
+        if res.status == 200:
+            json_data = json.loads(res.read())
+            weights = dict()
+            for site in json_data:
+                key = site['Sitename']
+                val = site['HEPSPEC06']
+                weights[key] = val
+            return weights
 
 def gen_outdict(data):
     datawr = []
@@ -82,9 +104,10 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
+    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Weights']}
     output = {'Output': ['Weights']}
-    cglob = Global(schemas, output)
+    cglob = Global(schemas, output, certs)
     global globopts
     globopts = cglob.parse()
 

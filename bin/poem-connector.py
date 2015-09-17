@@ -33,39 +33,16 @@ import sys
 import urlparse
 import socket
 import re
+
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from OpenSSL.SSL import Error as SSLError
 
 logger = None
 globopts, poemopts = {}, {}
 cpoem = None
-
-def resolve_http_redirect(url, depth=0):
-    if depth > 10:
-        raise Exception("Redirected "+depth+" times, giving up.")
-
-    o = urlparse.urlparse(url,allow_fragments=True)
-    conn = httplib.HTTPSConnection(o.netloc, 443,
-                                   globopts['AuthenticationHostKey'.lower()],
-                                   globopts['AuthenticationHostCert'.lower()])
-    path = o.path
-    if o.query:
-        path +='?'+o.query
-
-    try:
-        conn.request("HEAD", path)
-        res = conn.getresponse()
-        headers = dict(res.getheaders())
-        if headers.has_key('location') and headers['location'] != url:
-            return resolve_http_redirect(headers['location'],
-                                         globopts['AuthenticationHostKey'.lower()],
-                                         globopts['AuthenticationHostCert'.lower()],
-                                         depth+1)
-        else:
-            return url
-    except:
-        return url;
 
 class PoemReader:
     def __init__(self):
@@ -159,15 +136,13 @@ class PoemReader:
         if len(filterProfiles) > 0:
             doFilterProfiles = True
 
-        if 'https://' not in server:
-            server = 'https://' + server
+        url = self.poemRequest % (server, vo)
+        o = urlparse.urlparse(url, allow_fragments=True)
+        logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
-        logger.info('Server:%s VO:%s' % (server, vo))
-
-        url = resolve_http_redirect(self.poemRequest % (server,vo))
-
-        o = urlparse.urlparse(url,allow_fragments=True)
         try:
+            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
             conn = httplib.HTTPSConnection(o.netloc, 443,
                                            globopts['AuthenticationHostKey'.lower()],
                                            globopts['AuthenticationHostCert'.lower()])
@@ -185,8 +160,8 @@ class PoemReader:
             else:
                 logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
-        except (socket.error, httplib.HTTPException) as e:
-            logger.error('Connection to %s failed: ' % (server) + str(e))
+        except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
+            logger.error('Connection error %s - %s' % (server, errmsg_from_excp(e)))
             raise SystemExit(1)
 
         return validProfiles
@@ -246,7 +221,7 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert']}
+    certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath']}
     schemas = {'AvroSchemas': ['Poem']}
     output = {'Output': ['Poem']}
     cglob = Global(certs, schemas, output)

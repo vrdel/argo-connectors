@@ -24,9 +24,11 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
+from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
 from exceptions import AssertionError
 import datetime
 import httplib
@@ -34,8 +36,10 @@ import re
 import sys
 import socket
 import os
+from urlparse import urlparse
 import xml.dom.minidom
 import copy
+
 
 LegMapServType = {'SRM' : 'SRMv2', 'SRMv2': 'SRM'}
 globopts = {}
@@ -46,29 +50,25 @@ class VOReader:
     lgroups = []
 
     def __init__(self, feed):
-        host, path = self._host_path(feed)
-        self._parse(host, path)
+        self.feed = feed
+        self._parse()
 
-    def _host_path(self, feed):
-        urlsplit = re.split('/*', feed)
-        host = (urlsplit[0], urlsplit[1])
-        path = '/'+'/'.join(urlsplit[2:])
-        return host, path
-
-    def _parse(self, host, path):
+    def _parse(self):
+        o = urlparse(self.feed)
         try:
-            if 'https' in host[0]:
-                conn = httplib.HTTPSConnection(host[1], 443,
+            if o.scheme == 'https':
+                if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                    verify_cert(os.path.basename(sys.argv[0]), o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
+                conn = httplib.HTTPSConnection(o.netloc, 443,
                                             globopts['AuthenticationHostKey'.lower()],
                                             globopts['AuthenticationHostCert'.lower()])
-            elif 'http' in host[0]:
-                conn = httplib.HTTPConnection(host[1])
-
-        except (socket.error, httplib.HTTPException) as e:
-            logger.error('Connection to %s failed: ' % (host) + str(e))
+            elif o.scheme == 'http':
+                conn = httplib.HTTPConnection(o.netloc)
+        except(SSLError, socket.error, socket.timeout, httplib.HTTPConnection) as e:
+            logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
             raise SystemExit(1)
 
-        conn.request('GET', path)
+        conn.request('GET', o.path)
         res = conn.getresponse()
         try:
             if res.status == 200:
@@ -98,10 +98,10 @@ class VOReader:
                         ge['type'] = 'SITES'
                         self.lendpoints.append(ge)
             else:
-                logger.error('VOReader._parse(): Connection failed %s, HTTP response: %s %s' % (host[1], str(res.status), res.reason))
+                logger.error('VOReader._parse(): Connection failed %s, HTTP response: %s %s' % (o.netloc, str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
-            logger.error("Error parsing VO-feed %s" % ('//'.join(host)+path))
+            logger.error("Error parsing VO-feed %s" % (o.netloc + o.path))
             raise SystemExit(1)
 
     def get_groupgroups(self):
@@ -115,7 +115,7 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert']}
+    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     cglob = Global(certs, schemas, output)

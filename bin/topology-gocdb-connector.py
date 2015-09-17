@@ -24,7 +24,6 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-import urllib
 import datetime
 import xml.dom.minidom
 import httplib
@@ -32,11 +31,14 @@ import sys
 import os
 import socket
 import copy
+from urlparse import urlparse
 from exceptions import AssertionError
 
 from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
+from OpenSSL.SSL import Error as SSLError
 
 
 LegMapServType = {'SRM' : 'SRMv2'}
@@ -47,21 +49,12 @@ logger = None
 
 class GOCDBReader:
     def __init__(self, feed):
-        self.gocdbUrl = feed
-        self.gocdbHost = self._getHostFeed(feed)
+        self.gocdbHost = urlparse(feed).netloc
         self.hostKey = globopts['AuthenticationHostKey'.lower()]
         self.hostCert = globopts['AuthenticationHostCert'.lower()]
         self.siteListEGI, self.siteListLocal = dict(), dict()
         self.serviceListEGI, self.serviceListLocal = dict(), dict()
         self.groupListEGI, self.groupListLocal = dict(), dict()
-
-    def _getHostFeed(self, feed):
-        host = feed
-        if "https://" in feed:
-            host = feed.split("https://")[1]
-            if "/" in host:
-                host = host.split('/')[0]
-        return host
 
     def getGroupOfServices(self):
         self.loadDataIfNeeded()
@@ -154,6 +147,8 @@ class GOCDBReader:
 
     def getServiceEndpoints(self, serviceList, scope):
         try:
+            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
             conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
             conn.request('GET', '/gocdbpi/private/?method=get_service_endpoint&scope=' + scope)
             res = conn.getresponse()
@@ -181,9 +176,14 @@ class GOCDBReader:
         except AssertionError:
             logger.error("GOCDBReader.getServiceEndpoints():", "Error parsing feed")
             raise SystemExit(1)
+        except(SSLError, socket.error, socket.timeout) as e:
+            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
+            raise SystemExit(1)
 
     def getSitesInternal(self, siteList, scope):
         try:
+            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
             conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
             conn.request('GET', '/gocdbpi/private/?method=get_site&scope=' + scope)
             res = conn.getresponse()
@@ -205,9 +205,14 @@ class GOCDBReader:
         except AssertionError:
             logger.error("GOCDBReader.getSitesInternal():", "Error parsing feed")
             raise SystemExit(1)
+        except(SSLError, socket.error, socket.timeout) as e:
+            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
+            raise SystemExit(1)
 
     def getServiceGroups(self, groupList, scope):
         try:
+            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
             conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
             conn.request('GET', '/gocdbpi/private/?method=get_service_group&scope=' + scope)
             res = conn.getresponse()
@@ -237,6 +242,9 @@ class GOCDBReader:
         except AssertionError:
             logger.error("GOCDBReader.getServiceGroups():", "Error parsing feed")
             raise SystemExit(1)
+        except(SSLError, socket.error, socket.timeout) as e:
+            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
+            raise SystemExit(1)
 
 def filter_by_tags(tags, listofelem):
     for attr in tags.keys():
@@ -255,7 +263,7 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert']}
+    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     cglob = Global(certs, schemas, output)
