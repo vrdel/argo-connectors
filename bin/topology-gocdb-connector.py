@@ -308,6 +308,7 @@ def main():
                     gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
             getags = confcust.get_gocdb_getags(job)
+            numgeleg = len(gelegmap)
             if getags:
                 group_endpoints = filter_by_tags(getags, group_endpoints)
                 gelegmap = filter_by_tags(getags, gelegmap)
@@ -316,7 +317,7 @@ def main():
                             group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups(%s):%d' % (fetchtype, numgg))
+            logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + numgeleg) +' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
                 selstr = 'Job:%s Selected ' % (job)
                 selge, selgg = '', ''
