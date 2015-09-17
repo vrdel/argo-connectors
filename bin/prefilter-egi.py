@@ -24,17 +24,17 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-import sys
-import os
-import datetime
-import avro.schema
 import argparse
+import avro.schema
+import datetime
+import os
+import sys
 import time
-from avro.datafile import DataFileReader, DataFileWriter
-from avro.io import DatumReader, DatumWriter
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.writers import Logger
+from avro.datafile import DataFileReader, DataFileWriter
+from avro.io import DatumReader, DatumWriter
 
 globopts, confcust = {}, None
 logger = None
@@ -298,7 +298,8 @@ def main():
 
     stats = ()
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="""Filters consumer logs based on various criteria
+                                                    (allowed NGIs, service flavours, metrics...)""")
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY')
     group.add_argument('-f', dest='cfile', nargs=1, metavar='consumer_log_YEAR-MONTH-DAY.avro')
@@ -309,8 +310,11 @@ def main():
         date = args.cfile[0].split('_')[-1]
         date = date.split('.')[0]
         date = date.split('-')
-    else:
+    elif args.date:
         date = args.date[0].split('-')
+    else:
+        parser.print_help()
+        raise SystemExit(1)
 
     if len(date) == 0 or len(date) != 3:
         logger.error('Consumer file does not end with correctly formatted date')

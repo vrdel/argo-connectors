@@ -24,23 +24,23 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-import urllib2
-import os
+import argparse
+import datetime
 import httplib
 import json
-import datetime
-import sys
+import os
 import socket
-from urlparse import urlparse
+import sys
+import urllib2
 
-from avro.datafile import DataFileReader
-from avro.io import DatumReader
-
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
-from OpenSSL.SSL import Error as SSLError
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
+from avro.datafile import DataFileReader
+from avro.io import DatumReader
+from urlparse import urlparse
 
 globopts = {}
 logger = None
@@ -99,8 +99,11 @@ def loadOldData(directory, timestamp):
 
     return oldDataDict
 
-
 def main():
+    parser = argparse.ArgumentParser(description="""Fetch weights information from Gstat provider
+                                                    for every job listed in customer.conf""")
+    args = parser.parse_args()
+
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 

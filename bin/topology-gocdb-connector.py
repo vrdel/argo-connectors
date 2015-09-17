@@ -24,21 +24,22 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
+import argparse
+import copy
 import datetime
-import xml.dom.minidom
 import httplib
-import sys
 import os
 import socket
-import copy
-from urlparse import urlparse
-from exceptions import AssertionError
+import sys
+import xml.dom.minidom
 
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
-from argo_egi_connectors.writers import SingletonLogger as Logger
-from argo_egi_connectors.config import Global, CustomerConf
 from OpenSSL.SSL import Error as SSLError
+from argo_egi_connectors.config import Global, CustomerConf
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
+from exceptions import AssertionError
+from urlparse import urlparse
 
 
 LegMapServType = {'SRM' : 'SRMv2'}
@@ -258,6 +259,10 @@ def filter_by_tags(tags, listofelem):
     return listofelem
 
 def main():
+    parser = argparse.ArgumentParser(description="""Fetch wanted entities (ServiceGroups, Sites, Endpoints)
+                                                    from GOCDB for every job listed in customer.conf and write them
+                                                    in an appropriate place""")
+    args = parser.parse_args()
     group_endpoints, group_groups = [], []
 
     global logger

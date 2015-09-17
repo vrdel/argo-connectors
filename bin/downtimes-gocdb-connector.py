@@ -116,7 +116,7 @@ def main():
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
     parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
     args = parser.parse_args()
 

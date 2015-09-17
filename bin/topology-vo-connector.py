@@ -25,20 +25,22 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 from OpenSSL.SSL import Error as SSLError
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
+from urlparse import urlparse
+
+import argparse
+import copy
 import datetime
 import httplib
-import re
-import sys
-import socket
 import os
-from urlparse import urlparse
+import re
+import socket
+import sys
 import xml.dom.minidom
-import copy
 
 
 LegMapServType = {'SRM' : 'SRMv2', 'SRMv2': 'SRM'}
@@ -112,6 +114,10 @@ class VOReader:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="""Fetch wanted entities from VO feed provided in customer.conf
+                                                    and write them in an appropriate place""")
+    args = parser.parse_args()
+
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
