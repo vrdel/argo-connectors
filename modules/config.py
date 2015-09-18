@@ -268,46 +268,31 @@ class CustomerConf:
     def get_gocdb_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']
 
-    def _get_gocdb_tags(self, job, option):
+    def _get_tags(self, job, option):
         tags = {}
         if option in self._jobs[job].keys():
             tagstr = self._jobs[job][option]
-            for tag in tagstr.split(','):
-                mt = re.match('\s*(\w+)\s*:\s*(\w+)\s*', tag)
-                if mt is not None:
-                    tkey = mt.group(1)
-                    tvalue = mt.group(2)
-                    tags.update({tkey: tvalue})
-                else:
-                    print self.__class__, "Could not parse option %s: %s" % (option, tag)
+            match = re.findall("(\w+)\s*:\s*(\(.*?\))", tagstr)
+            if match is not None:
+                for m in match:
+                    tags.update({m[0]: [e.strip('() ') for e in m[1].split(',')]})
+            match = re.findall('([\w]+)\s*:\s*([\w]+)', tagstr)
+            if match is not None:
+                for m in match:
+                    tags.update({m[0]: m[1]})
+            else:
+                print self.__class__, "Could not parse option %s: %s" % (option, tag)
+                return {}
         return tags
 
     def get_gocdb_ggtags(self, job):
-        return self._get_gocdb_tags(job, 'TopoSelectGroupOfGroups')
+        return self._get_tags(job, 'TopoSelectGroupOfGroups')
 
     def get_gocdb_getags(self, job):
-        return self._get_gocdb_tags(job, 'TopoSelectGroupOfEndpoints')
+        return self._get_tags(job, 'TopoSelectGroupOfEndpoints')
 
     def get_vo_ggtags(self, job):
-        if 'TopoSelectGroupOfGroups' in self._jobs[job].keys():
-            t = self._jobs[job]['TopoSelectGroupOfGroups']
-            match = re.match("\s*(\w+)\s*:\s*(\(.*\))", t)
-            if match is not None:
-                tkey = match.group(1)
-                tvalue = match.group(2).strip("() ")
-                tvalue = re.split("\s*,\s*", tvalue)
-                return {tkey: tvalue}
-            else:
-                match = re.match("\s*(\w+)\s*:(.*)", t)
-                if match is not None:
-                    tkey = match.group(1)
-                    tvalue = match.group(2).strip()
-                    return {tkey: [tvalue]}
-                else:
-                    print self.__class__, "Could not parse option TopoSelectGroupOfGroups: %s" % t
-                    return {}
-        else:
-            return {}
+        return self._get_tags(job, 'TopoSelectGroupOfGroups')
 
     def _get_toponame(self, job):
         return self._jobs[job]['TopoType']
@@ -325,6 +310,23 @@ class CustomerConf:
         elif feedurl:
             feeds[feedurl] = []
             feeds[feedurl].append((job, cust))
+
+    def get_allspec_scopes(self, caller, name=None):
+        distinct_scopes = set()
+        ggtags, getags = [], []
+        for c in self.get_customers():
+            for job in self.get_jobs(c):
+                if self._get_toponame(job) == name:
+                    gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
+                    ge = self._get_tags(job, 'TopoSelectGroupOfEndpoints')
+                    for g in gg.items() + ge.items():
+                        if 'Scope'.lower() == g[0].lower():
+                            if isinstance(g[1], list):
+                                distinct_scopes.update(g[1])
+                            else:
+                                distinct_scopes.update([g[1]])
+
+        return distinct_scopes
 
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}

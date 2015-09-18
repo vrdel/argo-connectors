@@ -175,7 +175,9 @@ def main():
                 selstr = 'Job:%s Selected ' % (job)
                 selgg = ''
                 for key, value in tags.items():
-                    selgg += '%s:%s,' % (key, ','.join(value))
+                    if isinstance(value, list):
+                        value = ','.join(value)
+                    selgg += '%s:%s,' % (key, value)
                 selstr += 'Groups(%s):' % selgg[:len(selgg) - 1]
                 selstr += '%d' % (len(filtlgroups))
 
