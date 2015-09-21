@@ -11,7 +11,7 @@ Vendor: SRCE <dvrcic@srce.hr, lgjenero@gmail.com>
 Obsoletes: ar-sync
 Prefix: %{_prefix}
 Requires: avro
-Requires: pyOpenSSL 
+Requires: pyOpenSSL
 Source0: %{name}-%{version}.tar.gz
 
 BuildArch: noarch

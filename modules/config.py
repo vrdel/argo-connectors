@@ -1,9 +1,10 @@
 import ConfigParser
 import os, re, errno
-
+from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
     def __init__(self, *args, **kwargs):
+        self.logger = Logger(self.__class__)
         self._args = args
         self._filename = '/etc/argo-egi-connectors/global.conf'
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
@@ -11,7 +12,7 @@ class Global:
     def parse(self):
         config = ConfigParser.ConfigParser()
         if not os.path.exists(self._filename):
-            print self.__class__, 'Could not find %s' % self._filename
+            self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
         config.read(self._filename)
         options = {}
@@ -27,15 +28,13 @@ class Global:
                                     raise OSError(errno.ENOENT, optget)
                                 options.update({(sect+opt).lower(): optget})
         except ConfigParser.NoOptionError as e:
-            # TODO: syslog
-            print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
-            # TODO: syslog
-            print self.__class__, "No section '%s' defined" % (e.args[0])
+            self.logger.error("No section '%s' defined" % (e.args[0]))
             raise SystemExit(1)
         except OSError as e:
-            print self.__class__, os.strerror(e.args[0]), e.args[1], optget
+            self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
             raise SystemExit(1)
 
         return options
@@ -44,13 +43,14 @@ class PoemConf:
     options = {}
 
     def __init__(self, *args):
+        self.logger = Logger(self.__class__)
         self._args = args
         self._filename = '/etc/argo-egi-connectors/poem-connector.conf'
 
     def parse(self):
         config = ConfigParser.ConfigParser()
         if not os.path.exists(self._filename):
-            print self.__class__, 'Could not find %s' % self._filename
+            self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
         config.read(self._filename)
 
@@ -67,12 +67,10 @@ class PoemConf:
                                         self.options.update({(section+o).lower(): optget})
 
         except ConfigParser.NoOptionError as e:
-            # TODO: syslog
-            print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
-            # TODO: syslog
-            print self.__class__, "No section '%s' defined" % (e.args[0])
+            self.logger.error("No section '%s' defined" % (e.args[0]))
             raise SystemExit(1)
 
         return self.options
@@ -100,16 +98,14 @@ class PoemConf:
         try:
             return self._get_ngis('PrefilterDataAllNGI'.lower())
         except KeyError as e:
-            # TODO: syslog
-            print self.__class__, "No option %s defined" % e
+            self.logger.error("No option %s defined" % e)
             raise SystemExit(1)
 
     def get_allowedngi(self):
         try:
             return self._get_ngis('PrefilterDataAllowedNGI'.lower())
         except KeyError as e:
-            # TODO: syslog
-            print self.__class__, "No option %s defined" % e
+            self.logger.error("No option %s defined" % e)
             raise SystemExit(1)
 
     def get_servers(self):
@@ -145,6 +141,7 @@ class CustomerConf:
     tenantdir = ''
 
     def __init__(self, caller=None, **kwargs):
+        self.logger = Logger(self.__class__)
         self._filename = '/etc/argo-egi-connectors/customer.conf'
         if not kwargs:
             self._jobattrs = self._defjobattrs[os.path.basename(caller)]
@@ -157,7 +154,7 @@ class CustomerConf:
     def parse(self):
         config = ConfigParser.ConfigParser()
         if not os.path.exists(self._filename):
-            print self.__class__, 'Could not find %s' % self._filename
+            self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
         config.read(self._filename)
 
@@ -168,8 +165,7 @@ class CustomerConf:
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                 except ConfigParser.NoOptionError as e:
-                    # TODO: syslog
-                    print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+                    self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
                     raise SystemExit(1)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir}})
@@ -186,8 +182,7 @@ class CustomerConf:
                         profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
                     except ConfigParser.NoOptionError as e:
-                        # TODO: syslog
-                        print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+                        self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
                         raise SystemExit(1)
 
                     self._jobs.update({job: {'Profiles': profiles, 'Dirname': dirname}})
@@ -196,7 +191,7 @@ class CustomerConf:
                             if config.has_option(job, attr):
                                 self._jobs[job].update({attr: config.get(job, attr)})
                 else:
-                    print self.__class__, "Could not find Jobs: %s for customer: %s" % (job, cust)
+                    self.logger.error("Could not find Jobs: %s for customer: %s" % (job, cust))
                     raise SystemExit(1)
 
     def _sect_to_dir(self, sect):
@@ -205,8 +200,7 @@ class CustomerConf:
             assert match != None
             dirname = match.group(1)
         except (AssertionError, KeyError) as e:
-            # TODO: syslog
-            print self.__class__, "Could not get Dirname for %s" % e
+            self.logger.error("Could not get Dirname for %s" % e)
             raise SystemExit(1)
         return dirname
 
@@ -243,7 +237,7 @@ class CustomerConf:
                     os.makedirs(d)
                 except OSError as e:
                     if e.args[0] != errno.EEXIST:
-                        print self.__class__,  os.strerror(e.args[0]), e.args[1], d
+                        self.logger.error('%s %s %s' % os.strerror(e.args[0]), e.args[1], d)
                         raise SystemExit(1)
 
     def get_jobs(self, cust):
@@ -251,8 +245,7 @@ class CustomerConf:
         try:
             jobs = self._cust[cust]['Jobs']
         except KeyError:
-            # TODO: syslog
-            print self.__class__, "Could not get Jobs for %s" % cust
+            self.logger.error("Could not get Jobs for %s" % cust)
             raise SystemExit(1)
         return jobs
 
@@ -281,7 +274,7 @@ class CustomerConf:
                 for m in match:
                     tags.update({m[0]: m[1]})
             else:
-                print self.__class__, "Could not parse option %s: %s" % (option, tag)
+                self.logger.error("Could not parse option %s: %s" % (option, tagstr))
                 return {}
         return tags
 
@@ -338,7 +331,7 @@ class CustomerConf:
                         if feedurl:
                             self._update_feeds(feeds, feedurl, job, c)
                         elif not feedurl and name == 'VOFeed':
-                            print self.__class__, "Could not get VO TopoFeed for job %s" % job
+                            self.logger.error("Could not get VO TopoFeed for job %s" % job)
                             raise SystemExit(1)
                         else:
                             feedurl = deffeed

@@ -276,7 +276,7 @@ def filter_by_tags(tags, listofelem):
     return listofelem
 
 def main():
-    parser = argparse.ArgumentParser(description="""Fetch wanted entities (ServiceGroups, Sites, Endpoints)
+    parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from GOCDB for every job listed in customer.conf and write them
                                                     in an appropriate place""")
     args = parser.parse_args()
