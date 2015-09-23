@@ -125,9 +125,13 @@ def main():
         raise SystemExit(1)
 
     # calculate start and end times
-    start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
-    end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
-    timestamp = start.strftime('%Y_%m_%d')
+    try:
+        start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+        end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+        timestamp = start.strftime('%Y_%m_%d')
+    except ValueError as e:
+        logger.error(e)
+        raise SystemExit(1)
     start = start.replace(hour=0, minute=0, second=0)
     end = end.replace(hour=23, minute=59, second=59)
 
