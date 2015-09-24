@@ -51,7 +51,7 @@ logger = None
 class GOCDBReader:
     def __init__(self, feed, scopes):
         self.gocdbHost = urlparse(feed).netloc
-        self.scopes = scopes if scopes else set(['EGI'])
+        self.scopes = scopes if scopes else set(['NoScope'])
         self.hostKey = globopts['AuthenticationHostKey'.lower()]
         self.hostCert = globopts['AuthenticationHostCert'.lower()]
         for scope in self.scopes:
@@ -147,10 +147,11 @@ class GOCDBReader:
 
     def loadDataIfNeeded(self):
         try:
+            scopequery = "'&scope='+scope"
             for scope in self.scopes:
-                eval("self.getSitesInternal(self.siteList%s, '&scope='+scope)" % scope)
-                eval("self.getServiceGroups(self.groupList%s, '&scope='+scope)" % scope)
-                eval("self.getServiceEndpoints(self.serviceList%s, '&scope='+scope)" % scope)
+                eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
                 self.fetched = True
 
         except (socket.error, httplib.HTTPException) as e:
