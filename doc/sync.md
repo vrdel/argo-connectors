@@ -58,10 +58,12 @@ Config file is read by _every_ component because every component needs to, at le
 Every component generates output file in an avro binary format. This section points to a directory that holds all avro schemas. 
 
 	[Authentication]
+	VerifyServerCert = False
+	CAPAth = /etc/grid-security/certificates
 	HostKey = /etc/grid-security/hostkey.pem
 	HostCert = /etc/grid-security/hostcert.pem
 
-Each component that talks to GOCDB or POEM peer authenticates itself with a host certificate.
+Each component that talks to GOCDB or POEM peer authenticates itself with a host certificate. `HostKey` indicates the private and `HostCert` indicates the public part of certificate. Additionally, server certificate can be validated rounding up the mutual authentication. `CAPath` contains certificates of authorities from which chain will be tried to be built upon validating.
 
 	[AvroSchemas]
 	Downtimes = %(SchemaDir)s/downtimes.avsc
@@ -314,7 +316,7 @@ With all these informations written in `PrefilterPoem` file, `prefilter-egi.py` 
 	TopoType = GOCDB
 	TopoFetchType = ServiceGroups
 	TopoSelectGroupOfEndpoints = Monitored:Y, Scope:EGI, Production:N
-	#TopoSelectGroupOfGroups = Monitored:Y, Scope:EGI
+	#TopoSelectGroupOfGroups = Monitored:Y, Scope:EGI, Certification:(Certified,Candidate)
 
 	[JOB_BioMedCritical]
 	Dirname = BioMed_Critical
@@ -449,5 +451,8 @@ Connectors are using following GOCDB PI methods:
 - [GOCDB - get_service_endpoint_method](https://wiki.egi.eu/wiki/GOCDB/PI/get_service_endpoint_method)
 - [GOCDB - get_service_group](https://wiki.egi.eu/wiki/GOCDB/PI/get_service_group)
 - [GOCDB - get_site_method](https://wiki.egi.eu/wiki/GOCDB/PI/get_site_method)
+
+`poem-connector.py` is using POEM PI method:
+- [POEM - metrics_in_profiles](http://argoeu.github.io/guides/poem/)
 
 [Construction of VO feeds](https://twiki.cern.ch/twiki/bin/view/Main/ATPVOFeeds)
