@@ -4,7 +4,7 @@ from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
     def __init__(self, *args, **kwargs):
-        self.logger = Logger(self.__class__)
+        self.logger = Logger(str(self.__class__))
         self._args = args
         self._filename = '/etc/argo-egi-connectors/global.conf'
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
@@ -28,7 +28,7 @@ class Global:
                                     raise OSError(errno.ENOENT, optget)
                                 options.update({(sect+opt).lower(): optget})
         except ConfigParser.NoOptionError as e:
-            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+            self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
             self.logger.error("No section '%s' defined" % (e.args[0]))
@@ -43,7 +43,7 @@ class PoemConf:
     options = {}
 
     def __init__(self, *args):
-        self.logger = Logger(self.__class__)
+        self.logger = Logger(str(self.__class__))
         self._args = args
         self._filename = '/etc/argo-egi-connectors/poem-connector.conf'
 
@@ -67,7 +67,7 @@ class PoemConf:
                                         self.options.update({(section+o).lower(): optget})
 
         except ConfigParser.NoOptionError as e:
-            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+            self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
             self.logger.error("No section '%s' defined" % (e.args[0]))
@@ -141,7 +141,7 @@ class CustomerConf:
     tenantdir = ''
 
     def __init__(self, caller=None, **kwargs):
-        self.logger = Logger(self.__class__)
+        self.logger = Logger(str(self.__class__))
         self._filename = '/etc/argo-egi-connectors/customer.conf'
         if not kwargs:
             self._jobattrs = self._defjobattrs[os.path.basename(caller)]
@@ -165,7 +165,7 @@ class CustomerConf:
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                 except ConfigParser.NoOptionError as e:
-                    self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+                    self.logger.error(e.message)
                     raise SystemExit(1)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir}})
@@ -182,7 +182,7 @@ class CustomerConf:
                         profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
                     except ConfigParser.NoOptionError as e:
-                        self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+                        self.logger.error(e.message)
                         raise SystemExit(1)
 
                     self._jobs.update({job: {'Profiles': profiles, 'Dirname': dirname}})
