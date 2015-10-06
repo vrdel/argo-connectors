@@ -28,7 +28,7 @@ class Global:
                                     raise OSError(errno.ENOENT, optget)
                                 options.update({(sect+opt).lower(): optget})
         except ConfigParser.NoOptionError as e:
-            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+            self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
             self.logger.error("No section '%s' defined" % (e.args[0]))
@@ -67,7 +67,7 @@ class PoemConf:
                                         self.options.update({(section+o).lower(): optget})
 
         except ConfigParser.NoOptionError as e:
-            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+            self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
             self.logger.error("No section '%s' defined" % (e.args[0]))
@@ -165,7 +165,7 @@ class CustomerConf:
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                 except ConfigParser.NoOptionError as e:
-                    self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+                    self.logger.error(e.message)
                     raise SystemExit(1)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir}})
@@ -182,7 +182,7 @@ class CustomerConf:
                         profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
                     except ConfigParser.NoOptionError as e:
-                        self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+                        self.logger.error(e.message)
                         raise SystemExit(1)
 
                     self._jobs.update({job: {'Profiles': profiles, 'Dirname': dirname}})
