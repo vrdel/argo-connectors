@@ -31,9 +31,14 @@ import os
 import sys
 import xml.dom.minidom
 import copy
+import socket
+from urlparse import urlparse
 
-from argo_egi_connectors.writers import AvroWriter, Logger
+from argo_egi_connectors.writers import AvroWriter
+from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from OpenSSL.SSL import Error as SSLError
 
 logger = None
 
@@ -43,26 +48,19 @@ fileout = 'downtimes_%s.avro'
 
 class GOCDBReader(object):
     def __init__(self, feed):
-        self.gocdbUrl = feed
-        self.gocdbHost = self._getHostFeed(feed)
+        self.gocdbHost = urlparse(feed).netloc
         self.hostKey =  globopts['AuthenticationHostKey'.lower()]
         self.hostCert = globopts['AuthenticationHostCert'.lower()]
         self.argDateFormat = "%Y-%m-%d"
         self.WSDateFormat = "%Y-%m-%d %H:%M"
 
-    def _getHostFeed(self, feed):
-        host = feed
-        if "https://" in feed:
-            host = feed.split("https://")[1]
-            if "/" in host:
-                host = host.split('/')[0]
-        return host
-
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
         try:
+            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
             conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
-            conn.request('GET', '/gocdbpi/private/' + '?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat), end.strftime(self.argDateFormat)))
+            conn.request('GET', '/gocdbpi/private/?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat), end.strftime(self.argDateFormat)))
             res = conn.getresponse()
             if res.status == 200:
                 doc = xml.dom.minidom.parseString(res.read())
@@ -97,13 +95,16 @@ class GOCDBReader(object):
         except AssertionError:
             logger.error("GOCDBReader.getDowntimes():", "Error parsing feed")
             raise SystemExit(1)
+        except(SSLError, socket.error, socket.timeout) as e:
+            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
+            raise SystemExit(1)
 
         return filteredDowntimes
 
 def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
-    certs = {'Authentication': ['HostKey', 'HostCert']}
+    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Downtimes']}
     output = {'Output': ['Downtimes']}
     cglob = Global(certs, schemas, output)
@@ -115,7 +116,7 @@ def main():
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
     parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
     args = parser.parse_args()
 
@@ -124,9 +125,13 @@ def main():
         raise SystemExit(1)
 
     # calculate start and end times
-    start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
-    end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
-    timestamp = start.strftime('%Y_%m_%d')
+    try:
+        start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+        end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+        timestamp = start.strftime('%Y_%m_%d')
+    except ValueError as e:
+        logger.error(e)
+        raise SystemExit(1)
     start = start.replace(hour=0, minute=0, second=0)
     end = end.replace(hour=23, minute=59, second=59)
 
@@ -144,7 +149,7 @@ def main():
 
             filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
             avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
-                              dts + dtslegmap, os.path.basename(sys.argv[0]), logger)
+                              dts + dtslegmap, os.path.basename(sys.argv[0]))
             avro.write()
 
 	logger.info('Fetched Date:%s Endpoints:%d' % (args.date[0], len(dts + dtslegmap)))

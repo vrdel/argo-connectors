@@ -1,9 +1,10 @@
 import ConfigParser
 import os, re, errno
-
+from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
     def __init__(self, *args, **kwargs):
+        self.logger = Logger(self.__class__)
         self._args = args
         self._filename = '/etc/argo-egi-connectors/global.conf'
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
@@ -11,7 +12,7 @@ class Global:
     def parse(self):
         config = ConfigParser.ConfigParser()
         if not os.path.exists(self._filename):
-            print self.__class__, 'Could not find %s' % self._filename
+            self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
         config.read(self._filename)
         options = {}
@@ -27,15 +28,13 @@ class Global:
                                     raise OSError(errno.ENOENT, optget)
                                 options.update({(sect+opt).lower(): optget})
         except ConfigParser.NoOptionError as e:
-            # TODO: syslog
-            print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
-            # TODO: syslog
-            print self.__class__, "No section '%s' defined" % (e.args[0])
+            self.logger.error("No section '%s' defined" % (e.args[0]))
             raise SystemExit(1)
         except OSError as e:
-            print self.__class__, os.strerror(e.args[0]), e.args[1], optget
+            self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
             raise SystemExit(1)
 
         return options
@@ -44,13 +43,14 @@ class PoemConf:
     options = {}
 
     def __init__(self, *args):
+        self.logger = Logger(self.__class__)
         self._args = args
         self._filename = '/etc/argo-egi-connectors/poem-connector.conf'
 
     def parse(self):
         config = ConfigParser.ConfigParser()
         if not os.path.exists(self._filename):
-            print self.__class__, 'Could not find %s' % self._filename
+            self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
         config.read(self._filename)
 
@@ -67,12 +67,10 @@ class PoemConf:
                                         self.options.update({(section+o).lower(): optget})
 
         except ConfigParser.NoOptionError as e:
-            # TODO: syslog
-            print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
-            # TODO: syslog
-            print self.__class__, "No section '%s' defined" % (e.args[0])
+            self.logger.error("No section '%s' defined" % (e.args[0]))
             raise SystemExit(1)
 
         return self.options
@@ -100,16 +98,14 @@ class PoemConf:
         try:
             return self._get_ngis('PrefilterDataAllNGI'.lower())
         except KeyError as e:
-            # TODO: syslog
-            print self.__class__, "No option %s defined" % e
+            self.logger.error("No option %s defined" % e)
             raise SystemExit(1)
 
     def get_allowedngi(self):
         try:
             return self._get_ngis('PrefilterDataAllowedNGI'.lower())
         except KeyError as e:
-            # TODO: syslog
-            print self.__class__, "No option %s defined" % e
+            self.logger.error("No option %s defined" % e)
             raise SystemExit(1)
 
     def get_servers(self):
@@ -145,6 +141,7 @@ class CustomerConf:
     tenantdir = ''
 
     def __init__(self, caller=None, **kwargs):
+        self.logger = Logger(self.__class__)
         self._filename = '/etc/argo-egi-connectors/customer.conf'
         if not kwargs:
             self._jobattrs = self._defjobattrs[os.path.basename(caller)]
@@ -157,7 +154,7 @@ class CustomerConf:
     def parse(self):
         config = ConfigParser.ConfigParser()
         if not os.path.exists(self._filename):
-            print self.__class__, 'Could not find %s' % self._filename
+            self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
         config.read(self._filename)
 
@@ -168,8 +165,7 @@ class CustomerConf:
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                 except ConfigParser.NoOptionError as e:
-                    # TODO: syslog
-                    print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+                    self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
                     raise SystemExit(1)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir}})
@@ -186,8 +182,7 @@ class CustomerConf:
                         profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
                     except ConfigParser.NoOptionError as e:
-                        # TODO: syslog
-                        print self.__class__, "No option '%s' in section: '%s'" % (e.args[0], e.args[1])
+                        self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
                         raise SystemExit(1)
 
                     self._jobs.update({job: {'Profiles': profiles, 'Dirname': dirname}})
@@ -196,7 +191,7 @@ class CustomerConf:
                             if config.has_option(job, attr):
                                 self._jobs[job].update({attr: config.get(job, attr)})
                 else:
-                    print self.__class__, "Could not find Jobs: %s for customer: %s" % (job, cust)
+                    self.logger.error("Could not find Jobs: %s for customer: %s" % (job, cust))
                     raise SystemExit(1)
 
     def _sect_to_dir(self, sect):
@@ -205,8 +200,7 @@ class CustomerConf:
             assert match != None
             dirname = match.group(1)
         except (AssertionError, KeyError) as e:
-            # TODO: syslog
-            print self.__class__, "Could not get Dirname for %s" % e
+            self.logger.error("Could not get Dirname for %s" % e)
             raise SystemExit(1)
         return dirname
 
@@ -243,7 +237,7 @@ class CustomerConf:
                     os.makedirs(d)
                 except OSError as e:
                     if e.args[0] != errno.EEXIST:
-                        print self.__class__,  os.strerror(e.args[0]), e.args[1], d
+                        self.logger.error('%s %s %s' % os.strerror(e.args[0]), e.args[1], d)
                         raise SystemExit(1)
 
     def get_jobs(self, cust):
@@ -251,8 +245,7 @@ class CustomerConf:
         try:
             jobs = self._cust[cust]['Jobs']
         except KeyError:
-            # TODO: syslog
-            print self.__class__, "Could not get Jobs for %s" % cust
+            self.logger.error("Could not get Jobs for %s" % cust)
             raise SystemExit(1)
         return jobs
 
@@ -268,46 +261,31 @@ class CustomerConf:
     def get_gocdb_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']
 
-    def _get_gocdb_tags(self, job, option):
+    def _get_tags(self, job, option):
         tags = {}
         if option in self._jobs[job].keys():
             tagstr = self._jobs[job][option]
-            for tag in tagstr.split(','):
-                mt = re.match('\s*(\w+)\s*:\s*(\w+)\s*', tag)
-                if mt is not None:
-                    tkey = mt.group(1)
-                    tvalue = mt.group(2)
-                    tags.update({tkey: tvalue})
-                else:
-                    print self.__class__, "Could not parse option %s: %s" % (option, tag)
+            match = re.findall("(\w+)\s*:\s*(\(.*?\))", tagstr)
+            if match is not None:
+                for m in match:
+                    tags.update({m[0]: [e.strip('() ') for e in m[1].split(',')]})
+            match = re.findall('([\w]+)\s*:\s*([\w]+)', tagstr)
+            if match is not None:
+                for m in match:
+                    tags.update({m[0]: m[1]})
+            else:
+                self.logger.error("Could not parse option %s: %s" % (option, tagstr))
+                return {}
         return tags
 
     def get_gocdb_ggtags(self, job):
-        return self._get_gocdb_tags(job, 'TopoSelectGroupOfGroups')
+        return self._get_tags(job, 'TopoSelectGroupOfGroups')
 
     def get_gocdb_getags(self, job):
-        return self._get_gocdb_tags(job, 'TopoSelectGroupOfEndpoints')
+        return self._get_tags(job, 'TopoSelectGroupOfEndpoints')
 
     def get_vo_ggtags(self, job):
-        if 'TopoSelectGroupOfGroups' in self._jobs[job].keys():
-            t = self._jobs[job]['TopoSelectGroupOfGroups']
-            match = re.match("\s*(\w+)\s*:\s*(\(.*\))", t)
-            if match is not None:
-                tkey = match.group(1)
-                tvalue = match.group(2).strip("() ")
-                tvalue = re.split("\s*,\s*", tvalue)
-                return {tkey: tvalue}
-            else:
-                match = re.match("\s*(\w+)\s*:(.*)", t)
-                if match is not None:
-                    tkey = match.group(1)
-                    tvalue = match.group(2).strip()
-                    return {tkey: [tvalue]}
-                else:
-                    print self.__class__, "Could not parse option TopoSelectGroupOfGroups: %s" % t
-                    return {}
-        else:
-            return {}
+        return self._get_tags(job, 'TopoSelectGroupOfGroups')
 
     def _get_toponame(self, job):
         return self._jobs[job]['TopoType']
@@ -326,6 +304,23 @@ class CustomerConf:
             feeds[feedurl] = []
             feeds[feedurl].append((job, cust))
 
+    def get_allspec_scopes(self, caller, name=None):
+        distinct_scopes = set()
+        ggtags, getags = [], []
+        for c in self.get_customers():
+            for job in self.get_jobs(c):
+                if self._get_toponame(job) == name:
+                    gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
+                    ge = self._get_tags(job, 'TopoSelectGroupOfEndpoints')
+                    for g in gg.items() + ge.items():
+                        if 'Scope'.lower() == g[0].lower():
+                            if isinstance(g[1], list):
+                                distinct_scopes.update(g[1])
+                            else:
+                                distinct_scopes.update([g[1]])
+
+        return distinct_scopes
+
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}
         for c in self.get_customers():
@@ -336,7 +331,7 @@ class CustomerConf:
                         if feedurl:
                             self._update_feeds(feeds, feedurl, job, c)
                         elif not feedurl and name == 'VOFeed':
-                            print self.__class__, "Could not get VO TopoFeed for job %s" % job
+                            self.logger.error("Could not get VO TopoFeed for job %s" % job)
                             raise SystemExit(1)
                         else:
                             feedurl = deffeed

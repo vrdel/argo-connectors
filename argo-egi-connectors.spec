@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.4.3
-Release: 3%{?dist}
+Version: 1.4.4
+Release: 1%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -11,6 +11,7 @@ Vendor: SRCE <dvrcic@srce.hr, lgjenero@gmail.com>
 Obsoletes: ar-sync
 Prefix: %{_prefix}
 Requires: avro
+Requires: pyOpenSSL
 Source0: %{name}-%{version}.tar.gz
 
 BuildArch: noarch
@@ -45,6 +46,21 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Fri Oct 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-1%{?dist}
+- filter SRM endpoints too
+- refactored use of logging
+- connectors can verify server certificate
+  https://github.com/ARGOeu/ARGO/issues/153
+- report correct number of fetched endpoints even if SRM endpoints were being filtered
+- connectors handle help argument and describe basic info and usage
+  https://github.com/ARGOeu/ARGO/issues/169
+- removed hardcoded scopes and grab them dynamically from config
+  https://github.com/ARGOeu/ARGO/issues/168
+- report config parser errors via logger
+- downtimes connector complain if wrong date specified
+- remove notion of default scope
+- doc moved to repo
+- updated doc with server's cert validate options
 * Wed Aug 19 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.3-3%{?dist}
 - fix exception in case of returned HTTP 500 for other connectors
 * Sat Aug 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.3-2%{?dist}
