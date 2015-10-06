@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
-* Fri 02-10-2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-1%{?dist}
+* Fri Oct 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-1%{?dist}
 - filter SRM endpoints too
 - refactored use of logging
 - connectors can verify server certificate
