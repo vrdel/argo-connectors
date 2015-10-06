@@ -46,7 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
-* Fri Oct 6 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-2%{?dist}
+* Wed Oct 7 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-3%{?dist}
+- grab all distinct scopes for feed
+* Tue Oct 6 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-2%{?dist}
 - fix initialization of loggers in config parsers
 - backward compatible exception messages
 * Fri Oct 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-1%{?dist}
