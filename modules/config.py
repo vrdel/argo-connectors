@@ -4,7 +4,7 @@ from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
     def __init__(self, *args, **kwargs):
-        self.logger = Logger(self.__class__)
+        self.logger = Logger(str(self.__class__))
         self._args = args
         self._filename = '/etc/argo-egi-connectors/global.conf'
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
@@ -43,7 +43,7 @@ class PoemConf:
     options = {}
 
     def __init__(self, *args):
-        self.logger = Logger(self.__class__)
+        self.logger = Logger(str(self.__class__))
         self._args = args
         self._filename = '/etc/argo-egi-connectors/poem-connector.conf'
 
@@ -141,7 +141,7 @@ class CustomerConf:
     tenantdir = ''
 
     def __init__(self, caller=None, **kwargs):
-        self.logger = Logger(self.__class__)
+        self.logger = Logger(str(self.__class__))
         self._filename = '/etc/argo-egi-connectors/customer.conf'
         if not kwargs:
             self._jobattrs = self._defjobattrs[os.path.basename(caller)]
