@@ -136,11 +136,15 @@ class PoemReader:
         if len(filterProfiles) > 0:
             doFilterProfiles = True
 
+        if not server.startswith('http'):
+            server = 'https://' + server
+
         url = self.poemRequest % (server, vo)
         o = urlparse.urlparse(url, allow_fragments=True)
-        logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
         try:
+            assert o.scheme != '' and o.netloc != '' and o.path != ''
+            logger.info('Server:%s VO:%s' % (o.netloc, vo))
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
                 verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
             conn = httplib.HTTPSConnection(o.netloc, 443,
@@ -162,6 +166,9 @@ class PoemReader:
                 raise SystemExit(1)
         except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
             logger.error('Connection error %s - %s' % (server, errmsg_from_excp(e)))
+            raise SystemExit(1)
+        except AssertionError:
+            logger.error('Invalid POEM PI URL: %s' % (url))
             raise SystemExit(1)
 
         return validProfiles
