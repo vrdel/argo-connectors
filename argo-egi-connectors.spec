@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.4
-Release: 2%{?dist}
+Release: 3%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
