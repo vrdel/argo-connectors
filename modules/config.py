@@ -237,7 +237,7 @@ class CustomerConf:
                     os.makedirs(d)
                 except OSError as e:
                     if e.args[0] != errno.EEXIST:
-                        self.logger.error('%s %s %s' % os.strerror(e.args[0]), e.args[1], d)
+                        self.logger.error('%s %s %s' % (os.strerror(e.args[0]), e.args[1], d))
                         raise SystemExit(1)
 
     def get_jobs(self, cust):

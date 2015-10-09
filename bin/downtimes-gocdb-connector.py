@@ -30,6 +30,7 @@ import httplib
 import os
 import sys
 import xml.dom.minidom
+from xml.parsers.expat import ExpatError
 import copy
 import socket
 from urlparse import urlparse
@@ -48,7 +49,9 @@ fileout = 'downtimes_%s.avro'
 
 class GOCDBReader(object):
     def __init__(self, feed):
-        self.gocdbHost = urlparse(feed).netloc
+        self._o = urlparse(feed)
+        self._parsed = True
+        self.gocdbHost = self._o.netloc
         self.hostKey =  globopts['AuthenticationHostKey'.lower()]
         self.hostCert = globopts['AuthenticationHostCert'.lower()]
         self.argDateFormat = "%Y-%m-%d"
@@ -65,7 +68,6 @@ class GOCDBReader(object):
             if res.status == 200:
                 doc = xml.dom.minidom.parseString(res.read())
                 downtimes = doc.getElementsByTagName('DOWNTIME')
-                assert len(downtimes) > 0
                 for downtime in downtimes:
                     classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
                     hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
@@ -92,14 +94,15 @@ class GOCDBReader(object):
             else:
                 logger.error('GOCDBReader.getDowntimes(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
-        except AssertionError:
-            logger.error("GOCDBReader.getDowntimes():", "Error parsing feed")
-            raise SystemExit(1)
+        except ExpatError as e:
+            logger.error("GOCDBReader.getDowntimes(): Error parsing feed %s - %s" %
+                         (self._o.scheme + '://' + self._o.netloc + '/gocdbpi/private/?method=get_downtime', e.message))
+            self._parsed = False
         except(SSLError, socket.error, socket.timeout) as e:
             logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
             raise SystemExit(1)
 
-        return filteredDowntimes
+        return filteredDowntimes, self._parsed
 
 def main():
     global logger
@@ -137,21 +140,22 @@ def main():
 
     for feed, jobcust in feeds.items():
         gocdb = GOCDBReader(feed)
-        dts = gocdb.getDowntimes(start, end)
+        dts, parsed = gocdb.getDowntimes(start, end)
 
         dtslegmap = []
-        for dt in dts:
-            if dt['service'] in LegMapServType.keys():
-                dtslegmap.append(copy.copy(dt))
-                dtslegmap[-1]['service'] = LegMapServType[dt['service']]
-        for job, cust in jobcust:
-            jobdir = confcust.get_fulldir(cust, job)
+        if parsed:
+            for dt in dts:
+                if dt['service'] in LegMapServType.keys():
+                    dtslegmap.append(copy.copy(dt))
+                    dtslegmap[-1]['service'] = LegMapServType[dt['service']]
+            for job, cust in jobcust:
+                jobdir = confcust.get_fulldir(cust, job)
 
-            filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
-            avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
-                              dts + dtslegmap, os.path.basename(sys.argv[0]))
-            avro.write()
+                filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
+                avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
+                                dts + dtslegmap, os.path.basename(sys.argv[0]))
+                avro.write()
 
-	logger.info('Fetched Date:%s Endpoints:%d' % (args.date[0], len(dts + dtslegmap)))
+            logger.info('Jobs:%d Feed:%s Fetched Date:%s Endpoints:%d' % (len(jobcust), feed, args.date[0], len(dts + dtslegmap)))
 
 main()

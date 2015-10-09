@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.4
-Release: 4%{?dist}
+Release: 5%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Thu Oct 8 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-5%{?dist}
+- bugfix in case of no downtimes defined for given date
+  https://github.com/ARGOeu/ARGO/issues/170
 * Wed Oct 7 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-4%{?dist}
 - poem-connector urlparse bugfix
 * Wed Oct 7 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-3%{?dist}
