@@ -156,8 +156,8 @@ class PoemReader:
             if res.status == 200:
                 json_data = json.loads(res.read())
                 for profile in json_data[0]['profiles']:
-                    if not doFilterProfiles or (profile['namespace']+'.'+profile['name']).upper() in filterProfiles:
-                        validProfiles[(profile['namespace']+'.'+profile['name']).upper()] = profile
+                    if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
+                        validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
             elif res.status in (301, 302):
                 logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
 
