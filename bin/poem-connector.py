@@ -43,6 +43,7 @@ from OpenSSL.SSL import Error as SSLError
 logger = None
 globopts, poemopts = {}, {}
 cpoem = None
+custname = ''
 
 class PoemReader:
     def __init__(self):
@@ -255,6 +256,8 @@ def main():
         poempref = PrefilterPoem(confcust.get_custdir(cust))
         poempref.writeProfiles(ps, timestamp)
 
+        custname = confcust.get_custname(cust)
+
         for job in confcust.get_jobs(cust):
             jobdir = confcust.get_fulldir(cust, job)
 
@@ -266,6 +269,6 @@ def main():
                               lfprofiles, os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
+            logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
 
 main()

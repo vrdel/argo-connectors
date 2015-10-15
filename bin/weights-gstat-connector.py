@@ -165,6 +165,7 @@ def main():
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
+            custname = confcust.get_custname(cust)
 
             filename = jobdir + globopts['OutputWeights'.lower()] % timestamp
             datawr = gen_outdict(newData)
@@ -176,6 +177,6 @@ def main():
                 avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
                 avro.write()
 
-        logger.info('Jobs:%d Sites:%d' % (len(jobcust), len(datawr)))
+        logger.info('Customer:%s Jobs:%d Sites:%d' % (custname, len(jobcust), len(datawr)))
 
 main()

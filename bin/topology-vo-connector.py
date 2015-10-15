@@ -141,6 +141,8 @@ def main():
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
 
+            custname = confcust.get_custname(cust)
+
             filtlgroups = vo.get_groupgroups()
             numgg = len(filtlgroups)
             tags = confcust.get_vo_ggtags(job)
@@ -170,9 +172,9 @@ def main():
                                                                                        os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))
+            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))
             if tags:
-                selstr = 'Job:%s Selected ' % (job)
+                selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selgg = ''
                 for key, value in tags.items():
                     if isinstance(value, list):

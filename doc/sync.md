@@ -27,7 +27,7 @@ Installation narrows down to simply installing the package:
 	
 	`yum -y install argo-egi-connectors`
 
-**`Components require avro package to be installed/available.`**
+**`Components require avro and pyOpenSSL packages to be installed/available.`**
 
 
 | File Types | Destination |
@@ -99,6 +99,7 @@ This configuration file lists all customers, their jobs and appropriate attribut
 Job folders for each customer are placed under the customer's `OutputDir` directory and appropriate directory names are read from the config file. Segment of configuration file that reflects the creation of directories is for example: 
 
 	[CUSTOMER_C1]
+	Name = C1Name1
 	OutputDir = /var/lib/argo-connectors/Customer1
 	Jobs = JOB_Test1, JOB_Test2
 
@@ -106,10 +107,11 @@ Job folders for each customer are placed under the customer's `OutputDir` direct
 	Dirname = C1Testing1
 
 	[JOB_Test2]
-	Dirname = C2Testing2
+	Dirname = C1Testing2
 
 
 	[CUSTOMER_C2]
+	Name = C2Name2
 	OutputDir = /var/lib/argo-connectors/Customer2
 	Jobs = Job_Test3, JOB_Test4
 
@@ -126,7 +128,7 @@ This will result in the following jobs directories:
 	/var/lib/argo-connectors/Customer2/C2Testing1
 	/var/lib/argo-connectors/Customer2/C2Testing2
 
-So there are two customers, C1 and C2, each one identified with its `[CUSTOMER_*]` section. `CUSTOMER_` is a section keyword and must be specified when one wants to define a new customer. Each customer has two mandatory options: `OutputDir` and `Jobs`. With `OutputDir` option, customer defines his directory where he'll write job folders and other data. Customer must also specify set of jobs listed in `Jobs` options since it can not exist without associated jobs. The name of the job folder is specified with `Dirname` option of the certain job so `JOB\_Test1`, identified with `[JOB_Test1]` section, will be named `C1Testing1` and it will be placed under customer's `/var/lib/argo-connectors/Customer1/` directory. Each component will firstly try to create described directory structure if it doesn't exist yet. Only afterward it will write its data. 
+So there are two customers, C1 and C2, each one identified with its `[CUSTOMER_*]` section. `CUSTOMER_` is a section keyword and must be specified when one wants to define a new customer. Each customer has three mandatory options: `Name`, `OutputDir` and `Jobs`. With `OutputDir` option, customer defines his directory where he'll write job folders and other data. Customer must also specify set of jobs listed in `Jobs` options since it can not exist without associated jobs. The name of the job folder is specified with `Dirname` option of the certain job so `JOB\_Test1`, identified with `[JOB_Test1]` section, will be named `C1Testing1` and it will be placed under customer's `/var/lib/argo-connectors/Customer1/` directory. Each component will firstly try to create described directory structure if it doesn't exist yet. Only afterward it will write its data.
 
 Every connector reads this configuration file because it needs to find out how many customers are there and what are theirs customer and job directory names where they will lay down its files. So `poem-connector.py`, `downtimes-gocdb-connector.py`, `weights-gstat-connector.py`, all of them are writing theirs data in each job directory for each customer. Topology for EGI (fetched from GOCDB) is different than one for the VO so exceptions to this are `topology-gocdb-connector.py` and `topology-vo-connector.py`. They are writing data for a job based on the job's topology type specified with `TopoType` attribute.
 
