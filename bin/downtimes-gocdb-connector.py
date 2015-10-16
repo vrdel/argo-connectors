@@ -150,12 +150,13 @@ def main():
                     dtslegmap[-1]['service'] = LegMapServType[dt['service']]
             for job, cust in jobcust:
                 jobdir = confcust.get_fulldir(cust, job)
+                custname = confcust.get_custname(cust)
 
                 filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
                 avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                                 dts + dtslegmap, os.path.basename(sys.argv[0]))
                 avro.write()
 
-            logger.info('Jobs:%d Feed:%s Fetched Date:%s Endpoints:%d' % (len(jobcust), feed, args.date[0], len(dts + dtslegmap)))
+            logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (custname, len(jobcust), args.date[0], len(dts + dtslegmap)))
 
 main()

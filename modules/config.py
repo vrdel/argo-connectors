@@ -164,11 +164,12 @@ class CustomerConf:
                     custjobs = config.get(section, 'Jobs').split(',')
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
+                    custname = config.get(section, 'Name')
                 except ConfigParser.NoOptionError as e:
                     self.logger.error(e.message)
                     raise SystemExit(1)
 
-                self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir}})
+                self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -226,6 +227,9 @@ class CustomerConf:
 
     def get_custdir(self, cust):
         return self._dir_from_sect(cust, self._cust)
+
+    def get_custname(self, cust):
+        return self._cust[cust]['Name']
 
     def make_dirstruct(self):
         dirs = []

@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.4
-Release: 5%{?dist}
+Release: 6%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -46,6 +46,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
+* Thu Oct 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-6%{?dist}
+- bugfix handling lowercase defined POEM profiles
+- remove hardcoded customer name for topology-gocdb-connector
+  https://github.com/ARGOeu/ARGO/issues/173
+- guide updated with new configuration option for customer
 * Thu Oct 8 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-5%{?dist}
 - bugfix in case of no downtimes defined for given date
   https://github.com/ARGOeu/ARGO/issues/170

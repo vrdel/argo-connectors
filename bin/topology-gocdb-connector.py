@@ -46,6 +46,7 @@ LegMapServType = {'SRM' : 'SRMv2'}
 fetchtype = ''
 
 globopts = {}
+custname = ''
 logger = None
 
 class GOCDBReader:
@@ -99,7 +100,7 @@ class GOCDBReader:
             for d in gl:
                 g = dict()
                 g['type'] = 'PROJECT'
-                g['group'] = 'EGI'
+                g['group'] = custname
                 g['subgroup'] = d['name']
                 g['tags'] = {'monitored' : 1 if d['monitored'] == 'Y' else 0,
                             'scope' : d['scope']}
@@ -308,6 +309,8 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             global fetchtype
             fetchtype = confcust.get_gocdb_fetchtype(job)
+            global custname
+            custname = confcust.get_custname(cust)
 
             if fetchtype == 'ServiceGroups':
                 group_endpoints = gocdb.getGroupOfServices()
@@ -341,9 +344,9 @@ def main():
                             group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + numgeleg) +' Groups(%s):%d' % (fetchtype, numgg))
+            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge + numgeleg) +' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
-                selstr = 'Job:%s Selected ' % (job)
+                selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selge, selgg = '', ''
                 if getags:
                     for key, value in getags.items():
