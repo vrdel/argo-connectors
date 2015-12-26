@@ -62,13 +62,13 @@ class GstatReader:
                 conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert)
             else:
                 conn = httplib.HTTPConnection(o.netloc)
+            conn.request('GET', o.path)
+            res = conn.getresponse()
 
         except(SSLError, socket.error, socket.timeout) as e:
             logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
             raise SystemExit(1)
 
-        conn.request('GET', o.path)
-        res = conn.getresponse()
         if res.status == 200:
             json_data = json.loads(res.read())
             weights = dict()

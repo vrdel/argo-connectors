@@ -66,12 +66,13 @@ class VOReader:
                                             globopts['AuthenticationHostCert'.lower()])
             elif o.scheme == 'http':
                 conn = httplib.HTTPConnection(o.netloc)
+            conn.request('GET', o.path)
+            res = conn.getresponse()
+
         except(SSLError, socket.error, socket.timeout, httplib.HTTPConnection) as e:
             logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
             raise SystemExit(1)
 
-        conn.request('GET', o.path)
-        res = conn.getresponse()
         try:
             if res.status == 200:
                 dom = xml.dom.minidom.parseString(res.read())
