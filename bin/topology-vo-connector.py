@@ -63,9 +63,11 @@ class VOReader:
                     verify_cert(os.path.basename(sys.argv[0]), o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
                 conn = httplib.HTTPSConnection(o.netloc, 443,
                                             globopts['AuthenticationHostKey'.lower()],
-                                            globopts['AuthenticationHostCert'.lower()])
+                                            globopts['AuthenticationHostCert'.lower()],
+                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
             elif o.scheme == 'http':
-                conn = httplib.HTTPConnection(o.netloc)
+                conn = httplib.HTTPConnection(o.netloc,
+                                              timeout=int(globopts['ConnectionTimeout'.lower()]))
             conn.request('GET', o.path)
             res = conn.getresponse()
 
@@ -125,7 +127,8 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    cglob = Global(certs, schemas, output)
+    conn = {'Connection': ['Timeout']}
+    cglob = Global(certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 

@@ -162,8 +162,10 @@ class GOCDBReader:
     def getServiceEndpoints(self, serviceList, scope):
         try:
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
+                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert,
+                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
             conn.request('GET', '/gocdbpi/private/?method=get_service_endpoint' + scope)
             res = conn.getresponse()
             if res.status == 200:
@@ -197,8 +199,10 @@ class GOCDBReader:
     def getSitesInternal(self, siteList, scope):
         try:
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
+                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert,
+                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
             conn.request('GET', '/gocdbpi/private/?method=get_site'+scope)
             res = conn.getresponse()
             if res.status == 200:
@@ -226,8 +230,10 @@ class GOCDBReader:
     def getServiceGroups(self, groupList, scope):
         try:
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
+                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert,
+                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
             conn.request('GET', '/gocdbpi/private/?method=get_service_group' + scope)
             res = conn.getresponse()
             if res.status == 200:
@@ -290,7 +296,8 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    cglob = Global(certs, schemas, output)
+    conn = {'Connection': ['Timeout']}
+    cglob = Global(certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 

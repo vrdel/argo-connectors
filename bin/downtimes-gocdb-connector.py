@@ -61,8 +61,10 @@ class GOCDBReader(object):
         filteredDowntimes = list()
         try:
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
+                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
+                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert,
+                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
             conn.request('GET', '/gocdbpi/private/?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat), end.strftime(self.argDateFormat)))
             res = conn.getresponse()
             if res.status == 200:
@@ -110,7 +112,8 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Downtimes']}
     output = {'Output': ['Downtimes']}
-    cglob = Global(certs, schemas, output)
+    conn = {'Connection': ['Timeout']}
+    cglob = Global(certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 

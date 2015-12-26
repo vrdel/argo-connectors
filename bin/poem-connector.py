@@ -147,10 +147,12 @@ class PoemReader:
             assert o.scheme != '' and o.netloc != '' and o.path != ''
             logger.info('Server:%s VO:%s' % (o.netloc, vo))
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
+                verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
+                            timeout=int(globopts['ConnectionTimeout'.lower()]))
             conn = httplib.HTTPSConnection(o.netloc, 443,
                                            globopts['AuthenticationHostKey'.lower()],
-                                           globopts['AuthenticationHostCert'.lower()])
+                                           globopts['AuthenticationHostCert'.lower()],
+                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
             conn.request('GET', o.path + '?' + o.query)
 
             res = conn.getresponse()
@@ -232,6 +234,7 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath']}
     schemas = {'AvroSchemas': ['Poem']}
     output = {'Output': ['Poem']}
+    conn = {'Connection': ['Timeout']}
     cglob = Global(certs, schemas, output)
     global globopts
     globopts = cglob.parse()

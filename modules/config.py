@@ -20,6 +20,8 @@ class Global:
         try:
             for arg in self._args:
                 for sect, opts in arg.items():
+                    if sect not in config.sections():
+                        raise ConfigParser.NoSectionError(sect.lower())
                     for opt in opts:
                         for section in config.sections():
                             if section.lower().startswith(sect.lower()):

@@ -54,17 +54,18 @@ class GstatReader:
     def getWeights(self):
         # load server data
         o = urlparse(self.GstatRequest)
+        if o.scheme == 'https':
+            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
+                            int(globopts['ConnectionTimeout'.lower()]))
+            conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert,
+                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+        else:
+            conn = httplib.HTTPConnection(o.netloc, timeout=int(globopts['ConnectionTimeout'.lower()]))
 
         try:
-            if o.scheme == 'https':
-                if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                    verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
-                conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert)
-            else:
-                conn = httplib.HTTPConnection(o.netloc)
             conn.request('GET', o.path)
             res = conn.getresponse()
-
         except(SSLError, socket.error, socket.timeout) as e:
             logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
             raise SystemExit(1)
@@ -77,6 +78,9 @@ class GstatReader:
                 val = site['HEPSPEC06']
                 weights[key] = val
             return weights
+        else:
+            logger.error('GStatReader.getWeights(): HTTP response: %s %s' % (str(res.status), res.reason))
+            raise SystemExit(1)
 
 def gen_outdict(data):
     datawr = []
@@ -110,7 +114,8 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Weights']}
     output = {'Output': ['Weights']}
-    cglob = Global(schemas, output, certs)
+    conn = {'Connection': ['Timeout']}
+    cglob = Global(schemas, output, certs, conn)
     global globopts
     globopts = cglob.parse()
 
