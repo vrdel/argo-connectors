@@ -3,10 +3,10 @@ import os, re, errno
 from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, confpath, *args, **kwargs):
         self.logger = Logger(str(self.__class__))
         self._args = args
-        self._filename = '/etc/argo-egi-connectors/global.conf'
+        self._filename = '/etc/argo-egi-connectors/global.conf' if not confpath else confpath
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
 
     def parse(self):
@@ -44,10 +44,10 @@ class Global:
 class PoemConf:
     options = {}
 
-    def __init__(self, *args):
+    def __init__(self, confpath, *args):
         self.logger = Logger(str(self.__class__))
         self._args = args
-        self._filename = '/etc/argo-egi-connectors/poem-connector.conf'
+        self._filename = '/etc/argo-egi-connectors/poem-connector.conf' if not confpath else confpath
 
     def parse(self):
         config = ConfigParser.ConfigParser()
@@ -120,12 +120,6 @@ class PoemConf:
                                     re.split('\s*,\s*', self.options[key+'vo'])})
         return poemservers
 
-class PrefilterConf(Global):
-    def __init__(self, *args, **kwargs):
-        self._args = args
-        self._filename = '/etc/argo-egi-connectors/prefilter-egi.conf'
-        self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
-
 class CustomerConf:
     _custattrs = None
     _cust = {}
@@ -142,9 +136,9 @@ class CustomerConf:
     _jobs, _jobattrs = {}, None
     tenantdir = ''
 
-    def __init__(self, caller=None, **kwargs):
+    def __init__(self, caller, confpath, **kwargs):
         self.logger = Logger(str(self.__class__))
-        self._filename = '/etc/argo-egi-connectors/customer.conf'
+        self._filename = '/etc/argo-egi-connectors/customer.conf' if not confpath else confpath
         if not kwargs:
             self._jobattrs = self._defjobattrs[os.path.basename(caller)]
         else:

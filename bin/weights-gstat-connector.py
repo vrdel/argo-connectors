@@ -106,6 +106,8 @@ def loadOldData(directory, timestamp):
 def main():
     parser = argparse.ArgumentParser(description="""Fetch weights information from Gstat provider
                                                     for every job listed in customer.conf""")
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
     global logger
@@ -115,11 +117,13 @@ def main():
     schemas = {'AvroSchemas': ['Weights']}
     output = {'Output': ['Weights']}
     conn = {'Connection': ['Timeout']}
-    cglob = Global(schemas, output, certs, conn)
+    confpath = args.gloconf[0] if args.gloconf else None
+    cglob = Global(confpath, schemas, output, certs, conn)
     global globopts
     globopts = cglob.parse()
 
-    confcust = CustomerConf(sys.argv[0])
+    confpath = args.custconf[0] if args.custconf else None
+    confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='http://gstat2.grid.sinica.edu.tw/gstat/summary/json/')
@@ -182,6 +186,9 @@ def main():
                 avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
                 avro.write()
 
-        logger.info('Customer:%s Jobs:%d Sites:%d' % (custname, len(jobcust), len(datawr)))
+        custs = set([cust for job, cust in jobcust])
+        for cust in custs:
+            jobs = [job for job, lcust in jobcust if cust == lcust]
+            logger.info('Customer:%s Jobs:%d Sites:%d' % (cust, len(jobs), len(datawr)))
 
 main()

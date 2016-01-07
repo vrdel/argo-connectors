@@ -107,24 +107,29 @@ class GOCDBReader(object):
         return filteredDowntimes, self._parsed
 
 def main():
+    parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
+    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
+    args = parser.parse_args()
+
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Downtimes']}
     output = {'Output': ['Downtimes']}
     conn = {'Connection': ['Timeout']}
-    cglob = Global(certs, schemas, output, conn)
+    confpath = args.gloconf[0] if args.gloconf else None
+    cglob = Global(confpath, certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 
-    confcust = CustomerConf(sys.argv[0])
+    confpath = args.custconf[0] if args.custconf else None
+    confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
-    parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
-    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
-    args = parser.parse_args()
 
     if len(args.date) == 0:
         print parser.print_help()
@@ -160,6 +165,9 @@ def main():
                                 dts + dtslegmap, os.path.basename(sys.argv[0]))
                 avro.write()
 
-            logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (custname, len(jobcust), args.date[0], len(dts + dtslegmap)))
+            custs = set([cust for job, cust in jobcust])
+            for cust in custs:
+                jobs = [job for job, lcust in jobcust if cust == lcust]
+                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts + dtslegmap)))
 
 main()

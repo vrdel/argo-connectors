@@ -193,7 +193,7 @@ class GOCDBReader:
             logger.error("GOCDBReader.getServiceEndpoints(): Error parsing feed")
             raise SystemExit(1)
         except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
+            logger.error('GOCDBReader.getServiceEndpoints(): Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
             raise SystemExit(1)
 
     def getSitesInternal(self, siteList, scope):
@@ -285,8 +285,10 @@ def filter_by_tags(tags, listofelem):
 
 def main():
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
-                                                    from GOCDB for every job listed in customer.conf and write them
+                                                    from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
 
@@ -297,11 +299,13 @@ def main():
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     conn = {'Connection': ['Timeout']}
-    cglob = Global(certs, schemas, output, conn)
+    confpath = args.gloconf[0] if args.gloconf else None
+    cglob = Global(confpath, certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 
-    confcust = CustomerConf(sys.argv[0])
+    confpath = args.custconf[0] if args.custconf else None
+    confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
