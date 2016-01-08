@@ -57,22 +57,33 @@ class VOReader:
 
     def _parse(self):
         o = urlparse(self.feed)
+        i = 1
         try:
-            if o.scheme == 'https':
-                if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                    verify_cert(os.path.basename(sys.argv[0]), o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
-                conn = httplib.HTTPSConnection(o.netloc, 443,
-                                            globopts['AuthenticationHostKey'.lower()],
-                                            globopts['AuthenticationHostCert'.lower()],
-                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
-            elif o.scheme == 'http':
-                conn = httplib.HTTPConnection(o.netloc,
-                                              timeout=int(globopts['ConnectionTimeout'.lower()]))
-            conn.request('GET', o.path)
-            res = conn.getresponse()
+            while i <= int(globopts['ConnectionRetry'.lower()]):
+                try:
+                    if o.scheme == 'https':
+                        if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                            verify_cert(os.path.basename(sys.argv[0]), o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
+                        conn = httplib.HTTPSConnection(o.netloc, 443,
+                                                    globopts['AuthenticationHostKey'.lower()],
+                                                    globopts['AuthenticationHostCert'.lower()],
+                                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    elif o.scheme == 'http':
+                        conn = httplib.HTTPConnection(o.netloc,
+                                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    conn.request('GET', o.path)
+                    res = conn.getresponse()
+
+                except(SSLError, socket.error, socket.timeout, httplib.HTTPConnection) as e:
+                    logger.warn('Try:%d Connection error %s - %s' % (i, o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
+                    if i == int(globopts['ConnectionRetry'.lower()]):
+                        raise e
+                    else:
+                        pass
+                i += 1
 
         except(SSLError, socket.error, socket.timeout, httplib.HTTPConnection) as e:
-            logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
+            logger.error('Connection error %s - %s' % (o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
             raise SystemExit(1)
 
         try:
@@ -103,7 +114,7 @@ class VOReader:
                         ge['type'] = 'SITES'
                         self.lendpoints.append(ge)
             else:
-                logger.error('VOReader._parse(): Connection failed %s, HTTP response: %s %s' % (o.netloc, str(res.status), res.reason))
+                logger.error('VOReader._parse(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
             logger.error("Error parsing VO-feed %s" % (o.netloc + o.path))
@@ -119,6 +130,8 @@ class VOReader:
 def main():
     parser = argparse.ArgumentParser(description="""Fetch wanted entities from VO feed provided in customer.conf
                                                     and write them in an appropriate place""")
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
     global logger
@@ -127,12 +140,14 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    conn = {'Connection': ['Timeout']}
-    cglob = Global(certs, schemas, output, conn)
+    conn = {'Connection': ['Timeout', 'Retry']}
+    confpath = args.gloconf[0] if args.gloconf else None
+    cglob = Global(confpath, certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 
-    confcust = CustomerConf(sys.argv[0])
+    confpath = args.custconf[0] if args.custconf else None
+    confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'VOFeed')

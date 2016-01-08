@@ -69,25 +69,37 @@ class PoemReader:
                 url = 'https://' + url
 
             o = urlparse.urlparse(url, allow_fragments=True)
+            i = 1
             try:
-                if o.scheme.startswith('https'):
-                    if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                        verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
-                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
-                    conn = httplib.HTTPSConnection(o.netloc, 443,
-                                                   globopts['AuthenticationHostKey'.lower()],
-                                                   globopts['AuthenticationHostCert'.lower()],
-                                                   timeout=int(globopts['ConnectionTimeout'.lower()]))
-                else:
-                    conn = httplib.HTTPConnection(o.netloc, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
+                while i <= int(globopts['ConnectionRetry'.lower()]):
+                    try:
+                        if o.scheme.startswith('https'):
+                            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
+                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+                            conn = httplib.HTTPSConnection(o.netloc, 443,
+                                                        globopts['AuthenticationHostKey'.lower()],
+                                                        globopts['AuthenticationHostCert'.lower()],
+                                                        timeout=int(globopts['ConnectionTimeout'.lower()]))
+                        else:
+                            conn = httplib.HTTPConnection(o.netloc, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
 
-                conn.request('GET', o.path)
-                res = conn.getresponse()
-                if res.status == 200:
-                    urlLines = res.read().splitlines()
-                else:
-                    logger.error('PoemReader.getProfiles(): HTTP response: %s %s' % (str(res.status), res.reason))
-                    raise SystemExit(1)
+                        conn.request('GET', o.path)
+                        res = conn.getresponse()
+                        if res.status == 200:
+                            urlLines = res.read().splitlines()
+                            break
+                        else:
+                            logger.error('PoemReader.getProfiles(): HTTP response: %s %s' % (str(res.status), res.reason))
+                            raise SystemExit(1)
+                    except(SSLError, socket.error, socket.timeout) as e:
+                        logger.warn('PoemReader.getProfiles(): Try:%d Connection error %s - %s' % (i, o.scheme +'://' + o.netloc, errmsg_from_excp(e)))
+                        if i == int(globopts['ConnectionRetry'.lower()]):
+                            raise e
+                        else:
+                            pass
+                    i += 1
+
             except(SSLError, socket.error, socket.timeout) as e:
                 logger.error('PoemReader.getProfiles(): Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
                 raise SystemExit(1)
@@ -172,36 +184,50 @@ class PoemReader:
 
         try:
             assert o.scheme != '' and o.netloc != '' and o.path != ''
-            logger.info('Server:%s VO:%s' % (o.netloc, vo))
-            if o.scheme.startswith('https'):
-                if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                    verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
-                                timeout=int(globopts['ConnectionTimeout'.lower()]))
-                conn = httplib.HTTPSConnection(o.netloc, 443,
-                                            globopts['AuthenticationHostKey'.lower()],
-                                            globopts['AuthenticationHostCert'.lower()],
-                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
-            else:
-                conn = httplib.HTTPConnection(o.netloc, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
-
-            conn.request('GET', o.path + '?' + o.query)
-            res = conn.getresponse()
-            if res.status == 200:
-                json_data = json.loads(res.read())
-                for profile in json_data[0]['profiles']:
-                    if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
-                        validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
-            elif res.status in (301, 302):
-                logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
-
-            else:
-                logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
-                raise SystemExit(1)
-        except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
-            logger.error('Connection error %s - %s' % (server, errmsg_from_excp(e)))
-            raise SystemExit(1)
         except AssertionError:
             logger.error('Invalid POEM PI URL: %s' % (url))
+            raise SystemExit(1)
+
+        logger.info('Server:%s VO:%s' % (o.netloc, vo))
+        i = 1
+        try:
+            while i <= int(globopts['ConnectionRetry'.lower()]):
+                try:
+                    if o.scheme.startswith('https'):
+                        if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                            verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
+                                        timeout=int(globopts['ConnectionTimeout'.lower()]))
+                        conn = httplib.HTTPSConnection(o.netloc, 443,
+                                                    globopts['AuthenticationHostKey'.lower()],
+                                                    globopts['AuthenticationHostCert'.lower()],
+                                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    else:
+                        conn = httplib.HTTPConnection(o.netloc, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
+
+                    conn.request('GET', o.path + '?' + o.query)
+                    res = conn.getresponse()
+                    if res.status == 200:
+                        json_data = json.loads(res.read())
+                        for profile in json_data[0]['profiles']:
+                            if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
+                                validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
+                        break
+                    elif res.status in (301, 302):
+                        logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
+
+                    else:
+                        logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
+                        raise SystemExit(1)
+                except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
+                    logger.warn('POEMReader.loadProfilesFromServer(): Connection error %s - %s' % (o.scheme + '://' + server, errmsg_from_excp(e)))
+                    if i == int(globopts['ConnectionRetry'.lower()]):
+                        raise e
+                    else:
+                        pass
+                i += 1
+
+        except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
+            logger.error('Connection error %s - %s' % (server, errmsg_from_excp(e)))
             raise SystemExit(1)
 
         return validProfiles
@@ -270,7 +296,7 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath']}
     schemas = {'AvroSchemas': ['Poem']}
     output = {'Output': ['Poem']}
-    conn = {'Connection': ['Timeout']}
+    conn = {'Connection': ['Timeout', 'Retry']}
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(confpath, certs, schemas, output, conn)
     global globopts

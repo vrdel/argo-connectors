@@ -52,22 +52,31 @@ class GstatReader:
         self.hostCert = globopts['AuthenticationHostCert'.lower()]
 
     def getWeights(self):
-        # load server data
         o = urlparse(self.GstatRequest)
-        if o.scheme == 'https':
-            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
-                            int(globopts['ConnectionTimeout'.lower()]))
-            conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert,
-                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
-        else:
-            conn = httplib.HTTPConnection(o.netloc, timeout=int(globopts['ConnectionTimeout'.lower()]))
 
+        i = 1
         try:
-            conn.request('GET', o.path)
-            res = conn.getresponse()
+            while i <= int(globopts['ConnectionRetry'.lower()]):
+                try:
+                    if o.scheme == 'https':
+                        if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                            verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
+                                        int(globopts['ConnectionTimeout'.lower()]))
+                        conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert,
+                                                        timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    else:
+                        conn = httplib.HTTPConnection(o.netloc, timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    conn.request('GET', o.path)
+                    res = conn.getresponse()
+                except(SSLError, socket.error, socket.timeout) as e:
+                    logger.warn('Try:%d Connection error %s - %s' % (i, o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
+                    if i == int(globopts['ConnectionRetry'.lower()]):
+                        raise e
+                    else:
+                        pass
+                i += 1
         except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
+            logger.error('Connection error %s - %s' % (o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
             raise SystemExit(1)
 
         if res.status == 200:
@@ -116,7 +125,7 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Weights']}
     output = {'Output': ['Weights']}
-    conn = {'Connection': ['Timeout']}
+    conn = {'Connection': ['Timeout', 'Retry']}
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(confpath, schemas, output, certs, conn)
     global globopts

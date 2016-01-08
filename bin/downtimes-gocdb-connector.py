@@ -59,49 +59,62 @@ class GOCDBReader(object):
 
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
+        i = 1
         try:
-            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
-                            timeout=int(globopts['ConnectionTimeout'.lower()]))
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert,
-                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
-            conn.request('GET', '/gocdbpi/private/?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat), end.strftime(self.argDateFormat)))
-            res = conn.getresponse()
-            if res.status == 200:
-                doc = xml.dom.minidom.parseString(res.read())
-                downtimes = doc.getElementsByTagName('DOWNTIME')
-                for downtime in downtimes:
-                    classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-                    hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                    serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                    startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-                    endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
-                    severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
+            while i <= int(globopts['ConnectionRetry'.lower()]):
+                try:
+                    if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                        verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
+                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert,
+                                                timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    conn.request('GET', '/gocdbpi/private/?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat), end.strftime(self.argDateFormat)))
+                    res = conn.getresponse()
+                    if res.status == 200:
+                        doc = xml.dom.minidom.parseString(res.read())
+                        downtimes = doc.getElementsByTagName('DOWNTIME')
+                        for downtime in downtimes:
+                            classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
+                            hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
+                            serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
+                            startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
+                            endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
+                            severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
 
-                    startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
-                    endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
+                            startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
+                            endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
 
-                    if (startTime < start):
-                        startTime = start
-                    if (endTime > end):
-                        endTime = end
+                            if (startTime < start):
+                                startTime = start
+                            if (endTime > end):
+                                endTime = end
 
-                    if classification == 'SCHEDULED' and severity == 'OUTAGE':
-                        dt = dict()
-                        dt['hostname'] = hostname
-                        dt['service'] = serviceType
-                        dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                        dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                        filteredDowntimes.append(dt)
-            else:
-                logger.error('GOCDBReader.getDowntimes(): HTTP response: %s %s' % (str(res.status), res.reason))
-                raise SystemExit(1)
-        except ExpatError as e:
-            logger.error("GOCDBReader.getDowntimes(): Error parsing feed %s - %s" %
-                         (self._o.scheme + '://' + self._o.netloc + '/gocdbpi/private/?method=get_downtime', e.message))
-            self._parsed = False
+                            if classification == 'SCHEDULED' and severity == 'OUTAGE':
+                                dt = dict()
+                                dt['hostname'] = hostname
+                                dt['service'] = serviceType
+                                dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                                dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                                filteredDowntimes.append(dt)
+                        break
+                    else:
+                        logger.error('GOCDBReader.getDowntimes(): HTTP response: %s %s' % (str(res.status), res.reason))
+                        raise SystemExit(1)
+
+                except ExpatError as e:
+                    logger.error("GOCDBReader.getDowntimes(): Error parsing feed %s - %s" %
+                                (self._o.scheme + '://' + self._o.netloc + '/gocdbpi/private/?method=get_downtime', e.message))
+                    self._parsed = False
+                except(SSLError, socket.error, socket.timeout) as e:
+                    logger.warn('Try:%d Connection error %s - %s' % (i, self._o.scheme + '://' + self.gocdbHost, errmsg_from_excp(e)))
+                    if i == int(globopts['ConnectionRetry'.lower()]):
+                        raise e
+                    else:
+                        pass
+                i += 1
+
         except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
+            logger.error('Connection error %s - %s' % (self._o.scheme + '://' + self.gocdbHost, errmsg_from_excp(e)))
             raise SystemExit(1)
 
         return filteredDowntimes, self._parsed
@@ -118,7 +131,7 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Downtimes']}
     output = {'Output': ['Downtimes']}
-    conn = {'Connection': ['Timeout']}
+    conn = {'Connection': ['Timeout', 'Retry']}
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(confpath, certs, schemas, output, conn)
     global globopts
