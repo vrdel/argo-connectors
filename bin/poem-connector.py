@@ -38,7 +38,7 @@ import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate
 from OpenSSL.SSL import Error as SSLError
 
 logger = None
@@ -219,7 +219,7 @@ class PoemReader:
                         logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
                         raise SystemExit(1)
                 except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
-                    logger.warn('POEMReader.loadProfilesFromServer(): Connection error %s - %s' % (o.scheme + '://' + server, errmsg_from_excp(e)))
+                    logger.warn('POEMReader.loadProfilesFromServer(): Try:%d Connection error %s - %s' % (i, o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
                     if i == int(globopts['ConnectionRetry'.lower()]):
                         raise e
                     else:
@@ -247,14 +247,11 @@ class PoemReader:
         return entries
 
 class PrefilterPoem:
-    def __init__(self, outdir):
-        self.outputDir = outdir
-        self.outputFileTemplate = 'poem_sync_%s.out'
+    def __init__(self):
         self.outputFileFormat = '%s\001%s\001%s\001%s\001%s\001%s\001%s\r\n'
 
-    def writeProfiles(self, profiles, date, cust):
-        filename = self.outputDir+'/'+self.outputFileTemplate % date
-        outFile = open(filename, 'w')
+    def writeProfiles(self, profiles, fname):
+        outFile = open(fname, 'w')
         moninstance = set()
         for p in profiles:
             moninstance.add(p['server'])
@@ -267,7 +264,7 @@ class PrefilterPoem:
                        p['fqan']))
         outFile.close();
 
-        logger.info('Customer:%s POEM file(%s): Expanded profiles for %d monitoring instances' % (cust, self.outputFileTemplate % date, len(moninstance) + 1))
+        logger.info('POEM file(%s): Expanded profiles for %d monitoring instances' % (fname, len(moninstance) + 1))
 
 def gen_outprofiles(lprofiles, matched):
     lfprofiles = []
@@ -295,10 +292,11 @@ def main():
 
     certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath']}
     schemas = {'AvroSchemas': ['Poem']}
+    prefilter = {'Prefilter': ['PoemExpandedProfiles']}
     output = {'Output': ['Poem']}
     conn = {'Connection': ['Timeout', 'Retry']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn)
+    cglob = Global(confpath, certs, schemas, output, conn, prefilter)
     global globopts
     globopts = cglob.parse()
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
@@ -311,6 +309,7 @@ def main():
     cpoem = PoemConf(confpath, servers, filterprofiles, prefilterdata)
     poemopts = cpoem.parse()
 
+
     confpath = args.custconf[0] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
@@ -319,10 +318,12 @@ def main():
     readerInstance = PoemReader()
     ps, psa = readerInstance.getProfiles()
 
+    poempref = PrefilterPoem()
+    preffname = gen_fname_repdate(timestamp, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+    poempref.writeProfiles(ps, preffname)
+
     for cust in confcust.get_customers():
         # write profiles
-        poempref = PrefilterPoem(confcust.get_custdir(cust))
-        poempref.writeProfiles(ps, timestamp, confcust.get_custname(cust))
 
         custname = confcust.get_custname(cust)
 
@@ -332,7 +333,7 @@ def main():
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = jobdir + globopts['OutputPoem'.lower()]% timestamp
+            filename = gen_fname_repdate(timestamp, globopts['OutputPoem'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
                               lfprofiles, os.path.basename(sys.argv[0]))
             avro.write()

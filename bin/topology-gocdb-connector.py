@@ -31,11 +31,12 @@ import httplib
 import os
 import socket
 import sys
+import re
 import xml.dom.minidom
 
 from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
@@ -371,7 +372,8 @@ def main():
             ggtags = confcust.get_gocdb_ggtags(job)
             if ggtags:
                 group_groups = filter_by_tags(ggtags, group_groups)
-            filename = jobdir+globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
+
+            filename = gen_fname_repdate(timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
                             group_groups, os.path.basename(sys.argv[0]))
             avro.write()
@@ -386,7 +388,8 @@ def main():
             if getags:
                 group_endpoints = filter_by_tags(getags, group_endpoints)
                 gelegmap = filter_by_tags(getags, gelegmap)
-            filename = jobdir+globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
+
+            filename = gen_fname_repdate(timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
                             group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
             avro.write()

@@ -33,12 +33,13 @@ import xml.dom.minidom
 from xml.parsers.expat import ExpatError
 import copy
 import socket
+import re
 from urlparse import urlparse
 
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate
 from OpenSSL.SSL import Error as SSLError
 
 logger = None
@@ -173,7 +174,7 @@ def main():
                 jobdir = confcust.get_fulldir(cust, job)
                 custname = confcust.get_custname(cust)
 
-                filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
+                filename = gen_fname_repdate(timestamp, globopts['OutputDowntimes'.lower()], jobdir)
                 avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                                 dts + dtslegmap, os.path.basename(sys.argv[0]))
                 avro.write()

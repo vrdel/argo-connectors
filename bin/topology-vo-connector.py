@@ -26,7 +26,7 @@
 
 from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
@@ -174,12 +174,11 @@ def main():
                             return True
                 filtlgroups = filter(ismatch, filtlgroups)
 
-            filename = jobdir + globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
+            filename = gen_fname_repdate(timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups,
                               os.path.basename(sys.argv[0]))
             avro.write()
 
-            filename = jobdir + globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
             gelegmap = []
             group_endpoints = vo.get_groupendpoints()
             numge = len(group_endpoints)
@@ -187,6 +186,7 @@ def main():
                 if g['service'] in LegMapServType.keys():
                     gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
+            filename = gen_fname_repdate(timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap,
                                                                                        os.path.basename(sys.argv[0]))
             avro.write()

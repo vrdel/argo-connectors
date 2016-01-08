@@ -33,6 +33,7 @@ import time
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.writers import Logger
+from argo_egi_connectors.tools import gen_fname_repdate
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
@@ -56,7 +57,7 @@ def poemProfileFilenameCheck(year, month, day):
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = globopts['PrefilterPoemExpandedProfiles'.lower()] % (year+'_'+month+'_'+day)
+        fileName = gen_fname_repdate(year+'_'+month+'_'+day, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         if os.path.isfile(fileName):
             break
         if count >= checkInputFileForDays:
@@ -332,8 +333,8 @@ def main():
     if options.cfile:
         inputFile = options.cfile
     else:
-        inputFile = globopts['PrefilterConsumerFilePath'.lower()] % (year+'-'+month+'-'+day)
-    outputFile =  globopts['OutputPrefilter'.lower()] % (year+'_'+month+'_'+day)
+        inputFile = gen_fname_repdate(year+'-'+month+'-'+day, globopts['PrefilterConsumerFilePath'.lower()], '')
+    outputFile = gen_fname_repdate(year+'-'+month+'-'+day, globopts['OutputPrefilter'.lower()], '')
 
     try:
         schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())
