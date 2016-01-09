@@ -30,7 +30,6 @@ python setup.py build
 %install
 python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/
-install --directory %{buildroot}/%{_localstatedir}/log/argo-egi-connectors/
 install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
 
 %clean
@@ -43,7 +42,6 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644,root,root) %{_sysconfdir}/cron.d/*
 
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
-%attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
 * Thu Oct 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-6%{?dist}
