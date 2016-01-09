@@ -47,9 +47,6 @@ poemFileFieldDelimiter = '\001'
 # reject on missing monitoring host
 rejectMissingMonitoringHost = 0
 
-# past files checking
-checkInputFileForDays = 1
-
 def poemProfileFilenameCheck(year, month, day):
     count = 0
     dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
@@ -60,7 +57,7 @@ def poemProfileFilenameCheck(year, month, day):
         fileName = gen_fname_repdate(year+'_'+month+'_'+day, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         if os.path.isfile(fileName):
             break
-        if count >= checkInputFileForDays:
+        if count >= int(globopts['PrefilterLookbackPoemExpandedProfiles'.lower()]):
             fileName = None
             break
         count = count+1
@@ -172,7 +169,7 @@ def loadNameMapping(year, month, day):
 
     nameMappingFile = None
     try:
-        nameMappingFile = open('/etc/argo-egi-connectors/'+globopts['PrefilterPoemNameMapping'.lower()], 'r')
+        nameMappingFile = open('/etc/argo-egi-connectors/' + globopts['PrefilterPoemNameMapping'.lower()], 'r')
     except IOError:
         nameMappingFile = None
 
@@ -298,7 +295,7 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    prefilter = {'Prefilter': ['ConsumerFilePath', 'PoemExpandedProfiles', 'PoemNameMapping']}
+    prefilter = {'Prefilter': ['ConsumerFilePath', 'PoemExpandedProfiles', 'PoemNameMapping', 'LookbackPoemExpandedProfiles']}
     schemas = {'AvroSchemas': ['Prefilter']}
     output = {'Output': ['Prefilter']}
     confpath = options.gloconf if options.gloconf else None
