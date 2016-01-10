@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.4.4
-Release: 6%{?dist}
+Version: 1.4.5
+Release: 1%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -44,6 +44,20 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Sun Jan 10 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-1%{?dist}
+- log failed VO and weights connections
+  https://github.com/ARGOeu/ARGO/issues/179
+- added connection timeout for all connectors
+- config files can be passed as arguments to every component 
+  https://github.com/ARGOeu/ARGO/issues/180
+- added connection retry feature forr all connectors
+- prefilter explicit input and output
+- reorganized prefilter global.conf
+- DATE placeholder in global.conf so interpolation can be used
+- prefilter poem_sync.out look back option
+- remove obsoleted logging
+- guide updated
+- refactored connection retries
 * Thu Oct 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-6%{?dist}
 - bugfix handling lowercase defined POEM profiles
 - remove hardcoded customer name for topology-gocdb-connector
