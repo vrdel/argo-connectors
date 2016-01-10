@@ -26,7 +26,6 @@
 
 import argparse
 import datetime
-import httplib
 import json
 import os
 import re
@@ -38,7 +37,7 @@ import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate, make_connection
 from OpenSSL.SSL import Error as SSLError
 
 logger = None
@@ -61,6 +60,7 @@ class PoemReader:
         profileList = []
         profileListAvro = []
 
+        numngis, nummoninst = 0, 0
         for server, profiles in ngiallow.items():
             defaultProfiles = profiles
             url = server
@@ -69,42 +69,15 @@ class PoemReader:
                 url = 'https://' + url
 
             o = urlparse.urlparse(url, allow_fragments=True)
-            i = 1
-            try:
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    try:
-                        if o.scheme.startswith('https'):
-                            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()],
-                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
-                            conn = httplib.HTTPSConnection(o.netloc, 443,
-                                                        globopts['AuthenticationHostKey'.lower()],
-                                                        globopts['AuthenticationHostCert'.lower()],
-                                                        timeout=int(globopts['ConnectionTimeout'.lower()]))
-                        else:
-                            conn = httplib.HTTPConnection(o.netloc, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
-
-                        conn.request('GET', o.path)
-                        res = conn.getresponse()
-                        if res.status == 200:
-                            urlLines = res.read().splitlines()
-                            break
-                        else:
-                            logger.error('PoemReader.getProfiles(): HTTP response: %s %s' % (str(res.status), res.reason))
-                            raise SystemExit(1)
-                    except(SSLError, socket.error, socket.timeout) as e:
-                        logger.warn('PoemReader.getProfiles(): Try:%d Connection error %s - %s' % (i, o.scheme +'://' + o.netloc, errmsg_from_excp(e)))
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            raise e
-                        else:
-                            pass
-                    i += 1
-
-            except(SSLError, socket.error, socket.timeout) as e:
-                logger.error('PoemReader.getProfiles(): Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
+            res = make_connection(logger, globopts, o.scheme, o.netloc,
+                                  o.path + '?' + o.query,
+                                  "POEMReader.getProfiles():")
+            if res.status == 200:
+                urlLines = res.read().splitlines()
+            else:
+                logger.error('PoemReader.getProfiles(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
 
-            numngis, nummoninst = 0, 0
             for urlLine in urlLines:
                 if len(urlLine) == 0 or urlLine[0] == '#':
                     continue
@@ -189,45 +162,20 @@ class PoemReader:
             raise SystemExit(1)
 
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
-        i = 1
-        try:
-            while i <= int(globopts['ConnectionRetry'.lower()]):
-                try:
-                    if o.scheme.startswith('https'):
-                        if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                            verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
-                                        timeout=int(globopts['ConnectionTimeout'.lower()]))
-                        conn = httplib.HTTPSConnection(o.netloc, 443,
-                                                    globopts['AuthenticationHostKey'.lower()],
-                                                    globopts['AuthenticationHostCert'.lower()],
-                                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
-                    else:
-                        conn = httplib.HTTPConnection(o.netloc, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
 
-                    conn.request('GET', o.path + '?' + o.query)
-                    res = conn.getresponse()
-                    if res.status == 200:
-                        json_data = json.loads(res.read())
-                        for profile in json_data[0]['profiles']:
-                            if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
-                                validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
-                        break
-                    elif res.status in (301, 302):
-                        logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
+        res = make_connection(logger, globopts, o.scheme, o.netloc,
+                                o.path + '?' + o.query,
+                                "POEMReader.loadProfilesFromServer():")
+        if res.status == 200:
+            json_data = json.loads(res.read())
+            for profile in json_data[0]['profiles']:
+                if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
+                    validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
+        elif res.status in (301, 302):
+            logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
 
-                    else:
-                        logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
-                        raise SystemExit(1)
-                except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
-                    logger.warn('POEMReader.loadProfilesFromServer(): Try:%d Connection error %s - %s' % (i, o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
-                    if i == int(globopts['ConnectionRetry'.lower()]):
-                        raise e
-                    else:
-                        pass
-                i += 1
-
-        except(SSLError, socket.error, socket.timeout, httplib.HTTPException) as e:
-            logger.error('Connection error %s - %s' % (server, errmsg_from_excp(e)))
+        else:
+            logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
             raise SystemExit(1)
 
         return validProfiles
@@ -281,7 +229,7 @@ def gen_outprofiles(lprofiles, matched):
     return lfprofiles
 
 def main():
-    parser = argparse.ArgumentParser(description='Fetch POEM profile for every job of the customer and write POEM expanded profiles needed for prefilter for every customer')
+    parser = argparse.ArgumentParser(description='Fetch POEM profile for every job of the customer and write POEM expanded profiles needed for prefilter for EGI customer')
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-p', dest='poemconf', nargs=1, metavar='poem-connector.conf', help='path to poem-connector configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
@@ -319,7 +267,7 @@ def main():
     ps, psa = readerInstance.getProfiles()
 
     poempref = PrefilterPoem()
-    preffname = gen_fname_repdate(timestamp, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+    preffname = gen_fname_repdate(logger, timestamp, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
     poempref.writeProfiles(ps, preffname)
 
     for cust in confcust.get_customers():
@@ -333,7 +281,7 @@ def main():
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = gen_fname_repdate(timestamp, globopts['OutputPoem'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputPoem'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
                               lfprofiles, os.path.basename(sys.argv[0]))
             avro.write()

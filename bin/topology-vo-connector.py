@@ -26,7 +26,7 @@
 
 from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate, make_connection
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
@@ -35,7 +35,6 @@ from urlparse import urlparse
 import argparse
 import copy
 import datetime
-import httplib
 import os
 import re
 import socket
@@ -52,41 +51,14 @@ class VOReader:
     lgroups = []
 
     def __init__(self, feed):
+        self._o = urlparse(feed)
         self.feed = feed
         self._parse()
 
     def _parse(self):
-        o = urlparse(self.feed)
-        i = 1
         try:
-            while i <= int(globopts['ConnectionRetry'.lower()]):
-                try:
-                    if o.scheme == 'https':
-                        if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                            verify_cert(os.path.basename(sys.argv[0]), o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
-                        conn = httplib.HTTPSConnection(o.netloc, 443,
-                                                    globopts['AuthenticationHostKey'.lower()],
-                                                    globopts['AuthenticationHostCert'.lower()],
-                                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
-                    elif o.scheme == 'http':
-                        conn = httplib.HTTPConnection(o.netloc,
-                                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
-                    conn.request('GET', o.path)
-                    res = conn.getresponse()
-
-                except(SSLError, socket.error, socket.timeout, httplib.HTTPConnection) as e:
-                    logger.warn('Try:%d Connection error %s - %s' % (i, o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
-                    if i == int(globopts['ConnectionRetry'.lower()]):
-                        raise e
-                    else:
-                        pass
-                i += 1
-
-        except(SSLError, socket.error, socket.timeout, httplib.HTTPConnection) as e:
-            logger.error('Connection error %s - %s' % (o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
-            raise SystemExit(1)
-
-        try:
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
+                                  "VOReader._parse():")
             if res.status == 200:
                 dom = xml.dom.minidom.parseString(res.read())
                 sites = dom.getElementsByTagName('atp_site')
@@ -117,7 +89,7 @@ class VOReader:
                 logger.error('VOReader._parse(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
-            logger.error("Error parsing VO-feed %s" % (o.netloc + o.path))
+            logger.error("VOReader._parse(): Error parsing VO-feed %s" % (o.netloc + o.path))
             raise SystemExit(1)
 
     def get_groupgroups(self):
@@ -174,7 +146,7 @@ def main():
                             return True
                 filtlgroups = filter(ismatch, filtlgroups)
 
-            filename = gen_fname_repdate(timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups,
                               os.path.basename(sys.argv[0]))
             avro.write()
@@ -186,12 +158,12 @@ def main():
                 if g['service'] in LegMapServType.keys():
                     gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
-            filename = gen_fname_repdate(timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap,
                                                                                        os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))
+            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))
             if tags:
                 selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selgg = ''

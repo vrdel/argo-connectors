@@ -54,7 +54,7 @@ def poemProfileFilenameCheck(year, month, day):
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = gen_fname_repdate(year+'_'+month+'_'+day, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+        fileName = gen_fname_repdate(logger, year+'_'+month+'_'+day, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         if os.path.isfile(fileName):
             break
         if count >= int(globopts['PrefilterLookbackPoemExpandedProfiles'.lower()]):
@@ -330,8 +330,8 @@ def main():
     if options.cfile:
         inputFile = options.cfile
     else:
-        inputFile = gen_fname_repdate(year+'-'+month+'-'+day, globopts['PrefilterConsumerFilePath'.lower()], '')
-    outputFile = gen_fname_repdate(year+'-'+month+'-'+day, globopts['OutputPrefilter'.lower()], '')
+        inputFile = gen_fname_repdate(logger, year+'-'+month+'-'+day, globopts['PrefilterConsumerFilePath'.lower()], '')
+    outputFile = gen_fname_repdate(logger, year+'-'+month+'-'+day, globopts['OutputPrefilter'.lower()], '')
 
     try:
         schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())

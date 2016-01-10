@@ -1,6 +1,7 @@
 import logging, logging.handlers
 import sys
 import re
+import httplib
 import socket
 import signal
 
@@ -9,9 +10,8 @@ from OpenSSL.SSL import VERIFY_PEER, VERIFY_FAIL_IF_NO_PEER_CERT
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.SSL import OP_NO_SSLv3
 
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from argo_egi_connectors.config import Global
 
-logger = None
 
 def errmsg_from_excp(e):
     if getattr(e, 'message', False):
@@ -33,10 +33,7 @@ def errmsg_from_excp(e):
     else:
         return str(e)
 
-def gen_fname_repdate(timestamp, option, path):
-    global logger
-    logger = Logger('argo_egi_connectors.tools')
-
+def gen_fname_repdate(logger, timestamp, option, path):
     if re.search(r'DATE(.\w+)$', option):
         filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % timestamp, option)
     else:
@@ -44,6 +41,42 @@ def gen_fname_repdate(timestamp, option, path):
         raise SystemExit(1)
 
     return filename
+
+def make_connection(logger, globopts, scheme, host, url, msgprefix):
+    i = 1
+    try:
+        while i <= int(globopts['ConnectionRetry'.lower()]):
+            try:
+                if scheme.startswith('https'):
+                    if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                        verify_cert(host, globopts['AuthenticationCAPath'.lower()],
+                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
+                    conn = httplib.HTTPSConnection(host, 443,
+                                                   globopts['AuthenticationHostKey'.lower()],
+                                                   globopts['AuthenticationHostCert'.lower()],
+                                                   timeout=int(globopts['ConnectionTimeout'.lower()]))
+                else:
+                    conn = httplib.HTTPConnection(host, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
+
+                conn.request('GET', url)
+                return conn.getresponse()
+
+            except(SSLError, socket.error, socket.timeout) as e:
+                logger.warn('%sTry:%d Connection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                                                   i, scheme + '://' + host,
+                                                                   errmsg_from_excp(e)))
+                if i == int(globopts['ConnectionRetry'.lower()]):
+                    raise e
+                else:
+                    pass
+            i += 1
+
+    except(SSLError, socket.error, socket.timeout) as e:
+        logger.error('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                                     scheme + '://' + host,
+                                                     errmsg_from_excp(e)))
+        raise SystemExit(1)
+
 
 def verify_cert(host, capath, timeout):
     server_ctx = Context(TLSv1_METHOD)

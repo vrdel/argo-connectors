@@ -26,7 +26,6 @@
 
 import argparse
 import datetime
-import httplib
 import json
 import os
 import re
@@ -36,7 +35,7 @@ import urllib2
 
 from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate, make_connection
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from avro.datafile import DataFileReader
@@ -48,38 +47,11 @@ logger = None
 
 class GstatReader:
     def __init__(self, feed):
-        self.GstatRequest = feed
-        self.hostKey = globopts['AuthenticationHostKey'.lower()]
-        self.hostCert = globopts['AuthenticationHostCert'.lower()]
+        self._o = urlparse(feed)
 
     def getWeights(self):
-        o = urlparse(self.GstatRequest)
-
-        i = 1
-        try:
-            while i <= int(globopts['ConnectionRetry'.lower()]):
-                try:
-                    if o.scheme == 'https':
-                        if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                            verify_cert(o.netloc, globopts['AuthenticationCAPath'.lower()],
-                                        int(globopts['ConnectionTimeout'.lower()]))
-                        conn = httplib.HTTPSConnection(o.netloc, 443, self.hostKey, self.hostCert,
-                                                        timeout=int(globopts['ConnectionTimeout'.lower()]))
-                    else:
-                        conn = httplib.HTTPConnection(o.netloc, timeout=int(globopts['ConnectionTimeout'.lower()]))
-                    conn.request('GET', o.path)
-                    res = conn.getresponse()
-                except(SSLError, socket.error, socket.timeout) as e:
-                    logger.warn('Try:%d Connection error %s - %s' % (i, o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
-                    if i == int(globopts['ConnectionRetry'.lower()]):
-                        raise e
-                    else:
-                        pass
-                i += 1
-        except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (o.scheme + '://' + o.netloc, errmsg_from_excp(e)))
-            raise SystemExit(1)
-
+        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
+                              "GstatReader.getWeights()):")
         if res.status == 200:
             json_data = json.loads(res.read())
             weights = dict()
@@ -159,12 +131,12 @@ def main():
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
 
-            oldFilename = gen_fname_repdate(oldDate.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
+            oldFilename = gen_fname_repdate(logger, oldDate.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
             i = 0
             oldDataExists = True
             while not os.path.isfile(oldFilename):
                 oldDate = oldDate - datetime.timedelta(days=1)
-                oldFilename = gen_fname_repdate(oldDate.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
+                oldFilename = gen_fname_repdate(logger, oldDate.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
                 i = i + 1
                 if i >= 30:
                     oldDataExists = False
@@ -173,7 +145,7 @@ def main():
             # load old data
             oldData = dict()
             if oldDataExists:
-                oldData.update(loadOldData(gen_fname_repdate(timestamp, globopts['OutputWeights'.lower()], jobdir)))
+                oldData.update(loadOldData(gen_fname_repdate(logger, timestamp, globopts['OutputWeights'.lower()], jobdir)))
 
             # fill old list
             for key in oldData:
@@ -184,7 +156,7 @@ def main():
                 if key not in newData:
                     newData[key] = oldData[key]
 
-            filename = gen_fname_repdate(timestamp, globopts['OutputWeights'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputWeights'.lower()], jobdir)
 
             datawr = gen_outdict(newData)
             avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
