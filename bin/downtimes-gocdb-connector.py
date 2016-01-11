@@ -26,19 +26,19 @@
 
 import argparse
 import datetime
-import httplib
 import os
 import sys
 import xml.dom.minidom
 from xml.parsers.expat import ExpatError
 import copy
 import socket
+import re
 from urlparse import urlparse
 
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate, make_connection
 from OpenSSL.SSL import Error as SSLError
 
 logger = None
@@ -51,20 +51,17 @@ class GOCDBReader(object):
     def __init__(self, feed):
         self._o = urlparse(feed)
         self._parsed = True
-        self.gocdbHost = self._o.netloc
-        self.hostKey =  globopts['AuthenticationHostKey'.lower()]
-        self.hostCert = globopts['AuthenticationHostCert'.lower()]
         self.argDateFormat = "%Y-%m-%d"
         self.WSDateFormat = "%Y-%m-%d %H:%M"
 
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
+
+        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                              '/gocdbpi/private/?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
+                                                                                                     end.strftime(self.argDateFormat)),
+                              "GOCDBReader.getDowntimes():")
         try:
-            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
-            conn.request('GET', '/gocdbpi/private/?method=get_downtime&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat), end.strftime(self.argDateFormat)))
-            res = conn.getresponse()
             if res.status == 200:
                 doc = xml.dom.minidom.parseString(res.read())
                 downtimes = doc.getElementsByTagName('DOWNTIME')
@@ -94,34 +91,38 @@ class GOCDBReader(object):
             else:
                 logger.error('GOCDBReader.getDowntimes(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
+
         except ExpatError as e:
             logger.error("GOCDBReader.getDowntimes(): Error parsing feed %s - %s" %
-                         (self._o.scheme + '://' + self._o.netloc + '/gocdbpi/private/?method=get_downtime', e.message))
+                        (self._o.scheme + '://' + self._o.netloc + '/gocdbpi/private/?method=get_downtime', e.message))
             self._parsed = False
-        except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
-            raise SystemExit(1)
 
         return filteredDowntimes, self._parsed
 
 def main():
+    parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
+    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
+    args = parser.parse_args()
+
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Downtimes']}
     output = {'Output': ['Downtimes']}
-    cglob = Global(certs, schemas, output)
+    conn = {'Connection': ['Timeout', 'Retry']}
+    confpath = args.gloconf[0] if args.gloconf else None
+    cglob = Global(confpath, certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 
-    confcust = CustomerConf(sys.argv[0])
+    confpath = args.custconf[0] if args.custconf else None
+    confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
-    parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
-    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
-    args = parser.parse_args()
 
     if len(args.date) == 0:
         print parser.print_help()
@@ -152,11 +153,14 @@ def main():
                 jobdir = confcust.get_fulldir(cust, job)
                 custname = confcust.get_custname(cust)
 
-                filename = jobdir + globopts['OutputDowntimes'.lower()] % timestamp
+                filename = gen_fname_repdate(logger, timestamp, globopts['OutputDowntimes'.lower()], jobdir)
                 avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                                 dts + dtslegmap, os.path.basename(sys.argv[0]))
                 avro.write()
 
-            logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (custname, len(jobcust), args.date[0], len(dts + dtslegmap)))
+            custs = set([cust for job, cust in jobcust])
+            for cust in custs:
+                jobs = [job for job, lcust in jobcust if cust == lcust]
+                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts + dtslegmap)))
 
 main()

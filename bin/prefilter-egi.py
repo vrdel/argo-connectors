@@ -24,7 +24,7 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-import argparse
+import optparse
 import avro.schema
 import datetime
 import os
@@ -33,6 +33,7 @@ import time
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.writers import Logger
+from argo_egi_connectors.tools import gen_fname_repdate
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
@@ -46,20 +47,17 @@ poemFileFieldDelimiter = '\001'
 # reject on missing monitoring host
 rejectMissingMonitoringHost = 0
 
-# past files checking
-checkInputFileForDays = 1
-
-def poemProfileFilenameCheck(custdir, year, month, day):
+def poemProfileFilenameCheck(year, month, day):
     count = 0
     dt = datetime.datetime(year=int(year), month=int(month), day=int(day))
     while True:
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = custdir + '/' + globopts['OutputPrefilterPoem'.lower()] % (year+'_'+month+'_'+day)
+        fileName = gen_fname_repdate(logger, year+'_'+month+'_'+day, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         if os.path.isfile(fileName):
             break
-        if count >= checkInputFileForDays:
+        if count >= int(globopts['PrefilterLookbackPoemExpandedProfiles'.lower()]):
             fileName = None
             break
         count = count+1
@@ -67,13 +65,13 @@ def poemProfileFilenameCheck(custdir, year, month, day):
 
     return fileName
 
-def loadNGIs(custdir, year, month, day):
+def loadNGIs(year, month, day):
     ngiTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
     try:
-        poemfile = poemProfileFilenameCheck(custdir, year, month, day)
+        poemfile = poemProfileFilenameCheck(year, month, day)
         assert poemfile is not None
         poemProfileFile = open(poemfile, 'r')
     except (IOError, AssertionError) as e:
@@ -95,19 +93,19 @@ def loadNGIs(custdir, year, month, day):
         if profile['server'] not in ngiTree:
             ngiTree[profile['server']] = list()
 
-        if profile['ngi'] not in  ngiTree[profile['server']]:
+        if profile['ngi'] not in ngiTree[profile['server']]:
             ngiTree[profile['server']].append(profile['ngi'])
 
         # ngiTree[profile['server']] = profile['ngi']
 
     return ngiTree
 
-def loadFilteredProfiles(custdir, year, month, day):
+def loadFilteredProfiles(year, month, day):
     profileTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
-    poemProfileFile = open(poemProfileFilenameCheck(custdir, year, month, day), 'r')
+    poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
     poemProfiles = poemProfileFile.read().splitlines()
     poemProfileFile.close()
 
@@ -171,7 +169,7 @@ def loadNameMapping(year, month, day):
 
     nameMappingFile = None
     try:
-        nameMappingFile = open('/etc/argo-egi-connectors/'+globopts['OutputPrefilterPoemNameMapping'.lower()], 'r')
+        nameMappingFile = open('/etc/argo-egi-connectors/' + globopts['PrefilterPoemNameMapping'.lower()], 'r')
     except IOError:
         nameMappingFile = None
 
@@ -283,35 +281,40 @@ def prefilterit(reader, writer, ngis, profiles, nameMapping):
 
 
 def main():
+    parser = optparse.OptionParser(description="""Filters consumer messages based on various criteria
+                                                    (allowed NGIs, service flavours, metrics...)""")
+    parser.add_option('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str)
+    group = optparse.OptionGroup(parser, 'Compute Engine usage')
+    group.add_option('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY')
+    parser.add_option_group(group)
+    group = optparse.OptionGroup(parser, 'Debugging usage')
+    group.add_option('-f', dest='cfile', nargs=1, metavar='consumer_log_YEAR-MONTH-DAY.avro')
+    parser.add_option_group(group)
+    (options, args) = parser.parse_args()
+
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    global confcust
-    confcust = CustomerConf(sys.argv[0])
-    confcust.parse()
+    prefilter = {'Prefilter': ['ConsumerFilePath', 'PoemExpandedProfiles', 'PoemNameMapping', 'LookbackPoemExpandedProfiles']}
     schemas = {'AvroSchemas': ['Prefilter']}
-    output = {'Output': ['PrefilterPoem', 'PrefilterConsumerFilePath',
-                         'Prefilter', 'PrefilterPoemNameMapping']}
-    cglob = Global(schemas, output)
+    output = {'Output': ['Prefilter']}
+    confpath = options.gloconf if options.gloconf else None
+    cglob = Global(confpath, schemas, output, prefilter)
     global globopts
     globopts = cglob.parse()
 
     stats = ()
 
-    parser = argparse.ArgumentParser(description="""Filters consumer logs based on various criteria
-                                                    (allowed NGIs, service flavours, metrics...)""")
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY')
-    group.add_argument('-f', dest='cfile', nargs=1, metavar='consumer_log_YEAR-MONTH-DAY.avro')
-    args = parser.parse_args()
-
-    if args.cfile:
-        fname = args.cfile[0]
-        date = args.cfile[0].split('_')[-1]
+    if options.cfile and options.date:
+        parser.print_help()
+        raise SystemExit(1)
+    elif options.cfile:
+        fname = options.cfile
+        date = options.cfile.split('_')[-1]
         date = date.split('.')[0]
         date = date.split('-')
-    elif args.date:
-        date = args.date[0].split('-')
+    elif options.date:
+        date = options.date.split('-')
     else:
         parser.print_help()
         raise SystemExit(1)
@@ -323,36 +326,35 @@ def main():
 
     year, month, day = date
 
-    for cust in confcust.get_customers():
-        # avro files
-        if args.cfile:
-            inputFile = args.cfile[0]
-        else:
-            inputFile = globopts['OutputPrefilterConsumerFilePath'.lower()] % (year+'-'+month+'-'+day)
-        outputFile = confcust.get_custdir(cust)+'/'+globopts['OutputPrefilter'.lower()] % (year+'_'+month+'_'+day)
+    # avro files
+    if options.cfile:
+        inputFile = options.cfile
+    else:
+        inputFile = gen_fname_repdate(logger, year+'-'+month+'-'+day, globopts['PrefilterConsumerFilePath'.lower()], '')
+    outputFile = gen_fname_repdate(logger, year+'-'+month+'-'+day, globopts['OutputPrefilter'.lower()], '')
 
-        try:
-            schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())
-            writer = DataFileWriter(open(outputFile, "w"), DatumWriter(), schema)
-            reader = DataFileReader(open(inputFile, "r"), DatumReader())
-        except IOError as e:
-            logger.error(str(e))
-            raise SystemExit(1)
+    try:
+        schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())
+        writer = DataFileWriter(open(outputFile, "w"), DatumWriter(), schema)
+        reader = DataFileReader(open(inputFile, "r"), DatumReader())
+    except IOError as e:
+        logger.error(str(e))
+        raise SystemExit(1)
 
-        # load poem data
-        ngis = loadNGIs(confcust.get_custdir(cust), year, month, day)
-        profiles = loadFilteredProfiles(confcust.get_custdir(cust), year, month, day)
-        nameMapping = loadNameMapping(year, month, day)
+    # load poem data
+    ngis = loadNGIs(year, month, day)
+    profiles = loadFilteredProfiles(year, month, day)
+    nameMapping = loadNameMapping(year, month, day)
 
-        s = time.time()
-        msgs, msgswrit, msgsfilt, falsemonhost, falseroc, falseprofile = prefilterit(reader, writer, ngis, profiles, nameMapping)
-        e = time.time()
+    s = time.time()
+    msgs, msgswrit, msgsfilt, falsemonhost, falseroc, falseprofile = prefilterit(reader, writer, ngis, profiles, nameMapping)
+    e = time.time()
 
-        logger.info('ExecTime:%.2fs ConsumerDate:%s Read:%d Written:%d Filtered:%d(Monitoring_Host:%d,ROC:%d,ServiceTypes_Metrics:%d)' % (round(e - s, 2), year+'-'+month+'-'+day,
-                                                                                       msgs, msgswrit, msgsfilt, falsemonhost, falseroc,
-                                                                                       falseprofile))
+    logger.info('ExecTime:%.2fs ConsumerDate:%s Read:%d Written:%d Filtered:%d(Monitoring_Host:%d,ROC:%d,ServiceTypes_Metrics:%d)' % (round(e - s, 2), year+'-'+month+'-'+day,
+                                                                                    msgs, msgswrit, msgsfilt, falsemonhost, falseroc,
+                                                                                    falseprofile))
 
-        reader.close()
-        writer.close()
+    reader.close()
+    writer.close()
 
 main()
