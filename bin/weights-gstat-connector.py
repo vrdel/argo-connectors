@@ -114,57 +114,59 @@ def main():
 
     for feed, jobcust in feeds.items():
         weights = GstatReader(feed)
-        # load new data
-        newData = dict()
-        newData.update(weights.getWeights());
 
-        # fill new list
-        for key in newData:
-            newVal = int(newData[key])
-            if newVal <= 0:
-                if key in oldData:
-                    newVal = int(oldData[key])
-            if key not in oldData:
-                oldData[key] = str(newVal)
-            newData[key] = str(newVal)
+        newweights = dict()
+        newweights.update(weights.getWeights());
 
         for job, cust in jobcust:
+            fileprev, existfileprev = None, None
             jobdir = confcust.get_fulldir(cust, job)
 
-            oldFilename = gen_fname_repdate(logger, oldDate.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
-            i = 0
-            oldDataExists = True
-            while not os.path.isfile(oldFilename):
-                oldDate = oldDate - datetime.timedelta(days=1)
-                oldFilename = gen_fname_repdate(logger, oldDate.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
-                i = i + 1
-                if i >= 30:
-                    oldDataExists = False
+            oldDataExists = False
+            now = datetime.datetime.utcnow
+            i = 1
+            while i <= 30:
+                dayprev = datetime.datetime.utcnow() - datetime.timedelta(days=i)
+                fileprev = gen_fname_repdate(logger, dayprev.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
+                if os.path.exists(fileprev):
+                    existfileprev = fileprev
                     break
+                i += 1
 
+            oldweights = dict()
             # load old data
-            oldData = dict()
-            if oldDataExists:
-                oldData.update(loadOldData(gen_fname_repdate(logger, timestamp, globopts['OutputWeights'.lower()], jobdir)))
+            if existfileprev:
+                oldweights.update(loadOldData(existfileprev))
 
-            # fill old list
-            for key in oldData:
-                oldVal = int(oldData[key])
-                if oldVal <= 0:
-                    if key in newData:
-                        oldData[key] = newData[key]
-                if key not in newData:
-                    newData[key] = oldData[key]
+                # fill old list
+                for key in oldweights:
+                    val = int(oldweights[key])
+                    if val <= 0:
+                        if key in newweights:
+                            oldweights[key] = str(newweights[key])
+                    if key not in newweights:
+                        newweights[key] = str(oldweights[key])
+
+            # fill new list
+            for key in newweights:
+                val = int(newweights[key])
+                if val <= 0:
+                    if key in oldweights:
+                        val = int(oldweights[key])
+                if key not in oldweights:
+                    oldweights[key] = str(val)
+                newweights[key] = str(val)
 
             filename = gen_fname_repdate(logger, timestamp, globopts['OutputWeights'.lower()], jobdir)
 
-            datawr = gen_outdict(newData)
+            datawr = gen_outdict(newweights)
             avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
             avro.write()
 
-            if oldDataExists:
-                datawr = gen_outdict(oldData)
-                avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
+            if existfileprev:
+                olddata = gen_outdict(oldweights)
+                os.remove(existfileprev)
+                avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], existfileprev, olddata, os.path.basename(sys.argv[0]))
                 avro.write()
 
         custs = set([cust for job, cust in jobcust])
