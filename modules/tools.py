@@ -10,8 +10,6 @@ from OpenSSL.SSL import VERIFY_PEER, VERIFY_FAIL_IF_NO_PEER_CERT
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.SSL import OP_NO_SSLv3
 
-from argo_egi_connectors.config import Global
-
 
 def errmsg_from_excp(e):
     if getattr(e, 'message', False):
