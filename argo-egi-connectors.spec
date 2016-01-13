@@ -46,6 +46,8 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Tue Jan 12 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-2%{?dist}
 - weights connector refactored
+- README updated
+  https://github.com/ARGOeu/ARGO/issues/181
 * Sun Jan 10 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-1%{?dist}
 - log failed VO and weights connections
   https://github.com/ARGOeu/ARGO/issues/179
