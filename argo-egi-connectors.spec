@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -44,6 +44,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Tue Jan 12 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-2%{?dist}
+- weights connector refactored
+- README updated
+  https://github.com/ARGOeu/ARGO/issues/181
 * Sun Jan 10 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-1%{?dist}
 - log failed VO and weights connections
   https://github.com/ARGOeu/ARGO/issues/179

@@ -31,15 +31,12 @@ import sys
 import xml.dom.minidom
 from xml.parsers.expat import ExpatError
 import copy
-import socket
-import re
 from urlparse import urlparse
 
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp, gen_fname_repdate, make_connection
-from OpenSSL.SSL import Error as SSLError
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection
 
 logger = None
 
