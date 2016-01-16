@@ -331,7 +331,7 @@ def main():
         inputFile = options.cfile
     else:
         inputFile = gen_fname_repdate(logger, year+'-'+month+'-'+day, globopts['PrefilterConsumerFilePath'.lower()], '')
-    outputFile = gen_fname_repdate(logger, year+'-'+month+'-'+day, globopts['OutputPrefilter'.lower()], '')
+    outputFile = gen_fname_repdate(logger, year+'_'+month+'_'+day, globopts['OutputPrefilter'.lower()], '')
 
     try:
         schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())
