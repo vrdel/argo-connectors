@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.4.4
-Release: 1%{?dist}
+Version: 1.4.5
+Release: 2%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -30,7 +30,6 @@ python setup.py build
 %install
 python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/
-install --directory %{buildroot}/%{_localstatedir}/log/argo-egi-connectors/
 install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
 
 %clean
@@ -43,10 +42,42 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644,root,root) %{_sysconfdir}/cron.d/*
 
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
-%attr(0750,root,root) %dir %{_localstatedir}/log/argo-egi-connectors/
 
 %changelog
-* Fri 02-10-2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-1%{?dist}
+* Tue Jan 12 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-2%{?dist}
+- weights connector refactored
+- README updated
+  https://github.com/ARGOeu/ARGO/issues/181
+* Sun Jan 10 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-1%{?dist}
+- log failed VO and weights connections
+  https://github.com/ARGOeu/ARGO/issues/179
+- added connection timeout for all connectors
+- config files can be passed as arguments to every component 
+  https://github.com/ARGOeu/ARGO/issues/180
+- added connection retry feature forr all connectors
+- prefilter explicit input and output
+- reorganized prefilter global.conf
+- DATE placeholder in global.conf so interpolation can be used
+- prefilter poem_sync.out look back option
+- remove obsoleted logging
+- guide updated
+- refactored connection retries
+* Thu Oct 15 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-6%{?dist}
+- bugfix handling lowercase defined POEM profiles
+- remove hardcoded customer name for topology-gocdb-connector
+  https://github.com/ARGOeu/ARGO/issues/173
+- guide updated with new configuration option for customer
+* Thu Oct 8 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-5%{?dist}
+- bugfix in case of no downtimes defined for given date
+  https://github.com/ARGOeu/ARGO/issues/170
+* Wed Oct 7 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-4%{?dist}
+- poem-connector urlparse bugfix
+* Wed Oct 7 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-3%{?dist}
+- grab all distinct scopes for feed
+* Tue Oct 6 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-2%{?dist}
+- fix initialization of loggers in config parsers
+- backward compatible exception messages
+* Fri Oct 2 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.4-1%{?dist}
 - filter SRM endpoints too
 - refactored use of logging
 - connectors can verify server certificate

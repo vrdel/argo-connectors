@@ -19,15 +19,15 @@ Bundle consists of the following connectors:
  - `prefilter-egy.py`: component whose role is to filter out the messages coming from the `argo-egi-consumer`.
 
 
-Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating and placing files into appropriate job folders. Data is written in a binary avro formated file which is suitable for processing at compute side. Topology, downtimes, weights and POEM profile information all together with a prefiltered metric results (status messages), represents an input for `argo-compute-engine`.
+Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating and placing files into appropriate job folders. Data is written in a binary avro formatted file which is suitable for processing at compute side. Topology, downtimes, weights and POEM profile information all together with a prefiltered metric results (status messages), represents an input for `argo-compute-engine`.
 
 ## Installation
 
 Installation narrows down to simply installing the package:
 	
-	`yum -y install argo-egi-connectors`
+	yum -y install argo-egi-connectors
 
-**`Components require avro package to be installed/available.`**
+**`Components require avro and pyOpenSSL packages to be installed/available.`**
 
 
 | File Types | Destination |
@@ -38,24 +38,30 @@ Installation narrows down to simply installing the package:
 
 ## Configuration
 
-Configuration of all components is centered around two configuration files: `global.conf` and `customer.conf`. Those files contains some shared config options and sections and are _read by every component_. There's also a third one `poem-connector.conf`, specific only for `poem-connector.py` because it needs some special treatment not available in first two's.
+Configuration of all components is centered around two configuration files: `global.conf` and `customer.conf`. Those files contains some shared config options and sections and are _read by every connector_. There's also a third one `poem-connector.conf`, specific only for `poem-connector.py` because it needs some special treatment not available in first two's.
 
 | Configuration file | Description | Shortcut |
-| `global.conf` | Config file is read by every component because every component needs to fetch host certificate to authenticate to a peer and to find correct avro schema. |<a href="#sync1">Description</a>|
+| `global.conf` | Config file is read by every component because every component needs to fetch host certificate to authenticate to a peer, find correct avro schema and some connection settings like timeout and number of retries. |<a href="#sync1">Description</a>|
 | `customer.conf` | This configuration file lists all EGI jobs, their attributes and also all VOes and theirs set of jobs and attributes. | <a href="#sync2">Description</a>|
 | `poem-connector.conf` | This configuration file is central configuration for poem-connector.py | <a href="#sync3">Description</a>|
 
+All configuration files reside in `/etc/argo-egi-connectors/` after the installation of the package. That's the default location that each component will try to read configuration from. Location can be overridden since every component takes `-c` and `-g` arguments to explicitly define the paths to `customer.conf` and `global.conf`, respectively. Example:
+
+	topology-vo.py -c /path/to/customer-foo.conf -g /path/to/global-foo.conf
+
+Exception is `prefilter-egi.py` component which is interested only in `global.conf` so it takes only `-g` argument.
 
 <a id="sync1"></a>
 
 ### global.conf
 
-Config file is read by _every_ component because every component needs to, at least, fetch host certificate to authenticate to a peer and to find correct avro schema. Additionally, some connectors have default sources of data specified that can be overidden in a next configuration file. Config options are case insensitive and whole config file is splitted into a few sections:
+Config file is read by _every_ component because every component needs to, at least, fetch host certificate to authenticate to a peer, find correct avro schema and connection parameters. Config options are case insensitive and whole config file is splitted into a few sections:
 
 	[DEFAULT]
 	SchemaDir = /etc/argo-egi-connectors/schemas/
+	EGIDir = /var/lib/argo-connectors/EGI
 
-Every component generates output file in an avro binary format. This section points to a directory that holds all avro schemas. 
+Section contains options that will be combined with others mainly to circumvent the inconvenience of listing their values multiple times along the configuration. Every component generates output file in an avro binary format. `SchemaDir` option points to a directory that holds all avro schemas. `EGIDir` is needed for `prefilter-egi.py` component and must be consistent with the one specified in `customer.conf` for EGI customer.
 
 	[Authentication]
 	VerifyServerCert = False
@@ -63,7 +69,21 @@ Every component generates output file in an avro binary format. This section poi
 	HostKey = /etc/grid-security/hostkey.pem
 	HostCert = /etc/grid-security/hostcert.pem
 
-Each component that talks to GOCDB or POEM peer authenticates itself with a host certificate. `HostKey` indicates the private and `HostCert` indicates the public part of certificate. Additionally, server certificate can be validated rounding up the mutual authentication. `CAPath` contains certificates of authorities from which chain will be tried to be built upon validating.
+Each component that talks to GOCDB or POEM peer authenticates itself with a host certificate. `HostKey` indicates the private and `HostCert` indicates the public part of certificate. Additionally, server certificate can be validated with the help of `pyOpenSSL` rounding up the mutual authentication. `CAPath` contains certificates of authorities from which chain will be tried to be built upon validating.
+
+	[Connection]
+	Timeout = 180
+	Retry = 3
+
+For every connector, connection will timeout after `180` seconds specified in `Timeout` by default, if peer doesn't respond properly in a given time frame. Connection will try to be established `3` more times (specified in `Retry`) before connector considers peer unavailable.
+
+	[Prefilter]
+	ConsumerFilePath = /var/lib/argo-egi-consumer/argo-consumer_log_DATE.avro
+	PoemNameMapping = poem_name_mapping.cfg
+	PoemExpandedProfiles = %(EGIDir)s/poem_sync_DATE.out
+	LookbackPoemExpandedProfiles = 5
+
+Section defines parameters needed for `prefilter-egi.py` component. It's not connector like rest of the components and its purpose is to filter `ConsumerFilePath` messages based on criteria found in file specified by `PoemExpandProfiles` option so those two options represents its input. If `PoemExpandedProfiles` file is not found, it will try to look for it for `LookbackPoemExpandedProfiles` previous days.
 
 	[AvroSchemas]
 	Downtimes = %(SchemaDir)s/downtimes.avsc
@@ -76,29 +96,27 @@ Each component that talks to GOCDB or POEM peer authenticates itself with a host
 This section, together with a `[DEFAULT]` section, constitutes the full path of avro schema file for each component. Avro schema files define the format of the data that each component is writing. `Topology*` schemas are common to `topology-gocdb-connector.py` and `topology-vo-connector.py` because there is a need of compute side to not make a difference between two topologies. `Prefilter` schema is taken from `argo-egi-consumer` since `prefilter-egi.py` filters its metric results and needs to write them in the same format.
 
 	[Output]
-	Downtimes = downtimes_%s.avro
-	Poem = poem_sync_%s.avro
-	Prefilter = prefilter_%s.avro
-	PrefilterConsumerFilePath = /var/lib/ar-consumer/ar-consumer_log_%s.avro
-	PrefilterPoem = poem_sync_%s.out
-	PrefilterPoemNameMapping = poem_name_mapping.cfg
-	TopologyGroupOfEndpoints = group_endpoints_%s.avro
-	TopologyGroupOfGroups = group_groups_%s.avro
-	Weights = weights_%s.avro
+	Downtimes = downtimes_DATE.avro
+	Poem = poem_sync_DATE.avro
+	Prefilter = %(EGIDir)s/prefilter_DATE.avro
+	TopologyGroupOfEndpoints = group_endpoints_DATE.avro
+	TopologyGroupOfGroups = group_groups_DATE.avro
+	Weights = weights_DATE.avro
 
-Section lists all the filenames that each component is generating. Directory is purposely omitted because it's implicitly found in next configuration file. Exception is a `PrefilterConsumerFilePath` and `PrefilterPoem` options that tells the `prefilter-egi.py` where to look for its input files. `%s` is a string placeholder that will be replaced by the date timestamp in format `year_month_day`.
+Section lists all the filenames that each component is generating. Directory is purposely omitted because it's implicitly found in next configuration file. Exception is `Prefilter` that has its output directory explicitly specified. `DATE` is a string placeholder that will be replaced by the date timestamp in format `year_month_day`.
 
 <a id="sync2"></a>
 
 ### customer.conf
 
-This configuration file lists all customers, their jobs and appropriate attributes. Job is presented to `argo-compute-engine` as a folder with a set of files that are generated each day and that directs compute engine what metric results to take into account and do calculations upon them. 
+This configuration file lists all customers, their jobs and appropriate attributes. Customer in an EGI infrastructure could be a specific VO or even a NGI. Job is presented to `argo-compute-engine` as a folder with a set of files that are generated each day and that directs compute engine what metric results to take into account and do calculations upon them.
 
 #### Directory structure
 
 Job folders for each customer are placed under the customer's `OutputDir` directory and appropriate directory names are read from the config file. Segment of configuration file that reflects the creation of directories is for example: 
 
 	[CUSTOMER_C1]
+	Name = C1Name1
 	OutputDir = /var/lib/argo-connectors/Customer1
 	Jobs = JOB_Test1, JOB_Test2
 
@@ -106,10 +124,11 @@ Job folders for each customer are placed under the customer's `OutputDir` direct
 	Dirname = C1Testing1
 
 	[JOB_Test2]
-	Dirname = C2Testing2
+	Dirname = C1Testing2
 
 
 	[CUSTOMER_C2]
+	Name = C2Name2
 	OutputDir = /var/lib/argo-connectors/Customer2
 	Jobs = Job_Test3, JOB_Test4
 
@@ -126,7 +145,7 @@ This will result in the following jobs directories:
 	/var/lib/argo-connectors/Customer2/C2Testing1
 	/var/lib/argo-connectors/Customer2/C2Testing2
 
-So there are two customers, C1 and C2, each one identified with its `[CUSTOMER_*]` section. `CUSTOMER_` is a section keyword and must be specified when one wants to define a new customer. Each customer has two mandatory options: `OutputDir` and `Jobs`. With `OutputDir` option, customer defines his directory where he'll write job folders and other data. Customer must also specify set of jobs listed in `Jobs` options since it can not exist without associated jobs. The name of the job folder is specified with `Dirname` option of the certain job so `JOB\_Test1`, identified with `[JOB_Test1]` section, will be named `C1Testing1` and it will be placed under customer's `/var/lib/argo-connectors/Customer1/` directory. Each component will firstly try to create described directory structure if it doesn't exist yet. Only afterward it will write its data. 
+So there are two customers, C1 and C2, each one identified with its `[CUSTOMER_*]` section. `CUSTOMER_` is a section keyword and must be specified when one wants to define a new customer. Each customer has three mandatory options: `Name`, `OutputDir` and `Jobs`. With `OutputDir` option, customer defines his directory where he'll write job folders and other data. Customer must also specify set of jobs listed in `Jobs` options since it can not exist without associated jobs. The name of the job folder is specified with `Dirname` option of the certain job so `JOB\_Test1`, identified with `[JOB_Test1]` section, will be named `C1Testing1` and it will be placed under customer's `/var/lib/argo-connectors/Customer1/` directory. Each component will firstly try to create described directory structure if it doesn't exist yet. Only afterward it will write its data.
 
 Every connector reads this configuration file because it needs to find out how many customers are there and what are theirs customer and job directory names where they will lay down its files. So `poem-connector.py`, `downtimes-gocdb-connector.py`, `weights-gstat-connector.py`, all of them are writing theirs data in each job directory for each customer. Topology for EGI (fetched from GOCDB) is different than one for the VO so exceptions to this are `topology-gocdb-connector.py` and `topology-vo-connector.py`. They are writing data for a job based on the job's topology type specified with `TopoType` attribute.
 
@@ -163,7 +182,7 @@ So, in a `TopoFetchType` option customer can either specify:
 
 Tags represent a fine-grained control of what is being written in output files. It's a convenient way of selecting only certain entities, being it Sites, Service groups or Service endpoints based on appropriate criteria. Tags are optional so if a certain tag for a corresponding entity is omitted, than filtering is not done. In that case, it can be considered that entity is fetched for all its values of an omitted tag.
 
-Group of group tags are different for a different type of fetch. Tags and values for a different entities are:
+Group of group tags are different for a different type of fetch. Tags and values for a different entities existing in EGI infrastructure are:
 
 **Sites**
 
@@ -224,6 +243,10 @@ This configuration file is central configuration for `poem-connector.py` whose r
 - fetch all defined POEM profiles from each POEM server specified
 - prepare and layout data needed for `prefilter-egi.py`
 
+Default location of `poem-connector.conf` can be overriden with `-p` argument of connector:
+
+	poem-connector.py -p /path/to/poem-connector.conf
+
 #### POEM profiles fetch
 
 Config file is splitted into a few sections:
@@ -247,9 +270,9 @@ Same POEM profile can be defined on multiple POEM servers. Each POEM server can 
 	[FetchProfiles]
 	List = CH.CERN.SAM.ROC, CH.CERN.SAM.ROC_OPERATORS, CH.CERN.SAM.ROC_CRITICAL, CH.CERN.SAM.OPS_MONITOR, CH.CERN.SAM.OPS_MONITOR_CRITICAL, CH.CERN.SAM.GLEXEC, CH.CERN.SAM.CLOUD-MON
 
-#### Prefilter data
+#### Prefilter data and `prefilter-egi.py` component
 
-`poem-connector.py` also generates plaintext `PrefilterPoem` file (specified in `global.conf`) on a daily basis for each customer and places it under customer's directory. Content of the file is controlled in `[PrefilterData]` section:
+`poem-connector.py` also generates plaintext `PoemExpandedProfiles` file (specified in `global.conf`) on a daily basis for EGI customer and places it under its directory. It's not generated for every EGI subcustomer that may be specified in `customer.conf` but only for main one - EGI. Content of the file is controlled in `[PrefilterData]` section:
 
 	[PrefilterData]
 	AllowedNGI = http://mon.egi.eu/nagios-roles.conf
@@ -263,12 +286,34 @@ Same POEM profile can be defined on multiple POEM servers. Each POEM server can 
 
 `AllNGI1` option is similar in sense that it will extended specified nagios box (monitoring instance) with the information from `AllNGIProfiles1` POEM profiles. Multiple `AllNGI*` options can be specified and they must come in pair fashion so for every `AllNGI[n]` option, there must exist `AllNGIProfiles[n]` option that is related to it.
 
-With all these informations written in `PrefilterPoem` file, `prefilter-egi.py` can do its work, so it will filter consumer messages if:
+With all these informations written in `PoemExpandedProfiles` file, `prefilter-egi.py` can do its work, so it will filter consumer messages if:
 
 - message that enter into broker network doesn't come from allowed NGI or nagios box for certain NGI is incorrectly specified
 - metric result is response to metric not found in a fetched service flavour
 - metric result's service flavour is not registered in any fetched POEM profile
 - metric result is registered for different VO, not specified in `VO` option of any `[PoemServer]` section
+
+All `prefilter-egi.py` related I/O options are in `global.conf`:
+
+	[DEFAULT]
+	EGIDir = /var/lib/argo-connectors/EGI/
+
+* input
+
+	[Prefilter]
+	ConsumerFilePath = /var/lib/argo-egi-consumer/argo-consumer_log_DATE.avro
+	PoemExpandedProfiles = %(EGIDir)s/poem_sync_DATE.out`
+
+* output
+
+	[Output]
+	Prefilter = %(EGIDir)s/prefilter_DATE.avro
+
+If `prefilter-egi.py` is intended to be used for multiple customers, one must define `global.conf` for each customer and pass it to `prefilter-egi.py` while it's being called:
+
+	prefilter-egi.py -g /path/to/global-cus1.conf
+	prefilter-egi.py -g /path/to/global-cus2.conf
+
 
 ## Examples
 

@@ -3,10 +3,10 @@ import os, re, errno
 from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
-    def __init__(self, *args, **kwargs):
-        self.logger = Logger(self.__class__)
+    def __init__(self, confpath, *args, **kwargs):
+        self.logger = Logger(str(self.__class__))
         self._args = args
-        self._filename = '/etc/argo-egi-connectors/global.conf'
+        self._filename = '/etc/argo-egi-connectors/global.conf' if not confpath else confpath
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
 
     def parse(self):
@@ -20,6 +20,8 @@ class Global:
         try:
             for arg in self._args:
                 for sect, opts in arg.items():
+                    if sect not in config.sections():
+                        raise ConfigParser.NoSectionError(sect.lower())
                     for opt in opts:
                         for section in config.sections():
                             if section.lower().startswith(sect.lower()):
@@ -28,7 +30,7 @@ class Global:
                                     raise OSError(errno.ENOENT, optget)
                                 options.update({(sect+opt).lower(): optget})
         except ConfigParser.NoOptionError as e:
-            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+            self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
             self.logger.error("No section '%s' defined" % (e.args[0]))
@@ -42,10 +44,10 @@ class Global:
 class PoemConf:
     options = {}
 
-    def __init__(self, *args):
-        self.logger = Logger(self.__class__)
+    def __init__(self, confpath, *args):
+        self.logger = Logger(str(self.__class__))
         self._args = args
-        self._filename = '/etc/argo-egi-connectors/poem-connector.conf'
+        self._filename = '/etc/argo-egi-connectors/poem-connector.conf' if not confpath else confpath
 
     def parse(self):
         config = ConfigParser.ConfigParser()
@@ -67,7 +69,7 @@ class PoemConf:
                                         self.options.update({(section+o).lower(): optget})
 
         except ConfigParser.NoOptionError as e:
-            self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+            self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
             self.logger.error("No section '%s' defined" % (e.args[0]))
@@ -118,12 +120,6 @@ class PoemConf:
                                     re.split('\s*,\s*', self.options[key+'vo'])})
         return poemservers
 
-class PrefilterConf(Global):
-    def __init__(self, *args, **kwargs):
-        self._args = args
-        self._filename = '/etc/argo-egi-connectors/prefilter-egi.conf'
-        self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
-
 class CustomerConf:
     _custattrs = None
     _cust = {}
@@ -140,9 +136,9 @@ class CustomerConf:
     _jobs, _jobattrs = {}, None
     tenantdir = ''
 
-    def __init__(self, caller=None, **kwargs):
-        self.logger = Logger(self.__class__)
-        self._filename = '/etc/argo-egi-connectors/customer.conf'
+    def __init__(self, caller, confpath, **kwargs):
+        self.logger = Logger(str(self.__class__))
+        self._filename = '/etc/argo-egi-connectors/customer.conf' if not confpath else confpath
         if not kwargs:
             self._jobattrs = self._defjobattrs[os.path.basename(caller)]
         else:
@@ -164,11 +160,12 @@ class CustomerConf:
                     custjobs = config.get(section, 'Jobs').split(',')
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
+                    custname = config.get(section, 'Name')
                 except ConfigParser.NoOptionError as e:
-                    self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+                    self.logger.error(e.message)
                     raise SystemExit(1)
 
-                self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir}})
+                self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -182,7 +179,7 @@ class CustomerConf:
                         profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
                     except ConfigParser.NoOptionError as e:
-                        self.logger.error("No option '%s' in section: '%s'" % (e.args[0], e.args[1]))
+                        self.logger.error(e.message)
                         raise SystemExit(1)
 
                     self._jobs.update({job: {'Profiles': profiles, 'Dirname': dirname}})
@@ -227,6 +224,9 @@ class CustomerConf:
     def get_custdir(self, cust):
         return self._dir_from_sect(cust, self._cust)
 
+    def get_custname(self, cust):
+        return self._cust[cust]['Name']
+
     def make_dirstruct(self):
         dirs = []
         for cust in self._cust.keys():
@@ -237,7 +237,7 @@ class CustomerConf:
                     os.makedirs(d)
                 except OSError as e:
                     if e.args[0] != errno.EEXIST:
-                        self.logger.error('%s %s %s' % os.strerror(e.args[0]), e.args[1], d)
+                        self.logger.error('%s %s %s' % (os.strerror(e.args[0]), e.args[1], d))
                         raise SystemExit(1)
 
     def get_jobs(self, cust):
@@ -304,20 +304,18 @@ class CustomerConf:
             feeds[feedurl] = []
             feeds[feedurl].append((job, cust))
 
-    def get_allspec_scopes(self, caller, name=None):
-        distinct_scopes = set()
+    def get_feedscopes(self, feed, jobcust):
         ggtags, getags = [], []
-        for c in self.get_customers():
-            for job in self.get_jobs(c):
-                if self._get_toponame(job) == name:
-                    gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
-                    ge = self._get_tags(job, 'TopoSelectGroupOfEndpoints')
-                    for g in gg.items() + ge.items():
-                        if 'Scope'.lower() == g[0].lower():
-                            if isinstance(g[1], list):
-                                distinct_scopes.update(g[1])
-                            else:
-                                distinct_scopes.update([g[1]])
+        distinct_scopes = set()
+        for job, cust in jobcust:
+            gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
+            ge = self._get_tags(job, 'TopoSelectGroupOfEndpoints')
+            for g in gg.items() + ge.items():
+                if 'Scope'.lower() == g[0].lower():
+                    if isinstance(g[1], list):
+                        distinct_scopes.update(g[1])
+                    else:
+                        distinct_scopes.update([g[1]])
 
         return distinct_scopes
 

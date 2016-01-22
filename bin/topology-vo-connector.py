@@ -24,9 +24,8 @@
 # the EGI-InSPIRE project through the European Commission's 7th
 # Framework Programme (contract # INFSO-RI-261323)
 
-from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
@@ -35,10 +34,7 @@ from urlparse import urlparse
 import argparse
 import copy
 import datetime
-import httplib
 import os
-import re
-import socket
 import sys
 import xml.dom.minidom
 
@@ -52,27 +48,14 @@ class VOReader:
     lgroups = []
 
     def __init__(self, feed):
+        self._o = urlparse(feed)
         self.feed = feed
         self._parse()
 
     def _parse(self):
-        o = urlparse(self.feed)
         try:
-            if o.scheme == 'https':
-                if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                    verify_cert(os.path.basename(sys.argv[0]), o.netloc, globopts['AuthenticationCAPath'.lower()], 180)
-                conn = httplib.HTTPSConnection(o.netloc, 443,
-                                            globopts['AuthenticationHostKey'.lower()],
-                                            globopts['AuthenticationHostCert'.lower()])
-            elif o.scheme == 'http':
-                conn = httplib.HTTPConnection(o.netloc)
-        except(SSLError, socket.error, socket.timeout, httplib.HTTPConnection) as e:
-            logger.error('Connection error %s - %s' % (o.netloc, errmsg_from_excp(e)))
-            raise SystemExit(1)
-
-        conn.request('GET', o.path)
-        res = conn.getresponse()
-        try:
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
+                                  "VOReader._parse():")
             if res.status == 200:
                 dom = xml.dom.minidom.parseString(res.read())
                 sites = dom.getElementsByTagName('atp_site')
@@ -100,10 +83,10 @@ class VOReader:
                         ge['type'] = 'SITES'
                         self.lendpoints.append(ge)
             else:
-                logger.error('VOReader._parse(): Connection failed %s, HTTP response: %s %s' % (o.netloc, str(res.status), res.reason))
+                logger.error('VOReader._parse(): HTTP response: %s %s' % (str(res.status), res.reason))
                 raise SystemExit(1)
         except AssertionError:
-            logger.error("Error parsing VO-feed %s" % (o.netloc + o.path))
+            logger.error("VOReader._parse(): Error parsing VO-feed %s" % (o.netloc + o.path))
             raise SystemExit(1)
 
     def get_groupgroups(self):
@@ -116,6 +99,8 @@ class VOReader:
 def main():
     parser = argparse.ArgumentParser(description="""Fetch wanted entities from VO feed provided in customer.conf
                                                     and write them in an appropriate place""")
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
     global logger
@@ -124,11 +109,14 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    cglob = Global(certs, schemas, output)
+    conn = {'Connection': ['Timeout', 'Retry']}
+    confpath = args.gloconf[0] if args.gloconf else None
+    cglob = Global(confpath, certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 
-    confcust = CustomerConf(sys.argv[0])
+    confpath = args.custconf[0] if args.custconf else None
+    confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'VOFeed')
@@ -140,6 +128,8 @@ def main():
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
+
+            custname = confcust.get_custname(cust)
 
             filtlgroups = vo.get_groupgroups()
             numgg = len(filtlgroups)
@@ -153,12 +143,11 @@ def main():
                             return True
                 filtlgroups = filter(ismatch, filtlgroups)
 
-            filename = jobdir + globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups,
                               os.path.basename(sys.argv[0]))
             avro.write()
 
-            filename = jobdir + globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
             gelegmap = []
             group_endpoints = vo.get_groupendpoints()
             numge = len(group_endpoints)
@@ -166,13 +155,14 @@ def main():
                 if g['service'] in LegMapServType.keys():
                     gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap,
                                                                                        os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Job:'+job+' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))
+            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge + len(gelegmap))+' Groups:%d' % (numgg))
             if tags:
-                selstr = 'Job:%s Selected ' % (job)
+                selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selgg = ''
                 for key, value in tags.items():
                     if isinstance(value, list):
