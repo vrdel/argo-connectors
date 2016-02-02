@@ -272,7 +272,11 @@ Same POEM profile can be defined on multiple POEM servers. Each POEM server can 
 
 #### Prefilter data and `prefilter-egi.py` component
 
-`poem-connector.py` also generates plaintext `PoemExpandedProfiles` file (specified in `global.conf`) on a daily basis for EGI customer and places it under its directory. It's not generated for every EGI subcustomer that may be specified in `customer.conf` but only for main one - EGI. Content of the file is controlled in `[PrefilterData]` section:
+`poem-connector.py` also generates plaintext `PoemExpandedProfiles` file (specified in `global.conf`) on a daily basis for EGI customer and places it under its directory. It's not generated for every EGI subcustomer that may be specified in `customer.conf` but only for main one - EGI. Also, it can be invoked to **not** generate `PoemExpandedProfiles` file at all for customers that don't need it (i.e., customers outside EGI):
+
+	poem-connector.py -np
+
+Content of the `PoemExpandedProfiles` file is controlled in `[PrefilterData]` section:
 
 	[PrefilterData]
 	AllowedNGI = http://mon.egi.eu/nagios-roles.conf

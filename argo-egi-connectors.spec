@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.5
-Release: 2%{?dist}
+Release: 3%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -44,6 +44,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Mon Feb 1 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-3%{?dist}
+- poem connector optional write data needed for prefilter
+  https://github.com/ARGOeu/ARGO/issues/184
 * Tue Jan 12 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-2%{?dist}
 - weights connector refactored
 - README updated
