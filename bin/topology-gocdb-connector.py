@@ -27,15 +27,12 @@
 import argparse
 import copy
 import datetime
-import httplib
 import os
-import socket
 import sys
 import xml.dom.minidom
 
-from OpenSSL.SSL import Error as SSLError
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import verify_cert, errmsg_from_excp
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
@@ -51,10 +48,8 @@ logger = None
 
 class GOCDBReader:
     def __init__(self, feed, scopes):
-        self.gocdbHost = urlparse(feed).netloc
+        self._o = urlparse(feed)
         self.scopes = scopes if scopes else set(['NoScope'])
-        self.hostKey = globopts['AuthenticationHostKey'.lower()]
-        self.hostCert = globopts['AuthenticationHostCert'.lower()]
         for scope in self.scopes:
             code = "self.serviceList%s = dict(); " % scope
             code += "self.groupList%s = dict();" % scope
@@ -147,25 +142,18 @@ class GOCDBReader:
         return groupofendpoints
 
     def loadDataIfNeeded(self):
-        try:
-            scopequery = "'&scope='+scope"
-            for scope in self.scopes:
-                eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-                self.fetched = True
-
-        except (socket.error, httplib.HTTPException) as e:
-            logger.error('Connection to GOCDB failed: ' + str(e))
-            raise SystemExit(1)
+        scopequery = "'&scope='+scope"
+        for scope in self.scopes:
+            eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+            eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+            eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+            self.fetched = True
 
     def getServiceEndpoints(self, serviceList, scope):
         try:
-            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
-            conn.request('GET', '/gocdbpi/private/?method=get_service_endpoint' + scope)
-            res = conn.getresponse()
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                                  '/gocdbpi/private/?method=get_service_endpoint' + scope,
+                                  "GOCDBReader.getServiceEndpoints():")
             if res.status == 200:
                 doc = xml.dom.minidom.parseString(res.read())
                 services = doc.getElementsByTagName('SERVICE_ENDPOINT')
@@ -190,17 +178,12 @@ class GOCDBReader:
         except AssertionError:
             logger.error("GOCDBReader.getServiceEndpoints(): Error parsing feed")
             raise SystemExit(1)
-        except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
-            raise SystemExit(1)
 
     def getSitesInternal(self, siteList, scope):
         try:
-            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
-            conn.request('GET', '/gocdbpi/private/?method=get_site'+scope)
-            res = conn.getresponse()
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                                  '/gocdbpi/private/?method=get_site' + scope,
+                                  "GOCDBReader.getSitesInternal():")
             if res.status == 200:
                 dom = xml.dom.minidom.parseString(res.read())
                 sites = dom.getElementsByTagName('SITE')
@@ -219,17 +202,12 @@ class GOCDBReader:
         except AssertionError:
             logger.error("GOCDBReader.getSitesInternal(): Error parsing feed")
             raise SystemExit(1)
-        except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
-            raise SystemExit(1)
 
     def getServiceGroups(self, groupList, scope):
         try:
-            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(self.gocdbHost, globopts['AuthenticationCAPath'.lower()], 180)
-            conn = httplib.HTTPSConnection(self.gocdbHost, 443, self.hostKey, self.hostCert)
-            conn.request('GET', '/gocdbpi/private/?method=get_service_group' + scope)
-            res = conn.getresponse()
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                                  '/gocdbpi/private/?method=get_service_group' + scope,
+                                  "GOCDBReader.getServiceGroups():")
             if res.status == 200:
                 doc = xml.dom.minidom.parseString(res.read())
                 groups = doc.getElementsByTagName('SERVICE_GROUP')
@@ -256,9 +234,6 @@ class GOCDBReader:
         except AssertionError:
             logger.error("GOCDBReader.getServiceGroups(): Error parsing feed")
             raise SystemExit(1)
-        except(SSLError, socket.error, socket.timeout) as e:
-            logger.error('Connection error %s - %s' % (self.gocdbHost, errmsg_from_excp(e)))
-            raise SystemExit(1)
 
 def filter_by_tags(tags, listofelem):
     for attr in tags.keys():
@@ -279,8 +254,10 @@ def filter_by_tags(tags, listofelem):
 
 def main():
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
-                                                    from GOCDB for every job listed in customer.conf and write them
+                                                    from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
 
@@ -290,11 +267,14 @@ def main():
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    cglob = Global(certs, schemas, output)
+    conn = {'Connection': ['Timeout', 'Retry']}
+    confpath = args.gloconf[0] if args.gloconf else None
+    cglob = Global(confpath, certs, schemas, output, conn)
     global globopts
     globopts = cglob.parse()
 
-    confcust = CustomerConf(sys.argv[0])
+    confpath = args.custconf[0] if args.custconf else None
+    confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
@@ -324,7 +304,8 @@ def main():
             ggtags = confcust.get_gocdb_ggtags(job)
             if ggtags:
                 group_groups = filter_by_tags(ggtags, group_groups)
-            filename = jobdir+globopts['OutputTopologyGroupOfGroups'.lower()] % timestamp
+
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
                             group_groups, os.path.basename(sys.argv[0]))
             avro.write()
@@ -339,7 +320,8 @@ def main():
             if getags:
                 group_endpoints = filter_by_tags(getags, group_endpoints)
                 gelegmap = filter_by_tags(getags, gelegmap)
-            filename = jobdir+globopts['OutputTopologyGroupOfEndpoints'.lower()] % timestamp
+
+            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
                             group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
             avro.write()
