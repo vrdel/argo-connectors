@@ -76,8 +76,8 @@ class GOCDBReader:
                 g['hostname'] = service['hostname']
                 g['group_monitored'] = d['monitored']
                 g['tags'] = {'scope' : d['scope'], \
-                            'monitored' : 1 if service['monitored'] == "Y" else 0, \
-                            'production' : 1 if service['production'] == "Y" else 0}
+                            'monitored' : '1' if service['monitored'] == "Y" else '0', \
+                            'production' : '1' if service['production'] == "Y" else '0'}
                 groups.append(g)
 
         return groups
@@ -97,7 +97,7 @@ class GOCDBReader:
                 g['type'] = 'PROJECT'
                 g['group'] = custname
                 g['subgroup'] = d['name']
-                g['tags'] = {'monitored' : 1 if d['monitored'] == 'Y' else 0,
+                g['tags'] = {'monitored' : '1' if d['monitored'] == 'Y' else '0',
                             'scope' : d['scope']}
                 groupofgroups.append(g)
         else:
@@ -135,8 +135,8 @@ class GOCDBReader:
             g['service'] = gr['type']
             g['hostname'] = gr['hostname']
             g['tags'] = {'scope' : gr['scope'], \
-                         'monitored' : 1 if gr['monitored'] == "Y" else 0, \
-                         'production' : 1 if gr['production'] == "Y" else 0}
+                         'monitored' : '1' if gr['monitored'] == "Y" else '0', \
+                         'production' : '1' if gr['production'] == "Y" else '0'}
             groupofendpoints.append(g)
 
         return groupofendpoints
@@ -239,8 +239,8 @@ def filter_by_tags(tags, listofelem):
     for attr in tags.keys():
         def getit(elem):
             value = elem['tags'][attr.lower()]
-            if isinstance(value, int):
-                value = 'Y' if value else 'N'
+            if value == '1': value = 'Y'
+            elif value == '0': value = 'N'
             if isinstance(tags[attr], list):
                 for a in tags[attr]:
                     if value.lower() == a.lower():

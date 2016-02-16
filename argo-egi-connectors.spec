@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.4.5
-Release: 3%{?dist}
+Version: 1.4.6
+Release: 1%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -44,6 +44,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Tue Feb 16 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-1%{?dist}
+- topology data without mixed int and string values
 * Mon Feb 1 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-3%{?dist}
 - poem connector optional write data needed for prefilter
   https://github.com/ARGOeu/ARGO/issues/184
