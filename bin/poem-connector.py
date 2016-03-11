@@ -43,7 +43,8 @@ cpoem = None
 custname = ''
 
 class PoemReader:
-    def __init__(self):
+    def __init__(self, noprefilter):
+        self._nopf = noprefilter
         self.poemRequest = '%s/poem/api/0.2/json/metrics_in_profiles?vo_name=%s'
 
     def getProfiles(self):
@@ -57,65 +58,6 @@ class PoemReader:
         profileList = []
         profileListAvro = []
 
-        numngis, nummoninst = 0, 0
-        for server, profiles in ngiallow.items():
-            defaultProfiles = profiles
-            url = server
-
-            if not url.startswith('http'):
-                url = 'https://' + url
-
-            o = urlparse.urlparse(url, allow_fragments=True)
-            res = make_connection(logger, globopts, o.scheme, o.netloc,
-                                  o.path + '?' + o.query,
-                                  "POEMReader.getProfiles():")
-            if res.status == 200:
-                urlLines = res.read().splitlines()
-            else:
-                logger.error('PoemReader.getProfiles(): HTTP response: %s %s' % (str(res.status), res.reason))
-                raise SystemExit(1)
-
-            for urlLine in urlLines:
-                if len(urlLine) == 0 or urlLine[0] == '#':
-                    continue
-
-                ngis = urlLine.split(':')[0].split(',')
-                servers = urlLine.split(':')[2].split(',')
-                numngis += len(ngis)
-                nummoninst += len(servers)
-
-                for vo in availableVOs:
-                    serverProfiles = []
-                    if len(defaultProfiles) > 0:
-                        serverProfiles = defaultProfiles
-                    else:
-                        serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
-                    for profile in serverProfiles:
-                        if profile.upper() in validProfiles.keys():
-                            for ngi in ngis:
-                                for server in servers:
-                                    profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
-
-        for server, profiles in ngiall.items():
-            ngis = ['ALL']
-            servers = [server]
-            defaultProfiles = profiles
-
-            for vo in availableVOs:
-                serverProfiles = []
-                if len(defaultProfiles) > 0:
-                    serverProfiles = defaultProfiles
-                else:
-                    serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
-
-            for profile in serverProfiles:
-                if profile.upper() in validProfiles.keys():
-                    for ngi in ngis:
-                        for server in servers:
-                            profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
-
-        logger.info('Fetched %d monitoring instances for %d NGIs' % (nummoninst, numngis))
-
         for profile in validProfiles.values():
             for metric in profile['metrics']:
                 profileListAvro.append({'profile' : profile['namespace'] + '.' + profile['name'], \
@@ -124,7 +66,74 @@ class PoemReader:
                                         'vo' : profile['vo'], \
                                         'fqan' : metric['fqan']})
 
-        return profileList, profileListAvro
+        if not self._nopf:
+            numngis, nummoninst = 0, 0
+            for server, profiles in ngiallow.items():
+                defaultProfiles = profiles
+                url = server
+
+                if not url.startswith('http'):
+                    url = 'https://' + url
+
+                o = urlparse.urlparse(url, allow_fragments=True)
+                res = make_connection(logger, globopts, o.scheme, o.netloc,
+                                    o.path + '?' + o.query,
+                                    "POEMReader.getProfiles():")
+                if res.status == 200:
+                    urlLines = res.read().splitlines()
+                else:
+                    logger.error('PoemReader.getProfiles(): HTTP response: %s %s' % (str(res.status), res.reason))
+                    raise SystemExit(1)
+
+                try:
+                    for urlLine in urlLines:
+                        if len(urlLine) == 0 or urlLine[0] == '#':
+                            continue
+
+                        ngis = urlLine.split(':')[0].split(',')
+                        assert ngis is not []
+                        servers = urlLine.split(':')[2].split(',')
+                        assert servers is not []
+                        numngis += len(ngis)
+                        nummoninst += len(servers)
+
+                        for vo in availableVOs:
+                            serverProfiles = []
+                            if len(defaultProfiles) > 0:
+                                serverProfiles = defaultProfiles
+                            else:
+                                serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
+                            for profile in serverProfiles:
+                                if profile.upper() in validProfiles.keys():
+                                    for ngi in ngis:
+                                        for server in servers:
+                                            profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
+                except AssertionError as e:
+                    logger.error('Cannot parse %s' % url)
+                    raise SystemExit(1)
+
+
+            logger.info('Fetched %d monitoring instances for %d NGIs' % (nummoninst, numngis))
+
+            for server, profiles in ngiall.items():
+                ngis = ['ALL']
+                servers = [server]
+                defaultProfiles = profiles
+
+                for vo in availableVOs:
+                    serverProfiles = []
+                    if len(defaultProfiles) > 0:
+                        serverProfiles = defaultProfiles
+                    else:
+                        serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
+
+                for profile in serverProfiles:
+                    if profile.upper() in validProfiles.keys():
+                        for ngi in ngis:
+                            for server in servers:
+                                profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
+
+        return profileList if profileList else [], profileListAvro
 
     def loadValidProfiles(self, filteredProfiles):
         validProfiles = dict()
@@ -228,6 +237,7 @@ def gen_outprofiles(lprofiles, matched):
 def main():
     parser = argparse.ArgumentParser(description='Fetch POEM profile for every job of the customer and write POEM expanded profiles needed for prefilter for EGI customer')
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-np', dest='noprefilter', help='do not write POEM expanded profiles for prefilter', required=False, action='store_true')
     parser.add_argument('-p', dest='poemconf', nargs=1, metavar='poem-connector.conf', help='path to poem-connector configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
@@ -254,18 +264,18 @@ def main():
     cpoem = PoemConf(confpath, servers, filterprofiles, prefilterdata)
     poemopts = cpoem.parse()
 
-
     confpath = args.custconf[0] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
 
-    readerInstance = PoemReader()
+    readerInstance = PoemReader(args.noprefilter)
     ps, psa = readerInstance.getProfiles()
 
-    poempref = PrefilterPoem()
-    preffname = gen_fname_repdate(logger, timestamp, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
-    poempref.writeProfiles(ps, preffname)
+    if not args.noprefilter:
+        poempref = PrefilterPoem()
+        preffname = gen_fname_repdate(logger, timestamp, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+        poempref.writeProfiles(ps, preffname)
 
     for cust in confcust.get_customers():
         # write profiles

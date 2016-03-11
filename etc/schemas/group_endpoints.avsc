@@ -8,7 +8,7 @@
         {"name": "hostname", "type": "string"},
         {"name": "tags", "type" : ["null", { "name" : "Tags",
                                              "type" : "map",
-                                             "values" : ["int", "string"]
+                                             "values" : "string"
                                           }]
         }]
 }
