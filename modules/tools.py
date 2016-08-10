@@ -10,26 +10,27 @@ from OpenSSL.SSL import VERIFY_PEER, VERIFY_FAIL_IF_NO_PEER_CERT
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.SSL import OP_NO_SSLv3
 
+strerr = ''
+num_excp_expand = 0
 
 def errmsg_from_excp(e):
-    if getattr(e, 'args', False):
-        retstr = ''
-        if isinstance(e.args, list) or isinstance(e.args, tuple) \
-                or isinstance(e.args, dict):
-            for s in e.args:
-                if isinstance(s, str):
-                    retstr += s + ' '
-                if isinstance(s, tuple) or isinstance(s, tuple):
-                    retstr += ' '.join(s)
-            return retstr
-        elif isinstance(e.args, str):
-            return e.args
-        else:
-            for s in e.args:
-                retstr += str(s) + ' '
-            return retstr
-    else:
-        return str(e)
+    global strerr, num_excp_expand
+    if isinstance(e, Exception) and getattr(e, 'args', False):
+        num_excp_expand += 1
+        if not errmsg_from_excp(e.args):
+            return strerr
+    elif isinstance(e, dict):
+        for s in e.iteritems():
+            errmsg_from_excp(s)
+    elif isinstance(e, list):
+        for s in e:
+            errmsg_from_excp(s)
+    elif isinstance(e, tuple):
+        for s in e:
+            errmsg_from_excp(s)
+    elif isinstance(e, str):
+        if num_excp_expand <= 1:
+            strerr += e + ' '
 
 def gen_fname_repdate(logger, timestamp, option, path):
     if re.search(r'DATE(.\w+)$', option):
@@ -101,7 +102,7 @@ def verify_cert(host, capath, timeout):
         if 'sslv3 alert handshake failure' in errmsg_from_excp(e):
             pass
         else:
-            raise SSLError(e.message)
+            raise SSLError(errmsg_from_excp(e))
 
     server_conn.shutdown()
     server_conn.close()
