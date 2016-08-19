@@ -52,7 +52,7 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
                 if scheme.startswith('https'):
                     if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
                         verify_cert_cafile_capath(host, int(globopts['ConnectionTimeout'.lower()]),
-                                                  globopts['AuthenticationCAPath'.lower()], '/root/cacert.pem')
+                                                  globopts['AuthenticationCAPath'.lower()], globopts['AuthenticationCAFile'.lower()])
                     conn = httplib.HTTPSConnection(host, 443,
                                                    globopts['AuthenticationHostKey'.lower()],
                                                    globopts['AuthenticationHostCert'.lower()],

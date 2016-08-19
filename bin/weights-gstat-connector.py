@@ -90,7 +90,7 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'VerifyServerCert']}
+    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Weights']}
     output = {'Output': ['Weights']}
     conn = {'Connection': ['Timeout', 'Retry']}
