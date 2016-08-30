@@ -106,7 +106,7 @@ def main():
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
-    feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='http://gstat2.grid.sinica.edu.tw/gstat/summary/json/')
+    feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info')
 
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
     oldDate = datetime.datetime.utcnow()
