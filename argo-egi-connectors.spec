@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.4.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: EGI/SA4
 License: ASL 2.0
@@ -44,6 +44,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Wed Aug 31 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-2%{?dist} 
+- make use of VAPOR service for weights
+- extended cert verification with CAfile bundle
 * Tue Feb 16 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-1%{?dist}
 - topology data without mixed int and string values
 * Mon Feb 1 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.5-3%{?dist}
