@@ -83,6 +83,7 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
 def verify_cert_cafile_capath(host, timeout, capath, cafile):
     def verify_cert(host, ca, timeout):
         server_ctx = Context(TLSv1_METHOD)
+        server_cert_chain = []
 
         if os.path.isdir(ca):
             server_ctx.load_verify_locations(None, ca)
@@ -90,6 +91,7 @@ def verify_cert_cafile_capath(host, timeout, capath, cafile):
             server_ctx.load_verify_locations(ca, None)
 
         def verify_cb(conn, cert, errnum, depth, ok):
+            server_cert_chain.append(cert)
             return ok
         server_ctx.set_verify(VERIFY_PEER, verify_cb)
 
@@ -117,6 +119,11 @@ def verify_cert_cafile_capath(host, timeout, capath, cafile):
             while True:
                 if iosock_try():
                     break
+
+            server_subject = server_cert_chain[-1].get_subject()
+            if host != server_subject.CN:
+                raise SSLError('Server certificate CN does not match %s' % host)
+
         except SSLError as e:
             raise e
         finally:
