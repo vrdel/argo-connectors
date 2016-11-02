@@ -71,12 +71,22 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
                     raise e
                 else:
                     pass
+
+            except httplib.HTTPException as e:
+                raise e
+
             i += 1
 
     except(SSLError, socket.error, socket.timeout) as e:
         logger.error('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                      scheme + '://' + host,
                                                      errmsg_from_excp(e)))
+        raise SystemExit(1)
+
+    except httplib.HTTPException as e:
+        logger.error('%sHTTP error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                               scheme + '://' + host,
+                                               errmsg_from_excp(e)))
         raise SystemExit(1)
 
 
