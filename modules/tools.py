@@ -1,17 +1,19 @@
+import httplib
 import logging, logging.handlers
-import sys
 import os
 import re
-import httplib
-import socket
 import signal
+import socket
+import sys
+import xml.dom.minidom
 
-from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
-from OpenSSL.SSL import VERIFY_PEER, VERIFY_FAIL_IF_NO_PEER_CERT
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.SSL import OP_NO_SSLv3
+from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
+from OpenSSL.SSL import VERIFY_PEER, VERIFY_FAIL_IF_NO_PEER_CERT
 from OpenSSL.SSL import WantReadError as SSLWantReadError
 from time import sleep
+from xml.parsers.expat import ExpatError
 
 strerr = ''
 num_excp_expand = 0
@@ -44,6 +46,10 @@ def gen_fname_repdate(logger, timestamp, option, path):
 
     return filename
 
+def module_class_name(obj):
+    name = repr(obj.__class__.__name__)
+    return name.replace("'",'')
+
 def make_connection(logger, globopts, scheme, host, url, msgprefix):
     i = 1
     try:
@@ -61,7 +67,12 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
                     conn = httplib.HTTPConnection(host, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
 
                 conn.request('GET', url)
-                return conn.getresponse()
+                resp = conn.getresponse()
+
+                if resp.status != 200:
+                    raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
+
+                return resp
 
             except(SSLError, socket.error, socket.timeout) as e:
                 logger.warn('%sTry:%d Connection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
@@ -89,6 +100,14 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
                                                errmsg_from_excp(e)))
         raise SystemExit(1)
 
+def parse_xml(logger, response, method, objname):
+    try:
+        doc = xml.dom.minidom.parseString(response.read())
+    except ExpatError as e:
+        logger.error(objname + ': Error parsing feed %s - %s' % (method, errmsg_from_excp(e)))
+        raise SystemExit(1)
+
+    return doc
 
 def verify_cert_cafile_capath(host, timeout, capath, cafile):
     def verify_cert(host, ca, timeout):
