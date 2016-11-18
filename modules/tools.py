@@ -1,4 +1,5 @@
 import httplib
+import json
 import logging, logging.handlers
 import os
 import re
@@ -104,7 +105,16 @@ def parse_xml(logger, response, method, objname):
     try:
         doc = xml.dom.minidom.parseString(response.read())
     except ExpatError as e:
-        logger.error(objname + ': Error parsing feed %s - %s' % (method, errmsg_from_excp(e)))
+        logger.error(objname + ': Error parsing XML feed %s - %s' % (method, errmsg_from_excp(e)))
+        raise SystemExit(1)
+
+    return doc
+
+def parse_json(logger, response, method, objname):
+    try:
+        doc = json.loads(response.read())
+    except ValueError as e:
+        logger.error(objname + ': Error parsing JSON feed %s - %s' % (method, errmsg_from_excp(e)))
         raise SystemExit(1)
 
     return doc

@@ -35,17 +35,18 @@ import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name
 
 logger = None
 globopts, poemopts = {}, {}
 cpoem = None
 custname = ''
 
+MIPAPI = '/poem/api/0.2/json/metrics_in_profiles?vo_name='
+
 class PoemReader:
     def __init__(self, noprefilter):
         self._nopf = noprefilter
-        self.poemRequest = '%s/poem/api/0.2/json/metrics_in_profiles?vo_name=%s'
 
     def getProfiles(self):
         filteredProfiles = re.split('\s*,\s*', poemopts['FetchProfilesList'.lower()])
@@ -77,13 +78,9 @@ class PoemReader:
 
                 o = urlparse.urlparse(url, allow_fragments=True)
                 res = make_connection(logger, globopts, o.scheme, o.netloc,
-                                    o.path + '?' + o.query,
-                                    "POEMReader.getProfiles():")
-                if res.status == 200:
-                    urlLines = res.read().splitlines()
-                else:
-                    logger.error('PoemReader.getProfiles(): HTTP response: %s %s' % (str(res.status), res.reason))
-                    raise SystemExit(1)
+                                      o.path + '?' + o.query,
+                                      "POEMReader.getProfiles():")
+                urlLines = res.read().splitlines()
 
                 try:
                     for urlLine in urlLines:
@@ -158,7 +155,7 @@ class PoemReader:
         if not server.startswith('http'):
             server = 'https://' + server
 
-        url = self.poemRequest % (server, vo)
+        url = server + MIPAPI + vo
         o = urlparse.urlparse(url, allow_fragments=True)
 
         try:
@@ -170,19 +167,14 @@ class PoemReader:
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
         res = make_connection(logger, globopts, o.scheme, o.netloc,
-                                o.path + '?' + o.query,
-                                "POEMReader.loadProfilesFromServer():")
-        if res.status == 200:
-            json_data = json.loads(res.read())
-            for profile in json_data[0]['profiles']:
-                if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
-                    validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
-        elif res.status in (301, 302):
-            logger.warning('Redirect: ' + urlparse.urljoin(url, res.getheader('location', '')))
+                              o.path + '?' + o.query,
+                              module_class_name(self))
+        json_data = parse_json(logger, res, url, module_class_name(self))
 
-        else:
-            logger.error('POEMReader.loadProfilesFromServer(): HTTP response: %s %s' % (str(res.status), res.reason))
-            raise SystemExit(1)
+        for profile in json_data[0]['profiles']:
+            if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
+                validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
+
 
         return validProfiles
 
