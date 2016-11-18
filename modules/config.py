@@ -103,13 +103,6 @@ class PoemConf:
             self.logger.error("No option %s defined" % e)
             raise SystemExit(1)
 
-    def get_allowedngi(self):
-        try:
-            return self._get_ngis('PrefilterDataAllowedNGI'.lower())
-        except KeyError as e:
-            self.logger.error("No option %s defined" % e)
-            raise SystemExit(1)
-
     def get_servers(self):
         poemservers = {}
         for opt in self.options.keys():

@@ -26,7 +26,6 @@
 
 import argparse
 import datetime
-import json
 import os
 import re
 import sys
@@ -54,7 +53,6 @@ class PoemReader:
         validProfiles = self.loadValidProfiles(filteredProfiles)
 
         ngiall = cpoem.get_allngi()
-        ngiallow = cpoem.get_allowedngi()
 
         profileList = []
         profileListAvro = []
@@ -68,49 +66,7 @@ class PoemReader:
                                         'fqan' : metric['fqan']})
 
         if not self._nopf:
-            numngis, nummoninst = 0, 0
-            for server, profiles in ngiallow.items():
-                defaultProfiles = profiles
-                url = server
-
-                if not url.startswith('http'):
-                    url = 'https://' + url
-
-                o = urlparse.urlparse(url, allow_fragments=True)
-                res = make_connection(logger, globopts, o.scheme, o.netloc,
-                                      o.path + '?' + o.query,
-                                      "POEMReader.getProfiles():")
-                urlLines = res.read().splitlines()
-
-                try:
-                    for urlLine in urlLines:
-                        if len(urlLine) == 0 or urlLine[0] == '#':
-                            continue
-
-                        ngis = urlLine.split(':')[0].split(',')
-                        assert ngis is not []
-                        servers = urlLine.split(':')[2].split(',')
-                        assert servers is not []
-                        numngis += len(ngis)
-                        nummoninst += len(servers)
-
-                        for vo in availableVOs:
-                            serverProfiles = []
-                            if len(defaultProfiles) > 0:
-                                serverProfiles = defaultProfiles
-                            else:
-                                serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
-                            for profile in serverProfiles:
-                                if profile.upper() in validProfiles.keys():
-                                    for ngi in ngis:
-                                        for server in servers:
-                                            profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
-                except AssertionError as e:
-                    logger.error('Cannot parse %s' % url)
-                    raise SystemExit(1)
-
-
-            logger.info('Fetched %d monitoring instances for %d NGIs' % (nummoninst, numngis))
+            nummoninst = 0
 
             for server, profiles in ngiall.items():
                 ngis = ['ALL']
