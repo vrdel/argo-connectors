@@ -31,7 +31,7 @@ import os
 import sys
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from avro.datafile import DataFileReader
@@ -41,27 +41,26 @@ from urlparse import urlparse
 globopts = {}
 logger = None
 
+VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
+
 class Vapor:
     def __init__(self, feed):
         self._o = urlparse(feed)
 
     def getWeights(self):
         res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
-                              "Vapor.getWeights()):")
-        if res.status == 200:
-            json_data = json.loads(res.read())
-            weights = dict()
-            for ngi in json_data:
-                for site in ngi['site']:
-                    key = site['id']
-                    val = site['HEPSPEC2006']
-                    if val == 'NA':
-                        continue
-                    weights[key] = val
-            return weights
-        else:
-            logger.error('Vapor.getWeights(): HTTP response: %s %s' % (str(res.status), res.reason))
-            raise SystemExit(1)
+                              module_class_name(self))
+        json_data = parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
+
+        weights = dict()
+        for ngi in json_data:
+            for site in ngi['site']:
+                key = site['id']
+                val = site['HEPSPEC2006']
+                if val == 'NA':
+                    continue
+                weights[key] = val
+        return weights
 
 def gen_outdict(data):
     datawr = []
@@ -106,7 +105,7 @@ def main():
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
-    feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info')
+    feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed=VAPORPI)
 
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
     oldDate = datetime.datetime.utcnow()

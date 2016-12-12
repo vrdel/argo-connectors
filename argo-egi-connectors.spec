@@ -1,7 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.5.0
-Release: 1%{?dist}
-
+Version: 1.5.1
+Release: 2%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
@@ -44,6 +43,12 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Thu Nov 24 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-2%{?dist}
+- remove code for nagioses defined in obsoleted nagios-roles.conf
+- catch JSON parse errors
+- catch XML parse errors
+* Fri Oct 28 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-1%{?dist}
+- ARGO-584 Ensure to catch all exceptions of underlying library
 * Sat Sep 24 2016 Themis Zamani <themiszamani@gmail.com> - 1.5.0-1%{?dist}
 - New RPM package release
 * Wed Aug 31 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-2%{?dist} 
