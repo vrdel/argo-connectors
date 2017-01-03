@@ -7,6 +7,7 @@ import signal
 import socket
 import sys
 import xml.dom.minidom
+import datetime
 
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.SSL import OP_NO_SSLv3
@@ -18,6 +19,10 @@ from xml.parsers.expat import ExpatError
 
 strerr = ''
 num_excp_expand = 0
+
+
+class ConnectorError(Exception):
+    pass
 
 def errmsg_from_excp(e):
     global strerr, num_excp_expand
@@ -93,29 +98,46 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
         logger.error('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                      scheme + '://' + host,
                                                      errmsg_from_excp(e)))
-        raise SystemExit(1)
+        raise ConnectorError()
 
     except httplib.HTTPException as e:
         logger.error('%sHTTP error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                scheme + '://' + host,
                                                errmsg_from_excp(e)))
-        raise SystemExit(1)
+        raise ConnectorError()
 
 def parse_xml(logger, response, method, objname):
     try:
         doc = xml.dom.minidom.parseString(response.read())
     except ExpatError as e:
         logger.error(objname + ': Error parsing XML feed %s - %s' % (method, errmsg_from_excp(e)))
-        raise SystemExit(1)
+        raise ConnectorError()
 
     return doc
+
+def write_state(caller, statedir, state, savedays, timestamp):
+    filenamenew = ''
+    if 'topology' in caller:
+        filenamenew = 'topology-ok' + '_' + timestamp
+
+    datestart = datetime.datetime.now() - datetime.timedelta(days=int(savedays))
+    i = 0
+    while i < 5:
+        d = datestart - datetime.timedelta(days=i)
+        filenameold = 'topology-ok' + '_' + d.strftime('%Y_%m_%d')
+        if os.path.exists(statedir + '/' + filenameold):
+            os.remove(statedir + '/' + filenameold)
+        i += 1
+
+    with open(statedir + '/' + filenamenew, 'w') as fp:
+        fp.write(str(state))
 
 def parse_json(logger, response, method, objname):
     try:
         doc = json.loads(response.read())
     except ValueError as e:
         logger.error(objname + ': Error parsing JSON feed %s - %s' % (method, errmsg_from_excp(e)))
-        raise SystemExit(1)
+        raise ConnectorError()
 
     return doc
 
