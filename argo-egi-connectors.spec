@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.5.1
-Release: 2%{?dist}
+Version: 1.5.2
+Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
@@ -43,6 +43,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Wed Jan 4 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.2-1%{?dist}
+- ARGO-550 Introduce states that can be checked by Nagios probe
 * Thu Nov 24 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-2%{?dist}
 - remove code for nagioses defined in obsoleted nagios-roles.conf
 - catch JSON parse errors
