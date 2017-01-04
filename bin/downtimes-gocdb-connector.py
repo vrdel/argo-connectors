@@ -34,7 +34,7 @@ from urlparse import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_xml, module_class_name
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_xml, module_class_name, ConnectorError, write_state
 
 logger = None
 
@@ -48,44 +48,50 @@ class GOCDBReader(object):
         self._o = urlparse(feed)
         self.argDateFormat = "%Y-%m-%d"
         self.WSDateFormat = "%Y-%m-%d %H:%M"
+        self.state = True
 
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
 
-        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                              DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
-                                                                             end.strftime(self.argDateFormat)),
-                              module_class_name(self))
+        try:
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                                DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
+                                                                                end.strftime(self.argDateFormat)),
+                                module_class_name(self))
 
-        doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                        module_class_name(self))
+            doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
+                            module_class_name(self))
 
-        downtimes = doc.getElementsByTagName('DOWNTIME')
-        for downtime in downtimes:
-            classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-            hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-            serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-            startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-            endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
-            severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
+        except ConnectorError:
+            self.state = False
 
-            startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
-            endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
+        else:
+            downtimes = doc.getElementsByTagName('DOWNTIME')
+            for downtime in downtimes:
+                classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
+                hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
+                serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
+                startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
+                endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
+                severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
 
-            if (startTime < start):
-                startTime = start
-            if (endTime > end):
-                endTime = end
+                startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
+                endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
 
-            if classification == 'SCHEDULED' and severity == 'OUTAGE':
-                dt = dict()
-                dt['hostname'] = hostname
-                dt['service'] = serviceType
-                dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                filteredDowntimes.append(dt)
+                if (startTime < start):
+                    startTime = start
+                if (endTime > end):
+                    endTime = end
 
-        return filteredDowntimes
+                if classification == 'SCHEDULED' and severity == 'OUTAGE':
+                    dt = dict()
+                    dt['hostname'] = hostname
+                    dt['service'] = serviceType
+                    dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                    dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                    filteredDowntimes.append(dt)
+
+            return filteredDowntimes
 
 def main():
     parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')

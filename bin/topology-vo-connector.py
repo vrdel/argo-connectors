@@ -25,7 +25,7 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection, ConnectorError, write_state, parse_xml, module_class_name
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
@@ -48,6 +48,7 @@ class VOReader:
     lgroups = []
 
     def __init__(self, feed):
+        self.state = True
         self._o = urlparse(feed)
         self.feed = feed
         self._parse()
@@ -56,38 +57,36 @@ class VOReader:
         try:
             res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
                                   "VOReader._parse():")
-            if res.status == 200:
-                dom = xml.dom.minidom.parseString(res.read())
-                sites = dom.getElementsByTagName('atp_site')
-                assert len(sites) > 0
-                for site in sites:
-                    gg = {}
-                    subgroup = site.getAttribute('name')
-                    assert subgroup != ''
-                    groups = site.getElementsByTagName('group')
-                    assert len(groups) > 0
-                    for group in groups:
-                        gg = {}
-                        gg['group'] = group.getAttribute('name')
-                        gg['type'] = group.getAttribute('type')
-                        gg['subgroup'] = subgroup
-                        self.lgroups.append(gg)
+            dom = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
 
-                    endpoints = site.getElementsByTagName('service')
-                    assert len(endpoints) > 0
-                    for endpoint in endpoints:
-                        ge = {}
-                        ge['group'] = subgroup
-                        ge['hostname'] = endpoint.getAttribute('hostname')
-                        ge['service'] = endpoint.getAttribute('flavour')
-                        ge['type'] = 'SITES'
-                        self.lendpoints.append(ge)
-            else:
-                logger.error('VOReader._parse(): HTTP response: %s %s' % (str(res.status), res.reason))
-                raise SystemExit(1)
-        except AssertionError:
-            logger.error("VOReader._parse(): Error parsing VO-feed %s" % (o.netloc + o.path))
-            raise SystemExit(1)
+        except ConnectorError:
+            self.state = False
+
+        else:
+            sites = dom.getElementsByTagName('atp_site')
+            assert len(sites) > 0
+            for site in sites:
+                gg = {}
+                subgroup = site.getAttribute('name')
+                assert subgroup != ''
+                groups = site.getElementsByTagName('group')
+                assert len(groups) > 0
+                for group in groups:
+                    gg = {}
+                    gg['group'] = group.getAttribute('name')
+                    gg['type'] = group.getAttribute('type')
+                    gg['subgroup'] = subgroup
+                    self.lgroups.append(gg)
+
+                endpoints = site.getElementsByTagName('service')
+                assert len(endpoints) > 0
+                for endpoint in endpoints:
+                    ge = {}
+                    ge['group'] = subgroup
+                    ge['hostname'] = endpoint.getAttribute('hostname')
+                    ge['service'] = endpoint.getAttribute('flavour')
+                    ge['type'] = 'SITES'
+                    self.lendpoints.append(ge)
 
     def get_groupgroups(self):
         return self.lgroups
@@ -110,8 +109,9 @@ def main():
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     conn = {'Connection': ['Timeout', 'Retry']}
+    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn)
+    cglob = Global(confpath, certs, schemas, output, conn, state)
     global globopts
     globopts = cglob.parse()
 
@@ -128,8 +128,13 @@ def main():
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
-
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
             custname = confcust.get_custname(cust)
+
+            write_state(sys.argv[0], jobstatedir, vo.state, globopts['InputStateDays'.lower()], timestamp)
+
+            if not vo.state:
+                continue
 
             filtlgroups = vo.get_groupgroups()
             numgg = len(filtlgroups)

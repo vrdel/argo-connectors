@@ -31,7 +31,7 @@ import os
 import sys
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from avro.datafile import DataFileReader
@@ -46,21 +46,30 @@ VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/
 class Vapor:
     def __init__(self, feed):
         self._o = urlparse(feed)
+        self.state = True
 
     def getWeights(self):
-        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
-                              module_class_name(self))
-        json_data = parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
+        try:
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
+                                module_class_name(self))
+            json_data = parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
 
-        weights = dict()
-        for ngi in json_data:
-            for site in ngi['site']:
-                key = site['id']
-                val = site['HEPSPEC2006']
-                if val == 'NA':
-                    continue
-                weights[key] = val
-        return weights
+        except ConnectorError:
+            self.state = False
+
+        else:
+            try:
+                weights = dict()
+                for ngi in json_data:
+                    for site in ngi['site']:
+                        key = site['id']
+                        val = site['HEPSPEC2006']
+                        if val == 'NA':
+                            continue
+                        weights[key] = val
+                return weights
+            except KeyError, IndexError:
+                self.state = False
 
 def gen_outdict(data):
     datawr = []
@@ -96,8 +105,9 @@ def main():
     schemas = {'AvroSchemas': ['Weights']}
     output = {'Output': ['Weights']}
     conn = {'Connection': ['Timeout', 'Retry']}
+    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, schemas, output, certs, conn)
+    cglob = Global(confpath, schemas, output, certs, conn, state)
     global globopts
     globopts = cglob.parse()
 
@@ -112,14 +122,22 @@ def main():
 
     for feed, jobcust in feeds.items():
         weights = Vapor(feed)
+        datawr = None
 
         newweights = dict()
-        newweights.update(weights.getWeights());
+        w = weights.getWeights()
 
         for job, cust in jobcust:
             fileprev, existfileprev = None, None
             jobdir = confcust.get_fulldir(cust, job)
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
+            write_state(sys.argv[0], jobstatedir, weights.state, globopts['InputStateDays'.lower()], timestamp)
+
+            if not weights.state:
+                continue
+
+            newweights.update(w);
             oldDataExists = False
             now = datetime.datetime.utcnow
             i = 1
@@ -167,9 +185,10 @@ def main():
                 avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], existfileprev, olddata, os.path.basename(sys.argv[0]))
                 avro.write()
 
-        custs = set([cust for job, cust in jobcust])
-        for cust in custs:
-            jobs = [job for job, lcust in jobcust if cust == lcust]
-            logger.info('Customer:%s Jobs:%d Sites:%d' % (cust, len(jobs), len(datawr)))
+        if datawr:
+            custs = set([cust for job, cust in jobcust])
+            for cust in custs:
+                jobs = [job for job, lcust in jobcust if cust == lcust]
+                logger.info('Customer:%s Jobs:%d Sites:%d' % (cust, len(jobs), len(datawr)))
 
 main()

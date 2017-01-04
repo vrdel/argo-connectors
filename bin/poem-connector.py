@@ -34,7 +34,7 @@ import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name
+from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
 
 logger = None
 globopts, poemopts = {}, {}
@@ -46,6 +46,7 @@ MIPAPI = '/poem/api/0.2/json/metrics_in_profiles?vo_name='
 class PoemReader:
     def __init__(self, noprefilter):
         self._nopf = noprefilter
+        self.state = True
 
     def getProfiles(self):
         filteredProfiles = re.split('\s*,\s*', poemopts['FetchProfilesList'.lower()])
@@ -122,14 +123,19 @@ class PoemReader:
 
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
-        res = make_connection(logger, globopts, o.scheme, o.netloc,
-                              o.path + '?' + o.query,
-                              module_class_name(self))
-        json_data = parse_json(logger, res, url, module_class_name(self))
+        try:
+            res = make_connection(logger, globopts, o.scheme, o.netloc,
+                                o.path + '?' + o.query,
+                                module_class_name(self))
+            json_data = parse_json(logger, res, url, module_class_name(self))
 
-        for profile in json_data[0]['profiles']:
-            if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
-                validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
+        except ConnectorError:
+            self.state = False
+
+        else:
+            for profile in json_data[0]['profiles']:
+                if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
+                    validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
 
 
         return validProfiles
@@ -198,8 +204,9 @@ def main():
     prefilter = {'Prefilter': ['PoemExpandedProfiles']}
     output = {'Output': ['Poem']}
     conn = {'Connection': ['Timeout', 'Retry']}
+    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, prefilter)
+    cglob = Global(confpath, certs, schemas, output, conn, prefilter, state)
     global globopts
     globopts = cglob.parse()
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
@@ -232,6 +239,12 @@ def main():
 
         for job in confcust.get_jobs(cust):
             jobdir = confcust.get_fulldir(cust, job)
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+
+            write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()], timestamp)
+
+            if not readerInstance.state:
+                continue
 
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)

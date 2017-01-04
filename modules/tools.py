@@ -118,13 +118,19 @@ def parse_xml(logger, response, method, objname):
 def write_state(caller, statedir, state, savedays, timestamp):
     filenamenew = ''
     if 'topology' in caller:
-        filenamenew = 'topology-ok' + '_' + timestamp
+        filenamebase = 'topology-ok'
+    elif 'poem' in caller:
+        filenamebase = 'poem-ok'
+    elif 'weights' in caller:
+        filenamebase = 'weights-ok'
+
+    filenamenew = filenamebase + '_' + timestamp
 
     datestart = datetime.datetime.now() - datetime.timedelta(days=int(savedays))
     i = 0
     while i < 5:
         d = datestart - datetime.timedelta(days=i)
-        filenameold = 'topology-ok' + '_' + d.strftime('%Y_%m_%d')
+        filenameold = filenamebase + '_' + d.strftime('%Y_%m_%d')
         if os.path.exists(statedir + '/' + filenameold):
             os.remove(statedir + '/' + filenameold)
         i += 1
