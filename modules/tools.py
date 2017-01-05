@@ -123,6 +123,8 @@ def write_state(caller, statedir, state, savedays, timestamp):
         filenamebase = 'poem-ok'
     elif 'weights' in caller:
         filenamebase = 'weights-ok'
+    elif 'downtimes' in caller:
+        filenamebase = 'downtimes-ok'
 
     filenamenew = filenamebase + '_' + timestamp
 

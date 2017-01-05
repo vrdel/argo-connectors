@@ -65,7 +65,8 @@ class GOCDBReader:
 
     def getGroupOfServices(self):
         if not self.fetched:
-            self.loadDataIfNeeded()
+            if not self.loadDataIfNeeded():
+                return []
 
         groups, gl = list(), list()
 
@@ -90,7 +91,8 @@ class GOCDBReader:
 
     def getGroupOfGroups(self):
         if not self.fetched:
-            self.loadDataIfNeeded()
+            if not self.loadDataIfNeeded():
+                return []
 
         groupofgroups, gl = list(), list()
 
@@ -127,7 +129,8 @@ class GOCDBReader:
 
     def getGroupOfEndpoints(self):
         if not self.fetched:
-            self.loadDataIfNeeded()
+            if not self.loadDataIfNeeded():
+                return []
 
         groupofendpoints, ge = list(), list()
         for scope in self.scopes:
@@ -150,15 +153,16 @@ class GOCDBReader:
     def loadDataIfNeeded(self):
         scopequery = "'&scope='+scope"
         for scope in self.scopes:
-            eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-            eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-            eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-            self.fetched = True
+            try:
+                eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                self.fetched = True
+            except Exception:
+                return False
+        return True
 
     def getServiceEndpoints(self, serviceList, scope):
-        if not self.state:
-            return
-
         try:
             res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
                                     SERVENDPI + scope,
@@ -166,10 +170,6 @@ class GOCDBReader:
             doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
                             module_class_name(self))
 
-        except ConnectorError:
-            self.state = False
-
-        else:
             services = doc.getElementsByTagName('SERVICE_ENDPOINT')
             for service in services:
                 serviceId = ''
@@ -186,10 +186,16 @@ class GOCDBReader:
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
-    def getSitesInternal(self, siteList, scope):
-        if not self.state:
-            return
+        except ConnectorError:
+            self.state = False
 
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            self.state = False
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVENDPI,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            raise e
+
+    def getSitesInternal(self, siteList, scope):
         try:
             res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
                                     SITESPI + scope,
@@ -197,10 +203,7 @@ class GOCDBReader:
             dom = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + SITESPI,
                             module_class_name(self))
 
-        except ConnectorError as e:
-            self.state = False
 
-        else:
             sites = dom.getElementsByTagName('SITE')
             for site in sites:
                 siteName = site.getAttribute('NAME')
@@ -211,10 +214,16 @@ class GOCDBReader:
                 siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
                 siteList[siteName]['scope'] = scope.split('=')[1]
 
-    def getServiceGroups(self, groupList, scope):
-        if not self.state:
-            return
+        except ConnectorError as e:
+            self.state = False
 
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            self.state = False
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SITESPI,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            raise e
+
+    def getServiceGroups(self, groupList, scope):
         try:
             res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
                                     SERVGROUPPI + scope,
@@ -223,10 +232,6 @@ class GOCDBReader:
             doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
                             module_class_name(self))
 
-        except ConnectorError as e:
-            self.state = False
-
-        else:
             groups = doc.getElementsByTagName('SERVICE_GROUP')
             for group in groups:
                 groupId = group.getAttribute('PRIMARY_KEY')
@@ -244,6 +249,15 @@ class GOCDBReader:
                     serviceDict['monitored'] = service.getElementsByTagName('NODE_MONITORED')[0].childNodes[0].data
                     serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
                     groupList[groupId]['services'].append(serviceDict)
+
+        except ConnectorError as e:
+            self.state = False
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            self.state = False
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            raise e
 
 def filter_by_tags(tags, listofelem):
     for attr in tags.keys():
@@ -306,11 +320,14 @@ def main():
             global custname
             custname = confcust.get_custname(cust)
 
-            if fetchtype == 'ServiceGroups':
-                group_endpoints = gocdb.getGroupOfServices()
-            else:
-                group_endpoints = gocdb.getGroupOfEndpoints()
-            group_groups = gocdb.getGroupOfGroups()
+            import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
+            if gocdb.state:
+                if fetchtype == 'ServiceGroups':
+                    group_endpoints = gocdb.getGroupOfServices()
+                else:
+                    group_endpoints = gocdb.getGroupOfEndpoints()
+            if gocdb.state:
+                group_groups = gocdb.getGroupOfGroups()
 
             write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
 

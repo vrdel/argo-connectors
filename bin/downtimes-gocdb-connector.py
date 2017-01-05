@@ -64,34 +64,44 @@ class GOCDBReader(object):
 
         except ConnectorError:
             self.state = False
+            return []
 
         else:
             downtimes = doc.getElementsByTagName('DOWNTIME')
-            for downtime in downtimes:
-                classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-                hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-                endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
-                severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
+            try:
+                for downtime in downtimes:
+                    classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
+                    hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
+                    serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
+                    startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
+                    assert startStr != ''
+                    endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
+                    assert endStr != ''
+                    severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
 
-                startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
-                endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
+                    startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
+                    endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
 
-                if (startTime < start):
-                    startTime = start
-                if (endTime > end):
-                    endTime = end
+                    if (startTime < start):
+                        startTime = start
+                    if (endTime > end):
+                        endTime = end
 
-                if classification == 'SCHEDULED' and severity == 'OUTAGE':
-                    dt = dict()
-                    dt['hostname'] = hostname
-                    dt['service'] = serviceType
-                    dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                    dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                    filteredDowntimes.append(dt)
+                    if classification == 'SCHEDULED' and severity == 'OUTAGE':
+                        dt = dict()
+                        dt['hostname'] = hostname
+                        dt['service'] = serviceType
+                        dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                        dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                        filteredDowntimes.append(dt)
 
-            return filteredDowntimes
+            except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as e:
+                self.state = False
+                logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
+                                                                                         repr(e).replace('\'','')))
+                return []
+            else:
+                return filteredDowntimes
 
 def main():
     parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
@@ -106,8 +116,9 @@ def main():
     schemas = {'AvroSchemas': ['Downtimes']}
     output = {'Output': ['Downtimes']}
     conn = {'Connection': ['Timeout', 'Retry']}
+    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn)
+    cglob = Global(confpath, certs, schemas, output, conn, state)
     global globopts
     globopts = cglob.parse()
 
@@ -145,16 +156,23 @@ def main():
                 dtslegmap[-1]['service'] = LegMapServType[dt['service']]
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
-            custname = confcust.get_custname(cust)
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
+            write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+
+            if not gocdb.state:
+                continue
+
+            custname = confcust.get_custname(cust)
             filename = gen_fname_repdate(logger, timestamp, globopts['OutputDowntimes'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                             dts + dtslegmap, os.path.basename(sys.argv[0]))
             avro.write()
 
-        custs = set([cust for job, cust in jobcust])
-        for cust in custs:
-            jobs = [job for job, lcust in jobcust if cust == lcust]
-            logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts + dtslegmap)))
+        if gocdb.state:
+            custs = set([cust for job, cust in jobcust])
+            for cust in custs:
+                jobs = [job for job, lcust in jobcust if cust == lcust]
+                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts + dtslegmap)))
 
 main()

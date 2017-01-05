@@ -68,8 +68,10 @@ class Vapor:
                             continue
                         weights[key] = val
                 return weights
-            except KeyError, IndexError:
+            except (KeyError, IndexError) as e:
                 self.state = False
+                logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + self._o.path,
+                                                                                         repr(e).replace('\'','')))
 
 def gen_outdict(data):
     datawr = []

@@ -56,13 +56,9 @@ class VOReader:
     def _parse(self):
         try:
             res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
-                                  "VOReader._parse():")
+                                  module_class_name(self))
             dom = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
 
-        except ConnectorError:
-            self.state = False
-
-        else:
             sites = dom.getElementsByTagName('atp_site')
             assert len(sites) > 0
             for site in sites:
@@ -74,8 +70,11 @@ class VOReader:
                 for group in groups:
                     gg = {}
                     gg['group'] = group.getAttribute('name')
+                    assert gg['group'] != ''
                     gg['type'] = group.getAttribute('type')
+                    assert gg['type'] != ''
                     gg['subgroup'] = subgroup
+                    assert gg['subgroup'] != ''
                     self.lgroups.append(gg)
 
                 endpoints = site.getElementsByTagName('service')
@@ -84,9 +83,19 @@ class VOReader:
                     ge = {}
                     ge['group'] = subgroup
                     ge['hostname'] = endpoint.getAttribute('hostname')
+                    assert ge['hostname'] != ''
                     ge['service'] = endpoint.getAttribute('flavour')
+                    assert ge['service'] != ''
                     ge['type'] = 'SITES'
                     self.lendpoints.append(ge)
+
+        except ConnectorError:
+            self.state = False
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            self.state = False
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self.feed,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
 
     def get_groupgroups(self):
         return self.lgroups
