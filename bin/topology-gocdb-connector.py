@@ -65,7 +65,7 @@ class GOCDBReader:
 
     def getGroupOfServices(self):
         if not self.fetched:
-            if not self.loadDataIfNeeded():
+            if not self.state or not self.loadDataIfNeeded():
                 return []
 
         groups, gl = list(), list()
@@ -91,7 +91,7 @@ class GOCDBReader:
 
     def getGroupOfGroups(self):
         if not self.fetched:
-            if not self.loadDataIfNeeded():
+            if not self.state or not self.loadDataIfNeeded():
                 return []
 
         groupofgroups, gl = list(), list()
@@ -129,7 +129,7 @@ class GOCDBReader:
 
     def getGroupOfEndpoints(self):
         if not self.fetched:
-            if not self.loadDataIfNeeded():
+            if not self.state or not self.loadDataIfNeeded():
                 return []
 
         groupofendpoints, ge = list(), list()
@@ -159,7 +159,9 @@ class GOCDBReader:
                 eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
                 self.fetched = True
             except Exception:
+                self.state = False
                 return False
+
         return True
 
     def getServiceEndpoints(self, serviceList, scope):
@@ -186,11 +188,10 @@ class GOCDBReader:
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
-        except ConnectorError:
-            self.state = False
+        except ConnectorError as e:
+            raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            self.state = False
             logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVENDPI,
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
@@ -215,10 +216,9 @@ class GOCDBReader:
                 siteList[siteName]['scope'] = scope.split('=')[1]
 
         except ConnectorError as e:
-            self.state = False
+            raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            self.state = False
             logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SITESPI,
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
@@ -251,10 +251,9 @@ class GOCDBReader:
                     groupList[groupId]['services'].append(serviceDict)
 
         except ConnectorError as e:
-            self.state = False
+            raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            self.state = False
             logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
@@ -320,14 +319,11 @@ def main():
             global custname
             custname = confcust.get_custname(cust)
 
-            import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
-            if gocdb.state:
-                if fetchtype == 'ServiceGroups':
-                    group_endpoints = gocdb.getGroupOfServices()
-                else:
-                    group_endpoints = gocdb.getGroupOfEndpoints()
-            if gocdb.state:
-                group_groups = gocdb.getGroupOfGroups()
+            if fetchtype == 'ServiceGroups':
+                group_endpoints = gocdb.getGroupOfServices()
+            else:
+                group_endpoints = gocdb.getGroupOfEndpoints()
+            group_groups = gocdb.getGroupOfGroups()
 
             write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
 
