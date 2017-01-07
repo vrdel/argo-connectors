@@ -34,7 +34,7 @@ import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
 
 logger = None
 globopts, poemopts = {}, {}

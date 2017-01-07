@@ -32,7 +32,7 @@ import sys
 import xml.dom.minidom
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from urlparse import urlparse
