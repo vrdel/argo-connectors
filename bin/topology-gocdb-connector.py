@@ -276,6 +276,7 @@ def filter_by_tags(tags, listofelem):
     return listofelem
 
 def main():
+    global logger, globopts
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
@@ -284,7 +285,6 @@ def main():
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
 
-    global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
@@ -294,7 +294,6 @@ def main():
     state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(confpath, certs, schemas, output, conn, state)
-    global globopts
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
@@ -314,9 +313,8 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            global fetchtype
+            global fetchtype, custname
             fetchtype = confcust.get_gocdb_fetchtype(job)
-            global custname
             custname = confcust.get_custname(cust)
 
             if fetchtype == 'ServiceGroups':

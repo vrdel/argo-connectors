@@ -104,13 +104,13 @@ class GOCDBReader(object):
                 return filteredDowntimes
 
 def main():
+    global logger, globopts
     parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
     parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
-    global logger
     logger = Logger(os.path.basename(sys.argv[0]))
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Downtimes']}
@@ -119,7 +119,6 @@ def main():
     state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(confpath, certs, schemas, output, conn, state)
-    global globopts
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None

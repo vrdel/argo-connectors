@@ -94,13 +94,13 @@ def loadOldData(filename):
     return oldDataDict
 
 def main():
+    global logger, globopts
     parser = argparse.ArgumentParser(description="""Fetch weights information from Gstat provider
                                                     for every job listed in customer.conf""")
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
-    global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
@@ -110,7 +110,6 @@ def main():
     state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(confpath, schemas, output, certs, conn, state)
-    global globopts
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
