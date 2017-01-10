@@ -34,7 +34,7 @@ from urlparse import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_xml, module_class_name
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_xml, module_class_name, ConnectorError, write_state
 
 logger = None
 
@@ -48,61 +48,77 @@ class GOCDBReader(object):
         self._o = urlparse(feed)
         self.argDateFormat = "%Y-%m-%d"
         self.WSDateFormat = "%Y-%m-%d %H:%M"
+        self.state = True
 
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
 
-        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                              DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
-                                                                             end.strftime(self.argDateFormat)),
-                              module_class_name(self))
+        try:
+            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                                DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
+                                                                                end.strftime(self.argDateFormat)),
+                                module_class_name(self))
 
-        doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                        module_class_name(self))
+            doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
+                            module_class_name(self))
 
-        downtimes = doc.getElementsByTagName('DOWNTIME')
-        for downtime in downtimes:
-            classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-            hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-            serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-            startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-            endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
-            severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
+        except ConnectorError:
+            self.state = False
+            return []
 
-            startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
-            endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
+        else:
+            downtimes = doc.getElementsByTagName('DOWNTIME')
+            try:
+                for downtime in downtimes:
+                    classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
+                    hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
+                    serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
+                    startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
+                    assert startStr != ''
+                    endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
+                    assert endStr != ''
+                    severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
 
-            if (startTime < start):
-                startTime = start
-            if (endTime > end):
-                endTime = end
+                    startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
+                    endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
 
-            if classification == 'SCHEDULED' and severity == 'OUTAGE':
-                dt = dict()
-                dt['hostname'] = hostname
-                dt['service'] = serviceType
-                dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                filteredDowntimes.append(dt)
+                    if (startTime < start):
+                        startTime = start
+                    if (endTime > end):
+                        endTime = end
 
-        return filteredDowntimes
+                    if classification == 'SCHEDULED' and severity == 'OUTAGE':
+                        dt = dict()
+                        dt['hostname'] = hostname
+                        dt['service'] = serviceType
+                        dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                        dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
+                        filteredDowntimes.append(dt)
+
+            except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as e:
+                self.state = False
+                logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
+                                                                                         repr(e).replace('\'','')))
+                return []
+            else:
+                return filteredDowntimes
 
 def main():
+    global logger, globopts
     parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
     parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
-    global logger
     logger = Logger(os.path.basename(sys.argv[0]))
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['Downtimes']}
     output = {'Output': ['Downtimes']}
     conn = {'Connection': ['Timeout', 'Retry']}
+    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn)
-    global globopts
+    cglob = Global(confpath, certs, schemas, output, conn, state)
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
@@ -139,16 +155,23 @@ def main():
                 dtslegmap[-1]['service'] = LegMapServType[dt['service']]
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
-            custname = confcust.get_custname(cust)
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
+            write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+
+            if not gocdb.state:
+                continue
+
+            custname = confcust.get_custname(cust)
             filename = gen_fname_repdate(logger, timestamp, globopts['OutputDowntimes'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                             dts + dtslegmap, os.path.basename(sys.argv[0]))
             avro.write()
 
-        custs = set([cust for job, cust in jobcust])
-        for cust in custs:
-            jobs = [job for job, lcust in jobcust if cust == lcust]
-            logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts + dtslegmap)))
+        if gocdb.state:
+            custs = set([cust for job, cust in jobcust])
+            for cust in custs:
+                jobs = [job for job, lcust in jobcust if cust == lcust]
+                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts + dtslegmap)))
 
 main()

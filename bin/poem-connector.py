@@ -34,7 +34,7 @@ import urlparse
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection, parse_json, module_class_name
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
 
 logger = None
 globopts, poemopts = {}, {}
@@ -46,60 +46,74 @@ MIPAPI = '/poem/api/0.2/json/metrics_in_profiles?vo_name='
 class PoemReader:
     def __init__(self, noprefilter):
         self._nopf = noprefilter
+        self.state = True
 
     def getProfiles(self):
         filteredProfiles = re.split('\s*,\s*', poemopts['FetchProfilesList'.lower()])
         availableVOs = [vo for k, v in cpoem.get_servers().items() for vo in v]
-        validProfiles = self.loadValidProfiles(filteredProfiles)
 
-        ngiall = cpoem.get_allngi()
+        try:
+            validProfiles = self.loadValidProfiles(filteredProfiles)
 
-        profileList = []
-        profileListAvro = []
+            ngiall = cpoem.get_allngi()
 
-        for profile in validProfiles.values():
-            for metric in profile['metrics']:
-                profileListAvro.append({'profile' : profile['namespace'] + '.' + profile['name'], \
-                                        'metric' : metric['name'], \
-                                        'service' : metric['service_flavour'], \
-                                        'vo' : profile['vo'], \
-                                        'fqan' : metric['fqan']})
+            profileList = []
+            profileListAvro = []
 
-        if not self._nopf:
-            nummoninst = 0
+            for profile in validProfiles.values():
+                for metric in profile['metrics']:
+                    profileListAvro.append({'profile' : profile['namespace'] + '.' + profile['name'], \
+                                            'metric' : metric['name'], \
+                                            'service' : metric['service_flavour'], \
+                                            'vo' : profile['vo'], \
+                                            'fqan' : metric['fqan']})
 
-            for server, profiles in ngiall.items():
-                ngis = ['ALL']
-                servers = [server]
-                defaultProfiles = profiles
+            if not self._nopf:
+                nummoninst = 0
 
-                for vo in availableVOs:
-                    serverProfiles = []
-                    if len(defaultProfiles) > 0:
-                        serverProfiles = defaultProfiles
-                    else:
-                        serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
+                for server, profiles in ngiall.items():
+                    ngis = ['ALL']
+                    servers = [server]
+                    defaultProfiles = profiles
 
-                for profile in serverProfiles:
-                    if profile.upper() in validProfiles.keys():
-                        for ngi in ngis:
-                            for server in servers:
-                                profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
+                    for vo in availableVOs:
+                        serverProfiles = []
+                        if len(defaultProfiles) > 0:
+                            serverProfiles = defaultProfiles
+                        else:
+                            serverProfiles = self.loadProfilesFromServer(servers[0], vo, filteredProfiles).keys()
 
-        return profileList if profileList else [], profileListAvro
+                    for profile in serverProfiles:
+                        if profile.upper() in validProfiles.keys():
+                            for ngi in ngis:
+                                for server in servers:
+                                    profileList.extend(self.createProfileEntries(server, ngi, validProfiles[profile.upper()]))
+
+        except (KeyError, IndexError, AttributeError, TypeError) as e:
+            self.state = False
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._urlfeed,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            return [], []
+        else:
+            return profileList if profileList else [], profileListAvro
 
     def loadValidProfiles(self, filteredProfiles):
         validProfiles = dict()
 
-        for url, vos in cpoem.get_servers().items():
-            for vo in vos:
-                serverProfiles = self.loadProfilesFromServer(url, vo, filteredProfiles)
-                for profile in serverProfiles.keys():
-                    if not profile in validProfiles.keys():
-                        validProfiles[profile] = serverProfiles[profile]
-                        validProfiles[profile]['vo'] = vo
+        try:
+            for url, vos in cpoem.get_servers().items():
+                for vo in vos:
+                    serverProfiles = self.loadProfilesFromServer(url, vo, filteredProfiles)
+                    for profile in serverProfiles.keys():
+                        if not profile in validProfiles.keys():
+                            validProfiles[profile] = serverProfiles[profile]
+                            validProfiles[profile]['vo'] = vo
 
-        return validProfiles
+        except Exception as e:
+            raise e
+
+        else:
+            return validProfiles
 
     def loadProfilesFromServer(self, server, vo, filterProfiles):
         validProfiles = dict()
@@ -111,42 +125,55 @@ class PoemReader:
         if not server.startswith('http'):
             server = 'https://' + server
 
-        url = server + MIPAPI + vo
-        o = urlparse.urlparse(url, allow_fragments=True)
+        self._urlfeed = server + MIPAPI + vo
+        o = urlparse.urlparse(self._urlfeed, allow_fragments=True)
 
         try:
             assert o.scheme != '' and o.netloc != '' and o.path != ''
         except AssertionError:
-            logger.error('Invalid POEM PI URL: %s' % (url))
+            logger.error('Invalid POEM PI URL: %s' % (self._urlfeed))
             raise SystemExit(1)
 
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
-        res = make_connection(logger, globopts, o.scheme, o.netloc,
-                              o.path + '?' + o.query,
-                              module_class_name(self))
-        json_data = parse_json(logger, res, url, module_class_name(self))
+        try:
+            res = make_connection(logger, globopts, o.scheme, o.netloc,
+                                o.path + '?' + o.query,
+                                module_class_name(self))
+            json_data = parse_json(logger, res, self._urlfeed, module_class_name(self))
 
-        for profile in json_data[0]['profiles']:
-            if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
-                validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
+        except ConnectorError:
+            self.state = False
 
+        else:
+            try:
+                for profile in json_data[0]['profiles']:
+                    if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in filterProfiles:
+                        validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
 
-        return validProfiles
+            except Exception as e:
+                raise e
+
+            else:
+                return validProfiles
 
     def createProfileEntries(self, server, ngi, profile):
         entries = list()
-        for metric in profile['metrics']:
-            entry = dict()
-            entry["profile"] = profile['namespace']+'.'+profile['name']
-            entry["service"] = metric['service_flavour']
-            entry["metric"] = metric['name']
-            entry["server"] = server
-            entry["ngi"] = ngi
-            entry["vo"] = profile['vo']
-            entry["fqan"] = metric['fqan']
-            entries.append(entry)
-        return entries
+        try:
+            for metric in profile['metrics']:
+                entry = dict()
+                entry["profile"] = profile['namespace']+'.'+profile['name']
+                entry["service"] = metric['service_flavour']
+                entry["metric"] = metric['name']
+                entry["server"] = server
+                entry["ngi"] = ngi
+                entry["vo"] = profile['vo']
+                entry["fqan"] = metric['fqan']
+                entries.append(entry)
+        except Exception as e:
+            raise e
+        else:
+            return entries
 
 class PrefilterPoem:
     def __init__(self):
@@ -183,6 +210,7 @@ def gen_outprofiles(lprofiles, matched):
     return lfprofiles
 
 def main():
+    global logger, globopts
     parser = argparse.ArgumentParser(description='Fetch POEM profile for every job of the customer and write POEM expanded profiles needed for prefilter for EGI customer')
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-np', dest='noprefilter', help='do not write POEM expanded profiles for prefilter', required=False, action='store_true')
@@ -190,7 +218,6 @@ def main():
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
-    global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
     certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath', 'CAFile']}
@@ -198,9 +225,9 @@ def main():
     prefilter = {'Prefilter': ['PoemExpandedProfiles']}
     output = {'Output': ['Poem']}
     conn = {'Connection': ['Timeout', 'Retry']}
+    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, prefilter)
-    global globopts
+    cglob = Global(confpath, certs, schemas, output, conn, prefilter, state)
     globopts = cglob.parse()
     timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
@@ -220,7 +247,7 @@ def main():
     readerInstance = PoemReader(args.noprefilter)
     ps, psa = readerInstance.getProfiles()
 
-    if not args.noprefilter:
+    if not args.noprefilter and ps:
         poempref = PrefilterPoem()
         preffname = gen_fname_repdate(logger, timestamp, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         poempref.writeProfiles(ps, preffname)
@@ -232,6 +259,12 @@ def main():
 
         for job in confcust.get_jobs(cust):
             jobdir = confcust.get_fulldir(cust, job)
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+
+            write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()], timestamp)
+
+            if not readerInstance.state:
+                continue
 
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)

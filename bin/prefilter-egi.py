@@ -33,7 +33,7 @@ import time
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.writers import Logger
-from argo_egi_connectors.tools import gen_fname_repdate
+from argo_egi_connectors.helpers import gen_fname_repdate
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
