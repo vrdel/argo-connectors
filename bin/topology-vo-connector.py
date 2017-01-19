@@ -25,7 +25,7 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, ConnectorError, write_state, parse_xml, module_class_name, gen_fname_timestamp
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, ConnectorError, write_state, parse_xml, module_class_name
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError

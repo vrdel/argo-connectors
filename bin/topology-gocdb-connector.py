@@ -32,7 +32,7 @@ import sys
 import xml.dom.minidom
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state, gen_fname_timestamp
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from urlparse import urlparse
@@ -302,8 +302,6 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
-
-    timestamp = gen_fname_timestamp(1)
 
     for feed, jobcust in feeds.items():
         scopes = confcust.get_feedscopes(feed, jobcust)
