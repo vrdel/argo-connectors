@@ -25,7 +25,7 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, ConnectorError, write_state, parse_xml, module_class_name
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, ConnectorError, write_state, parse_xml, module_class_name, gen_fname_timestamp
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from exceptions import AssertionError
@@ -129,8 +129,6 @@ def main():
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'VOFeed')
 
-    timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
-
     for feed, jobcust in feeds.items():
         vo = VOReader(feed)
 
@@ -139,7 +137,7 @@ def main():
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
             custname = confcust.get_custname(cust)
 
-            write_state(sys.argv[0], jobstatedir, vo.state, globopts['InputStateDays'.lower()], timestamp)
+            write_state(sys.argv[0], jobstatedir, vo.state, globopts['InputStateDays'.lower()])
 
             if not vo.state:
                 continue
@@ -156,7 +154,7 @@ def main():
                             return True
                 filtlgroups = filter(ismatch, filtlgroups)
 
-            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename, filtlgroups,
                               os.path.basename(sys.argv[0]))
             avro.write()
@@ -168,7 +166,7 @@ def main():
                 if g['service'] in LegMapServType.keys():
                     gelegmap.append(copy.copy(g))
                     gelegmap[-1]['service'] = LegMapServType[g['service']]
-            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename, group_endpoints + gelegmap,
                                                                                        os.path.basename(sys.argv[0]))
             avro.write()

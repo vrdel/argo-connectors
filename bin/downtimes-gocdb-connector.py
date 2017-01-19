@@ -163,7 +163,7 @@ def main():
                 continue
 
             custname = confcust.get_custname(cust)
-            filename = gen_fname_repdate(logger, timestamp, globopts['OutputDowntimes'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, globopts['OutputDowntimes'.lower()], jobdir, datestamp=timestamp)
             avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                             dts + dtslegmap, os.path.basename(sys.argv[0]))
             avro.write()
