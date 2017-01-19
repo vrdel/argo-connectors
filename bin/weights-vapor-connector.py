@@ -140,7 +140,7 @@ def main():
             now = datetime.datetime.utcnow
             i = 1 + daysback
             while i <= 30:
-                dayprev = datetime.datetime.utcnow() - datetime.timedelta(days=i)
+                dayprev = datetime.datetime.now() - datetime.timedelta(days=i)
                 fileprev = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir, datestamp=dayprev.strftime('%Y_%m_%d'))
                 if os.path.exists(fileprev):
                     existfileprev = fileprev

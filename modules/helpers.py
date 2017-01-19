@@ -48,8 +48,9 @@ def gen_fname_timestamp(daysback):
     return str(dateback.strftime('%Y_%m_%d'))
 
 def gen_fname_repdate(logger, option, path, datestamp=None):
+    datestamp = datestamp if datestamp else gen_fname_timestamp(daysback)
     if re.search(r'DATE(.\w+)$', option):
-        filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % datestamp if datestamp else gen_fname_timestamp(daysback), option)
+        filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % datestamp, option)
     else:
         logger.error('No DATE placeholder in %s' % option)
         raise SystemExit(1)

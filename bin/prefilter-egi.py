@@ -65,13 +65,16 @@ def poemProfileFilenameCheck(year, month, day):
 
     return fileName
 
-def loadNGIs(year, month, day):
+def loadNGIs(*args, **kwargs):
     ngiTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
     try:
-        poemfile = poemProfileFilenameCheck(year, month, day)
+        if args:
+            poemfile = poemProfileFilenameCheck(args[0], args[1], args[2])
+        else:
+            poemfile = kwargs['poemfile']
         assert poemfile is not None
         poemProfileFile = open(poemfile, 'r')
     except (IOError, AssertionError) as e:
@@ -100,12 +103,16 @@ def loadNGIs(year, month, day):
 
     return ngiTree
 
-def loadFilteredProfiles(year, month, day):
+def loadFilteredProfiles(*args, **kwargs):
     profileTree = dict()
 
     profileFieldNames = poemFileFields.split(';')
 
-    poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
+    if args:
+        poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
+    else:
+        poemProfileFile = open(kwargs['poemfile'], 'r')
+
     poemProfiles = poemProfileFile.read().splitlines()
     poemProfileFile.close()
 
@@ -284,12 +291,16 @@ def main():
     parser = optparse.OptionParser(description="""Filters consumer messages based on various criteria
                                                     (allowed NGIs, service flavours, metrics...)""")
     parser.add_option('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str)
+
     group = optparse.OptionGroup(parser, 'Compute Engine usage')
     group.add_option('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY')
     parser.add_option_group(group)
     group = optparse.OptionGroup(parser, 'Debugging usage')
-    group.add_option('-f', dest='cfile', nargs=1, metavar='consumer_log_YEAR-MONTH-DAY.avro')
+    group.add_option('-c', dest='cfile', default=None, metavar='consumer_log_YEAR-MONTH-DAY.avro')
+    group.add_option('-p', dest='pfile', default=None, metavar='poem_sync_YEAR-MONTH-DAY.out')
+    group.add_option('-o', dest='ofile', default=None, metavar='output_YEAR-MONTH-DAY.avro')
     parser.add_option_group(group)
+
     (options, args) = parser.parse_args()
 
     global logger
@@ -331,7 +342,12 @@ def main():
         inputFile = options.cfile
     else:
         inputFile = gen_fname_repdate(logger, globopts['PrefilterConsumerFilePath'.lower()], '', datestamp=year + '-' + month + '-' + day)
-    outputFile = gen_fname_repdate(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '-' + month + '-' + day)
+    if options.ofile:
+        fname = options.ofile + '_DATE.avro'
+        outputFile = gen_fname_repdate(logger, fname, '', datestamp=year + '-' + month + '-' + day)
+    else:
+        outputFile = gen_fname_repdate(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '-' + month + '-' + day)
+
 
     try:
         schema = avro.schema.parse(open(globopts['AvroSchemasPrefilter'.lower()]).read())
@@ -342,12 +358,16 @@ def main():
         raise SystemExit(1)
 
     # load poem data
-    ngis = loadNGIs(year, month, day)
-    profiles = loadFilteredProfiles(year, month, day)
+    if options.pfile:
+        ngis = loadNGIs(poemfile=options.pfile)
+        profiles = loadFilteredProfiles(poemfile=options.pfile)
+    else:
+        ngis = loadNGIs(year, month, day)
+        profiles = loadFilteredProfiles(year, month, day)
     nameMapping = loadNameMapping(year, month, day)
 
     s = time.time()
-    msgs, msgswrit, msgsfilt, falsemonhost, falseroc, falseprofile = prefilterit(reader, writer, ngis, profiles, nameMapping)
+    msgs, msgswrit, msgsfilt, falsemonhost, falseroc, falseprofile=prefilterit(reader, writer, ngis, profiles, nameMapping)
     e = time.time()
 
     logger.info('ExecTime:%.2fs ConsumerDate:%s Read:%d Written:%d Filtered:%d(Monitoring_Host:%d,ROC:%d,ServiceTypes_Metrics:%d)' % (round(e - s, 2), year+'-'+month+'-'+day,
