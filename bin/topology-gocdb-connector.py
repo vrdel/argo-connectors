@@ -164,14 +164,17 @@ class GOCDBReader:
 
         return True
 
+    def _get_xmldata(self, scope, pi):
+        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                                pi + scope,
+                                module_class_name(self))
+        doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
+                        module_class_name(self))
+        return doc
+
     def getServiceEndpoints(self, serviceList, scope):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                    SERVENDPI + scope,
-                                    module_class_name(self))
-            doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
-                            module_class_name(self))
-
+            doc = self._get_xmldata(scope, SERVENDPI)
             services = doc.getElementsByTagName('SERVICE_ENDPOINT')
             for service in services:
                 serviceId = ''
@@ -198,14 +201,8 @@ class GOCDBReader:
 
     def getSitesInternal(self, siteList, scope):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                    SITESPI + scope,
-                                    module_class_name(self))
-            dom = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + SITESPI,
-                            module_class_name(self))
-
-
-            sites = dom.getElementsByTagName('SITE')
+            doc = self._get_xmldata(scope, SITESPI)
+            sites = doc.getElementsByTagName('SITE')
             for site in sites:
                 siteName = site.getAttribute('NAME')
                 if siteName not in siteList:
@@ -225,13 +222,7 @@ class GOCDBReader:
 
     def getServiceGroups(self, groupList, scope):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                    SERVGROUPPI + scope,
-                                    module_class_name(self))
-
-            doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
-                            module_class_name(self))
-
+            doc = self._get_xmldata(scope, SERVGROUPPI)
             groups = doc.getElementsByTagName('SERVICE_GROUP')
             for group in groups:
                 groupId = group.getAttribute('PRIMARY_KEY')
