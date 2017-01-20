@@ -111,14 +111,26 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
                                                errmsg_from_excp(e)))
         raise ConnectorError()
 
+    except Exception as e:
+        logger.error('%sError %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                          scheme + '://' + host,
+                                          errmsg_from_excp(e)))
+        raise ConnectorError()
+
 def parse_xml(logger, response, method, objname):
     try:
         doc = xml.dom.minidom.parseString(response.read())
+
     except ExpatError as e:
         logger.error(objname + ': Error parsing XML feed %s - %s' % (method, errmsg_from_excp(e)))
         raise ConnectorError()
 
-    return doc
+    except Exception as e:
+        logger.error(objname + ': Error %s - %s' % (method, errmsg_from_excp(e)))
+        raise e
+
+    else:
+        return doc
 
 def write_state(caller, statedir, state, savedays, datestamp=None):
     filenamenew = ''
@@ -154,11 +166,17 @@ def write_state(caller, statedir, state, savedays, datestamp=None):
 def parse_json(logger, response, method, objname):
     try:
         doc = json.loads(response.read())
+
     except ValueError as e:
         logger.error(objname + ': Error parsing JSON feed %s - %s' % (method, errmsg_from_excp(e)))
         raise ConnectorError()
 
-    return doc
+    except Exception as e:
+        logger.error(objname + ': Error %s - %s' % (method, errmsg_from_excp(e)))
+        raise e
+
+    else:
+        return doc
 
 def verify_cert_cafile_capath(host, timeout, capath, cafile):
     def verify_cert(host, ca, timeout):
