@@ -31,7 +31,7 @@ import os
 import sys
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state, daysback
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from avro.datafile import DataFileReader
@@ -118,9 +118,6 @@ def main():
     confcust.make_dirstruct()
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed=VAPORPI)
 
-    timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
-    oldDate = datetime.datetime.utcnow()
-
     for feed, jobcust in feeds.items():
         weights = Vapor(feed)
         datawr = None
@@ -133,7 +130,7 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            write_state(sys.argv[0], jobstatedir, weights.state, globopts['InputStateDays'.lower()], timestamp)
+            write_state(sys.argv[0], jobstatedir, weights.state, globopts['InputStateDays'.lower()])
 
             if not weights.state:
                 continue
@@ -141,10 +138,10 @@ def main():
             newweights.update(w);
             oldDataExists = False
             now = datetime.datetime.utcnow
-            i = 1
+            i = 1 + daysback
             while i <= 30:
-                dayprev = datetime.datetime.utcnow() - datetime.timedelta(days=i)
-                fileprev = gen_fname_repdate(logger, dayprev.strftime('%Y_%m_%d'), globopts['OutputWeights'.lower()], jobdir)
+                dayprev = datetime.datetime.now() - datetime.timedelta(days=i)
+                fileprev = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir, datestamp=dayprev.strftime('%Y_%m_%d'))
                 if os.path.exists(fileprev):
                     existfileprev = fileprev
                     break
@@ -174,7 +171,7 @@ def main():
                     oldweights[key] = str(val)
                 newweights[key] = str(val)
 
-            filename = gen_fname_repdate(logger, timestamp, globopts['OutputWeights'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir)
 
             datawr = gen_outdict(newweights)
             avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))

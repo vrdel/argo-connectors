@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.5.2
+Version: 1.5.3
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -43,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Thu Jan 19 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-1%{?dist}
+- poem and output files as arguments to prefilter
+- refactored filename datestamp creation 
 * Wed Jan 4 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.2-1%{?dist}
 - ARGO-550 Introduce states that can be checked by Nagios probe
 * Thu Nov 24 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-2%{?dist}

@@ -19,7 +19,7 @@ from xml.parsers.expat import ExpatError
 
 strerr = ''
 num_excp_expand = 0
-
+daysback = 1
 
 class ConnectorError(Exception):
     pass
@@ -43,9 +43,14 @@ def errmsg_from_excp(e):
         if num_excp_expand <= 1:
             strerr += e + ' '
 
-def gen_fname_repdate(logger, timestamp, option, path):
+def gen_fname_timestamp(daysback):
+    dateback = datetime.datetime.now() - datetime.timedelta(days=daysback)
+    return str(dateback.strftime('%Y_%m_%d'))
+
+def gen_fname_repdate(logger, option, path, datestamp=None):
+    datestamp = datestamp if datestamp else gen_fname_timestamp(daysback)
     if re.search(r'DATE(.\w+)$', option):
-        filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % timestamp, option)
+        filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % datestamp, option)
     else:
         logger.error('No DATE placeholder in %s' % option)
         raise SystemExit(1)
@@ -106,16 +111,28 @@ def make_connection(logger, globopts, scheme, host, url, msgprefix):
                                                errmsg_from_excp(e)))
         raise ConnectorError()
 
+    except Exception as e:
+        logger.error('%sError %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                          scheme + '://' + host,
+                                          errmsg_from_excp(e)))
+        raise ConnectorError()
+
 def parse_xml(logger, response, method, objname):
     try:
         doc = xml.dom.minidom.parseString(response.read())
+
     except ExpatError as e:
         logger.error(objname + ': Error parsing XML feed %s - %s' % (method, errmsg_from_excp(e)))
         raise ConnectorError()
 
-    return doc
+    except Exception as e:
+        logger.error(objname + ': Error %s - %s' % (method, errmsg_from_excp(e)))
+        raise e
 
-def write_state(caller, statedir, state, savedays, timestamp):
+    else:
+        return doc
+
+def write_state(caller, statedir, state, savedays, datestamp=None):
     filenamenew = ''
     if 'topology' in caller:
         filenamebase = 'topology-ok'
@@ -126,9 +143,15 @@ def write_state(caller, statedir, state, savedays, timestamp):
     elif 'downtimes' in caller:
         filenamebase = 'downtimes-ok'
 
-    filenamenew = filenamebase + '_' + timestamp
+    if datestamp:
+        datebackstamp = datestamp
+    else:
+        datebackstamp = gen_fname_timestamp(daysback)
 
-    datestart = datetime.datetime.now() - datetime.timedelta(days=int(savedays))
+    filenamenew = filenamebase + '_' + datebackstamp
+    db = datetime.datetime.strptime(datebackstamp, '%Y_%m_%d')
+
+    datestart = db - datetime.timedelta(days=int(savedays))
     i = 0
     while i < 5:
         d = datestart - datetime.timedelta(days=i)
@@ -143,11 +166,17 @@ def write_state(caller, statedir, state, savedays, timestamp):
 def parse_json(logger, response, method, objname):
     try:
         doc = json.loads(response.read())
+
     except ValueError as e:
         logger.error(objname + ': Error parsing JSON feed %s - %s' % (method, errmsg_from_excp(e)))
         raise ConnectorError()
 
-    return doc
+    except Exception as e:
+        logger.error(objname + ': Error %s - %s' % (method, errmsg_from_excp(e)))
+        raise e
+
+    else:
+        return doc
 
 def verify_cert_cafile_capath(host, timeout, capath, cafile):
     def verify_cert(host, ca, timeout):

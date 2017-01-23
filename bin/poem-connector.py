@@ -229,7 +229,6 @@ def main():
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(confpath, certs, schemas, output, conn, prefilter, state)
     globopts = cglob.parse()
-    timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
     servers = {'PoemServer': ['Host', 'VO']}
     filterprofiles = {'FetchProfiles': ['List']}
@@ -249,7 +248,7 @@ def main():
 
     if not args.noprefilter and ps:
         poempref = PrefilterPoem()
-        preffname = gen_fname_repdate(logger, timestamp, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+        preffname = gen_fname_repdate(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         poempref.writeProfiles(ps, preffname)
 
     for cust in confcust.get_customers():
@@ -261,7 +260,7 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()], timestamp)
+            write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()])
 
             if not readerInstance.state:
                 continue
@@ -269,7 +268,7 @@ def main():
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = gen_fname_repdate(logger, timestamp, globopts['OutputPoem'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, globopts['OutputPoem'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
                               lfprofiles, os.path.basename(sys.argv[0]))
             avro.write()
