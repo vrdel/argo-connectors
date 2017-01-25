@@ -109,7 +109,7 @@ def loadFilteredProfiles(*args, **kwargs):
     profileFieldNames = poemFileFields.split(';')
 
     if args:
-        poemProfileFile = open(poemProfileFilenameCheck(year, month, day), 'r')
+        poemProfileFile = open(poemProfileFilenameCheck(args[0], args[1], args[2]), 'r')
     else:
         poemProfileFile = open(kwargs['poemfile'], 'r')
 
