@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
 Version: 1.5.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
@@ -43,6 +43,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-3%{?dist}
+- prefilter output datestamp with underscores
 * Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-2%{?dist}
 - prefilter datestamp extracted from arg tuple 
 * Thu Jan 19 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-1%{?dist}

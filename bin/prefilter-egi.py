@@ -344,9 +344,9 @@ def main():
         inputFile = gen_fname_repdate(logger, globopts['PrefilterConsumerFilePath'.lower()], '', datestamp=year + '-' + month + '-' + day)
     if options.ofile:
         fname = options.ofile + '_DATE.avro'
-        outputFile = gen_fname_repdate(logger, fname, '', datestamp=year + '-' + month + '-' + day)
+        outputFile = gen_fname_repdate(logger, fname, '', datestamp=year + '_' + month + '_' + day)
     else:
-        outputFile = gen_fname_repdate(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '-' + month + '-' + day)
+        outputFile = gen_fname_repdate(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '_' + month + '_' + day)
 
 
     try:
