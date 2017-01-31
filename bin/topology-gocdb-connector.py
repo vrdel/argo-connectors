@@ -249,7 +249,7 @@ class GOCDBReader:
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
 
-def filter_by_tags(tags, listofelem):
+def filter_by_tags(tags, listofelem, subgroups=None):
     for attr in tags.keys():
         def getit(elem):
             value = elem['tags'][attr.lower()]
@@ -257,13 +257,22 @@ def filter_by_tags(tags, listofelem):
             elif value == '0': value = 'N'
             if isinstance(tags[attr], list):
                 for a in tags[attr]:
-                    if value.lower() == a.lower():
+                    if subgroups and elem['group'] in subgroups and \
+                            value.lower() == a.lower():
+                        return True
+                    elif not subgroups and value.lower() == a.lower():
                         return True
             else:
-                if value.lower() == tags[attr].lower():
+                if subgroups and elem['group'] in subgroups and \
+                        value.lower() == tags[attr].lower():
+                    return True
+                elif not subgroups and value.lower() == tags[attr].lower():
                     return True
 
-        listofelem = filter(getit, listofelem)
+        try:
+            listofelem = filter(getit, listofelem)
+        except KeyError as e:
+            logger.error('Wrong tags specified: %s' % e)
     return listofelem
 
 def main():
@@ -324,6 +333,8 @@ def main():
             if ggtags:
                 group_groups = filter_by_tags(ggtags, group_groups)
 
+            allsubgroups = set([e['subgroup'] for e in group_groups])
+
             filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
                             group_groups, os.path.basename(sys.argv[0]))
@@ -337,8 +348,8 @@ def main():
             getags = confcust.get_gocdb_getags(job)
             numgeleg = len(gelegmap)
             if getags:
-                group_endpoints = filter_by_tags(getags, group_endpoints)
-                gelegmap = filter_by_tags(getags, gelegmap)
+                group_endpoints = filter_by_tags(getags, group_endpoints, allsubgroups)
+                gelegmap = filter_by_tags(getags, gelegmap, allsubgroups)
 
             filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
