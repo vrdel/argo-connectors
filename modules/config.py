@@ -214,17 +214,23 @@ class CustomerConf:
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
 
+    def get_fullstatedir(self, root, cust, job):
+        return root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job)
+
     def get_custdir(self, cust):
         return self._dir_from_sect(cust, self._cust)
 
     def get_custname(self, cust):
         return self._cust[cust]['Name']
 
-    def make_dirstruct(self):
+    def make_dirstruct(self, root=None):
         dirs = []
         for cust in self._cust.keys():
             for job in self.get_jobs(cust):
-                dirs.append(self.get_custdir(cust)+'/'+self.get_jobdir(job))
+                if root:
+                    dirs.append(root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job))
+                else:
+                    dirs.append(self.get_custdir(cust) + '/' + self.get_jobdir(job))
             for d in dirs:
                 try:
                     os.makedirs(d)

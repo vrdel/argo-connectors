@@ -1,6 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.5.1
-Release: 2%{?dist}
+Version: 1.5.4
+Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
@@ -43,6 +43,17 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Mon Jan 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.4-1%{?dist}
+- ARGO-667 filter endpoints whose groups are filtered in groups of groups 
+* Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-3%{?dist}
+- prefilter output datestamp with underscores
+* Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-2%{?dist}
+- prefilter datestamp extracted from arg tuple 
+* Thu Jan 19 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-1%{?dist}
+- poem and output files as arguments to prefilter
+- refactored filename datestamp creation 
+* Wed Jan 4 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.2-1%{?dist}
+- ARGO-550 Introduce states that can be checked by Nagios probe
 * Thu Nov 24 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-2%{?dist}
 - remove code for nagioses defined in obsoleted nagios-roles.conf
 - catch JSON parse errors

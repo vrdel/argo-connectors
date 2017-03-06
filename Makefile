@@ -21,3 +21,5 @@ clean:
 	rm -rf ${PKGNAME}-${PKGVERSION}.tar.gz
 	rm -f MANIFEST
 	rm -rf dist
+	rm -rf **/*.pyc
+	rm -rf **/*.pyo

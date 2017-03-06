@@ -4,3 +4,6 @@ include etc/*.conf
 include etc/schemas/*.avsc
 include modules/*.py
 include argo-egi-connectors.spec
+
+recursive-exclude modules *.pyc *.pyo
+recursive-exclude bin *.pyc *.pyo
