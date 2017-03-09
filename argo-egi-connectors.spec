@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.5.4
+Version: 1.5.5
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -43,6 +43,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Thu Mar 9 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.5-1%{?dist}
+- ARGO-713 Topology connector should be able to pick only particular NGI or site
 * Mon Jan 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.4-1%{?dist}
 - ARGO-667 filter endpoints whose groups are filtered in groups of groups 
 * Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-3%{?dist}
