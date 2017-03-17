@@ -64,8 +64,6 @@ class Vapor:
                     for site in ngi['site']:
                         key = site['id']
                         val = site['HEPSPEC2006']
-                        if val == 'NA':
-                            continue
                         weights[key] = val
                 return weights
             except (KeyError, IndexError) as e:
@@ -122,11 +120,9 @@ def main():
         weights = Vapor(feed)
         datawr = None
 
-        newweights = dict()
         w = weights.getWeights()
 
         for job, cust in jobcust:
-            fileprev, existfileprev = None, None
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
@@ -135,53 +131,11 @@ def main():
             if not weights.state:
                 continue
 
-            newweights.update(w);
-            oldDataExists = False
-            now = datetime.datetime.utcnow
-            i = 1 + daysback
-            while i <= 30:
-                dayprev = datetime.datetime.now() - datetime.timedelta(days=i)
-                fileprev = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir, datestamp=dayprev.strftime('%Y_%m_%d'))
-                if os.path.exists(fileprev):
-                    existfileprev = fileprev
-                    break
-                i += 1
-
-            oldweights = dict()
-            # load old data
-            if existfileprev:
-                oldweights.update(loadOldData(existfileprev))
-
-                # fill old list
-                for key in oldweights:
-                    val = int(oldweights[key])
-                    if val <= 0:
-                        if key in newweights:
-                            oldweights[key] = str(newweights[key])
-                    if key not in newweights:
-                        newweights[key] = str(oldweights[key])
-
-            # fill new list
-            for key in newweights:
-                val = int(newweights[key])
-                if val <= 0:
-                    if key in oldweights:
-                        val = int(oldweights[key])
-                if key not in oldweights:
-                    oldweights[key] = str(val)
-                newweights[key] = str(val)
-
             filename = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir)
 
-            datawr = gen_outdict(newweights)
+            datawr = gen_outdict(w)
             avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
             avro.write()
-
-            if existfileprev:
-                olddata = gen_outdict(oldweights)
-                os.remove(existfileprev)
-                avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], existfileprev, olddata, os.path.basename(sys.argv[0]))
-                avro.write()
 
         if datawr:
             custs = set([cust for job, cust in jobcust])
