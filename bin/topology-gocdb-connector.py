@@ -249,8 +249,6 @@ class GOCDBReader:
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
 
-
-
 class TopoFilter(object):
     def __init__(self, gg, ge, ggfilter, gefilter):
         self.gg = gg
