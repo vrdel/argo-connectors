@@ -272,9 +272,11 @@ class TopoFilter(object):
             self.gg = self.filter_by_tags(self.ggfilter, self.gg)
 
         allsubgroups = set([e['subgroup'] for e in self.gg])
+        if allsubgroups:
+            self.ge = filter(lambda e: e['group'] in allsubgroups, self.ge)
 
-        if self.gefilter or allsubgroups:
-            self.ge = self.filter_by_tags(self.gefilter, self.ge, allsubgroups)
+        if self.gefilter:
+            self.ge = self.filter_by_tags(self.gefilter, self.ge)
 
     def extract_siteorngi_tags(self, tag, ggtags):
         gg = None
@@ -291,7 +293,7 @@ class TopoFilter(object):
 
         return gg
 
-    def filter_by_tags(self, tags, listofelem, subgroups=None):
+    def filter_by_tags(self, tags, listofelem):
         for attr in tags.keys():
             def getit(elem):
                 value = elem['tags'][attr.lower()]
@@ -299,18 +301,11 @@ class TopoFilter(object):
                 elif value == '0': value = 'N'
                 if isinstance(tags[attr], list):
                     for a in tags[attr]:
-                        if subgroups and elem['group'] in subgroups and \
-                                value.lower() == a.lower():
-                            return True
-                        elif not subgroups and value.lower() == a.lower():
+                        if value.lower() == a.lower():
                             return True
                 else:
-                    if subgroups and elem['group'] in subgroups and \
-                            value.lower() == tags[attr].lower():
+                    if value.lower() == tags[attr].lower():
                         return True
-                    elif not subgroups and value.lower() == tags[attr].lower():
-                        return True
-
             try:
                 listofelem = filter(getit, listofelem)
             except KeyError as e:
