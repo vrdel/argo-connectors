@@ -26,10 +26,8 @@
 
 import argparse
 import copy
-import datetime
 import os
 import sys
-import xml.dom.minidom
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
@@ -43,7 +41,6 @@ SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint'
 SITESPI = '/gocdbpi/private/?method=get_site'
 SERVGROUPPI = '/gocdbpi/private/?method=get_service_group'
 
-LegMapServType = {'SRM' : 'SRMv2'}
 fetchtype = ''
 
 globopts = {}
@@ -375,19 +372,12 @@ def main():
                             group_groups, os.path.basename(sys.argv[0]))
             avro.write()
 
-            gelegmap = []
-            for g in group_endpoints:
-                if g['service'] in LegMapServType.keys():
-                    gelegmap.append(copy.copy(g))
-                    gelegmap[-1]['service'] = LegMapServType[g['service']]
-            numgeleg = len(gelegmap)
-
             filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
-                            group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
+                            group_endpoints, os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge + numgeleg) +' Groups(%s):%d' % (fetchtype, numgg))
+            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
                 selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selge, selgg = '', ''
@@ -397,7 +387,7 @@ def main():
                             value = '['+','.join(value)+']'
                         selge += '%s:%s,' % (key, value)
                     selstr += 'Endpoints(%s):' % selge[:len(selge) - 1]
-                    selstr += '%d ' % (len(group_endpoints) + len(gelegmap))
+                    selstr += '%d ' % (len(group_endpoints))
                 if ggtags:
                     for key, value in ggtags.items():
                         if isinstance(value, list):
