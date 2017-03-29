@@ -252,11 +252,11 @@ class TopoFilter(object):
         self.ge = ge
         self.ggfilter = copy.copy(ggfilter)
         self.gefilter = copy.copy(gefilter)
-        self.sitefilter = self.extract_siteorngi_tags('site', self.ggfilter)
-        self.ngifilter = self.extract_siteorngi_tags('ngi', self.ggfilter)
-        self.filter()
+        self.sitefilter = self.extract_filter('site', self.ggfilter)
+        self.ngifilter = self.extract_filter('ngi', self.ggfilter)
+        self.topofilter()
 
-    def filter(self):
+    def topofilter(self):
         if self.sitefilter:
             self.gg = filter(lambda e: e['subgroup'].lower() in self.sitefilter, self.gg)
 
@@ -264,16 +264,16 @@ class TopoFilter(object):
             self.gg = filter(lambda e: e['group'].lower() in self.ngifilter, self.gg)
 
         if self.ggfilter:
-            self.gg = self.filter_by_tags(self.ggfilter, self.gg)
+            self.gg = self.filter_tags(self.ggfilter, self.gg)
 
         allsubgroups = set([e['subgroup'] for e in self.gg])
         if allsubgroups:
             self.ge = filter(lambda e: e['group'] in allsubgroups, self.ge)
 
         if self.gefilter:
-            self.ge = self.filter_by_tags(self.gefilter, self.ge)
+            self.ge = self.filter_tags(self.gefilter, self.ge)
 
-    def extract_siteorngi_tags(self, tag, ggtags):
+    def extract_filter(self, tag, ggtags):
         gg = None
         if tag.lower() in [t.lower() for t in ggtags.iterkeys()]:
             for k, v in ggtags.iteritems():
@@ -288,7 +288,7 @@ class TopoFilter(object):
 
         return gg
 
-    def filter_by_tags(self, tags, listofelem):
+    def filter_tags(self, tags, listofelem):
         for attr in tags.keys():
             def getit(elem):
                 value = elem['tags'][attr.lower()]
