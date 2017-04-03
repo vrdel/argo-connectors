@@ -26,10 +26,8 @@
 
 import argparse
 import copy
-import datetime
 import os
 import sys
-import xml.dom.minidom
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
@@ -43,7 +41,6 @@ SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint'
 SITESPI = '/gocdbpi/private/?method=get_site'
 SERVGROUPPI = '/gocdbpi/private/?method=get_service_group'
 
-LegMapServType = {'SRM' : 'SRMv2'}
 fetchtype = ''
 
 globopts = {}
@@ -249,49 +246,66 @@ class GOCDBReader:
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
 
-def extract_siteorngi_tags(tag, ggtags):
-    gg, key, exval = None, None, None
-    if tag.lower() in [t.lower() for t in ggtags.iterkeys()]:
-        for k, v in ggtags.iteritems():
-            if tag.lower() in k.lower():
-                gg = ggtags[k]
-                key = k
-        exval = ggtags.pop(key)
-        if isinstance(gg, list):
-            gg = [t.lower() for t in gg]
-        else:
-            gg = gg.lower()
+class TopoFilter(object):
+    def __init__(self, gg, ge, ggfilter, gefilter):
+        self.gg = gg
+        self.ge = ge
+        self.ggfilter = copy.copy(ggfilter)
+        self.gefilter = copy.copy(gefilter)
+        self.sitefilter = self.extract_filter('site', self.ggfilter)
+        self.ngifilter = self.extract_filter('ngi', self.ggfilter)
+        self.topofilter()
 
-    if exval:
-        return gg, dict({key: exval})
-    else:
-        return gg, None
+    def topofilter(self):
+        if self.sitefilter:
+            self.gg = filter(lambda e: e['subgroup'].lower() in self.sitefilter, self.gg)
 
-def filter_by_tags(tags, listofelem, subgroups=None):
-    for attr in tags.keys():
-        def getit(elem):
-            value = elem['tags'][attr.lower()]
-            if value == '1': value = 'Y'
-            elif value == '0': value = 'N'
-            if isinstance(tags[attr], list):
-                for a in tags[attr]:
-                    if subgroups and elem['group'] in subgroups and \
-                            value.lower() == a.lower():
-                        return True
-                    elif not subgroups and value.lower() == a.lower():
-                        return True
+        if self.ngifilter:
+            self.gg = filter(lambda e: e['group'].lower() in self.ngifilter, self.gg)
+
+        if self.ggfilter:
+            self.gg = self.filter_tags(self.ggfilter, self.gg)
+
+        allsubgroups = set([e['subgroup'] for e in self.gg])
+        if allsubgroups:
+            self.ge = filter(lambda e: e['group'] in allsubgroups, self.ge)
+
+        if self.gefilter:
+            self.ge = self.filter_tags(self.gefilter, self.ge)
+
+    def extract_filter(self, tag, ggtags):
+        gg = None
+        if tag.lower() in [t.lower() for t in ggtags.iterkeys()]:
+            for k, v in ggtags.iteritems():
+                if tag.lower() in k.lower():
+                    gg = ggtags[k]
+                    key = k
+            ggtags.pop(key)
+            if isinstance(gg, list):
+                gg = [t.lower() for t in gg]
             else:
-                if subgroups and elem['group'] in subgroups and \
-                        value.lower() == tags[attr].lower():
-                    return True
-                elif not subgroups and value.lower() == tags[attr].lower():
-                    return True
+                gg = gg.lower()
 
-        try:
-            listofelem = filter(getit, listofelem)
-        except KeyError as e:
-            logger.error('Wrong tags specified: %s' % e)
-    return listofelem
+        return gg
+
+    def filter_tags(self, tags, listofelem):
+        for attr in tags.keys():
+            def getit(elem):
+                value = elem['tags'][attr.lower()]
+                if value == '1': value = 'Y'
+                elif value == '0': value = 'N'
+                if isinstance(tags[attr], list):
+                    for a in tags[attr]:
+                        if value.lower() == a.lower():
+                            return True
+                else:
+                    if value.lower() == tags[attr].lower():
+                        return True
+            try:
+                listofelem = filter(getit, listofelem)
+            except KeyError as e:
+                logger.error('Wrong tags specified: %s' % e)
+        return listofelem
 
 def main():
     global logger, globopts
@@ -348,51 +362,22 @@ def main():
             numgg = len(group_groups)
 
             ggtags = confcust.get_gocdb_ggtags(job)
-            ggngi, ggsite = None, None
-            dngi, dsite = None, None
-
-            ggngi, dngi = extract_siteorngi_tags('ngi', ggtags)
-            ggsite, dsite = extract_siteorngi_tags('site', ggtags)
-
-            if ggngi:
-                group_groups = filter(lambda e: e['group'].lower() in ggngi, group_groups)
-
-            if ggsite:
-                group_groups = filter(lambda e: e['subgroup'].lower() in ggsite, group_groups)
-
-            if ggtags:
-                group_groups = filter_by_tags(ggtags, group_groups)
-
-            if dngi:
-                ggtags.update(dngi)
-
-            if dsite:
-                ggtags.update(dsite)
-
-            allsubgroups = set([e['subgroup'] for e in group_groups])
+            getags = confcust.get_gocdb_getags(job)
+            tf = TopoFilter(group_groups, group_endpoints, ggtags, getags)
+            group_groups = tf.gg
+            group_endpoints = tf.ge
 
             filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
                             group_groups, os.path.basename(sys.argv[0]))
             avro.write()
 
-            gelegmap = []
-            for g in group_endpoints:
-                if g['service'] in LegMapServType.keys():
-                    gelegmap.append(copy.copy(g))
-                    gelegmap[-1]['service'] = LegMapServType[g['service']]
-            getags = confcust.get_gocdb_getags(job)
-            numgeleg = len(gelegmap)
-            if getags or allsubgroups:
-                group_endpoints = filter_by_tags(getags, group_endpoints, allsubgroups)
-                gelegmap = filter_by_tags(getags, gelegmap, allsubgroups)
-
             filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
-                            group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
+                            group_endpoints, os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge + numgeleg) +' Groups(%s):%d' % (fetchtype, numgg))
+            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
                 selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selge, selgg = '', ''
@@ -402,7 +387,7 @@ def main():
                             value = '['+','.join(value)+']'
                         selge += '%s:%s,' % (key, value)
                     selstr += 'Endpoints(%s):' % selge[:len(selge) - 1]
-                    selstr += '%d ' % (len(group_endpoints) + len(gelegmap))
+                    selstr += '%d ' % (len(group_endpoints))
                 if ggtags:
                     for key, value in ggtags.items():
                         if isinstance(value, list):

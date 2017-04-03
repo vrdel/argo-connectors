@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.5.6
+Version: 1.5.8
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -43,6 +43,12 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Wed Mar 29 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.8-1%{?dist}
+- ARGO-766 Remove SRMv2 service type mapping
+* Mon Mar 20 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.7-1%{?dist}
+- ARGO-767 Remove topology-vo connector
+- refactored topology filtering 
+- removed schema migration helper
 * Fri Mar 17 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.6-1%{?dist}
 - ARGO-762 Remove inspection logic of HEPSPEC factors for previous days 
 * Thu Mar 9 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.5-1%{?dist}

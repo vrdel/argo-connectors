@@ -22,9 +22,9 @@ setup(name=NAME,
       package_dir={'argo_egi_connectors': 'modules/'},
       packages=['argo_egi_connectors'],
       data_files=[('/etc/argo-egi-connectors', glob.glob('etc/*.conf')),
-                  ('/usr/libexec/argo-egi-connectors', ['bin/downtimes-gocdb-connector.py', 'bin/migrate.py', \
+                  ('/usr/libexec/argo-egi-connectors', ['bin/downtimes-gocdb-connector.py', \
                                                         'bin/poem-connector.py', 'bin/prefilter-egi.py', \
-                                                        'bin/topology-gocdb-connector.py', 'bin/topology-vo-connector.py', \
+                                                        'bin/topology-gocdb-connector.py', \
                                                         'bin/weights-vapor-connector.py']),
                   ('/etc/argo-egi-connectors/schemas', glob.glob('etc/schemas/*.avsc')),
                   ('/etc/cron.d', glob.glob('cronjobs/*'))])

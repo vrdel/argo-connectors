@@ -41,7 +41,6 @@ logger = None
 DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
 
 globopts = {}
-LegMapServType = {'SRM' : 'SRMv2'}
 
 class GOCDBReader(object):
     def __init__(self, feed):
@@ -148,11 +147,6 @@ def main():
         gocdb = GOCDBReader(feed)
         dts = gocdb.getDowntimes(start, end)
 
-        dtslegmap = []
-        for dt in dts:
-            if dt['service'] in LegMapServType.keys():
-                dtslegmap.append(copy.copy(dt))
-                dtslegmap[-1]['service'] = LegMapServType[dt['service']]
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -165,13 +159,13 @@ def main():
             custname = confcust.get_custname(cust)
             filename = gen_fname_repdate(logger, globopts['OutputDowntimes'.lower()], jobdir, datestamp=timestamp)
             avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
-                            dts + dtslegmap, os.path.basename(sys.argv[0]))
+                            dts, os.path.basename(sys.argv[0]))
             avro.write()
 
         if gocdb.state:
             custs = set([cust for job, cust in jobcust])
             for cust in custs:
                 jobs = [job for job, lcust in jobcust if cust == lcust]
-                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts + dtslegmap)))
+                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts)))
 
 main()
