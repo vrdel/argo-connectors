@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.5.8
+Version: 1.5.9
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -43,6 +43,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Tue Apr 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.9-1%{?dist}
+- ARGO-724 Each connector must try to create states directory structure
 * Wed Mar 29 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.8-1%{?dist}
 - ARGO-766 Remove SRMv2 service type mapping
 * Mon Mar 20 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.7-1%{?dist}
