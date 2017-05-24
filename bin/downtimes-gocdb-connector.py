@@ -124,6 +124,7 @@ def main():
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
+    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
 

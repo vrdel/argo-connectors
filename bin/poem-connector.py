@@ -242,6 +242,7 @@ def main():
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
+    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
     readerInstance = PoemReader(args.noprefilter)
     ps, psa = readerInstance.getProfiles()

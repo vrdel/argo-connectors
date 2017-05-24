@@ -153,7 +153,7 @@ def write_state(caller, statedir, state, savedays, datestamp=None):
 
     datestart = db - datetime.timedelta(days=int(savedays))
     i = 0
-    while i < 5:
+    while i < int(savedays)*2:
         d = datestart - datetime.timedelta(days=i)
         filenameold = filenamebase + '_' + d.strftime('%Y_%m_%d')
         if os.path.exists(statedir + '/' + filenameold):
