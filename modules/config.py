@@ -4,6 +4,7 @@ from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
     def __init__(self, confpath, *args, **kwargs):
+        self.optional = {'ams': ['host', 'token', 'project', 'topic']}
         self.logger = Logger(str(self.__class__))
         self._args = args
         self._filename = '/etc/argo-egi-connectors/global.conf' if not confpath else confpath
@@ -11,29 +12,46 @@ class Global:
 
     def parse(self):
         config = ConfigParser.ConfigParser()
+
         if not os.path.exists(self._filename):
             self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
+
         config.read(self._filename)
         options = {}
+
+        lower_section = [sec.lower() for sec in config.sections()]
+        lower_optsection = [sec.lower() for sec in self.optional.keys()]
 
         try:
             for arg in self._args:
                 for sect, opts in arg.items():
-                    if sect not in config.sections():
+                    if (sect.lower() not in lower_section and
+                        sect.lower() not in lower_optsection):
                         raise ConfigParser.NoSectionError(sect.lower())
+
                     for opt in opts:
                         for section in config.sections():
                             if section.lower().startswith(sect.lower()):
-                                optget = config.get(section, opt)
-                                if self._checkpath and os.path.isfile(optget) is False:
-                                    raise OSError(errno.ENOENT, optget)
-                                options.update({(sect+opt).lower(): optget})
+                                try:
+                                    optget = config.get(section, opt)
+                                    if self._checkpath and os.path.isfile(optget) is False:
+                                        raise OSError(errno.ENOENT, optget)
+
+                                    options.update({(sect+opt).lower(): optget})
+
+                                except ConfigParser.NoOptionError as e:
+                                    s = e.section.lower()
+                                    if (s in lower_optsection and
+                                        e.option in self.optional[s]):
+                                        pass
+                                    else:
+                                        raise e
         except ConfigParser.NoOptionError as e:
             self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
-            self.logger.error("No section '%s' defined" % (e.args[0]))
+            self.logger.error("%s defined" % (e.args[0]))
             raise SystemExit(1)
         except OSError as e:
             self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
