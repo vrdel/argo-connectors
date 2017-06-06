@@ -3,12 +3,86 @@ import os, re, errno
 from argo_egi_connectors.writers import SingletonLogger as Logger
 
 class Global:
-    def __init__(self, confpath, *args, **kwargs):
-        self.optional = {'ams': ['host', 'token', 'project', 'topic']}
+    """
+       Class represents parser for global.conf
+    """
+    # options common for all connectors
+    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic']}
+    conf_general = {'General': ['PublishAms', 'WriteAvro']}
+    conf_certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
+                                     'VerifyServerCert']}
+    conf_conn = {'Connection': ['Timeout', 'Retry']}
+    conf_state = {'InputState': ['SaveDir', 'Days']}
+
+    # options specific for every connector
+    conf_topo_schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints',
+                                         'TopologyGroupOfGroups']}
+    conf_topo_output = {'Output': ['TopologyGroupOfEndpoints',
+                                   'TopologyGroupOfGroups']}
+    conf_downtimes_schemas = {'AvroSchemas': ['Downtimes']}
+    conf_downtimes_output = {'Output': ['Downtimes']}
+    conf_weights_schemas = {'AvroSchemas': ['Weights']}
+    conf_weights_output = {'Output': ['Weights']}
+    conf_poem_output = {'Output': ['Poem']}
+    conf_poem_schemas = {'AvroSchemas': ['Poem']}
+    conf_poem_prefilter = {'Prefilter': ['PoemExpandedProfiles']}
+    conf_prefilter_prefilter = {'Prefilter': ['ConsumerFilePath',
+                                              'PoemExpandedProfiles',
+                                              'PoemNameMapping',
+                                              'LookbackPoemExpandedProfiles']}
+    conf_prefilter_schemas = {'AvroSchemas': ['Prefilter']}
+    conf_prefilter_output = {'Output': ['Prefilter']}
+
+    def __init__(self, caller, confpath, **kwargs):
+        self.optional = dict()
+
         self.logger = Logger(str(self.__class__))
-        self._args = args
         self._filename = '/etc/argo-egi-connectors/global.conf' if not confpath else confpath
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
+
+        self.optional.update(self._lowercase_dict(self.conf_ams))
+
+        self.shared_secopts = self._merge_dict(self.conf_ams,
+                                               self.conf_general,
+                                               self.conf_certs, self.conf_conn,
+                                               self.conf_state)
+        self.secopts = {'topology-gocdb-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_topo_schemas,
+                                         self.conf_topo_output),
+                        'downtimes-gocdb-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_downtimes_schemas,
+                                         self.conf_downtimes_output),
+                        'weights-vapor-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_weights_schemas,
+                                         self.conf_weights_output),
+                        'poem-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_poem_schemas,
+                                         self.conf_poem_output,
+                                         self.conf_poem_prefilter),
+                        'prefilter-egi.py':
+                        self._merge_dict(self.conf_prefilter_output,
+                                         self.conf_prefilter_schemas,
+                                         self.conf_prefilter_prefilter)
+                        }
+
+        self.caller_secopts = self.secopts[os.path.basename(caller)]
+
+    def _merge_dict(self, *args):
+        newd = dict()
+        for d in args:
+            newd.update(d)
+        return newd
+
+    def _lowercase_dict(self, d):
+        newd = dict()
+        for k in d.iterkeys():
+            opts = [o.lower() for o in d[k]]
+            newd[k.lower()] = opts
+        return newd
 
     def parse(self):
         config = ConfigParser.ConfigParser()
@@ -21,32 +95,30 @@ class Global:
         options = {}
 
         lower_section = [sec.lower() for sec in config.sections()]
-        lower_optsection = [sec.lower() for sec in self.optional.keys()]
 
         try:
-            for arg in self._args:
-                for sect, opts in arg.items():
-                    if (sect.lower() not in lower_section and
-                        sect.lower() not in lower_optsection):
-                        raise ConfigParser.NoSectionError(sect.lower())
+            for sect, opts in self.caller_secopts.items():
+                if (sect.lower() not in lower_section and
+                    sect.lower() not in self.optional.keys()):
+                    raise ConfigParser.NoSectionError(sect.lower())
 
-                    for opt in opts:
-                        for section in config.sections():
-                            if section.lower().startswith(sect.lower()):
-                                try:
-                                    optget = config.get(section, opt)
-                                    if self._checkpath and os.path.isfile(optget) is False:
-                                        raise OSError(errno.ENOENT, optget)
+                for opt in opts:
+                    for section in config.sections():
+                        if section.lower().startswith(sect.lower()):
+                            try:
+                                optget = config.get(section, opt)
+                                if self._checkpath and os.path.isfile(optget) is False:
+                                    raise OSError(errno.ENOENT, optget)
 
-                                    options.update({(sect+opt).lower(): optget})
+                                options.update({(sect+opt).lower(): optget})
 
-                                except ConfigParser.NoOptionError as e:
-                                    s = e.section.lower()
-                                    if (s in lower_optsection and
-                                        e.option in self.optional[s]):
-                                        pass
-                                    else:
-                                        raise e
+                            except ConfigParser.NoOptionError as e:
+                                s = e.section.lower()
+                                if (s in self.optional.keys() and
+                                    e.option in self.optional[s]):
+                                    pass
+                                else:
+                                    raise e
         except ConfigParser.NoOptionError as e:
             self.logger.error(e.message)
             raise SystemExit(1)

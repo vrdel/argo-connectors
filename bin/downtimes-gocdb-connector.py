@@ -111,13 +111,8 @@ def main():
     args = parser.parse_args()
 
     logger = Logger(os.path.basename(sys.argv[0]))
-    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
-    schemas = {'AvroSchemas': ['Downtimes']}
-    output = {'Output': ['Downtimes']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, state)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None

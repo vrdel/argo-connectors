@@ -306,15 +306,10 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    prefilter = {'Prefilter': ['ConsumerFilePath', 'PoemExpandedProfiles', 'PoemNameMapping', 'LookbackPoemExpandedProfiles']}
-    schemas = {'AvroSchemas': ['Prefilter']}
-    output = {'Output': ['Prefilter']}
     confpath = options.gloconf if options.gloconf else None
-    cglob = Global(confpath, schemas, output, prefilter)
+    cglob = Global(sys.argv[0], confpath)
     global globopts
     globopts = cglob.parse()
-
-    stats = ()
 
     if options.cfile and options.date:
         parser.print_help()

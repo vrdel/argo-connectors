@@ -25,7 +25,6 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 import argparse
-import datetime
 import os
 import re
 import sys
@@ -220,14 +219,8 @@ def main():
 
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath', 'CAFile']}
-    schemas = {'AvroSchemas': ['Poem']}
-    prefilter = {'Prefilter': ['PoemExpandedProfiles']}
-    output = {'Output': ['Poem']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, prefilter, state)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     servers = {'PoemServer': ['Host', 'VO']}

@@ -319,15 +319,8 @@ def main():
 
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    general = {'General': ['PublishAms', 'WriteAvro']}
-    ams = {'AMS': ['Host', 'Token', 'Project', 'Topic']}
-    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
-    schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, ams, certs, schemas, output, conn, state, general)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
