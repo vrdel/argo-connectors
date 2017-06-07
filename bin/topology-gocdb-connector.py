@@ -342,6 +342,13 @@ def main():
             fetchtype = confcust.get_gocdb_fetchtype(job)
             custname = confcust.get_custname(cust)
 
+            ams_custopts = confcust.get_amsopts(cust)
+            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
+            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
+            if not ams_complete:
+                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
+                continue
+
             if fetchtype == 'ServiceGroups':
                 group_endpoints = gocdb.getGroupOfServices()
             else:
