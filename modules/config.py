@@ -84,6 +84,21 @@ class Global:
             newd[k.lower()] = opts
         return newd
 
+    def merge_opts(self, custamsopt, section):
+        newd = custamsopt.copy()
+        opts = [o for o in self.options.keys() if o.startswith(section)]
+        for o in opts:
+            newd.update({o: self.options[o]})
+
+        return newd
+
+    def is_complete(self, opts, section):
+        all = set([section+o for o in self.optional[section]])
+        diff = all.symmetric_difference(opts.keys())
+        if diff:
+            return (False, diff)
+        return (True, None)
+
     def parse(self):
         config = ConfigParser.ConfigParser()
 
@@ -128,6 +143,8 @@ class Global:
         except OSError as e:
             self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
             raise SystemExit(1)
+
+        self.options = options
 
         return options
 
