@@ -341,7 +341,10 @@ class CustomerConf:
         return self._dir_from_sect(job, self._jobs)
 
     def get_amsopts(self, cust):
-        return self._cust[cust]['AmsOpts']
+        if 'AmsOpts' in self._cust[cust]:
+            return self._cust[cust]['AmsOpts']
+        else:
+            return dict()
 
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
@@ -406,7 +409,7 @@ class CustomerConf:
                     tags.update({m[0]: m[1]})
             else:
                 self.logger.error("Could not parse option %s: %s" % (option, tagstr))
-                return {}
+                return dict()
         return tags
 
     def get_gocdb_ggtags(self, job):
