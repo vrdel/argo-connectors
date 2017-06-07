@@ -204,6 +204,9 @@ class PoemConf:
         return poemservers
 
 class CustomerConf:
+    """
+       Class with parser for customer.conf and additional helper methods
+    """
     _custattrs = None
     _cust = {}
     _defjobattrs = {'topology-gocdb-connector.py' : ['TopoFetchType',
@@ -217,6 +220,7 @@ class CustomerConf:
                     'weights-vapor-connector.py': ['WeightsFeed'],
                     'prefilter-egi.py': []}
     _jobs, _jobattrs = {}, None
+    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic']
     tenantdir = ''
 
     def __init__(self, caller, confpath, **kwargs):
@@ -237,18 +241,36 @@ class CustomerConf:
             raise SystemExit(1)
         config.read(self._filename)
 
+        lower_custopt = [oo.lower() for oo in self._cust_optional]
+
         for section in config.sections():
             if section.lower().startswith('CUSTOMER_'.lower()):
+                amsopts = dict()
+                amshost, amstoken, amsproject, amstopic = None, None, None, None
+
                 try:
                     custjobs = config.get(section, 'Jobs').split(',')
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                     custname = config.get(section, 'Name')
+
+                    for o in lower_custopt:
+                        try:
+                            code = "amsopts.update(%s = config.get(section, '%s'))" % (o, o)
+                            exec code
+                        except ConfigParser.NoOptionError as e:
+                            if e.option in lower_custopt:
+                                pass
+                            else:
+                                raise e
+
                 except ConfigParser.NoOptionError as e:
                     self.logger.error(e.message)
                     raise SystemExit(1)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
+                if amsopts:
+                    self._cust[section].update(AmsOpts=amsopts)
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -300,6 +322,9 @@ class CustomerConf:
 
     def get_jobdir(self, job):
         return self._dir_from_sect(job, self._jobs)
+
+    def get_amsopts(self, cust):
+        return self._cust[cust]['AmsOpts']
 
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
