@@ -25,17 +25,15 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 import argparse
-import datetime
-import json
 import os
 import sys
 
+from argo_egi_connectors import input
+
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state, daysback
+from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name, write_state
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
-from avro.datafile import DataFileReader
-from avro.io import DatumReader
 from urlparse import urlparse
 
 globopts = {}
@@ -50,11 +48,11 @@ class Vapor:
 
     def getWeights(self):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
+            res = input.connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
                                 module_class_name(self))
-            json_data = parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
+            json_data = input.parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
 
-        except ConnectorError:
+        except input.ConnectorError:
             self.state = False
 
         else:
@@ -71,25 +69,12 @@ class Vapor:
                 logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + self._o.path,
                                                                                          repr(e).replace('\'','')))
 
-def gen_outdict(data):
+def data_out(data):
     datawr = []
     for key in data:
         w = data[key]
         datawr.append({'type': 'hepspec', 'site': key, 'weight': w})
     return datawr
-
-def loadOldData(filename):
-    oldDataDict = dict()
-
-    if not os.path.isfile(filename):
-        return oldDataDict
-
-    reader = DataFileReader(open(filename, "r"), DatumReader())
-    for weight in reader:
-        oldDataDict[weight["site"]] = weight["weight"]
-    reader.close()
-
-    return oldDataDict
 
 def main():
     global logger, globopts
@@ -137,7 +122,7 @@ def main():
 
             filename = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir)
 
-            datawr = gen_outdict(w)
+            datawr = data_out(w)
             avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
             avro.write()
 

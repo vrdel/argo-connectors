@@ -31,7 +31,7 @@ import os
 import sys
 import time
 
-from argo_egi_connectors.config import Global, CustomerConf
+from argo_egi_connectors.config import Global
 from argo_egi_connectors.writers import Logger
 from argo_egi_connectors.helpers import gen_fname_repdate
 from avro.datafile import DataFileReader, DataFileWriter
@@ -77,7 +77,7 @@ def loadNGIs(*args, **kwargs):
             poemfile = kwargs['poemfile']
         assert poemfile is not None
         poemProfileFile = open(poemfile, 'r')
-    except (IOError, AssertionError) as e:
+    except (IOError, AssertionError):
         logger.error('Cannot open POEM file with expanded profiles for every monitoring instance')
         raise SystemExit(1)
 
@@ -260,7 +260,7 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
 
 
 def prefilterit(reader, writer, ngis, profiles, nameMapping):
-    num_falsemonhost, num_falseprofile, num_falseroc, num_msgs, rejected = 0, 0, 0, 0, 0
+    num_falsemonhost, num_falseprofile, num_falseroc, num_msgs, = 0, 0, 0, 0
     for logItem in reader:
         num_msgs += 1
         if not logItem.get('monitoring_host'):

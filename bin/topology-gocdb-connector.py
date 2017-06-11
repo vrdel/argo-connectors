@@ -29,8 +29,10 @@ import copy
 import os
 import sys
 
+from argo_egi_connectors import input
+
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name, write_state
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from urlparse import urlparse
@@ -162,10 +164,10 @@ class GOCDBReader:
         return True
 
     def _get_xmldata(self, scope, pi):
-        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+        res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
                                 pi + scope,
                                 module_class_name(self))
-        doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
+        doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
                         module_class_name(self))
         return doc
 
@@ -188,7 +190,7 @@ class GOCDBReader:
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
-        except ConnectorError as e:
+        except input.ConnectorError as e:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -209,7 +211,7 @@ class GOCDBReader:
                 siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
                 siteList[siteName]['scope'] = scope.split('=')[1]
 
-        except ConnectorError as e:
+        except input.ConnectorError as e:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -238,7 +240,7 @@ class GOCDBReader:
                     serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
                     groupList[groupId]['services'].append(serviceDict)
 
-        except ConnectorError as e:
+        except input.ConnectorError as e:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:

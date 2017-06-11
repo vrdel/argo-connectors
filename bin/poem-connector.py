@@ -30,10 +30,12 @@ import re
 import sys
 import urlparse
 
+from argo_egi_connectors import input
+
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name, write_state
 
 logger = None
 globopts, poemopts = {}, {}
@@ -136,12 +138,12 @@ class PoemReader:
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
         try:
-            res = make_connection(logger, globopts, o.scheme, o.netloc,
+            res = input.connection(logger, globopts, o.scheme, o.netloc,
                                 o.path + '?' + o.query,
                                 module_class_name(self))
-            json_data = parse_json(logger, res, self._urlfeed, module_class_name(self))
+            json_data = input.parse_json(logger, res, self._urlfeed, module_class_name(self))
 
-        except ConnectorError:
+        except input.ConnectorError:
             self.state = False
 
         else:

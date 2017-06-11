@@ -31,10 +31,12 @@ import sys
 import copy
 from urlparse import urlparse
 
+from argo_egi_connectors import input
+
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_xml, module_class_name, ConnectorError, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name, write_state
 
 logger = None
 
@@ -53,15 +55,15 @@ class GOCDBReader(object):
         filteredDowntimes = list()
 
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+            res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
                                 DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
                                                                                 end.strftime(self.argDateFormat)),
                                 module_class_name(self))
 
-            doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
+            doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
                             module_class_name(self))
 
-        except ConnectorError:
+        except input.ConnectorError:
             self.state = False
             return []
 
