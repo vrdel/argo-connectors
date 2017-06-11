@@ -33,7 +33,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name
+from argo_egi_connectors.helpers import filename_date, module_class_name
 from urlparse import urlparse
 
 globopts = {}
@@ -120,7 +120,7 @@ def main():
             if not weights.state:
                 continue
 
-            filename = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
 
             datawr = data_out(w)
             avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))

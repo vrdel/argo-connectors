@@ -51,7 +51,7 @@ def write_state(caller, statedir, state, savedays, datestamp=None):
     if datestamp:
         datebackstamp = datestamp
     else:
-        datebackstamp = helpers.gen_fname_timestamp(daysback)
+        datebackstamp = helpers.filename_datestamp(daysback)
 
     filenamenew = filenamebase + '_' + datebackstamp
     db = datetime.datetime.strptime(datebackstamp, '%Y_%m_%d')

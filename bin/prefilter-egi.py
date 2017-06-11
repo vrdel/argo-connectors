@@ -32,7 +32,7 @@ import sys
 import time
 
 from argo_egi_connectors.config import Global
-from argo_egi_connectors.helpers import gen_fname_repdate
+from argo_egi_connectors.helpers import filename_date
 from argo_egi_connectors.log import Logger
 
 from avro.datafile import DataFileReader, DataFileWriter
@@ -55,7 +55,7 @@ def poemProfileFilenameCheck(year, month, day):
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = gen_fname_repdate(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '', datestamp = year + '_' + month + '_' + day)
+        fileName = filename_date(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '', datestamp = year + '_' + month + '_' + day)
         if os.path.isfile(fileName):
             break
         if count >= int(globopts['PrefilterLookbackPoemExpandedProfiles'.lower()]):
@@ -337,12 +337,12 @@ def main():
     if options.cfile:
         inputFile = options.cfile
     else:
-        inputFile = gen_fname_repdate(logger, globopts['PrefilterConsumerFilePath'.lower()], '', datestamp=year + '-' + month + '-' + day)
+        inputFile = filename_date(logger, globopts['PrefilterConsumerFilePath'.lower()], '', datestamp=year + '-' + month + '-' + day)
     if options.ofile:
         fname = options.ofile + '_DATE.avro'
-        outputFile = gen_fname_repdate(logger, fname, '', datestamp=year + '_' + month + '_' + day)
+        outputFile = filename_date(logger, fname, '', datestamp=year + '_' + month + '_' + day)
     else:
-        outputFile = gen_fname_repdate(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '_' + month + '_' + day)
+        outputFile = filename_date(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '_' + month + '_' + day)
 
 
     try:

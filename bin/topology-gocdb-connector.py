@@ -34,7 +34,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name
+from argo_egi_connectors.helpers import filename_date, module_class_name
 from urlparse import urlparse
 
 logger = None
@@ -371,12 +371,12 @@ def main():
             group_groups = tf.gg
             group_endpoints = tf.ge
 
-            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
                             group_groups, os.path.basename(sys.argv[0]))
             avro.write()
 
-            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
                             group_endpoints, os.path.basename(sys.argv[0]))
             avro.write()

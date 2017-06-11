@@ -35,7 +35,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name
+from argo_egi_connectors.helpers import filename_date, module_class_name
 
 logger = None
 globopts, poemopts = {}, {}
@@ -244,7 +244,7 @@ def main():
 
     if not args.noprefilter and ps:
         poempref = PrefilterPoem()
-        preffname = gen_fname_repdate(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+        preffname = filename_date(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         poempref.writeProfiles(ps, preffname)
 
     for cust in confcust.get_customers():
@@ -271,7 +271,7 @@ def main():
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = gen_fname_repdate(logger, globopts['OutputPoem'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
             avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
                               lfprofiles, os.path.basename(sys.argv[0]))
             avro.write()

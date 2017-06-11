@@ -25,12 +25,12 @@ def error_message(exception):
         if num_excp_expand <= 1:
             strerr += exception + ' '
 
-def gen_fname_timestamp(daysback):
+def filename_datestamp(daysback):
     dateback = datetime.datetime.now() - datetime.timedelta(days=daysback)
     return str(dateback.strftime('%Y_%m_%d'))
 
-def gen_fname_repdate(logger, option, path, datestamp=None):
-    datestamp = datestamp if datestamp else gen_fname_timestamp(daysback)
+def filename_date(logger, option, path, datestamp=None):
+    datestamp = datestamp if datestamp else filename_datestamp(daysback)
     if re.search(r'DATE(.\w+)$', option):
         filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % datestamp, option)
     else:
@@ -42,4 +42,3 @@ def gen_fname_repdate(logger, option, path, datestamp=None):
 def module_class_name(obj):
     name = repr(obj.__class__.__name__)
     return name.replace("'",'')
-
