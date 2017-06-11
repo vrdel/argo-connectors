@@ -30,11 +30,11 @@ import os
 import sys
 
 from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name, write_state
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name
 from urlparse import urlparse
 
 logger = None
@@ -357,7 +357,7 @@ def main():
                 group_endpoints = gocdb.getGroupOfEndpoints()
             group_groups = gocdb.getGroupOfGroups()
 
-            write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()])
+            output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()])
 
             if not gocdb.state:
                 continue
@@ -372,12 +372,12 @@ def main():
             group_endpoints = tf.ge
 
             filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
-            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
+            avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
                             group_groups, os.path.basename(sys.argv[0]))
             avro.write()
 
             filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
-            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
+            avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
                             group_endpoints, os.path.basename(sys.argv[0]))
             avro.write()
 

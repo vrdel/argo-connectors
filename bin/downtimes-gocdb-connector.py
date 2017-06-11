@@ -32,11 +32,11 @@ import copy
 from urlparse import urlparse
 
 from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
 
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name
 
 logger = None
 
@@ -157,13 +157,13 @@ def main():
                 logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
                 continue
 
-            write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+            output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
 
             if not gocdb.state:
                 continue
 
             filename = gen_fname_repdate(logger, globopts['OutputDowntimes'.lower()], jobdir, datestamp=timestamp)
-            avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
+            avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
                             dts, os.path.basename(sys.argv[0]))
             avro.write()
 

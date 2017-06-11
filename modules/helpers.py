@@ -43,33 +43,3 @@ def module_class_name(obj):
     name = repr(obj.__class__.__name__)
     return name.replace("'",'')
 
-def write_state(caller, statedir, state, savedays, datestamp=None):
-    filenamenew = ''
-    if 'topology' in caller:
-        filenamebase = 'topology-ok'
-    elif 'poem' in caller:
-        filenamebase = 'poem-ok'
-    elif 'weights' in caller:
-        filenamebase = 'weights-ok'
-    elif 'downtimes' in caller:
-        filenamebase = 'downtimes-ok'
-
-    if datestamp:
-        datebackstamp = datestamp
-    else:
-        datebackstamp = gen_fname_timestamp(daysback)
-
-    filenamenew = filenamebase + '_' + datebackstamp
-    db = datetime.datetime.strptime(datebackstamp, '%Y_%m_%d')
-
-    datestart = db - datetime.timedelta(days=int(savedays))
-    i = 0
-    while i < int(savedays)*2:
-        d = datestart - datetime.timedelta(days=i)
-        filenameold = filenamebase + '_' + d.strftime('%Y_%m_%d')
-        if os.path.exists(statedir + '/' + filenameold):
-            os.remove(statedir + '/' + filenameold)
-        i += 1
-
-    with open(statedir + '/' + filenamenew, 'w') as fp:
-        fp.write(str(state))

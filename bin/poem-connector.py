@@ -31,11 +31,11 @@ import sys
 import urlparse
 
 from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
 
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name, write_state
+from argo_egi_connectors.helpers import gen_fname_repdate, module_class_name
 
 logger = None
 globopts, poemopts = {}, {}
@@ -263,7 +263,7 @@ def main():
                 logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
                 continue
 
-            write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()])
+            output.write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()])
 
             if not readerInstance.state:
                 continue
@@ -272,7 +272,7 @@ def main():
             lfprofiles = gen_outprofiles(psa, profiles)
 
             filename = gen_fname_repdate(logger, globopts['OutputPoem'.lower()], jobdir)
-            avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
+            avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
                               lfprofiles, os.path.basename(sys.argv[0]))
             avro.write()
 
