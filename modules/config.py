@@ -88,6 +88,8 @@ class Global:
         newd = custamsopt.copy()
         opts = [o for o in self.options.keys() if o.startswith(section)]
         for o in opts:
+            if o in newd:
+                continue
             newd.update({o: self.options[o]})
 
         return newd
