@@ -3,39 +3,51 @@ import os
 
 import avro.schema
 from avro.datafile import DataFileWriter
-from avro.io import DatumWriter
+from avro.io import DatumWriter, BinaryEncoder
+
+from io import BytesIO
 
 from argo_egi_connectors import helpers
 from argo_egi_connectors.log import Logger
 
+from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
+
+
 daysback = 1
+
 
 class AvroWriter:
     """ AvroWriter """
-    def __init__(self, schema, outfile, listdata, name):
-        self.logger = Logger(name)
+    def __init__(self, schema, outfile):
         self.schema = schema
-        self.listdata = listdata
         self.outfile = outfile
 
-    def write(self):
+    def write(self, data):
         try:
-            schema = avro.schema.parse(open(self.schema).read())
+            schema = load_schema(self.schema)
             avrofile = open(self.outfile, 'w+')
             datawrite = DataFileWriter(avrofile, DatumWriter(), schema)
 
-            for elem in self.listdata:
+            for elem in data:
                 datawrite.append(elem)
 
             datawrite.close()
             avrofile.close()
 
-        except (avro.schema.SchemaParseException, avro.io.AvroTypeException):
-            self.logger.error(" couldn't parse %s" % self.schema)
-            raise SystemExit(1)
-        except IOError as e:
-            self.logger.error(e)
-            raise SystemExit(1)
+        except Exception as e:
+            return False, e
+
+        return True, None
+
+
+def load_schema(schema):
+    try:
+        f = open(schema)
+        schema = avro.schema.parse(f.read())
+        return schema
+    except Exception as e:
+        raise e
+
 
 def write_state(caller, statedir, state, savedays, datestamp=None):
     filenamenew = ''
@@ -51,7 +63,7 @@ def write_state(caller, statedir, state, savedays, datestamp=None):
     if datestamp:
         datebackstamp = datestamp
     else:
-        datebackstamp = helpers.filename_datestamp(daysback)
+        datebackstamp = helpers.datestamp(daysback)
 
     filenamenew = filenamebase + '_' + datebackstamp
     db = datetime.datetime.strptime(datebackstamp, '%Y_%m_%d')

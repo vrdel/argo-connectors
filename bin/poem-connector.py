@@ -272,9 +272,11 @@ def main():
             lfprofiles = gen_outprofiles(psa, profiles)
 
             filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
-            avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
-                              lfprofiles, os.path.basename(sys.argv[0]))
-            avro.write()
+            avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
+            ret, excep = avro.write(lfprofiles)
+            if not ret:
+                logger.error(excep)
+                raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
 

@@ -123,8 +123,11 @@ def main():
             filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
 
             datawr = data_out(w)
-            avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
-            avro.write()
+            avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
+            ret, excep = avro.write(datawr)
+            if not ret:
+                logger.error(excep)
+                raise SystemExit(1)
 
         if datawr:
             custs = set([cust for job, cust in jobcust])

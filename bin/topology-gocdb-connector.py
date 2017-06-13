@@ -34,7 +34,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import filename_date, module_class_name
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
 from urlparse import urlparse
 
 logger = None
@@ -371,15 +371,20 @@ def main():
             group_groups = tf.gg
             group_endpoints = tf.ge
 
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
-            avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
-                            group_groups, os.path.basename(sys.argv[0]))
-            avro.write()
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+                ret, excep = avro.write(group_groups)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
-            avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
-                            group_endpoints, os.path.basename(sys.argv[0]))
-            avro.write()
+                filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+                ret, excep = avro.write(group_endpoints)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:

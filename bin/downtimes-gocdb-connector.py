@@ -28,7 +28,6 @@ import argparse
 import datetime
 import os
 import sys
-import copy
 from urlparse import urlparse
 
 from argo_egi_connectors import input
@@ -162,10 +161,12 @@ def main():
             if not gocdb.state:
                 continue
 
-            filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, datestamp=timestamp)
-            avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
-                            dts, os.path.basename(sys.argv[0]))
-            avro.write()
+            filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)
+            avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+            ret, excep = avro.write(dts)
+            if not ret:
+                logger.error(excep)
+                raise SystemExit(1)
 
         if gocdb.state:
             custs = set([cust for job, cust in jobcust])

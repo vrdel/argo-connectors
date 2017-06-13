@@ -1,5 +1,4 @@
 import datetime
-import os
 import re
 
 strerr = ''
@@ -25,14 +24,18 @@ def error_message(exception):
         if num_excp_expand <= 1:
             strerr += exception + ' '
 
-def filename_datestamp(daysback):
-    dateback = datetime.datetime.now() - datetime.timedelta(days=daysback)
+def datestamp(daysback=None):
+    if daysback:
+        dateback = datetime.datetime.now() - datetime.timedelta(days=daysback)
+    else:
+        dateback = datetime.datetime.now()
+
     return str(dateback.strftime('%Y_%m_%d'))
 
-def filename_date(logger, option, path, datestamp=None):
-    datestamp = datestamp if datestamp else filename_datestamp(daysback)
+def filename_date(logger, option, path, stamp=None):
+    stamp = stamp if stamp else datestamp(daysback)
     if re.search(r'DATE(.\w+)$', option):
-        filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % datestamp, option)
+        filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % stamp, option)
     else:
         logger.error('No DATE placeholder in %s' % option)
         raise SystemExit(1)
