@@ -40,6 +40,36 @@ class AvroWriter:
         return True, None
 
 
+class AmsPublish(object):
+    """
+       Class represents interaction with AMS service
+    """
+    def __init__(self, host, project, token, topic):
+        self.ams = ArgoMessagingService(host, token, project)
+        self.topic = topic
+
+    def send(self, schema, msgtype, date, msglist):
+        def _avro_serialize(msg):
+            opened_schema = load_schema(schema)
+            avro_writer = DatumWriter(opened_schema)
+            bytesio = BytesIO()
+            encoder = BinaryEncoder(bytesio)
+            avro_writer.write(msg, encoder)
+
+            return bytesio.getvalue()
+
+        try:
+            msgs = map(lambda m: AmsMessage(attributes=dict(partition_date=date,
+                                                            type=msgtype),
+                                            data=_avro_serialize(m)), msglist)
+            topic = self.ams.topic(self.topic)
+            topic.publish(msgs)
+        except AmsException as e:
+            return False, e
+
+        return True, None
+
+
 def load_schema(schema):
     try:
         f = open(schema)

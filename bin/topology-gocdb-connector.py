@@ -371,6 +371,23 @@ def main():
             group_groups = tf.gg
             group_endpoints = tf.ge
 
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstopic'])
+                ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
+                                      'group_groups', datestamp().replace('_', '-'), group_groups)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
+
+                ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
+                                      'group_endpoints', datestamp().replace('_', '-'), group_endpoints)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
+
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
                 avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
