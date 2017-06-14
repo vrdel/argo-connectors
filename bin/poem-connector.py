@@ -35,7 +35,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.helpers import filename_date, module_class_name
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
 
 logger = None
 globopts, poemopts = {}, {}
@@ -271,12 +271,25 @@ def main():
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
-            avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
-            ret, excep = avro.write(lfprofiles)
-            if not ret:
-                logger.error(excep)
-                raise SystemExit(1)
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        ams_opts['amsbulk'])
+                ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
+                                      'poem', datestamp().replace('_', '-'), lfprofiles)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
+
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
+                ret, excep = avro.write(lfprofiles)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
 

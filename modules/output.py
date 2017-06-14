@@ -60,8 +60,8 @@ class AmsPublish(object):
             return bytesio.getvalue()
 
         try:
-            msgs = map(lambda m: AmsMessage(attributes=dict(partition_date=date,
-                                                            type=msgtype),
+            msgs = map(lambda m: AmsMessage(attributes={'partition_date': date,
+                                                        'type': msgtype},
                                             data=_avro_serialize(m)), msglist)
             topic = self.ams.topic(self.topic)
 

@@ -161,12 +161,25 @@ def main():
             if not gocdb.state:
                 continue
 
-            filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)
-            avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
-            ret, excep = avro.write(dts)
-            if not ret:
-                logger.error(excep)
-                raise SystemExit(1)
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        ams_opts['amsbulk'])
+                ret, excep = ams.send(globopts['AvroSchemasDowntimes'.lower()],
+                                      'downtimes', timestamp.replace('_', '-'), dts)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
+
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)
+                avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+                ret, excep = avro.write(dts)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
         if gocdb.state:
             custs = set([cust for job, cust in jobcust])

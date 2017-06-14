@@ -33,7 +33,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import filename_date, module_class_name
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
 from urlparse import urlparse
 
 globopts = {}
@@ -120,14 +120,26 @@ def main():
             if not weights.state:
                 continue
 
-            filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
-
             datawr = data_out(w)
-            avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
-            ret, excep = avro.write(datawr)
-            if not ret:
-                logger.error(excep)
-                raise SystemExit(1)
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        ams_opts['amsbulk'])
+                ret, excep = ams.send(globopts['AvroSchemasWeights'.lower()],
+                                      'weights', datestamp().replace('_', '-'), datawr)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
+
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
+                ret, excep = avro.write(datawr)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
         if datawr:
             custs = set([cust for job, cust in jobcust])
