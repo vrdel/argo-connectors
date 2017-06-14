@@ -375,7 +375,8 @@ def main():
                 ams = output.AmsPublish(ams_opts['amshost'],
                                         ams_opts['amsproject'],
                                         ams_opts['amstoken'],
-                                        ams_opts['amstopic'])
+                                        ams_opts['amstopic'],
+                                        ams_opts['amsbulk'])
                 ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
                                       'group_groups', datestamp().replace('_', '-'), group_groups)
                 if not ret:

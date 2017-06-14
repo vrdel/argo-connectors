@@ -7,7 +7,7 @@ class Global:
        Class represents parser for global.conf
     """
     # options common for all connectors
-    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic']}
+    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk']}
     conf_general = {'General': ['PublishAms', 'WriteAvro']}
     conf_certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                      'VerifyServerCert']}
@@ -128,7 +128,7 @@ class Global:
                                     raise OSError(errno.ENOENT, optget)
 
                                 if ('output' in section.lower() and
-                                    'DATE' not in optget)
+                                    'DATE' not in optget):
                                         logger.error('No DATE placeholder in %s' % option)
                                         raise SystemExit(1)
 
