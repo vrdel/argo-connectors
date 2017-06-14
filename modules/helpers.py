@@ -34,14 +34,11 @@ def datestamp(daysback=None):
 
 def filename_date(logger, option, path, stamp=None):
     stamp = stamp if stamp else datestamp(daysback)
-    if re.search(r'DATE(.\w+)$', option):
-        filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % stamp, option)
-    else:
-        logger.error('No DATE placeholder in %s' % option)
-        raise SystemExit(1)
+    filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % stamp, option)
 
     return filename
 
 def module_class_name(obj):
     name = repr(obj.__class__.__name__)
+
     return name.replace("'",'')

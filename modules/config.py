@@ -127,6 +127,11 @@ class Global:
                                 if self._checkpath and os.path.isfile(optget) is False:
                                     raise OSError(errno.ENOENT, optget)
 
+                                if ('output' in section.lower() and
+                                    'DATE' not in optget)
+                                        logger.error('No DATE placeholder in %s' % option)
+                                        raise SystemExit(1)
+
                                 options.update({(sect+opt).lower(): optget})
 
                             except ConfigParser.NoOptionError as e:
