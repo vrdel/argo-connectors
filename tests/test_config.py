@@ -18,7 +18,7 @@ class TestGlobalConfig(unittest.TestCase):
         ams_incomplete = dict(amshost='host', amstoken='token')
         complete, missing = self.globalconfig.is_complete(ams_incomplete, 'ams')
         self.assertFalse(complete)
-        self.assertEqual(missing, set(['amsproject', 'amstopic']))
+        self.assertEqual(missing, set(['amsproject', 'amstopic', 'amsbulk']))
         merged = self.globalconfig.merge_opts(ams_incomplete, 'ams')
         self.assertEqual(merged, dict(amshost='host', amsproject='EGI', amstoken='token', amstopic='TOPIC'))
 
