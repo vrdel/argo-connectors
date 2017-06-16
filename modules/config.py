@@ -1,6 +1,6 @@
 import ConfigParser
 import os, re, errno
-from argo_egi_connectors.log import Logger
+from log import Logger
 
 class Global:
     """
