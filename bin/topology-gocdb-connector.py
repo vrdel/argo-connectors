@@ -26,25 +26,27 @@
 
 import argparse
 import copy
-import datetime
 import os
 import sys
-import xml.dom.minidom
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import gen_fname_repdate, make_connection
+from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
 from argo_egi_connectors.writers import AvroWriter
 from argo_egi_connectors.writers import SingletonLogger as Logger
-from exceptions import AssertionError
 from urlparse import urlparse
 
+logger = None
 
-LegMapServType = {'SRM' : 'SRMv2'}
+SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint'
+SITESPI = '/gocdbpi/private/?method=get_site'
+SERVGROUPPI = '/gocdbpi/private/?method=get_service_group'
+
 fetchtype = ''
 
 globopts = {}
 custname = ''
-logger = None
+
+isok = True
 
 class GOCDBReader:
     def __init__(self, feed, scopes):
@@ -56,10 +58,12 @@ class GOCDBReader:
             code += "self.siteList%s = dict()" % scope
             exec code
         self.fetched = False
+        self.state = True
 
     def getGroupOfServices(self):
         if not self.fetched:
-            self.loadDataIfNeeded()
+            if not self.state or not self.loadDataIfNeeded():
+                return []
 
         groups, gl = list(), list()
 
@@ -84,7 +88,8 @@ class GOCDBReader:
 
     def getGroupOfGroups(self):
         if not self.fetched:
-            self.loadDataIfNeeded()
+            if not self.state or not self.loadDataIfNeeded():
+                return []
 
         groupofgroups, gl = list(), list()
 
@@ -121,7 +126,8 @@ class GOCDBReader:
 
     def getGroupOfEndpoints(self):
         if not self.fetched:
-            self.loadDataIfNeeded()
+            if not self.state or not self.loadDataIfNeeded():
+                return []
 
         groupofendpoints, ge = list(), list()
         for scope in self.scopes:
@@ -144,115 +150,165 @@ class GOCDBReader:
     def loadDataIfNeeded(self):
         scopequery = "'&scope='+scope"
         for scope in self.scopes:
-            eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-            eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-            eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-            self.fetched = True
+            try:
+                eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                self.fetched = True
+            except Exception:
+                self.state = False
+                return False
+
+        return True
+
+    def _get_xmldata(self, scope, pi):
+        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+                                pi + scope,
+                                module_class_name(self))
+        doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
+                        module_class_name(self))
+        return doc
 
     def getServiceEndpoints(self, serviceList, scope):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                  '/gocdbpi/private/?method=get_service_endpoint' + scope,
-                                  "GOCDBReader.getServiceEndpoints():")
-            if res.status == 200:
-                doc = xml.dom.minidom.parseString(res.read())
-                services = doc.getElementsByTagName('SERVICE_ENDPOINT')
-                assert len(services) > 0
-                for service in services:
-                    serviceId = ''
-                    if service.getAttributeNode('PRIMARY_KEY'):
-                        serviceId = str(service.attributes['PRIMARY_KEY'].value)
-                    if serviceId not in serviceList:
-                        serviceList[serviceId] = {}
-                    serviceList[serviceId]['hostname'] = service.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                    serviceList[serviceId]['type'] = service.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                    serviceList[serviceId]['monitored'] = service.getElementsByTagName('NODE_MONITORED')[0].childNodes[0].data
-                    serviceList[serviceId]['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
-                    serviceList[serviceId]['site'] = service.getElementsByTagName('SITENAME')[0].childNodes[0].data
-                    serviceList[serviceId]['roc'] = service.getElementsByTagName('ROC_NAME')[0].childNodes[0].data
-                    serviceList[serviceId]['scope'] = scope.split('=')[1]
-                    serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
-            else:
-                logger.error('GOCDBReader.getServiceEndpoints(): HTTP response: %s %s' % (str(res.status), res.reason))
-                raise SystemExit(1)
-        except AssertionError:
-            logger.error("GOCDBReader.getServiceEndpoints(): Error parsing feed")
-            raise SystemExit(1)
+            doc = self._get_xmldata(scope, SERVENDPI)
+            services = doc.getElementsByTagName('SERVICE_ENDPOINT')
+            for service in services:
+                serviceId = ''
+                if service.getAttributeNode('PRIMARY_KEY'):
+                    serviceId = str(service.attributes['PRIMARY_KEY'].value)
+                if serviceId not in serviceList:
+                    serviceList[serviceId] = {}
+                serviceList[serviceId]['hostname'] = service.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
+                serviceList[serviceId]['type'] = service.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
+                serviceList[serviceId]['monitored'] = service.getElementsByTagName('NODE_MONITORED')[0].childNodes[0].data
+                serviceList[serviceId]['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
+                serviceList[serviceId]['site'] = service.getElementsByTagName('SITENAME')[0].childNodes[0].data
+                serviceList[serviceId]['roc'] = service.getElementsByTagName('ROC_NAME')[0].childNodes[0].data
+                serviceList[serviceId]['scope'] = scope.split('=')[1]
+                serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
+
+        except ConnectorError as e:
+            raise e
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVENDPI,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            raise e
 
     def getSitesInternal(self, siteList, scope):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                  '/gocdbpi/private/?method=get_site' + scope,
-                                  "GOCDBReader.getSitesInternal():")
-            if res.status == 200:
-                dom = xml.dom.minidom.parseString(res.read())
-                sites = dom.getElementsByTagName('SITE')
-                assert len(sites) > 0
-                for site in sites:
-                    siteName = site.getAttribute('NAME')
-                    if siteName not in siteList:
-                        siteList[siteName] = {'site': siteName}
-                    siteList[siteName]['infrastructure'] = site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes[0].data
-                    siteList[siteName]['certification'] = site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes[0].data
-                    siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
-                    siteList[siteName]['scope'] = scope.split('=')[1]
-            else:
-                logger.error('GOCDBReader.getSitesInternal(): HTTP response: %s %s' % (str(res.status), res.reason))
-                raise SystemExit(1)
-        except AssertionError:
-            logger.error("GOCDBReader.getSitesInternal(): Error parsing feed")
-            raise SystemExit(1)
+            doc = self._get_xmldata(scope, SITESPI)
+            sites = doc.getElementsByTagName('SITE')
+            for site in sites:
+                siteName = site.getAttribute('NAME')
+                if siteName not in siteList:
+                    siteList[siteName] = {'site': siteName}
+                siteList[siteName]['infrastructure'] = site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes[0].data
+                siteList[siteName]['certification'] = site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes[0].data
+                siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
+                siteList[siteName]['scope'] = scope.split('=')[1]
+
+        except ConnectorError as e:
+            raise e
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SITESPI,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            raise e
 
     def getServiceGroups(self, groupList, scope):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                  '/gocdbpi/private/?method=get_service_group' + scope,
-                                  "GOCDBReader.getServiceGroups():")
-            if res.status == 200:
-                doc = xml.dom.minidom.parseString(res.read())
-                groups = doc.getElementsByTagName('SERVICE_GROUP')
-                assert len(groups) > 0
-                for group in groups:
-                    groupId = group.getAttribute('PRIMARY_KEY')
-                    if groupId not in groupList:
-                        groupList[groupId] = {}
-                    groupList[groupId]['name'] = group.getElementsByTagName('NAME')[0].childNodes[0].data
-                    groupList[groupId]['monitored'] = group.getElementsByTagName('MONITORED')[0].childNodes[0].data
-                    groupList[groupId]['scope'] = scope.split('=')[1]
-                    groupList[groupId]['services'] = []
-                    services = group.getElementsByTagName('SERVICE_ENDPOINT')
-                    for service in services:
-                        serviceDict = {}
-                        serviceDict['hostname'] = service.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                        serviceDict['type'] = service.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                        serviceDict['monitored'] = service.getElementsByTagName('NODE_MONITORED')[0].childNodes[0].data
-                        serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
-                        groupList[groupId]['services'].append(serviceDict)
-            else:
-                logger.error('GOCDBReader.getServiceGroups(): HTTP response: %s %s' % (str(res.status), res.reason))
-                raise SystemExit(1)
-        except AssertionError:
-            logger.error("GOCDBReader.getServiceGroups(): Error parsing feed")
-            raise SystemExit(1)
+            doc = self._get_xmldata(scope, SERVGROUPPI)
+            groups = doc.getElementsByTagName('SERVICE_GROUP')
+            for group in groups:
+                groupId = group.getAttribute('PRIMARY_KEY')
+                if groupId not in groupList:
+                    groupList[groupId] = {}
+                groupList[groupId]['name'] = group.getElementsByTagName('NAME')[0].childNodes[0].data
+                groupList[groupId]['monitored'] = group.getElementsByTagName('MONITORED')[0].childNodes[0].data
+                groupList[groupId]['scope'] = scope.split('=')[1]
+                groupList[groupId]['services'] = []
+                services = group.getElementsByTagName('SERVICE_ENDPOINT')
+                for service in services:
+                    serviceDict = {}
+                    serviceDict['hostname'] = service.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
+                    serviceDict['type'] = service.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
+                    serviceDict['monitored'] = service.getElementsByTagName('NODE_MONITORED')[0].childNodes[0].data
+                    serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
+                    groupList[groupId]['services'].append(serviceDict)
 
-def filter_by_tags(tags, listofelem):
-    for attr in tags.keys():
-        def getit(elem):
-            value = elem['tags'][attr.lower()]
-            if value == '1': value = 'Y'
-            elif value == '0': value = 'N'
-            if isinstance(tags[attr], list):
-                for a in tags[attr]:
-                    if value.lower() == a.lower():
+        except ConnectorError as e:
+            raise e
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
+                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            raise e
+
+class TopoFilter(object):
+    def __init__(self, gg, ge, ggfilter, gefilter):
+        self.gg = gg
+        self.ge = ge
+        self.ggfilter = copy.copy(ggfilter)
+        self.gefilter = copy.copy(gefilter)
+        self.sitefilter = self.extract_filter('site', self.ggfilter)
+        self.ngifilter = self.extract_filter('ngi', self.ggfilter)
+        self.topofilter()
+
+    def topofilter(self):
+        if self.sitefilter:
+            self.gg = filter(lambda e: e['subgroup'].lower() in self.sitefilter, self.gg)
+
+        if self.ngifilter:
+            self.gg = filter(lambda e: e['group'].lower() in self.ngifilter, self.gg)
+
+        if self.ggfilter:
+            self.gg = self.filter_tags(self.ggfilter, self.gg)
+
+        allsubgroups = set([e['subgroup'] for e in self.gg])
+        if allsubgroups:
+            self.ge = filter(lambda e: e['group'] in allsubgroups, self.ge)
+
+        if self.gefilter:
+            self.ge = self.filter_tags(self.gefilter, self.ge)
+
+    def extract_filter(self, tag, ggtags):
+        gg = None
+        if tag.lower() in [t.lower() for t in ggtags.iterkeys()]:
+            for k, v in ggtags.iteritems():
+                if tag.lower() in k.lower():
+                    gg = ggtags[k]
+                    key = k
+            ggtags.pop(key)
+            if isinstance(gg, list):
+                gg = [t.lower() for t in gg]
+            else:
+                gg = gg.lower()
+
+        return gg
+
+    def filter_tags(self, tags, listofelem):
+        for attr in tags.keys():
+            def getit(elem):
+                value = elem['tags'][attr.lower()]
+                if value == '1': value = 'Y'
+                elif value == '0': value = 'N'
+                if isinstance(tags[attr], list):
+                    for a in tags[attr]:
+                        if value.lower() == a.lower():
+                            return True
+                else:
+                    if value.lower() == tags[attr].lower():
                         return True
-            else:
-                if value.lower() == tags[attr].lower():
-                    return True
-
-        listofelem = filter(getit, listofelem)
-    return listofelem
+            try:
+                listofelem = filter(getit, listofelem)
+            except KeyError as e:
+                logger.error('Wrong tags specified: %s' % e)
+        return listofelem
 
 def main():
+    global logger, globopts
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
@@ -261,25 +317,23 @@ def main():
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
 
-    global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
     certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
     schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
     conn = {'Connection': ['Timeout', 'Retry']}
+    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn)
-    global globopts
+    cglob = Global(confpath, certs, schemas, output, conn, state)
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
+    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
-
-    timestamp = datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
     for feed, jobcust in feeds.items():
         scopes = confcust.get_feedscopes(feed, jobcust)
@@ -287,9 +341,10 @@ def main():
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
-            global fetchtype
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+
+            global fetchtype, custname
             fetchtype = confcust.get_gocdb_fetchtype(job)
-            global custname
             custname = confcust.get_custname(cust)
 
             if fetchtype == 'ServiceGroups':
@@ -298,35 +353,31 @@ def main():
                 group_endpoints = gocdb.getGroupOfEndpoints()
             group_groups = gocdb.getGroupOfGroups()
 
+            write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()])
+
+            if not gocdb.state:
+                continue
+
             numge = len(group_endpoints)
             numgg = len(group_groups)
 
             ggtags = confcust.get_gocdb_ggtags(job)
-            if ggtags:
-                group_groups = filter_by_tags(ggtags, group_groups)
+            getags = confcust.get_gocdb_getags(job)
+            tf = TopoFilter(group_groups, group_endpoints, ggtags, getags)
+            group_groups = tf.gg
+            group_endpoints = tf.ge
 
-            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
                             group_groups, os.path.basename(sys.argv[0]))
             avro.write()
 
-            gelegmap = []
-            for g in group_endpoints:
-                if g['service'] in LegMapServType.keys():
-                    gelegmap.append(copy.copy(g))
-                    gelegmap[-1]['service'] = LegMapServType[g['service']]
-            getags = confcust.get_gocdb_getags(job)
-            numgeleg = len(gelegmap)
-            if getags:
-                group_endpoints = filter_by_tags(getags, group_endpoints)
-                gelegmap = filter_by_tags(getags, gelegmap)
-
-            filename = gen_fname_repdate(logger, timestamp, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
             avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
-                            group_endpoints + gelegmap, os.path.basename(sys.argv[0]))
+                            group_endpoints, os.path.basename(sys.argv[0]))
             avro.write()
 
-            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge + numgeleg) +' Groups(%s):%d' % (fetchtype, numgg))
+            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
                 selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selge, selgg = '', ''
@@ -336,7 +387,7 @@ def main():
                             value = '['+','.join(value)+']'
                         selge += '%s:%s,' % (key, value)
                     selstr += 'Endpoints(%s):' % selge[:len(selge) - 1]
-                    selstr += '%d ' % (len(group_endpoints) + len(gelegmap))
+                    selstr += '%d ' % (len(group_endpoints))
                 if ggtags:
                     for key, value in ggtags.items():
                         if isinstance(value, list):

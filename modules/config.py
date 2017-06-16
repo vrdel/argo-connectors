@@ -103,13 +103,6 @@ class PoemConf:
             self.logger.error("No option %s defined" % e)
             raise SystemExit(1)
 
-    def get_allowedngi(self):
-        try:
-            return self._get_ngis('PrefilterDataAllowedNGI'.lower())
-        except KeyError as e:
-            self.logger.error("No option %s defined" % e)
-            raise SystemExit(1)
-
     def get_servers(self):
         poemservers = {}
         for opt in self.options.keys():
@@ -221,17 +214,23 @@ class CustomerConf:
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
 
+    def get_fullstatedir(self, root, cust, job):
+        return root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job)
+
     def get_custdir(self, cust):
         return self._dir_from_sect(cust, self._cust)
 
     def get_custname(self, cust):
         return self._cust[cust]['Name']
 
-    def make_dirstruct(self):
+    def make_dirstruct(self, root=None):
         dirs = []
         for cust in self._cust.keys():
             for job in self.get_jobs(cust):
-                dirs.append(self.get_custdir(cust)+'/'+self.get_jobdir(job))
+                if root:
+                    dirs.append(root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job))
+                else:
+                    dirs.append(self.get_custdir(cust) + '/' + self.get_jobdir(job))
             for d in dirs:
                 try:
                     os.makedirs(d)
@@ -269,7 +268,7 @@ class CustomerConf:
             if match is not None:
                 for m in match:
                     tags.update({m[0]: [e.strip('() ') for e in m[1].split(',')]})
-            match = re.findall('([\w]+)\s*:\s*([\w]+)', tagstr)
+            match = re.findall('([\w]+)\s*:\s*([\w\.\-\_]+)', tagstr)
             if match is not None:
                 for m in match:
                     tags.update({m[0]: m[1]})

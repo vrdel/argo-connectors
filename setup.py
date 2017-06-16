@@ -1,5 +1,5 @@
 from distutils.core import setup
-import glob, sys
+import glob
 
 NAME='argo-egi-connectors'
 
@@ -10,7 +10,7 @@ def get_ver():
                 return line.split()[1]
     except IOError:
         print "Make sure that %s is in directory"  % (NAME+'.spec')
-        sys.exit(1)
+        raise SystemExit(1)
 
 
 setup(name=NAME,
@@ -22,6 +22,9 @@ setup(name=NAME,
       package_dir={'argo_egi_connectors': 'modules/'},
       packages=['argo_egi_connectors'],
       data_files=[('/etc/argo-egi-connectors', glob.glob('etc/*.conf')),
-                  ('/usr/libexec/argo-egi-connectors', glob.glob('bin/*.py')),
+                  ('/usr/libexec/argo-egi-connectors', ['bin/downtimes-gocdb-connector.py', \
+                                                        'bin/poem-connector.py', 'bin/prefilter-egi.py', \
+                                                        'bin/topology-gocdb-connector.py', \
+                                                        'bin/weights-vapor-connector.py']),
                   ('/etc/argo-egi-connectors/schemas', glob.glob('etc/schemas/*.avsc')),
                   ('/etc/cron.d', glob.glob('cronjobs/*'))])

@@ -1,7 +1,6 @@
 Name: argo-egi-connectors
-Version: 1.5.0
+Version: 1.5.9
 Release: 1%{?dist}
-
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
@@ -44,6 +43,35 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 
 %changelog
+* Tue Apr 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.9-1%{?dist}
+- ARGO-724 Each connector must try to create states directory structure
+* Wed Mar 29 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.8-1%{?dist}
+- ARGO-766 Remove SRMv2 service type mapping
+* Mon Mar 20 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.7-1%{?dist}
+- ARGO-767 Remove topology-vo connector
+- refactored topology filtering 
+- removed schema migration helper
+* Fri Mar 17 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.6-1%{?dist}
+- ARGO-762 Remove inspection logic of HEPSPEC factors for previous days 
+* Thu Mar 9 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.5-1%{?dist}
+- ARGO-713 Topology connector should be able to pick only particular NGI or site
+* Mon Jan 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.4-1%{?dist}
+- ARGO-667 filter endpoints whose groups are filtered in groups of groups 
+* Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-3%{?dist}
+- prefilter output datestamp with underscores
+* Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-2%{?dist}
+- prefilter datestamp extracted from arg tuple 
+* Thu Jan 19 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-1%{?dist}
+- poem and output files as arguments to prefilter
+- refactored filename datestamp creation 
+* Wed Jan 4 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.2-1%{?dist}
+- ARGO-550 Introduce states that can be checked by Nagios probe
+* Thu Nov 24 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-2%{?dist}
+- remove code for nagioses defined in obsoleted nagios-roles.conf
+- catch JSON parse errors
+- catch XML parse errors
+* Fri Oct 28 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-1%{?dist}
+- ARGO-584 Ensure to catch all exceptions of underlying library
 * Sat Sep 24 2016 Themis Zamani <themiszamani@gmail.com> - 1.5.0-1%{?dist}
 - New RPM package release
 * Wed Aug 31 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-2%{?dist} 
