@@ -1,6 +1,6 @@
 import ConfigParser
 import os, re, errno
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from argo_egi_connectors.log import Logger
 
 class Global:
     """
@@ -141,6 +141,7 @@ class Global:
                                     pass
                                 else:
                                     raise e
+
         except ConfigParser.NoOptionError as e:
             self.logger.error(e.message)
             raise SystemExit(1)
