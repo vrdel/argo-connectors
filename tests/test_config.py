@@ -37,7 +37,12 @@ class TestGlobalConfig(unittest.TestCase):
         self.assertEqual(getags, {'Scope': 'EGI', 'Production': 'Y', 'Monitored': 'Y'})
         profiles = self.customerconfig.get_profiles(jobs[0])
         self.assertEqual(profiles, ['ROC_CRITICAL'])
-        import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
+        feedjobs = self.customerconfig.get_mapfeedjobs('topology-gocdb-connector.py',
+                                                       'GOCDB',
+                                                       deffeed='https://goc.egi.eu/gocdbpi/')
+        self.assertEqual(feedjobs, {'https://goc.egi.eu/gocdbpi/':
+                                    [('JOB_EGICritical', 'CUSTOMER_EGI'),
+                                     ('JOB_EGICloudmon', 'CUSTOMER_EGI')]})
 
 if __name__ == '__main__':
     unittest.main()
