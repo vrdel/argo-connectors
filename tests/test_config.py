@@ -28,7 +28,7 @@ class TestGlobalConfig(unittest.TestCase):
         customers = self.customerconfig.get_customers()
         self.assertEqual(customers, ['CUSTOMER_EGI'])
         jobs = self.customerconfig.get_jobs(customers[0])
-        self.assertEqual(jobs, ['JOB_EGICritical', 'JOB_EGICloudmon', 'JOB_GridPPTest'])
+        self.assertEqual(jobs, ['JOB_EGICritical', 'JOB_EGICloudmon'])
         custdir = self.customerconfig.get_custdir(customers[0])
         self.assertEqual(custdir, '/var/lib/argo-connectors/EGI/')
         ggtags = self.customerconfig.get_gocdb_ggtags(jobs[0])
@@ -37,6 +37,7 @@ class TestGlobalConfig(unittest.TestCase):
         self.assertEqual(getags, {'Scope': 'EGI', 'Production': 'Y', 'Monitored': 'Y'})
         profiles = self.customerconfig.get_profiles(jobs[0])
         self.assertEqual(profiles, ['ROC_CRITICAL'])
+        import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
 
 if __name__ == '__main__':
     unittest.main()
