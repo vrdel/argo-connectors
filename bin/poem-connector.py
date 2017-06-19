@@ -276,6 +276,7 @@ def main():
                                         ams_opts['amsproject'],
                                         ams_opts['amstoken'],
                                         ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
                                         ams_opts['amsbulk'])
                 ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
                                       'poem', datestamp().replace('_', '-'), lfprofiles)

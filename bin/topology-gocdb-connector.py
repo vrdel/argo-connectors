@@ -376,6 +376,7 @@ def main():
                                         ams_opts['amsproject'],
                                         ams_opts['amstoken'],
                                         ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
                                         ams_opts['amsbulk'])
                 ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
                                       'group_groups', datestamp().replace('_', '-'), group_groups)

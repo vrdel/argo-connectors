@@ -126,6 +126,7 @@ def main():
                                         ams_opts['amsproject'],
                                         ams_opts['amstoken'],
                                         ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
                                         ams_opts['amsbulk'])
                 ret, excep = ams.send(globopts['AvroSchemasWeights'.lower()],
                                       'weights', datestamp().replace('_', '-'), datawr)

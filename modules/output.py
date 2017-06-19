@@ -44,10 +44,11 @@ class AmsPublish(object):
     """
        Class represents interaction with AMS service
     """
-    def __init__(self, host, project, token, topic, bulk):
+    def __init__(self, host, project, token, topic, report, bulk):
         self.ams = ArgoMessagingService(host, token, project)
         self.topic = topic
         self.bulk = int(bulk)
+        self.report = report
 
     def send(self, schema, msgtype, date, msglist):
         def _avro_serialize(msg):
@@ -61,6 +62,7 @@ class AmsPublish(object):
 
         try:
             msgs = map(lambda m: AmsMessage(attributes={'partition_date': date,
+                                                        'report': self.report,
                                                         'type': msgtype},
                                             data=_avro_serialize(m)), msglist)
             topic = self.ams.topic(self.topic)
