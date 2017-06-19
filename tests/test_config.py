@@ -4,6 +4,7 @@ import modules.config
 class TestGlobalConfig(unittest.TestCase):
     def setUp(self):
         self.globalconfig = modules.config.Global('topology-gocdb-connector.py', 'tests/global.conf')
+        self.customerconfig = modules.config.CustomerConf('topology-gocdb-connector.py', 'tests/customer.conf')
 
     def testGlobalParse(self):
         opts = self.globalconfig.parse()
@@ -21,6 +22,21 @@ class TestGlobalConfig(unittest.TestCase):
         self.assertEqual(missing, set(['amsproject', 'amstopic', 'amsbulk']))
         merged = self.globalconfig.merge_opts(ams_incomplete, 'ams')
         self.assertEqual(merged, dict(amshost='host', amsproject='EGI', amstoken='token', amstopic='TOPIC'))
+
+    def testCustomerParse(self):
+        opts = self.customerconfig.parse()
+        customers = self.customerconfig.get_customers()
+        self.assertEqual(customers, ['CUSTOMER_EGI'])
+        jobs = self.customerconfig.get_jobs(customers[0])
+        self.assertEqual(jobs, ['JOB_EGICritical', 'JOB_EGICloudmon', 'JOB_GridPPTest'])
+        custdir = self.customerconfig.get_custdir(customers[0])
+        self.assertEqual(custdir, '/var/lib/argo-connectors/EGI/')
+        ggtags = self.customerconfig.get_gocdb_ggtags(jobs[0])
+        self.assertEqual(ggtags, {'Infrastructure': 'Production', 'Certification': 'Certified', 'Scope': 'EGI'})
+        getags = self.customerconfig.get_gocdb_getags(jobs[0])
+        self.assertEqual(getags, {'Scope': 'EGI', 'Production': 'Y', 'Monitored': 'Y'})
+        profiles = self.customerconfig.get_profiles(jobs[0])
+        self.assertEqual(profiles, ['ROC_CRITICAL'])
 
 if __name__ == '__main__':
     unittest.main()

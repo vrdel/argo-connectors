@@ -120,7 +120,6 @@ class Global:
         else:
             return False
 
-
     def parse(self):
         config = ConfigParser.ConfigParser()
 
