@@ -101,6 +101,26 @@ class Global:
             return (False, diff)
         return (True, None)
 
+    def _concat_sectopt(self, d):
+        opts = list()
+
+        for k in d.iterkeys():
+            for v in d[k]:
+                opts.append(k+v)
+
+        return opts
+
+    def _one_active(self, options):
+        loweropts = self._lowercase_dict(options)
+
+        lval = [eval(self.options[k]) for k in self._concat_sectopt(loweropts)]
+
+        if any(lval):
+            return True
+        else:
+            return False
+
+
     def parse(self):
         config = ConfigParser.ConfigParser()
 
@@ -142,6 +162,12 @@ class Global:
                                 else:
                                     raise e
 
+            self.options = options
+
+            if not self._one_active(self.conf_general):
+                self.logger.error('At least one of %s needs to be True' % (', '.join(self._concat_sectopt(self.conf_general))))
+                raise SystemExit(1)
+
         except ConfigParser.NoOptionError as e:
             self.logger.error(e.message)
             raise SystemExit(1)
@@ -151,8 +177,6 @@ class Global:
         except OSError as e:
             self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
             raise SystemExit(1)
-
-        self.options = options
 
         return options
 
