@@ -16,9 +16,9 @@ class TopologyFeed(unittest.TestCase):
         jobcust = feedjobs.values()[0]
         scopes = self.customerconfig.get_feedscopes(feed, jobcust)
         self.gocdbreader = GOCDBReader(feed, scopes)
-        self.gocdbreader._get_xmldata = self.wrap_get_xmldata
+        self.gocdbreader._get_xmldata = self.overriden_get_xmldata
 
-    def wrap_get_xmldata(self, scope, pi):
+    def overriden_get_xmldata(self, scope, pi):
         globopts = self.globalconfig.parse()
         self._o = self.gocdbreader._o
         res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
