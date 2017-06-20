@@ -37,7 +37,7 @@ from argo_egi_connectors.helpers import filename_date, module_class_name, datest
 from urlparse import urlparse
 
 globopts = {}
-logger = None
+logger = Logger(os.path.basename(sys.argv[0]))
 
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
 

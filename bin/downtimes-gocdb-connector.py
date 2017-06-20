@@ -37,7 +37,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name
 
-logger = None
+logger = Logger(os.path.basename(sys.argv[0]))
 
 DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
 

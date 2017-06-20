@@ -37,7 +37,7 @@ from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
 from urlparse import urlparse
 
-logger = None
+logger = Logger(os.path.basename(sys.argv[0]))
 
 SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint'
 SITESPI = '/gocdbpi/private/?method=get_site'
@@ -164,6 +164,7 @@ class GOCDBReader:
         return True
 
     def _get_xmldata(self, scope, pi):
+        import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
         res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
                                 pi + scope,
                                 module_class_name(self))
@@ -321,7 +322,6 @@ def main():
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
 
-    logger = Logger(os.path.basename(sys.argv[0]))
 
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(sys.argv[0], confpath)

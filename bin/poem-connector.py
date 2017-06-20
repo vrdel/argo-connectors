@@ -37,7 +37,8 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
 
-logger = None
+logger = Logger(os.path.basename(sys.argv[0]))
+
 globopts, poemopts = {}, {}
 cpoem = None
 custname = ''
