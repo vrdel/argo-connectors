@@ -176,6 +176,7 @@ class PoemReader:
         else:
             return entries
 
+
 class PrefilterPoem:
     def __init__(self):
         self.outputFileFormat = '%s\001%s\001%s\001%s\001%s\001%s\001%s\r\n'
@@ -196,6 +197,7 @@ class PrefilterPoem:
 
         logger.info('POEM file(%s): Expanded profiles for %d monitoring instances' % (fname, len(moninstance) + 1))
 
+
 def gen_outprofiles(lprofiles, matched):
     lfprofiles = []
 
@@ -209,6 +211,7 @@ def gen_outprofiles(lprofiles, matched):
             lfprofiles.append(pt)
 
     return lfprofiles
+
 
 def main():
     global logger, globopts
@@ -294,4 +297,6 @@ def main():
 
             logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
 
-main()
+
+if __name__ == '__main__':
+    main()

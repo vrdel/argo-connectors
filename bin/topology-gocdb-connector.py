@@ -248,6 +248,7 @@ class GOCDBReader:
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
 
+
 class TopoFilter(object):
     def __init__(self, gg, ge, ggfilter, gefilter):
         self.gg = gg
@@ -308,6 +309,7 @@ class TopoFilter(object):
             except KeyError as e:
                 logger.error('Wrong tags specified: %s' % e)
         return listofelem
+
 
 def main():
     global logger, globopts
@@ -425,4 +427,7 @@ def main():
                     selstr += '%d' % (len(group_groups))
 
                 logger.info(selstr)
-main()
+
+
+if __name__ == '__main__':
+    main()

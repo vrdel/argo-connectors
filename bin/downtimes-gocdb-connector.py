@@ -188,4 +188,6 @@ def main():
                 jobs = [job for job, lcust in jobcust if cust == lcust]
                 logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts)))
 
-main()
+
+if __name__ == '__main__':
+    main()

@@ -69,12 +69,14 @@ class Vapor:
                 logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + self._o.path,
                                                                                          repr(e).replace('\'','')))
 
+
 def data_out(data):
     datawr = []
     for key in data:
         w = data[key]
         datawr.append({'type': 'hepspec', 'site': key, 'weight': w})
     return datawr
+
 
 def main():
     global logger, globopts
@@ -148,4 +150,6 @@ def main():
                 jobs = [job for job, lcust in jobcust if cust == lcust]
                 logger.info('Customer:%s Jobs:%d Sites:%d' % (cust, len(jobs), len(datawr)))
 
-main()
+
+if __name__ == '__main__':
+    main()
