@@ -1,7 +1,7 @@
 import unittest
 import modules.config
 
-class TestGlobalConfig(unittest.TestCase):
+class TestConfig(unittest.TestCase):
     def setUp(self):
         self.globalconfig = modules.config.Global('topology-gocdb-connector.py', 'tests/global.conf')
         self.customerconfig = modules.config.CustomerConf('topology-gocdb-connector.py', 'tests/customer.conf')
@@ -43,6 +43,8 @@ class TestGlobalConfig(unittest.TestCase):
         self.assertEqual(feedjobs, {'https://goc.egi.eu/gocdbpi/':
                                     [('JOB_EGICritical', 'CUSTOMER_EGI'),
                                      ('JOB_EGICloudmon', 'CUSTOMER_EGI')]})
+
+
 
 if __name__ == '__main__':
     unittest.main()

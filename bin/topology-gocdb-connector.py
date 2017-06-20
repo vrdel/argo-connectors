@@ -164,7 +164,6 @@ class GOCDBReader:
         return True
 
     def _get_xmldata(self, scope, pi):
-        import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
         res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
                                 pi + scope,
                                 module_class_name(self))
