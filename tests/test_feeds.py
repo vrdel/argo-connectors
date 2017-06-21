@@ -16,17 +16,13 @@ class TopologyFeed(unittest.TestCase):
         jobcust = feedjobs.values()[0]
         scopes = self.customerconfig.get_feedscopes(feed, jobcust)
         self.gocdbreader = GOCDBReader(feed, scopes)
-        self.gocdbreader._get_xmldata = self.overriden_get_xmldata
+        self.orig_get_xmldata = self.gocdbreader._get_xmldata
+        self.gocdbreader._get_xmldata = self.wrap_get_xmldata
 
-    def overriden_get_xmldata(self, scope, pi):
+    def wrap_get_xmldata(self, scope, pi):
         globopts = self.globalconfig.parse()
-        self._o = self.gocdbreader._o
-        res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                pi + scope,
-                                module_class_name(self))
-        doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
-                        module_class_name(self))
-        return doc
+        self.orig_get_xmldata.im_func.func_globals['globopts'] = globopts
+        self.orig_get_xmldata(scope, pi)
 
     def testServiceEndpoints(self):
         # group_endpoints = self.gocdbreader.getGroupOfServices()
