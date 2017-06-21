@@ -44,11 +44,12 @@ class AmsPublish(object):
     """
        Class represents interaction with AMS service
     """
-    def __init__(self, host, project, token, topic, report, bulk):
+    def __init__(self, host, project, token, topic, report, bulk, timeout=60):
         self.ams = ArgoMessagingService(host, token, project)
         self.topic = topic
         self.bulk = int(bulk)
         self.report = report
+        self.timeout = int(timeout)
 
     def send(self, schema, msgtype, date, msglist):
         def _avro_serialize(msg):
@@ -65,7 +66,7 @@ class AmsPublish(object):
                                                         'report': self.report,
                                                         'type': msgtype},
                                             data=_avro_serialize(m)), msglist)
-            topic = self.ams.topic(self.topic)
+            topic = self.ams.topic(self.topic, timeout=self.timeout)
 
             if self.bulk > 1:
                 q, r = divmod(len(msgs), self.bulk)
@@ -75,16 +76,16 @@ class AmsPublish(object):
                     e = self.bulk - 1
 
                     for i in range(q):
-                        topic.publish(msgs[s:e])
+                        topic.publish(msgs[s:e], timeout=self.timeout)
                         s += self.bulk
                         e += self.bulk
-                    topic.publish(msgs[s:])
+                    topic.publish(msgs[s:], timeout=self.timeout)
 
                 else:
-                    topic.publish(msgs)
+                    topic.publish(msgs, timeout=self.timeout)
 
             else:
-                topic.publish(msgs)
+                topic.publish(msgs, timeout=self.timeout)
 
         except AmsException as e:
             return False, e

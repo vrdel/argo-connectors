@@ -282,11 +282,19 @@ def main():
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
                                         ams_opts['amsbulk'])
-                ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
-                                      'poem', datestamp().replace('_', '-'), lfprofiles)
-                if not ret:
-                    logger.error(excep)
-                    raise SystemExit(1)
+                i = 1
+                while i <= int(globopts['ConnectionRetry'.lower()]):
+                    ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
+                                        'poem', datestamp().replace('_', '-'), lfprofiles)
+                    if not ret:
+                        if i == int(globopts['ConnectionRetry'.lower()]):
+                            logger.error(excep)
+                            raise SystemExit(1)
+                        else:
+                            logger.warn('Try:%d AMS publish' % i)
+                    elif ret:
+                        break
+                    i += 1
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
