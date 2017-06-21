@@ -1,6 +1,5 @@
 import unittest
 import modules.config
-from httmock import urlmatch, HTTMock, response
 from bin.topology_gocdb_connector import GOCDBReader, logger, globopts
 from modules import input
 from modules.helpers import module_class_name
