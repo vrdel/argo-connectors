@@ -1,6 +1,6 @@
 import unittest
 import modules.config
-from bin.topology_gocdb_connector import GOCDBReader, logger, globopts
+from bin.topology_gocdb_connector import GOCDBReader, logger
 from modules import input
 from modules.helpers import module_class_name
 
