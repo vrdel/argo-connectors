@@ -15,7 +15,7 @@ do
     link=$(echo $f | sed "s/-/_/g") 
     if [[ ! -L $link ]]
     then
-        ln -s $f $link > /dev/null
+        ln -s $f $link
     fi
 done && \
 if [[ ! -e __init__.py ]]
