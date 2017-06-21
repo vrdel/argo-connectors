@@ -1,5 +1,6 @@
 import logging, logging.handlers
 import sys
+import socket
 
 class Logger:
     def __init__(self, connector):
@@ -10,7 +11,10 @@ class Logger:
         logging.basicConfig(format=lfs, level=logging.INFO, stream=sys.stdout)
         self.logger = logging.getLogger(connector)
 
-        sh = logging.handlers.SysLogHandler('/dev/log', logging.handlers.SysLogHandler.LOG_USER)
+        try:
+            sh = logging.handlers.SysLogHandler('/dev/log', logging.handlers.SysLogHandler.LOG_USER)
+        except socket.error as e:
+            sh = logging.StreamHandler()
         sh.setFormatter(lf)
         sh.setLevel(lv)
         self.logger.addHandler(sh)
