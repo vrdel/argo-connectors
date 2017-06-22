@@ -12,7 +12,7 @@ fi
 (cd bin && \
 for f in [a-z]*.py
 do
-    link=$(echo $f | sed "s/-/_/g") 
+    link=${f//-/_} 
     if [[ ! -L $link ]]
     then
         ln -s $f $link
