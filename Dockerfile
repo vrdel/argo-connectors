@@ -7,6 +7,7 @@ RUN yum -y update && \
     tar \
     wget \
     python \
+    python-argparse \
     python-setuptools \
     modules
 
@@ -14,4 +15,5 @@ RUN easy_install pip
 RUN pip install coverage
 RUN pip install unittest2
 RUN pip install discover
+RUN pip install pyOpenSSL
 
