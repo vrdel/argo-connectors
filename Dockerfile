@@ -23,6 +23,7 @@ RUN pip install coverage
 RUN pip install unittest2
 RUN pip install discover
 RUN pip install pyOpenSSL
+RUN pip install httmock
 RUN pip install avro
 RUN pip install argo_ams_library
 RUN pip install requests

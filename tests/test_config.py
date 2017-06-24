@@ -11,8 +11,8 @@ class TestConfig(unittest.TestCase):
         self.assertTrue(isinstance(opts, dict))
         self.assertEqual(opts['outputtopologygroupofendpoints'], 'group_endpoints_DATE.avro')
         self.assertEqual(opts['outputtopologygroupofgroups'], 'group_groups_DATE.avro')
-        self.assertEqual(opts['avroschemastopologygroupofendpoints'], '/etc/argo-egi-connectors/schemas//group_endpoints.avsc')
-        self.assertEqual(opts['avroschemastopologygroupofgroups'], '/etc/argo-egi-connectors/schemas//group_groups.avsc')
+        self.assertEqual(opts['avroschemastopologygroupofendpoints'], 'etc/schemas//group_endpoints.avsc')
+        self.assertEqual(opts['avroschemastopologygroupofgroups'], 'etc/schemas//group_groups.avsc')
 
     def testAmsOpts(self):
         opts = self.globalconfig.parse()
@@ -21,7 +21,7 @@ class TestConfig(unittest.TestCase):
         self.assertFalse(complete)
         self.assertEqual(missing, set(['amsproject', 'amstopic', 'amsbulk']))
         merged = self.globalconfig.merge_opts(ams_incomplete, 'ams')
-        self.assertEqual(merged, dict(amshost='host', amsproject='EGI', amstoken='token', amstopic='TOPIC'))
+        self.assertEqual(merged, dict(amshost='host', amsproject='EGI', amstoken='token', amstopic='TOPIC', amsbulk='100'))
 
     def testCustomerParse(self):
         opts = self.customerconfig.parse()
@@ -32,7 +32,9 @@ class TestConfig(unittest.TestCase):
         custdir = self.customerconfig.get_custdir(customers[0])
         self.assertEqual(custdir, '/var/lib/argo-connectors/EGI/')
         ggtags = self.customerconfig.get_gocdb_ggtags(jobs[0])
-        self.assertEqual(ggtags, {'Infrastructure': 'Production', 'Certification': 'Certified', 'Scope': 'EGI'})
+        self.assertEqual(ggtags, {'NGI': 'EGI.eu', 'Infrastructure':
+                                  'Production', 'Certification': 'Certified',
+                                  'Scope': 'EGI'})
         getags = self.customerconfig.get_gocdb_getags(jobs[0])
         self.assertEqual(getags, {'Scope': 'EGI', 'Production': 'Y', 'Monitored': 'Y'})
         profiles = self.customerconfig.get_profiles(jobs[0])

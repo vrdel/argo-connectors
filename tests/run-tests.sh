@@ -36,5 +36,5 @@ coverage run --source=tests -m unittest2 discover tests && coverage xml
 
 for f in ${files[@]}
 do
-    rm -f $f
+    rm -f $f*
 done
