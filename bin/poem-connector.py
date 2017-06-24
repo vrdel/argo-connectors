@@ -285,7 +285,7 @@ def main():
                 i = 1
                 while i <= int(globopts['ConnectionRetry'.lower()]):
                     ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
-                                        'poem', datestamp().replace('_', '-'), lfprofiles)
+                                        'metric_profile', datestamp().replace('_', '-'), lfprofiles)
                     if not ret:
                         if i == int(globopts['ConnectionRetry'.lower()]):
                             logger.error(excep)
