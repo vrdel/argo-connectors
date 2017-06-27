@@ -21,18 +21,32 @@ class AvroWriter:
     def __init__(self, schema, outfile):
         self.schema = schema
         self.outfile = outfile
+        self.datawrite = None
+        self.avrofile = None
+        self._load_datawriter()
+
+    def _load_datawriter(self):
+        try:
+            lschema = load_schema(self.schema)
+            self.avrofile = open(self.outfile, 'w+')
+            self.datawrite = DataFileWriter(self.avrofile, DatumWriter(), lschema)
+        except Exception:
+            return False
+
+        return True
 
     def write(self, data):
         try:
-            schema = load_schema(self.schema)
-            avrofile = open(self.outfile, 'w+')
-            datawrite = DataFileWriter(avrofile, DatumWriter(), schema)
+
+            if (not self.datawrite or
+                not self.avrofile):
+                raise ('AvroFileWriter not initalized')
 
             for elem in data:
-                datawrite.append(elem)
+                self.datawrite.append(elem)
 
-            datawrite.close()
-            avrofile.close()
+            self.datawrite.close()
+            self.avrofile.close()
 
         except Exception as e:
             return False, e
