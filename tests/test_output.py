@@ -1,15 +1,58 @@
 import json
 import modules.config
-import unittest
+import unittest2 as unittest
+import mock
+
+from bin.topology_gocdb_connector import logger
 
 from httmock import urlmatch, HTTMock, response
 from modules import output
-from modules.helpers import module_class_name, datestamp
+from modules.helpers import module_class_name, datestamp, filename_date
+
+class TopologyAvro(unittest.TestCase):
+    def setUp(self):
+        self.globalconfig = modules.config.Global('topology-gocdb-connector.py', 'tests/global.conf')
+        self.customerconfig = modules.config.CustomerConf('topology-gocdb-connector.py', 'tests/customer.conf')
+        self.globopts = self.globalconfig.parse()
+        self.customerconfig.parse()
+        customers = self.customerconfig.get_customers()
+        self.jobs = self.customerconfig.get_jobs(customers[0])
+        self.jobdir = self.customerconfig.get_fulldir(customers[0], self.jobs[0])
+
+    @mock.patch('modules.output.load_schema')
+    @mock.patch('modules.output.open')
+    def testGroupGroups(self, mock_open, mock_lschema):
+        mock_avrofile = mock.create_autospec(output.DataFileWriter)
+        group_groups = [{'group': u'AfricaArabia', 'subgroup': u'MA-01-CNRST',
+                          'tags': {'certification': u'Certified',
+                                   'infrastructure': u'Production',
+                                   'scope': 'EGI'},
+                         'type': 'NGI'},
+                        {'group': u'AfricaArabia', 'subgroup': u'MA-04-CNRST-ATLAS',
+                         'tags': {'certification': u'Certified',
+                                  'infrastructure': u'Production',
+                                  'scope': 'EGI'},
+                         'type': 'NGI'},
+                        {'group': u'AfricaArabia', 'subgroup': u'ZA-UCT-ICTS',
+                         'tags': {'certification': u'Suspended',
+                                  'infrastructure': u'Production',
+                                  'scope': 'EGI'},
+                         'type': 'NGI'}]
+
+
+        filename = filename_date(logger, self.globopts['OutputTopologyGroupOfGroups'.lower()], self.jobdir)
+        m = output.AvroWriter(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+        m.datawrite = mock_avrofile
+        m.write(group_groups)
+        mock_open.assert_called_with(filename, 'w+')
+        mock_lschema.assert_called_with(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()])
+        self.assertTrue(mock_avrofile.append.called)
+        self.assertEqual(mock_avrofile.append.call_count, 3)
 
 class TopologyAms(unittest.TestCase):
     get_topic_urlmatch = dict(netloc='localhost',
-                                path='/v1/projects/EGI/topics/TOPIC',
-                                method='GET')
+                              path='/v1/projects/EGI/topics/TOPIC',
+                              method='GET')
 
     publish_topic_urlmatch = dict(netloc='localhost',
                                   path='/v1/projects/EGI/topics/TOPIC:publish',

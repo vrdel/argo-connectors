@@ -1,4 +1,4 @@
-import unittest
+import unittest2 as unittest
 import modules.config
 from bin.topology_gocdb_connector import GOCDBReader, logger
 from modules import input
