@@ -1,13 +1,51 @@
 import json
+import mock
 import modules.config
 import unittest2 as unittest
-import mock
 
 from bin.topology_gocdb_connector import logger
 
 from httmock import urlmatch, HTTMock, response
 from modules import output
-from modules.helpers import module_class_name, datestamp, filename_date
+from modules.helpers import datestamp, filename_date
+
+group_groups = [{'group': u'AfricaArabia', 'subgroup': u'MA-01-CNRST',
+                    'tags': {'certification': u'Certified',
+                            'infrastructure': u'Production',
+                            'scope': 'EGI'},
+                    'type': 'NGI'},
+                {'group': u'AfricaArabia', 'subgroup': u'MA-04-CNRST-ATLAS',
+                    'tags': {'certification': u'Certified',
+                            'infrastructure': u'Production',
+                            'scope': 'EGI'},
+                    'type': 'NGI'},
+                {'group': u'AfricaArabia', 'subgroup': u'ZA-UCT-ICTS',
+                    'tags': {'certification': u'Suspended',
+                            'infrastructure': u'Production',
+                            'scope': 'EGI'},
+                    'type': 'NGI'}]
+
+group_endpoints = [{'group': u'100IT',
+                    'hostname': u'occi-api.100percentit.com',
+                    'service': u'eu.egi.cloud.vm-management.occi',
+                    'tags': {'monitored': '1',
+                                'production': '1',
+                                'scope': 'EGI'},
+                    'type': 'SITES'},
+                    {'group': u'100IT',
+                    'hostname': u'egi-cloud-accounting.100percentit.com',
+                    'service': u'eu.egi.cloud.accounting',
+                    'tags': {'monitored': '1',
+                                'production': '1',
+                                'scope': 'EGI'},
+                    'type': 'SITES'},
+                    {'group': u'100IT',
+                    'hostname': u'occi-api.100percentit.com',
+                    'service': u'eu.egi.cloud.information.bdii',
+                    'tags': {'monitored': '1',
+                                'production': '1',
+                                'scope': 'EGI'},
+                    'type': 'SITES'}]
 
 class TopologyAvro(unittest.TestCase):
     def setUp(self):
@@ -23,23 +61,6 @@ class TopologyAvro(unittest.TestCase):
     @mock.patch('modules.output.open')
     def testGroupGroups(self, mock_open, mock_lschema):
         mock_avrofile = mock.create_autospec(output.DataFileWriter)
-        group_groups = [{'group': u'AfricaArabia', 'subgroup': u'MA-01-CNRST',
-                          'tags': {'certification': u'Certified',
-                                   'infrastructure': u'Production',
-                                   'scope': 'EGI'},
-                         'type': 'NGI'},
-                        {'group': u'AfricaArabia', 'subgroup': u'MA-04-CNRST-ATLAS',
-                         'tags': {'certification': u'Certified',
-                                  'infrastructure': u'Production',
-                                  'scope': 'EGI'},
-                         'type': 'NGI'},
-                        {'group': u'AfricaArabia', 'subgroup': u'ZA-UCT-ICTS',
-                         'tags': {'certification': u'Suspended',
-                                  'infrastructure': u'Production',
-                                  'scope': 'EGI'},
-                         'type': 'NGI'}]
-
-
         filename = filename_date(logger, self.globopts['OutputTopologyGroupOfGroups'.lower()], self.jobdir)
         m = output.AvroWriter(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
         m.datawrite = mock_avrofile
@@ -48,6 +69,9 @@ class TopologyAvro(unittest.TestCase):
         mock_lschema.assert_called_with(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()])
         self.assertTrue(mock_avrofile.append.called)
         self.assertEqual(mock_avrofile.append.call_count, 3)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(group_groups[0])), 0)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(group_groups[1])), 1)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(group_groups[2])), 2)
 
 class TopologyAms(unittest.TestCase):
     get_topic_urlmatch = dict(netloc='localhost',
@@ -75,22 +99,6 @@ class TopologyAms(unittest.TestCase):
                                             int(self.globopts['connectiontimeout']))
 
     def testGroupGroups(self):
-        group_groups = [{'group': u'AfricaArabia', 'subgroup': u'MA-01-CNRST',
-                          'tags': {'certification': u'Certified',
-                                   'infrastructure': u'Production',
-                                   'scope': 'EGI'},
-                         'type': 'NGI'},
-                        {'group': u'AfricaArabia', 'subgroup': u'MA-04-CNRST-ATLAS',
-                         'tags': {'certification': u'Certified',
-                                  'infrastructure': u'Production',
-                                  'scope': 'EGI'},
-                         'type': 'NGI'},
-                        {'group': u'AfricaArabia', 'subgroup': u'ZA-UCT-ICTS',
-                         'tags': {'certification': u'Suspended',
-                                  'infrastructure': u'Production',
-                                  'scope': 'EGI'},
-                         'type': 'NGI'}]
-
         @urlmatch(**self.get_topic_urlmatch)
         def get_topic_mock(url, request):
             # Return the details of a topic in json format
@@ -125,28 +133,6 @@ class TopologyAms(unittest.TestCase):
             self.assertTrue(ret)
 
     def testGroupEndpoints(self):
-        group_endpoints = [{'group': u'100IT',
-                            'hostname': u'occi-api.100percentit.com',
-                            'service': u'eu.egi.cloud.vm-management.occi',
-                            'tags': {'monitored': '1',
-                                     'production': '1',
-                                     'scope': 'EGI'},
-                            'type': 'SITES'},
-                           {'group': u'100IT',
-                            'hostname': u'egi-cloud-accounting.100percentit.com',
-                            'service': u'eu.egi.cloud.accounting',
-                            'tags': {'monitored': '1',
-                                     'production': '1',
-                                     'scope': 'EGI'},
-                            'type': 'SITES'},
-                           {'group': u'100IT',
-                            'hostname': u'occi-api.100percentit.com',
-                            'service': u'eu.egi.cloud.information.bdii',
-                            'tags': {'monitored': '1',
-                                     'production': '1',
-                                     'scope': 'EGI'},
-                            'type': 'SITES'}]
-
         @urlmatch(**self.get_topic_urlmatch)
         def get_topic_mock(url, request):
             # Return the details of a topic in json format
@@ -179,4 +165,3 @@ class TopologyAms(unittest.TestCase):
             ret, excep = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
                                             'group_endpoints', datestamp().replace('_', '-'), group_endpoints)
             self.assertTrue(ret)
-
