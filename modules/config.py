@@ -260,9 +260,7 @@ class CustomerConf:
     _defjobattrs = {'topology-gocdb-connector.py' : ['TopoFetchType',
                                                      'TopoSelectGroupOfGroups',
                                                      'TopoSelectGroupOfEndpoints',
-                                                     'TopoType','TopoFeed'],
-                    'topology-vo-connector.py': ['TopoSelectGroupOfGroups',
-                                                 'TopoType', 'TopoFeed'],
+                                                     'TopoFeed'],
                     'poem-connector.py': [],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed'],
@@ -452,9 +450,6 @@ class CustomerConf:
     def get_vo_ggtags(self, job):
         return self._get_tags(job, 'TopoSelectGroupOfGroups')
 
-    def _get_toponame(self, job):
-        return self._jobs[job]['TopoType']
-
     def _get_feed(self, job, key):
         try:
             feed = self._jobs[job][key]
@@ -489,16 +484,12 @@ class CustomerConf:
         for c in self.get_customers():
             for job in self.get_jobs(c):
                 if 'topology' in caller:
-                    if self._get_toponame(job) == name:
-                        feedurl = self._get_feed(job, 'TopoFeed')
-                        if feedurl:
-                            self._update_feeds(feeds, feedurl, job, c)
-                        elif not feedurl and name == 'VOFeed':
-                            self.logger.error("Could not get VO TopoFeed for job %s" % job)
-                            raise SystemExit(1)
-                        else:
-                            feedurl = deffeed
-                            self._update_feeds(feeds, feedurl, job, c)
+                    feedurl = self._get_feed(job, 'TopoFeed')
+                    if feedurl:
+                        self._update_feeds(feeds, feedurl, job, c)
+                    else:
+                        feedurl = deffeed
+                        self._update_feeds(feeds, feedurl, job, c)
                 elif 'downtimes' in caller:
                     feedurl = self._get_feed(job, 'DowntimesFeed')
                     if feedurl:
