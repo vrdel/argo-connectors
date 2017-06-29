@@ -7,19 +7,18 @@ description: This document describes the available connectors for data in EGI in
 
 ## Description
 
-`argo-egi-connectors` is a bundle of connectors/sync components for various data sources established in EGI infrastructure, most notably GOCDB (EGI topology, downtimes), but there's also support for fetching alternative EGI topology via various VO feeds, weights information via GStat service and POEM metric profiles.
+`argo-egi-connectors` is a bundle of connectors/sync components for various data sources established in EGI infrastructure, most notably GOCDB (EGI topology, downtimes), but there's also support for fetching weights information via VAPOR service and POEM metric profiles.
 
 Bundle consists of the following connectors: 
 
  - `topology-gocdb-connector.py` 
- - `topology-vo-connector.py` 
  - `downtimes-gocdb-connector.py` 
  - `weights-gstat-connector.py` 
  - `poem-connector.py`
  - `prefilter-egy.py`: component whose role is to filter out the messages coming from the `argo-egi-consumer`.
 
 
-Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating and placing files into appropriate job folders. Data is written in a binary avro formatted file which is suitable for processing at compute side. Topology, downtimes, weights and POEM profile information all together with a prefiltered metric results (status messages), represents an input for `argo-compute-engine`.
+Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating appropriate data for each job.Data is presented in a form of avro serialized files that are placed in job folders or can be sent to AMS service. Topology, downtimes, weights and POEM profile information all together with a metric results (status messages), represents an input for `argo-compute-engine`.
 
 ## Installation
 
@@ -27,7 +26,7 @@ Installation narrows down to simply installing the package:
 	
 	yum -y install argo-egi-connectors
 
-**`Components require avro and pyOpenSSL packages to be installed/available.`**
+**`Components require avro, argo-ams-library and pyOpenSSL packages to be installed/available.`**
 
 
 | File Types | Destination |
@@ -38,16 +37,16 @@ Installation narrows down to simply installing the package:
 
 ## Configuration
 
-Configuration of all components is centered around two configuration files: `global.conf` and `customer.conf`. Those files contains some shared config options and sections and are _read by every connector_. There's also a third one `poem-connector.conf`, specific only for `poem-connector.py` because it needs some special treatment not available in first two's.
+Configuration of all components is centered around two configuration files: `global.conf` and `customer.conf`. Those file contains some shared config options and sections and are _read by every connector_. There's also a third one `poem-connector.conf`, specific only for `poem-connector.py` because it needs some special treatment not available in first two's.
 
 | Configuration file | Description | Shortcut |
-| `global.conf` | Config file is read by every component because every component needs to fetch host certificate to authenticate to a peer, find correct avro schema and some connection settings like timeout and number of retries. |<a href="#sync1">Description</a>|
-| `customer.conf` | This configuration file lists all EGI jobs, their attributes and also all VOes and theirs set of jobs and attributes. | <a href="#sync2">Description</a>|
+| `global.conf` | Config file consists of global options common to all connectors like the FQDN of AMS service, the path of host certificate to authenticate to a peer, path of correct avro schema and some connection settings like timeout and number of retries. |<a href="#sync1">Description</a>|
+| `customer.conf` | This configuration file is specific for each customer and it consists of listed jobs and their attributes | <a href="#sync2">Description</a>|
 | `poem-connector.conf` | This configuration file is central configuration for poem-connector.py | <a href="#sync3">Description</a>|
 
 All configuration files reside in `/etc/argo-egi-connectors/` after the installation of the package. That's the default location that each component will try to read configuration from. Location can be overridden since every component takes `-c` and `-g` arguments to explicitly define the paths to `customer.conf` and `global.conf`, respectively. Example:
 
-	topology-vo.py -c /path/to/customer-foo.conf -g /path/to/global-foo.conf
+	topology-gocdb-connector.py -c /path/to/customer-foo.conf -g /path/to/global-foo.conf
 
 Exception is `prefilter-egi.py` component which is interested only in `global.conf` so it takes only `-g` argument.
 
@@ -55,13 +54,28 @@ Exception is `prefilter-egi.py` component which is interested only in `global.co
 
 ### global.conf
 
-Config file is read by _every_ component because every component needs to, at least, fetch host certificate to authenticate to a peer, find correct avro schema and connection parameters. Config options are case insensitive and whole config file is splitted into a few sections:
+Config file is read by _every_ component because every component needs to, at least, fetch host certificate to authenticate to a peer, find correct avro schema, know the FQDN of AMS service and have connection parameter properly configured. Config options are case insensitive and whole config file is splitted into a few sections:
 
 	[DEFAULT]
 	SchemaDir = /etc/argo-egi-connectors/schemas/
 	EGIDir = /var/lib/argo-connectors/EGI
 
 Section contains options that will be combined with others mainly to circumvent the inconvenience of listing their values multiple times along the configuration. Every component generates output file in an avro binary format. `SchemaDir` option points to a directory that holds all avro schemas. `EGIDir` is needed for `prefilter-egi.py` component and must be consistent with the one specified in `customer.conf` for EGI customer.
+
+	[General]
+	PublishAms = True
+	WriteAvro = True
+
+This section currently has two configuration options affecting the type of delivering the output that each connector generates, so all connectors can write avro encoded data to a files or send the same avro encoded data to AMS service. At least one type of delivering the output data must be enabled. 
+
+	[AMS]
+	Host = messaging-devel.argo.grnet.gr
+	Token = EGIKEY
+	Project = EGI
+	Topic = TOPIC
+	Bulk = 100  
+
+Section configures parameters needed for AMS service. These are the complete options needed. Some options can be shared across all customers and some like a `Token` and `Project` can be private to each customer so those options can be specified in `[CUSTOMER_*]` section of related `customer.conf`. Splitting of listed options throughout two configuration files `global.conf` and `customer.conf` works as long as the complete set of options is specified so if `Host`, `Token` and `Bulk` are specified in `global.conf`, then `AmsProject` and `AmsToken` should be specified in `customer.conf`.
 
 	[Authentication]
 	VerifyServerCert = False
