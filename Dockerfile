@@ -25,7 +25,7 @@ RUN pip install \
         cryptography \
         discover \
         httmock \
-				mock \
+        mock \
         pyOpenSSL \
         requests \
         unittest2
