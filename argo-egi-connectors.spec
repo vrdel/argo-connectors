@@ -5,10 +5,11 @@ Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
 Url: http://argoeu.github.io/guides/sync/
-Vendor: SRCE <dvrcic@srce.hr, lgjenero@gmail.com>
+Vendor: SRCE <dvrcic@srce.hr>
 
 Obsoletes: ar-sync
 Prefix: %{_prefix}
+Requires: argo-ams-library
 Requires: avro
 Requires: pyOpenSSL
 Source0: %{name}-%{version}.tar.gz
@@ -18,7 +19,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
 Installs the components for syncing ARGO Compute Engine
-with GOCDB, VO topology and POEM definitions per day.
+with GOCDB, VAPOR and POEM definitions per day.
 
 %prep
 %setup -n %{name}-%{version}

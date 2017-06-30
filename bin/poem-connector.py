@@ -25,18 +25,20 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 import argparse
-import datetime
 import os
 import re
 import sys
 import urlparse
 
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
-from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
+from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
 
-logger = None
+from argo_egi_connectors.config import CustomerConf, PoemConf, Global
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
+
+logger = Logger(os.path.basename(sys.argv[0]))
+
 globopts, poemopts = {}, {}
 cpoem = None
 custname = ''
@@ -137,12 +139,12 @@ class PoemReader:
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
         try:
-            res = make_connection(logger, globopts, o.scheme, o.netloc,
+            res = input.connection(logger, globopts, o.scheme, o.netloc,
                                 o.path + '?' + o.query,
                                 module_class_name(self))
-            json_data = parse_json(logger, res, self._urlfeed, module_class_name(self))
+            json_data = input.parse_json(logger, res, self._urlfeed, module_class_name(self))
 
-        except ConnectorError:
+        except input.ConnectorError:
             self.state = False
 
         else:
@@ -175,6 +177,7 @@ class PoemReader:
         else:
             return entries
 
+
 class PrefilterPoem:
     def __init__(self):
         self.outputFileFormat = '%s\001%s\001%s\001%s\001%s\001%s\001%s\r\n'
@@ -195,6 +198,7 @@ class PrefilterPoem:
 
         logger.info('POEM file(%s): Expanded profiles for %d monitoring instances' % (fname, len(moninstance) + 1))
 
+
 def gen_outprofiles(lprofiles, matched):
     lfprofiles = []
 
@@ -209,6 +213,7 @@ def gen_outprofiles(lprofiles, matched):
 
     return lfprofiles
 
+
 def main():
     global logger, globopts
     parser = argparse.ArgumentParser(description='Fetch POEM profile for every job of the customer and write POEM expanded profiles needed for prefilter for EGI customer')
@@ -220,14 +225,8 @@ def main():
 
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath', 'CAFile']}
-    schemas = {'AvroSchemas': ['Poem']}
-    prefilter = {'Prefilter': ['PoemExpandedProfiles']}
-    output = {'Output': ['Poem']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, prefilter, state)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     servers = {'PoemServer': ['Host', 'VO']}
@@ -249,7 +248,7 @@ def main():
 
     if not args.noprefilter and ps:
         poempref = PrefilterPoem()
-        preffname = gen_fname_repdate(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+        preffname = filename_date(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         poempref.writeProfiles(ps, preffname)
 
     for cust in confcust.get_customers():
@@ -261,7 +260,14 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()])
+            ams_custopts = confcust.get_amsopts(cust)
+            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
+            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
+            if not ams_complete:
+                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
+                continue
+
+            output.write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()])
 
             if not readerInstance.state:
                 continue
@@ -269,11 +275,37 @@ def main():
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = gen_fname_repdate(logger, globopts['OutputPoem'.lower()], jobdir)
-            avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
-                              lfprofiles, os.path.basename(sys.argv[0]))
-            avro.write()
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
+                                        ams_opts['amsbulk'])
+                i = 1
+                while i <= int(globopts['ConnectionRetry'.lower()]):
+                    ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
+                                        'metric_profile', datestamp().replace('_', '-'), lfprofiles)
+                    if not ret:
+                        if i == int(globopts['ConnectionRetry'.lower()]):
+                            logger.error(excep)
+                            raise SystemExit(1)
+                        else:
+                            logger.warn('Try:%d AMS publish' % i)
+                    elif ret:
+                        break
+                    i += 1
+
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
+                ret, excep = avro.write(lfprofiles)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
 
-main()
+
+if __name__ == '__main__':
+    main()

@@ -25,21 +25,19 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 import argparse
-import datetime
-import json
 import os
 import sys
 
+from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
+
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state, daysback
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
-from avro.datafile import DataFileReader
-from avro.io import DatumReader
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
 from urlparse import urlparse
 
 globopts = {}
-logger = None
+logger = Logger(os.path.basename(sys.argv[0]))
 
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
 
@@ -50,11 +48,11 @@ class Vapor:
 
     def getWeights(self):
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
+            res = input.connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
                                 module_class_name(self))
-            json_data = parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
+            json_data = input.parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
 
-        except ConnectorError:
+        except input.ConnectorError:
             self.state = False
 
         else:
@@ -71,25 +69,14 @@ class Vapor:
                 logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + self._o.path,
                                                                                          repr(e).replace('\'','')))
 
-def gen_outdict(data):
+
+def data_out(data):
     datawr = []
     for key in data:
         w = data[key]
         datawr.append({'type': 'hepspec', 'site': key, 'weight': w})
     return datawr
 
-def loadOldData(filename):
-    oldDataDict = dict()
-
-    if not os.path.isfile(filename):
-        return oldDataDict
-
-    reader = DataFileReader(open(filename, "r"), DatumReader())
-    for weight in reader:
-        oldDataDict[weight["site"]] = weight["weight"]
-    reader.close()
-
-    return oldDataDict
 
 def main():
     global logger, globopts
@@ -101,13 +88,8 @@ def main():
 
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
-    schemas = {'AvroSchemas': ['Weights']}
-    output = {'Output': ['Weights']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, schemas, output, certs, conn, state)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
@@ -127,16 +109,49 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            write_state(sys.argv[0], jobstatedir, weights.state, globopts['InputStateDays'.lower()])
+            custname = confcust.get_custname(cust)
+            ams_custopts = confcust.get_amsopts(cust)
+            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
+            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
+            if not ams_complete:
+                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
+                continue
+
+            output.write_state(sys.argv[0], jobstatedir, weights.state, globopts['InputStateDays'.lower()])
 
             if not weights.state:
                 continue
 
-            filename = gen_fname_repdate(logger, globopts['OutputWeights'.lower()], jobdir)
+            datawr = data_out(w)
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
+                                        ams_opts['amsbulk'],
+                                        int(globopts['ConnectionTimeout'.lower()]))
+                i = 1
+                while i <= int(globopts['ConnectionRetry'.lower()]):
+                    ret, excep = ams.send(globopts['AvroSchemasWeights'.lower()],
+                                        'weights', datestamp().replace('_', '-'), datawr)
+                    if not ret:
+                        if i == int(globopts['ConnectionRetry'.lower()]):
+                            logger.error(excep)
+                            raise SystemExit(1)
+                        else:
+                            logger.warn('Try:%d AMS publish' % i)
+                    elif ret:
+                        break
+                    i += 1
 
-            datawr = gen_outdict(w)
-            avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename, datawr, os.path.basename(sys.argv[0]))
-            avro.write()
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
+                ret, excep = avro.write(datawr)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
         if datawr:
             custs = set([cust for job, cust in jobcust])
@@ -144,4 +159,6 @@ def main():
                 jobs = [job for job, lcust in jobcust if cust == lcust]
                 logger.info('Customer:%s Jobs:%d Sites:%d' % (cust, len(jobs), len(datawr)))
 
-main()
+
+if __name__ == '__main__':
+    main()

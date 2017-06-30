@@ -29,13 +29,15 @@ import copy
 import os
 import sys
 
+from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
+
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, module_class_name, parse_xml, ConnectorError, write_state
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
 from urlparse import urlparse
 
-logger = None
+logger = Logger(os.path.basename(sys.argv[0]))
 
 SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint'
 SITESPI = '/gocdbpi/private/?method=get_site'
@@ -162,10 +164,10 @@ class GOCDBReader:
         return True
 
     def _get_xmldata(self, scope, pi):
-        res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
+        res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
                                 pi + scope,
                                 module_class_name(self))
-        doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
+        doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
                         module_class_name(self))
         return doc
 
@@ -188,7 +190,7 @@ class GOCDBReader:
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
-        except ConnectorError as e:
+        except input.ConnectorError as e:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -209,7 +211,7 @@ class GOCDBReader:
                 siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
                 siteList[siteName]['scope'] = scope.split('=')[1]
 
-        except ConnectorError as e:
+        except input.ConnectorError as e:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -238,13 +240,14 @@ class GOCDBReader:
                     serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
                     groupList[groupId]['services'].append(serviceDict)
 
-        except ConnectorError as e:
+        except input.ConnectorError as e:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
+
 
 class TopoFilter(object):
     def __init__(self, gg, ge, ggfilter, gefilter):
@@ -307,6 +310,7 @@ class TopoFilter(object):
                 logger.error('Wrong tags specified: %s' % e)
         return listofelem
 
+
 def main():
     global logger, globopts
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
@@ -317,15 +321,9 @@ def main():
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
 
-    logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
-    schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    output = {'Output': ['TopologyGroupOfEndpoints', 'TopologyGroupOfGroups']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, state)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
@@ -347,13 +345,20 @@ def main():
             fetchtype = confcust.get_gocdb_fetchtype(job)
             custname = confcust.get_custname(cust)
 
+            ams_custopts = confcust.get_amsopts(cust)
+            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
+            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
+            if not ams_complete:
+                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
+                continue
+
             if fetchtype == 'ServiceGroups':
                 group_endpoints = gocdb.getGroupOfServices()
             else:
                 group_endpoints = gocdb.getGroupOfEndpoints()
             group_groups = gocdb.getGroupOfGroups()
 
-            write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()])
+            output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()])
 
             if not gocdb.state:
                 continue
@@ -367,15 +372,56 @@ def main():
             group_groups = tf.gg
             group_endpoints = tf.ge
 
-            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
-            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename,
-                            group_groups, os.path.basename(sys.argv[0]))
-            avro.write()
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
+                                        ams_opts['amsbulk'],
+                                        int(globopts['ConnectionTimeout'.lower()]))
+                i = 1
+                while i <= int(globopts['ConnectionRetry'.lower()]):
+                    ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
+                                        'group_groups', datestamp().replace('_', '-'), group_groups)
+                    if not ret:
+                        if i == int(globopts['ConnectionRetry'.lower()]):
+                            logger.error(excep)
+                            raise SystemExit(1)
+                        else:
+                            logger.warn('Try:%d AMS publish' % i)
+                    elif ret:
+                        break
+                    i += 1
 
-            filename = gen_fname_repdate(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
-            avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename,
-                            group_endpoints, os.path.basename(sys.argv[0]))
-            avro.write()
+                i = 1
+                while i <= int(globopts['ConnectionRetry'.lower()]):
+                    ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
+                                        'group_endpoints', datestamp().replace('_', '-'), group_endpoints)
+                    if not ret:
+                        if i == int(globopts['ConnectionRetry'.lower()]):
+                            logger.error(excep)
+                            raise SystemExit(1)
+                        else:
+                            logger.warn('Try:%d AMS publish' % i)
+                    elif ret:
+                        break
+                    i += 1
+
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+                ret, excep = avro.write(group_groups)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
+
+                filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+                ret, excep = avro.write(group_endpoints)
+                if not ret:
+                    logger.error(excep)
+                    raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
@@ -397,4 +443,7 @@ def main():
                     selstr += '%d' % (len(group_groups))
 
                 logger.info(selstr)
-main()
+
+
+if __name__ == '__main__':
+    main()
