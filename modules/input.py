@@ -7,7 +7,7 @@ import os
 from xml.parsers.expat import ExpatError
 from time import sleep
 
-from argo_egi_connectors.helpers import error_message
+from argo_egi_connectors.helpers import error_message, retry
 
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
@@ -17,61 +17,38 @@ from OpenSSL.SSL import WantReadError as SSLWantReadError
 class ConnectorError(Exception):
     pass
 
+@retry(3)
 def connection(logger, globopts, scheme, host, url, msgprefix):
-    i = 1
     try:
-        while i <= int(globopts['ConnectionRetry'.lower()]):
-            try:
-                if scheme.startswith('https'):
-                    if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                        verify_cert(host, int(globopts['ConnectionTimeout'.lower()]),
-                                                  globopts['AuthenticationCAPath'.lower()], globopts['AuthenticationCAFile'.lower()])
-                    conn = httplib.HTTPSConnection(host, 443,
-                                                   globopts['AuthenticationHostKey'.lower()],
-                                                   globopts['AuthenticationHostCert'.lower()],
-                                                   timeout=int(globopts['ConnectionTimeout'.lower()]))
-                else:
-                    conn = httplib.HTTPConnection(host, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
+        if scheme.startswith('https'):
+            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
+                verify_cert(host, int(globopts['ConnectionTimeout'.lower()]),
+                                            globopts['AuthenticationCAPath'.lower()], globopts['AuthenticationCAFile'.lower()])
+            conn = httplib.HTTPSConnection(host, 443,
+                                            globopts['AuthenticationHostKey'.lower()],
+                                            globopts['AuthenticationHostCert'.lower()],
+                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+        else:
+            conn = httplib.HTTPConnection(host, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
 
-                conn.request('GET', url)
-                resp = conn.getresponse()
+        conn.request('GET', url)
+        resp = conn.getresponse()
 
-                if resp.status != 200:
-                    raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
+        if resp.status != 200:
+            raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
 
-                return resp
-
-            except(SSLError, socket.error, socket.timeout) as e:
-                logger.warn('%sTry:%d Connection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                                   i, scheme + '://' + host,
-                                                                   error_message(e)))
-                if i == int(globopts['ConnectionRetry'.lower()]):
-                    raise e
-                else:
-                    pass
-
-            except httplib.HTTPException as e:
-                raise e
-
-            i += 1
+        return resp
 
     except(SSLError, socket.error, socket.timeout) as e:
-        logger.error('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+        logger.warn('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                      scheme + '://' + host,
                                                      error_message(e)))
-        raise ConnectorError()
+        raise e
 
     except httplib.HTTPException as e:
-        logger.error('%sHTTP error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                               scheme + '://' + host,
-                                               error_message(e)))
-        raise ConnectorError()
+        raise e
 
-    except Exception as e:
-        logger.error('%sError %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                          scheme + '://' + host,
-                                          error_message(e)))
-        raise ConnectorError()
+
 
 def parse_xml(logger, response, method, objname):
     try:

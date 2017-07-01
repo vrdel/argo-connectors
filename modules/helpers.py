@@ -5,6 +5,32 @@ strerr = ''
 num_excp_expand = 0
 daysback = 1
 
+def retry(number=1):
+    def deco(func):
+        def wrap(*args, **kwargs):
+            result = None
+            logger = args[0]
+            try:
+                i = 1
+                loops = number + 1
+                while i <= range(loops):
+                    try:
+                        result = func(*args, **kwargs)
+                    except Exception as e:
+                        if i == loops:
+                            raise e
+                        else:
+                            logger.warn('%s() Retry:%d ' % (func.__name__, i))
+                            pass
+                    else:
+                        break
+                    i += 1
+            except Exception as e:
+                raise SystemExit(1)
+            return result
+        return wrap
+    return deco
+
 def error_message(exception):
     global strerr, num_excp_expand
     if isinstance(exception, Exception) and getattr(exception, 'args', False):
