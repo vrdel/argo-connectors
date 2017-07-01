@@ -58,6 +58,9 @@ class GOCDBReader(object):
                                    DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
                                                                                   end.strftime(self.argDateFormat)))
 
+            if not res:
+                raise SystemExit(1)
+
             doc = input.parse_xml(logger, module_class_name(self), globopts,
                                   res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI)
 

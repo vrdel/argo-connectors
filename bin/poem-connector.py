@@ -141,6 +141,9 @@ class PoemReader:
         try:
             res = input.connection(logger, module_class_name(self), globopts,
                                    o.scheme, o.netloc, o.path + '?' + o.query)
+            if not res:
+                raise SystemExit(1)
+
             json_data = input.parse_json(logger, module_class_name(self),
                                          globopts, res, self._urlfeed)
 

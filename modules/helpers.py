@@ -30,7 +30,7 @@ def retry(func):
                 i += 1
         except Exception as e:
             logger.error('%s %s() Giving up' % (objname, func.__name__))
-            raise SystemExit(1)
+            return False
         return result
     return wrap
 

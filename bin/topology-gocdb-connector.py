@@ -166,6 +166,9 @@ class GOCDBReader:
     def _get_xmldata(self, scope, pi):
         res = input.connection(logger, module_class_name(self), globopts,
                                self._o.scheme, self._o.netloc, pi + scope)
+        if not ret:
+            raise SystemExit(1)
+
         doc = input.parse_xml(logger, module_class_name(self), globopts, res,
                               self._o.scheme + '://' + self._o.netloc + pi)
         return doc
