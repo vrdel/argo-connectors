@@ -32,7 +32,7 @@ from urlparse import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
-from argo_egi_connectors.log import Logger
+from argo_egi_connectors.log import SingletonLogger as Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name
