@@ -48,9 +48,11 @@ class Vapor:
 
     def getWeights(self):
         try:
-            res = input.connection(logger, globopts, self._o.scheme, self._o.netloc, self._o.path,
-                                module_class_name(self))
-            json_data = input.parse_json(logger, res, self._o.scheme + '://' + self._o.netloc + self._o.path, module_class_name(self))
+            res = input.connection(logger, module_class_name(self), globopts,
+                                   self._o.scheme, self._o.netloc,
+                                   self._o.path)
+            json_data = input.parse_json(logger, module_class_name(self), globopts, res,
+                                         self._o.scheme + '://' + self._o.netloc + self._o.path)
 
         except input.ConnectorError:
             self.state = False

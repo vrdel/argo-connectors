@@ -139,10 +139,10 @@ class PoemReader:
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
         try:
-            res = input.connection(logger, globopts, o.scheme, o.netloc,
-                                o.path + '?' + o.query,
-                                module_class_name(self))
-            json_data = input.parse_json(logger, res, self._urlfeed, module_class_name(self))
+            res = input.connection(logger, module_class_name(self), globopts,
+                                   o.scheme, o.netloc, o.path + '?' + o.query)
+            json_data = input.parse_json(logger, module_class_name(self),
+                                         globopts, res, self._urlfeed)
 
         except input.ConnectorError:
             self.state = False

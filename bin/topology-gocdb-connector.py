@@ -164,11 +164,10 @@ class GOCDBReader:
         return True
 
     def _get_xmldata(self, scope, pi):
-        res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                pi + scope,
-                                module_class_name(self))
-        doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
-                        module_class_name(self))
+        res = input.connection(logger, module_class_name(self), globopts,
+                               self._o.scheme, self._o.netloc, pi + scope)
+        doc = input.parse_xml(logger, module_class_name(self), globopts, res,
+                              self._o.scheme + '://' + self._o.netloc + pi)
         return doc
 
     def getServiceEndpoints(self, serviceList, scope):

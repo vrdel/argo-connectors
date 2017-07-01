@@ -54,13 +54,12 @@ class GOCDBReader(object):
         filteredDowntimes = list()
 
         try:
-            res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
-                                                                                end.strftime(self.argDateFormat)),
-                                module_class_name(self))
+            res = input.connection(logger, module_class_name(self), globopts, self._o.scheme, self._o.netloc,
+                                   DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
+                                                                                  end.strftime(self.argDateFormat)))
 
-            doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                            module_class_name(self))
+            doc = input.parse_xml(logger, module_class_name(self), globopts,
+                                  res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI)
 
         except input.ConnectorError:
             self.state = False

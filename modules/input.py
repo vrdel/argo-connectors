@@ -17,19 +17,21 @@ from OpenSSL.SSL import WantReadError as SSLWantReadError
 class ConnectorError(Exception):
     pass
 
-@retry(3)
-def connection(logger, globopts, scheme, host, url, msgprefix):
+@retry
+def connection(logger, msgprefix, globopts, scheme, host, url):
     try:
         if scheme.startswith('https'):
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
                 verify_cert(host, int(globopts['ConnectionTimeout'.lower()]),
-                                            globopts['AuthenticationCAPath'.lower()], globopts['AuthenticationCAFile'.lower()])
+                            globopts['AuthenticationCAPath'.lower()],
+                            globopts['AuthenticationCAFile'.lower()])
             conn = httplib.HTTPSConnection(host, 443,
-                                            globopts['AuthenticationHostKey'.lower()],
-                                            globopts['AuthenticationHostCert'.lower()],
-                                            timeout=int(globopts['ConnectionTimeout'.lower()]))
+                                           globopts['AuthenticationHostKey'.lower()],
+                                           globopts['AuthenticationHostCert'.lower()],
+                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
         else:
-            conn = httplib.HTTPConnection(host, 80, timeout=int(globopts['ConnectionTimeout'.lower()]))
+            conn = httplib.HTTPConnection(host, 80,
+                                          timeout=int(globopts['ConnectionTimeout'.lower()]))
 
         conn.request('GET', url)
         resp = conn.getresponse()
@@ -41,16 +43,16 @@ def connection(logger, globopts, scheme, host, url, msgprefix):
 
     except(SSLError, socket.error, socket.timeout) as e:
         logger.warn('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                     scheme + '://' + host,
-                                                     error_message(e)))
+                                                    scheme + '://' + host,
+                                                    error_message(e)))
         raise e
 
     except httplib.HTTPException as e:
         raise e
 
 
-
-def parse_xml(logger, response, method, objname):
+@retry
+def parse_xml(logger, objname, globopts, response, method):
     try:
         doc = xml.dom.minidom.parseString(response.read())
 
@@ -65,7 +67,9 @@ def parse_xml(logger, response, method, objname):
     else:
         return doc
 
-def parse_json(logger, response, method, objname):
+
+@retry
+def parse_json(logger, objname, globopts, response, method):
     try:
         doc = json.loads(response.read())
 
@@ -79,6 +83,7 @@ def parse_json(logger, response, method, objname):
 
     else:
         return doc
+
 
 def verify_cert(host, timeout, capath, cafile):
     def verify_cert(host, ca, timeout):

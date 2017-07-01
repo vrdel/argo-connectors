@@ -5,31 +5,34 @@ strerr = ''
 num_excp_expand = 0
 daysback = 1
 
-def retry(number=1):
-    def deco(func):
-        def wrap(*args, **kwargs):
-            result = None
-            logger = args[0]
-            try:
-                i = 1
-                loops = number + 1
-                while i <= range(loops):
-                    try:
-                        result = func(*args, **kwargs)
-                    except Exception as e:
-                        if i == loops:
-                            raise e
-                        else:
-                            logger.warn('%s() Retry:%d ' % (func.__name__, i))
-                            pass
+def retry(func):
+    """Decorator that will repeat function calls in case of errors"""
+
+    def wrap(*args, **kwargs):
+        result = None
+        # extract logger, object that called the func and number of tries
+        logger = args[0]
+        objname = args[1]
+        loops = int(args[2]['ConnectionRetry'.lower()]) + 1
+        try:
+            i = 1
+            while i <= range(loops):
+                try:
+                    result = func(*args, **kwargs)
+                except Exception as e:
+                    if i == loops:
+                        raise e
                     else:
-                        break
-                    i += 1
-            except Exception as e:
-                raise SystemExit(1)
-            return result
-        return wrap
-    return deco
+                        logger.warn('%s %s() Retry:%d ' % (objname, func.__name__, i))
+                        pass
+                else:
+                    break
+                i += 1
+        except Exception as e:
+            logger.error('%s %s() Giving up' % (objname, func.__name__))
+            raise SystemExit(1)
+        return result
+    return wrap
 
 def error_message(exception):
     global strerr, num_excp_expand
