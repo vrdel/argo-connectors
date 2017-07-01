@@ -378,34 +378,17 @@ def main():
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
                                         ams_opts['amsbulk'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))
-                i = 1
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
-                                        'group_groups', datestamp().replace('_', '-'), group_groups)
-                    if not ret:
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            logger.error(excep)
-                            raise SystemExit(1)
-                        else:
-                            logger.warn('Try:%d AMS publish' % i)
-                    elif ret:
-                        break
-                    i += 1
 
-                i = 1
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
-                                        'group_endpoints', datestamp().replace('_', '-'), group_endpoints)
-                    if not ret:
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            logger.error(excep)
-                            raise SystemExit(1)
-                        else:
-                            logger.warn('Try:%d AMS publish' % i)
-                    elif ret:
-                        break
-                    i += 1
+                ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
+                         'group_groups', datestamp().replace('_', '-'),
+                         group_groups)
+
+                ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
+                         'group_endpoints', datestamp().replace('_', '-'),
+                         group_endpoints)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)

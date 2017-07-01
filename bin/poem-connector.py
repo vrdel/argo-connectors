@@ -281,20 +281,13 @@ def main():
                                         ams_opts['amstoken'],
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
-                                        ams_opts['amsbulk'])
-                i = 1
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
-                                        'metric_profile', datestamp().replace('_', '-'), lfprofiles)
-                    if not ret:
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            logger.error(excep)
-                            raise SystemExit(1)
-                        else:
-                            logger.warn('Try:%d AMS publish' % i)
-                    elif ret:
-                        break
-                    i += 1
+                                        ams_opts['amsbulk'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
+                                        int(globopts['ConnectionTimeout'.lower()]))
+
+                ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
+                         datestamp().replace('_', '-'), lfprofiles)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
