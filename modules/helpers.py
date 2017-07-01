@@ -22,6 +22,8 @@ def retry(number=1):
                         else:
                             logger.warn('%s() Retry:%d ' % (func.__name__, i))
                             pass
+                    else:
+                        break
                     i += 1
             except Exception as e:
                 raise SystemExit(1)
