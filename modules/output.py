@@ -7,8 +7,8 @@ from avro.io import DatumWriter, BinaryEncoder
 
 from io import BytesIO
 
-from argo_egi_connectors import helpers
-from argo_egi_connectors.log import Logger
+from argo_egi_connectors.helpers import datestamp, retry, module_class_name
+from argo_egi_connectors.log import SingletonLogger as Logger
 
 from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
 
@@ -58,12 +58,14 @@ class AmsPublish(object):
     """
        Class represents interaction with AMS service
     """
-    def __init__(self, host, project, token, topic, report, bulk, timeout=60):
+    def __init__(self, host, project, token, topic, report, bulk, logger, retry, timeout=60):
         self.ams = ArgoMessagingService(host, token, project)
         self.topic = topic
         self.bulk = int(bulk)
         self.report = report
         self.timeout = int(timeout)
+        self.retry = int(retry)
+        self.logger = logger
 
     def send(self, schema, msgtype, date, msglist):
         def _avro_serialize(msg):
@@ -75,36 +77,43 @@ class AmsPublish(object):
 
             return bytesio.getvalue()
 
-        try:
-            msgs = map(lambda m: AmsMessage(attributes={'partition_date': date,
-                                                        'report': self.report,
-                                                        'type': msgtype},
-                                            data=_avro_serialize(m)), msglist)
-            topic = self.ams.topic(self.topic, timeout=self.timeout)
+        msgs = map(lambda m: AmsMessage(attributes={'partition_date': date,
+                                                    'report': self.report,
+                                                    'type': msgtype},
+                                        data=_avro_serialize(m)), msglist)
 
-            if self.bulk > 1:
-                q, r = divmod(len(msgs), self.bulk)
+        if _send(self.logger, module_class_name(self),
+                 {'ConnectionRetry'.lower(): self.retry}, msgs, self):
+            return True
 
-                if q:
-                    s = 0
-                    e = self.bulk - 1
+@retry
+def _send(logger, msgprefix, globopts, msgs, obj):
+    try:
+        topic = obj.ams.topic(obj.topic, timeout=obj.timeout)
 
-                    for i in range(q):
-                        topic.publish(msgs[s:e], timeout=self.timeout)
-                        s += self.bulk
-                        e += self.bulk
-                    topic.publish(msgs[s:], timeout=self.timeout)
+        if obj.bulk > 1:
+            q, r = divmod(len(msgs), obj.bulk)
 
-                else:
-                    topic.publish(msgs, timeout=self.timeout)
+            if q:
+                s = 0
+                e = obj.bulk - 1
+
+                for i in range(q):
+                    topic.publish(msgs[s:e], timeout=obj.timeout)
+                    s += obj.bulk
+                    e += obj.bulk
+                topic.publish(msgs[s:], timeout=obj.timeout)
 
             else:
-                topic.publish(msgs, timeout=self.timeout)
+                topic.publish(msgs, timeout=obj.timeout)
 
-        except AmsException as e:
-            return False, e
+        else:
+            topic.publish(msgs, timeout=obj.timeout)
 
-        return True, None
+    except AmsException as e:
+        raise e
+
+    return True
 
 
 def load_schema(schema):
@@ -116,7 +125,7 @@ def load_schema(schema):
         raise e
 
 
-def write_state(caller, statedir, state, savedays, datestamp=None):
+def write_state(caller, statedir, state, savedays, date=None):
     filenamenew = ''
     if 'topology' in caller:
         filenamebase = 'topology-ok'
@@ -127,10 +136,10 @@ def write_state(caller, statedir, state, savedays, datestamp=None):
     elif 'downtimes' in caller:
         filenamebase = 'downtimes-ok'
 
-    if datestamp:
-        datebackstamp = datestamp
+    if date:
+        datebackstamp = date
     else:
-        datebackstamp = helpers.datestamp(daysback)
+        datebackstamp = datestamp(daysback)
 
     filenamenew = filenamebase + '_' + datebackstamp
     db = datetime.datetime.strptime(datebackstamp, '%Y_%m_%d')
