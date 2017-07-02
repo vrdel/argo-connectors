@@ -32,7 +32,7 @@ import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
-from argo_egi_connectors.log import Logger
+from argo_egi_connectors.log import SingletonLogger as Logger
 
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
@@ -139,10 +139,16 @@ class PoemReader:
         logger.info('Server:%s VO:%s' % (o.netloc, vo))
 
         try:
-            res = input.connection(logger, globopts, o.scheme, o.netloc,
-                                o.path + '?' + o.query,
-                                module_class_name(self))
-            json_data = input.parse_json(logger, res, self._urlfeed, module_class_name(self))
+            res = input.connection(logger, module_class_name(self), globopts,
+                                   o.scheme, o.netloc, o.path + '?' + o.query)
+            if not res:
+                raise SystemExit(1)
+
+            json_data = input.parse_json(logger, module_class_name(self),
+                                         globopts, res, self._urlfeed)
+
+            if not json_data:
+                raise SystemExit(1)
 
         except input.ConnectorError:
             self.state = False
@@ -281,20 +287,13 @@ def main():
                                         ams_opts['amstoken'],
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
-                                        ams_opts['amsbulk'])
-                i = 1
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    ret, excep = ams.send(globopts['AvroSchemasPoem'.lower()],
-                                        'metric_profile', datestamp().replace('_', '-'), lfprofiles)
-                    if not ret:
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            logger.error(excep)
-                            raise SystemExit(1)
-                        else:
-                            logger.warn('Try:%d AMS publish' % i)
-                    elif ret:
-                        break
-                    i += 1
+                                        ams_opts['amsbulk'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
+                                        int(globopts['ConnectionTimeout'.lower()]))
+
+                ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
+                         datestamp().replace('_', '-'), lfprofiles)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)

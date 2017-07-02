@@ -32,7 +32,7 @@ from urlparse import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
-from argo_egi_connectors.log import Logger
+from argo_egi_connectors.log import SingletonLogger as Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name
@@ -54,13 +54,17 @@ class GOCDBReader(object):
         filteredDowntimes = list()
 
         try:
-            res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
-                                                                                end.strftime(self.argDateFormat)),
-                                module_class_name(self))
+            res = input.connection(logger, module_class_name(self), globopts, self._o.scheme, self._o.netloc,
+                                   DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
+                                                                                  end.strftime(self.argDateFormat)))
+            if not res:
+                raise SystemExit(1)
 
-            doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                            module_class_name(self))
+            doc = input.parse_xml(logger, module_class_name(self), globopts,
+                                  res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI)
+
+            if not doc:
+                raise SystemExit(1)
 
         except input.ConnectorError:
             self.state = False
@@ -168,20 +172,12 @@ def main():
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
                                         ams_opts['amsbulk'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))
-                i = 1
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    ret, excep = ams.send(globopts['AvroSchemasDowntimes'.lower()],
-                                        'downtimes', timestamp().replace('_', '-'), dts)
-                    if not ret:
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            logger.error(excep)
-                            raise SystemExit(1)
-                        else:
-                            logger.warn('Try:%d AMS publish' % i)
-                    elif ret:
-                        break
-                    i += 1
+
+                ams.send(globopts['AvroSchemasDowntimes'.lower()], 'downtimes',
+                         timestamp.replace('_', '-'), dts)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)

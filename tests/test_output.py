@@ -1,13 +1,16 @@
+import datetime
+import httplib
 import json
 import mock
 import modules.config
 import unittest2 as unittest
 
-from bin.topology_gocdb_connector import logger
-
 from httmock import urlmatch, HTTMock, response
+
+from bin.topology_gocdb_connector import logger
 from modules import output
-from modules.helpers import datestamp, filename_date
+from modules import input
+from modules.helpers import datestamp, filename_date, retry
 
 
 class ConnectorSetup(object):
@@ -115,6 +118,22 @@ class TopologyAvro(unittest.TestCase):
         self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_groups[1])), 1)
         self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_groups[2])), 2)
 
+    @mock.patch('modules.output.load_schema')
+    @mock.patch('modules.output.open')
+    def testGroupEndpoints(self, mock_open, mock_lschema):
+        mock_avrofile = mock.create_autospec(output.DataFileWriter)
+        filename = filename_date(logger, self.globopts['OutputTopologyGroupOfEndpoints'.lower()], self.jobdir)
+        m = output.AvroWriter(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+        m.datawrite = mock_avrofile
+        m.write(self.group_endpoints)
+        mock_open.assert_called_with(filename, 'w+')
+        mock_lschema.assert_called_with(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()])
+        self.assertTrue(mock_avrofile.append.called)
+        self.assertEqual(mock_avrofile.append.call_count, 3)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_endpoints[0])), 0)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_endpoints[1])), 1)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_endpoints[2])), 2)
+
 
 class DowntimesAvro(unittest.TestCase):
     def setUp(self):
@@ -221,6 +240,8 @@ class PoemAms(unittest.TestCase):
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            logger,
+                                            int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
 
     def testPoem(self):
@@ -253,7 +274,7 @@ class PoemAms(unittest.TestCase):
 
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
-            ret, excep = self.amspublish.send(self.globopts['AvroSchemasPoem'.lower()],
+            ret = self.amspublish.send(self.globopts['AvroSchemasPoem'.lower()],
                                  'poem', datestamp().replace('_', '-'),
                                  self.poem)
             self.assertTrue(ret)
@@ -283,6 +304,8 @@ class WeightsAms(unittest.TestCase):
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            logger,
+                                            int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
 
     def testWeights(self):
@@ -315,7 +338,7 @@ class WeightsAms(unittest.TestCase):
 
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
-            ret, excep = self.amspublish.send(self.globopts['AvroSchemasWeights'.lower()],
+            ret = self.amspublish.send(self.globopts['AvroSchemasWeights'.lower()],
                                  'weights', datestamp().replace('_', '-'),
                                  self.weights)
             self.assertTrue(ret)
@@ -345,6 +368,8 @@ class DowntimesAms(unittest.TestCase):
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            logger,
+                                            int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
 
     def testDowntimes(self):
@@ -377,7 +402,7 @@ class DowntimesAms(unittest.TestCase):
 
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
-            ret, excep = self.amspublish.send(self.globopts['AvroSchemasDowntimes'.lower()],
+            ret = self.amspublish.send(self.globopts['AvroSchemasDowntimes'.lower()],
                                  'downtimes', datestamp().replace('_', '-'),
                                  self.downtimes)
             self.assertTrue(ret)
@@ -407,6 +432,8 @@ class TopologyAms(unittest.TestCase):
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            logger,
+                                            int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
 
     def testGroupGroups(self):
@@ -439,8 +466,8 @@ class TopologyAms(unittest.TestCase):
 
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
-            ret, excep = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
-                                            'group_groups', datestamp().replace('_', '-'), self.group_groups)
+            ret = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
+                                       'group_groups', datestamp().replace('_', '-'), self.group_groups)
             self.assertTrue(ret)
 
     def testGroupEndpoints(self):
@@ -473,6 +500,6 @@ class TopologyAms(unittest.TestCase):
 
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
-            ret, excep = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
-                                            'group_endpoints', datestamp().replace('_', '-'), self.group_endpoints)
+            ret = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
+                                       'group_endpoints', datestamp().replace('_', '-'), self.group_endpoints)
             self.assertTrue(ret)

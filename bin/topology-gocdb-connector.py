@@ -31,7 +31,7 @@ import sys
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
-from argo_egi_connectors.log import Logger
+from argo_egi_connectors.log import SingletonLogger as Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
@@ -164,11 +164,13 @@ class GOCDBReader:
         return True
 
     def _get_xmldata(self, scope, pi):
-        res = input.connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                pi + scope,
-                                module_class_name(self))
-        doc = input.parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + pi,
-                        module_class_name(self))
+        res = input.connection(logger, module_class_name(self), globopts,
+                               self._o.scheme, self._o.netloc, pi + scope)
+        if not ret:
+            raise SystemExit(1)
+
+        doc = input.parse_xml(logger, module_class_name(self), globopts, res,
+                              self._o.scheme + '://' + self._o.netloc + pi)
         return doc
 
     def getServiceEndpoints(self, serviceList, scope):
@@ -379,34 +381,17 @@ def main():
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
                                         ams_opts['amsbulk'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))
-                i = 1
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
-                                        'group_groups', datestamp().replace('_', '-'), group_groups)
-                    if not ret:
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            logger.error(excep)
-                            raise SystemExit(1)
-                        else:
-                            logger.warn('Try:%d AMS publish' % i)
-                    elif ret:
-                        break
-                    i += 1
 
-                i = 1
-                while i <= int(globopts['ConnectionRetry'.lower()]):
-                    ret, excep = ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
-                                        'group_endpoints', datestamp().replace('_', '-'), group_endpoints)
-                    if not ret:
-                        if i == int(globopts['ConnectionRetry'.lower()]):
-                            logger.error(excep)
-                            raise SystemExit(1)
-                        else:
-                            logger.warn('Try:%d AMS publish' % i)
-                    elif ret:
-                        break
-                    i += 1
+                ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
+                         'group_groups', datestamp().replace('_', '-'),
+                         group_groups)
+
+                ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
+                         'group_endpoints', datestamp().replace('_', '-'),
+                         group_endpoints)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
