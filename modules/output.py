@@ -67,6 +67,36 @@ class AmsPublish(object):
         self.retry = int(retry)
         self.logger = logger
 
+    @staticmethod
+    @retry
+    def _send(logger, msgprefix, globopts, msgs, obj):
+        try:
+            topic = obj.ams.topic(obj.topic, timeout=obj.timeout)
+
+            if obj.bulk > 1:
+                q, r = divmod(len(msgs), obj.bulk)
+
+                if q:
+                    s = 0
+                    e = obj.bulk - 1
+
+                    for i in range(q):
+                        topic.publish(msgs[s:e], timeout=obj.timeout)
+                        s += obj.bulk
+                        e += obj.bulk
+                    topic.publish(msgs[s:], timeout=obj.timeout)
+
+                else:
+                    topic.publish(msgs, timeout=obj.timeout)
+
+            else:
+                topic.publish(msgs, timeout=obj.timeout)
+
+        except AmsException as e:
+            raise e
+
+        return True
+
     def send(self, schema, msgtype, date, msglist):
         def _avro_serialize(msg):
             opened_schema = load_schema(schema)
@@ -82,38 +112,10 @@ class AmsPublish(object):
                                                     'type': msgtype},
                                         data=_avro_serialize(m)), msglist)
 
-        if _send(self.logger, module_class_name(self),
+        if self._send(self.logger, module_class_name(self),
                  {'ConnectionRetry'.lower(): self.retry}, msgs, self):
             return True
 
-@retry
-def _send(logger, msgprefix, globopts, msgs, obj):
-    try:
-        topic = obj.ams.topic(obj.topic, timeout=obj.timeout)
-
-        if obj.bulk > 1:
-            q, r = divmod(len(msgs), obj.bulk)
-
-            if q:
-                s = 0
-                e = obj.bulk - 1
-
-                for i in range(q):
-                    topic.publish(msgs[s:e], timeout=obj.timeout)
-                    s += obj.bulk
-                    e += obj.bulk
-                topic.publish(msgs[s:], timeout=obj.timeout)
-
-            else:
-                topic.publish(msgs, timeout=obj.timeout)
-
-        else:
-            topic.publish(msgs, timeout=obj.timeout)
-
-    except AmsException as e:
-        raise e
-
-    return True
 
 
 def load_schema(schema):
