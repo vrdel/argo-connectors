@@ -1,13 +1,16 @@
+import datetime
+import httplib
 import json
 import mock
 import modules.config
 import unittest2 as unittest
 
-from bin.topology_gocdb_connector import logger
-
 from httmock import urlmatch, HTTMock, response
+
+from bin.topology_gocdb_connector import logger
 from modules import output
-from modules.helpers import datestamp, filename_date
+from modules import input
+from modules.helpers import datestamp, filename_date, retry
 
 
 class ConnectorSetup(object):
@@ -114,6 +117,22 @@ class TopologyAvro(unittest.TestCase):
         self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_groups[0])), 0)
         self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_groups[1])), 1)
         self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_groups[2])), 2)
+
+    @mock.patch('modules.output.load_schema')
+    @mock.patch('modules.output.open')
+    def testGroupEndpoints(self, mock_open, mock_lschema):
+        mock_avrofile = mock.create_autospec(output.DataFileWriter)
+        filename = filename_date(logger, self.globopts['OutputTopologyGroupOfEndpoints'.lower()], self.jobdir)
+        m = output.AvroWriter(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+        m.datawrite = mock_avrofile
+        m.write(self.group_endpoints)
+        mock_open.assert_called_with(filename, 'w+')
+        mock_lschema.assert_called_with(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()])
+        self.assertTrue(mock_avrofile.append.called)
+        self.assertEqual(mock_avrofile.append.call_count, 3)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_endpoints[0])), 0)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_endpoints[1])), 1)
+        self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.group_endpoints[2])), 2)
 
 
 class DowntimesAvro(unittest.TestCase):
