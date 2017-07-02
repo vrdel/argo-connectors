@@ -147,6 +147,9 @@ class PoemReader:
             json_data = input.parse_json(logger, module_class_name(self),
                                          globopts, res, self._urlfeed)
 
+            if not json_data:
+                raise SystemExit(1)
+
         except input.ConnectorError:
             self.state = False
 

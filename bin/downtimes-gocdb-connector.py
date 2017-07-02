@@ -57,12 +57,14 @@ class GOCDBReader(object):
             res = input.connection(logger, module_class_name(self), globopts, self._o.scheme, self._o.netloc,
                                    DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
                                                                                   end.strftime(self.argDateFormat)))
-
             if not res:
                 raise SystemExit(1)
 
             doc = input.parse_xml(logger, module_class_name(self), globopts,
                                   res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI)
+
+            if not doc:
+                raise SystemExit(1)
 
         except input.ConnectorError:
             self.state = False
