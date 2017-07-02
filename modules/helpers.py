@@ -5,10 +5,12 @@ strerr = ''
 num_excp_expand = 0
 daysback = 1
 
-def retry(func):
-    """Decorator that will repeat function calls in case of errors"""
+class retry:
+    def __init__(self, func):
+        self.func = func
 
-    def wrap(*args, **kwargs):
+    def __call__(self, *args, **kwargs):
+        """Decorator that will repeat function calls in case of errors"""
         result = None
         # extract logger, object that called the func and number of tries
         logger = args[0]
@@ -18,21 +20,20 @@ def retry(func):
             i = 1
             while i <= range(loops):
                 try:
-                    result = func(*args, **kwargs)
+                    result = self.func(*args, **kwargs)
                 except Exception as e:
                     if i == loops:
                         raise e
                     else:
-                        logger.warn('%s %s() Retry:%d ' % (objname, func.__name__, i))
+                        logger.warn('%s %s() Retry:%d ' % (objname, self.func.__name__, i))
                         pass
                 else:
                     break
                 i += 1
         except Exception as e:
-            logger.error('%s %s() Giving up' % (objname, func.__name__))
+            logger.error('%s %s() Giving up' % (objname, self.func.__name__))
             return False
         return result
-    return wrap
 
 def error_message(exception):
     global strerr, num_excp_expand
