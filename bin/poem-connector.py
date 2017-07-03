@@ -35,7 +35,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import SingletonLogger as Logger
 
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
 
 logger = Logger(os.path.basename(sys.argv[0]))
 
@@ -227,9 +227,14 @@ def main():
     parser.add_argument('-np', dest='noprefilter', help='do not write POEM expanded profiles for prefilter', required=False, action='store_true')
     parser.add_argument('-p', dest='poemconf', nargs=1, metavar='poem-connector.conf', help='path to poem-connector configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
+    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
     args = parser.parse_args()
 
     logger = Logger(os.path.basename(sys.argv[0]))
+
+    fixed_date = None
+    if args.date and date_check(args.date):
+        fixed_date = args.date
 
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(sys.argv[0], confpath)
@@ -282,6 +287,11 @@ def main():
             lfprofiles = gen_outprofiles(psa, profiles)
 
             if eval(globopts['GeneralPublishAms'.lower()]):
+                if fixed_date:
+                    partdate = fixed_date
+                else:
+                    partdate = datestamp().replace('_', '-')
+
                 ams = output.AmsPublish(ams_opts['amshost'],
                                         ams_opts['amsproject'],
                                         ams_opts['amstoken'],
@@ -293,10 +303,13 @@ def main():
                                         int(globopts['ConnectionTimeout'.lower()]))
 
                 ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
-                         datestamp().replace('_', '-'), lfprofiles)
+                         partdate, lfprofiles)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
-                filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
+                if fixed_date:
+                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir, fixed_date.replace('-', '_'))
+                else:
+                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
                 avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
                 ret, excep = avro.write(lfprofiles)
                 if not ret:
