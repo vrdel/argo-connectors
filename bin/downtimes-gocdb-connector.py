@@ -137,12 +137,12 @@ def main():
         start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
         end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
         timestamp = start.strftime('%Y_%m_%d')
+        start = start.replace(hour=0, minute=0, second=0)
+        end = end.replace(hour=23, minute=59, second=59)
     except ValueError as e:
         logger.error(e)
         raise SystemExit(1)
 
-    start = start.replace(hour=0, minute=0, second=0)
-    end = end.replace(hour=23, minute=59, second=59)
 
     for feed, jobcust in feeds.items():
         gocdb = GOCDBReader(feed)
