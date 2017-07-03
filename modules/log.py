@@ -2,6 +2,8 @@ import logging, logging.handlers
 import sys
 import socket
 
+logfile = "/var/log/argo-connectors/connectors.log"
+
 class Logger:
     def __init__(self, connector):
         lfs = '%(name)s[%(process)s]: %(levelname)s %(message)s'
@@ -18,6 +20,13 @@ class Logger:
         sh.setFormatter(lf)
         sh.setLevel(lv)
         self.logger.addHandler(sh)
+
+        lffs = '%(asctime)s %(name)s[%(process)s]: %(levelname)s %(message)s'
+        lff = logging.Formatter(lffs)
+        fh = logging.handlers.RotatingFileHandler(logfile, maxBytes=512*1024, backupCount=5)
+        fh.setFormatter(lff)
+        fh.setLevel(lv)
+        self.logger.addHandler(fh)
 
     for func in ['warn', 'error', 'critical', 'info']:
         code = """def %s(self, msg):
