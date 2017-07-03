@@ -45,12 +45,6 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
 %attr(0750,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
-%postun
-if [ "$1" = 0 ]; then
-  rm -rf %{_localstatedir}/log/argo-connectors/
-fi
-exit 0
-
 %changelog
 * Tue Apr 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.9-1%{?dist}
 - ARGO-724 Each connector must try to create states directory structure
