@@ -54,6 +54,12 @@ def error_message(exception):
         if num_excp_expand <= 1:
             strerr += exception + ' '
 
+def date_check(arg):
+    if re.search("[0-9]{4}-[0-9]{2}-[0-9]{2}", arg):
+        return True
+    else:
+        return False
+
 def datestamp(daysback=None):
     if daysback:
         dateback = datetime.datetime.now() - datetime.timedelta(days=daysback)

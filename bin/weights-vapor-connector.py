@@ -33,7 +33,7 @@ from argo_egi_connectors import output
 from argo_egi_connectors.log import SingletonLogger as Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
 from urlparse import urlparse
 
 globopts = {}
@@ -92,9 +92,14 @@ def main():
                                                     for every job listed in customer.conf""")
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
+    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
     args = parser.parse_args()
 
     logger = Logger(os.path.basename(sys.argv[0]))
+
+    fixed_date = None
+    if args.date and date_check(args.date):
+        fixed_date = args.date
 
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(sys.argv[0], confpath)
@@ -132,6 +137,11 @@ def main():
 
             datawr = data_out(w)
             if eval(globopts['GeneralPublishAms'.lower()]):
+                if fixed_date:
+                    partdate = fixed_date
+                else:
+                    partdate = datestamp().replace('_', '-')
+
                 ams = output.AmsPublish(ams_opts['amshost'],
                                         ams_opts['amsproject'],
                                         ams_opts['amstoken'],
@@ -143,10 +153,13 @@ def main():
                                         int(globopts['ConnectionTimeout'.lower()]))
 
                 ams.send(globopts['AvroSchemasWeights'.lower()], 'weights',
-                         datestamp().replace('_', '-'), datawr)
+                         partdate, datawr)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
-                filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
+                if fixed_date:
+                    filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
+                else:
+                    filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
                 avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
                 ret, excep = avro.write(datawr)
                 if not ret:
