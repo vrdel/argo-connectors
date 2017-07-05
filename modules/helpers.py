@@ -25,13 +25,13 @@ class retry:
                     if i == loops:
                         raise e
                     else:
-                        logger.warn('%s %s() Retry:%d ' % (objname, self.func.__name__, i))
+                        logger.warn('%s %s() Retry:%d - %s' % (objname, self.func.__name__, i, error_message(e)))
                         pass
                 else:
                     break
                 i += 1
         except Exception as e:
-            logger.error('%s %s() Giving up' % (objname, self.func.__name__))
+            logger.error('%s %s() Giving up - %s' % (objname, self.func.__name__, error_message(e)))
             return False
         return result
 
