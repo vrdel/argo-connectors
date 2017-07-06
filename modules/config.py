@@ -33,7 +33,7 @@ class Global:
     conf_prefilter_schemas = {'AvroSchemas': ['Prefilter']}
     conf_prefilter_output = {'Output': ['Prefilter']}
 
-    def __init__(self, caller, confpath, **kwargs):
+    def __init__(self, caller, confpath=None, **kwargs):
         self.optional = dict()
 
         self.logger = Logger(str(self.__class__))
@@ -69,7 +69,10 @@ class Global:
                                          self.conf_prefilter_prefilter)
                         }
 
-        self.caller_secopts = self.secopts[os.path.basename(caller)]
+        if caller:
+            self.caller_secopts = self.secopts[os.path.basename(caller)]
+        else:
+            self.caller_secopts = self.shared_secopts
 
     def _merge_dict(self, *args):
         newd = dict()
