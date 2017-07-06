@@ -5,6 +5,7 @@ class TestConfig(unittest.TestCase):
     def setUp(self):
         self.globalconfig = modules.config.Global('topology-gocdb-connector.py', 'tests/global.conf')
         self.customerconfig = modules.config.CustomerConf('topology-gocdb-connector.py', 'tests/customer.conf')
+        self.globalconfig_nocaller = modules.config.Global(None, 'tests/global.conf')
 
     def testGlobalParse(self):
         opts = self.globalconfig.parse()
@@ -13,6 +14,24 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(opts['outputtopologygroupofgroups'], 'group_groups_DATE.avro')
         self.assertEqual(opts['avroschemastopologygroupofendpoints'], 'etc/schemas//group_endpoints.avsc')
         self.assertEqual(opts['avroschemastopologygroupofgroups'], 'etc/schemas//group_groups.avsc')
+
+        opts_nocall = self.globalconfig_nocaller.parse()
+        self.assertEqual(opts_nocall['amshost'],'localhost')
+        self.assertEqual(opts_nocall['authenticationverifyservercert'], 'False')
+        self.assertEqual(opts_nocall['authenticationcafile'], '/etc/pki/tls/certs/ca-bundle.crt')
+        self.assertEqual(opts_nocall['inputstatedays'], '3')
+        self.assertEqual(opts_nocall['amstoken'], 'EGIKEY')
+        self.assertEqual(opts_nocall['authenticationcapath'], '/etc/grid-security/certificates')
+        self.assertEqual(opts_nocall['inputstatesavedir'], '/var/lib/argo-connectors/states/')
+        self.assertEqual(opts_nocall['connectionretry'], '3')
+        self.assertEqual(opts_nocall['amsproject'], 'EGI')
+        self.assertEqual(opts_nocall['generalpublishams'], 'True')
+        self.assertEqual(opts_nocall['generalwriteavro'], 'True')
+        self.assertEqual(opts_nocall['authenticationhostcert'], '/etc/grid-security/hostcert.pem')
+        self.assertEqual(opts_nocall['connectiontimeout'], '180')
+        self.assertEqual(opts_nocall['authenticationhostkey'], '/etc/grid-security/hostkey.pem')
+        self.assertEqual(opts_nocall['amstopic'], 'TOPIC')
+        self.assertEqual(opts_nocall['amsbulk'], '100')
 
     def testAmsOpts(self):
         opts = self.globalconfig.parse()
