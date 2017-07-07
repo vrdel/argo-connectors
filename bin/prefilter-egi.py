@@ -307,7 +307,6 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
     confpath = options.gloconf if options.gloconf else None
     cglob = Global(sys.argv[0], confpath)
     global globopts
