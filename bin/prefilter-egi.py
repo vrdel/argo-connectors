@@ -55,7 +55,7 @@ def poemProfileFilenameCheck(year, month, day):
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = filename_date(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '', datestamp = year + '_' + month + '_' + day)
+        fileName = filename_date(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '', stamp = year + '_' + month + '_' + day)
         if os.path.isfile(fileName):
             break
         if count >= int(globopts['PrefilterLookbackPoemExpandedProfiles'.lower()]):
@@ -337,7 +337,7 @@ def main():
     if options.cfile:
         inputFile = options.cfile
     else:
-        inputFile = filename_date(logger, globopts['PrefilterConsumerFilePath'.lower()], '', datestamp=year + '-' + month + '-' + day)
+        inputFile = filename_date(logger, globopts['PrefilterConsumerFilePath'.lower()], '', stamp=year + '-' + month + '-' + day)
     if options.ofile:
         fname = options.ofile + '_DATE.avro'
         outputFile = filename_date(logger, fname, '', stamp=year + '_' + month + '_' + day)
