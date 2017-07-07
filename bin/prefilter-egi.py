@@ -33,7 +33,7 @@ import time
 
 from argo_egi_connectors.config import Global
 from argo_egi_connectors.helpers import filename_date
-from argo_egi_connectors.log import Singleton as Logger
+from argo_egi_connectors.log import SingletonLogger as Logger
 
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
