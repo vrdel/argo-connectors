@@ -340,9 +340,9 @@ def main():
         inputFile = filename_date(logger, globopts['PrefilterConsumerFilePath'.lower()], '', datestamp=year + '-' + month + '-' + day)
     if options.ofile:
         fname = options.ofile + '_DATE.avro'
-        outputFile = filename_date(logger, fname, '', datestamp=year + '_' + month + '_' + day)
+        outputFile = filename_date(logger, fname, '', stamp=year + '_' + month + '_' + day)
     else:
-        outputFile = filename_date(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '_' + month + '_' + day)
+        outputFile = filename_date(logger, globopts['OutputPrefilter'.lower()], '', stamp=year + '_' + month + '_' + day)
 
 
     try:
