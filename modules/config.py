@@ -64,7 +64,8 @@ class Global:
                                          self.conf_poem_output,
                                          self.conf_poem_prefilter),
                         'prefilter-egi.py':
-                        self._merge_dict(self.conf_prefilter_output,
+                        self._merge_dict(self.conf_general,
+                                         self.conf_prefilter_output,
                                          self.conf_prefilter_schemas,
                                          self.conf_prefilter_prefilter)
                         }
