@@ -163,7 +163,7 @@ class TopologyFeed(unittest.TestCase):
         # group_endpoints = self.gocdbreader.getGroupOfServices()
         pass
 
-class RetryWeightsJson(unittest.TestCase):
+class WeightsJson(unittest.TestCase):
     def setUp(self):
         self.connset = ConnectorSetup('weights-vapor-connector.py',
                                       'tests/global.conf',
@@ -176,22 +176,19 @@ class RetryWeightsJson(unittest.TestCase):
     def wrap_get_weights(self, mock_conn):
         self.orig_get_weights.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_weights.im_func.func_globals['input'].connection.func = mock_conn
-        self.orig_get_weights()
+        return self.orig_get_weights()
 
     @mock.patch('modules.input.connection')
-    def testRetryJson(self, mock_conn):
-        mock_resp = mock.create_autospec(modules.input.httplib.HTTPResponse)
+    def testFailJson(self, mock_conn):
         feeds = self.customerconfig.get_mapfeedjobs('weights-vapor-connector.py',
                                                     deffeed= 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info')
         vapor = VaporReader(feeds.keys()[0])
         datestamp = datetime.datetime.strptime('2017-01-19', '%Y-%m-%d')
         self.orig_get_weights = vapor.getWeights
-        mock_resp.read.return_value = 'Erroneous JSON feed'
         mock_conn.__name__ = 'mock_conn'
-        mock_conn.return_value = mock_resp
+        mock_conn.return_value = 'Erroneous JSON feed'
         vapor.getWeights = self.wrap_get_weights
-        self.assertRaises(SystemExit, vapor.getWeights, mock_conn)
-        self.assertEqual(mock_resp.read.call_count, int(self.globopts['ConnectionRetry'.lower()]) + 1)
+        self.assertEqual(vapor.getWeights(mock_conn), [])
 
 class RetryDowntimesXml(unittest.TestCase):
     def setUp(self):
@@ -206,7 +203,7 @@ class RetryDowntimesXml(unittest.TestCase):
     def wrap_get_downtimes(self, start, end, mock_conn):
         self.orig_get_downtimes.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_downtimes.im_func.func_globals['input'].connection.func = mock_conn
-        self.orig_get_downtimes(start, end)
+        return self.orig_get_downtimes(start, end)
 
     @mock.patch('modules.input.connection')
     def testRetryConnection(self, mock_conn):
@@ -221,24 +218,21 @@ class RetryDowntimesXml(unittest.TestCase):
         mock_conn.side_effect = [httplib.HTTPException('Bogus'),
                                  httplib.HTTPException('Bogus'),
                                  httplib.HTTPException('Bogus')]
-        self.assertRaises(SystemExit, gocdb.getDowntimes, start, end, mock_conn)
+        self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), [])
         self.assertEqual(mock_conn.call_count, int(self.globopts['ConnectionRetry'.lower()]) + 1)
 
     @mock.patch('modules.input.connection')
-    def testRetryXml(self, mock_conn):
-        mock_resp = mock.create_autospec(modules.input.httplib.HTTPResponse)
+    def testFailXml(self, mock_conn):
         feeds = self.customerconfig.get_mapfeedjobs('downtimes-gocdb-connector.py', deffeed='https://goc.egi.eu/gocdbpi/')
         gocdb = DowntimesGOCDBReader(feeds.keys()[0])
         datestamp = datetime.datetime.strptime('2017-01-19', '%Y-%m-%d')
         start = datestamp.replace(hour=0, minute=0, second=0)
         end = datestamp.replace(hour=23, minute=59, second=59)
         self.orig_get_downtimes = gocdb.getDowntimes
-        mock_resp.read.return_value = 'Erroneous XML feed'
         mock_conn.__name__ = 'mock_conn'
-        mock_conn.return_value = mock_resp
+        mock_conn.return_value = 'Erroneous XML feed'
         gocdb.getDowntimes = self.wrap_get_downtimes
-        self.assertRaises(SystemExit, gocdb.getDowntimes, start, end, mock_conn)
-        self.assertEqual(mock_resp.read.call_count, int(self.globopts['ConnectionRetry'.lower()]) + 1)
+        self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), [])
 
 if __name__ == '__main__':
     unittest.main()

@@ -52,16 +52,17 @@ class Vapor:
                                    self._o.scheme, self._o.netloc,
                                    self._o.path)
             if not res:
-                raise SystemExit(1)
+                raise input.ConnectorError()
 
             json_data = input.parse_json(logger, module_class_name(self), globopts, res,
                                          self._o.scheme + '://' + self._o.netloc + self._o.path)
 
             if not json_data:
-                raise SystemExit(1)
+                raise input.ConnectorError()
 
         except input.ConnectorError:
             self.state = False
+            return []
 
         else:
             try:

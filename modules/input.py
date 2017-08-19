@@ -20,6 +20,8 @@ class ConnectorError(Exception):
 @retry
 def connection(logger, msgprefix, globopts, scheme, host, url):
     try:
+        buf = None
+
         if scheme.startswith('https'):
             if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
                 verify_cert(host, int(globopts['ConnectionTimeout'.lower()]),
@@ -39,7 +41,10 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
         if resp.status != 200:
             raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
 
-        return resp
+        elif resp.status == 200:
+            buf = resp.read()
+
+        return buf
 
     except(SSLError, socket.error, socket.timeout) as e:
         logger.warn('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
@@ -51,10 +56,9 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
         raise e
 
 
-@retry
-def parse_xml(logger, objname, globopts, response, method):
+def parse_xml(logger, objname, globopts, buf, method):
     try:
-        doc = xml.dom.minidom.parseString(response.read())
+        doc = xml.dom.minidom.parseString(buf)
 
     except ExpatError as e:
         logger.error(objname + ': Error parsing XML feed %s - %s' % (method, error_message(e)))
@@ -68,10 +72,9 @@ def parse_xml(logger, objname, globopts, response, method):
         return doc
 
 
-@retry
-def parse_json(logger, objname, globopts, response, method):
+def parse_json(logger, objname, globopts, buf, method):
     try:
-        doc = json.loads(response.read())
+        doc = json.loads(buf)
 
     except ValueError as e:
         logger.error(objname + ': Error parsing JSON feed %s - %s' % (method, error_message(e)))
