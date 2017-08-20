@@ -222,7 +222,7 @@ class DowntimesXml(unittest.TestCase):
         self.assertEqual(mock_conn.call_count, int(self.globopts['ConnectionRetry'.lower()]) + 1)
 
     @mock.patch('modules.input.connection')
-    def testFailXml(self, mock_conn):
+    def testXml(self, mock_conn):
         feeds = self.customerconfig.get_mapfeedjobs('downtimes-gocdb-connector.py', deffeed='https://goc.egi.eu/gocdbpi/')
         gocdb = DowntimesGOCDBReader(feeds.keys()[0])
         datestamp = datetime.datetime.strptime('2017-01-19', '%Y-%m-%d')
@@ -233,6 +233,10 @@ class DowntimesXml(unittest.TestCase):
         mock_conn.return_value = 'Erroneous XML feed'
         gocdb.getDowntimes = self.wrap_get_downtimes
         self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), [])
+        mock_conn.return_value = self.downtimes_feed
+        gocdb.getDowntimes = self.wrap_get_downtimes
+        self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), self.downtimes)
+
 
 if __name__ == '__main__':
     unittest.main()
