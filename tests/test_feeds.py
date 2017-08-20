@@ -190,7 +190,7 @@ class WeightsJson(unittest.TestCase):
         vapor.getWeights = self.wrap_get_weights
         self.assertEqual(vapor.getWeights(mock_conn), [])
 
-class RetryDowntimesXml(unittest.TestCase):
+class DowntimesXml(unittest.TestCase):
     def setUp(self):
         self.connset = ConnectorSetup('downtimes-gocdb-connector.py',
                                       'tests/global.conf',

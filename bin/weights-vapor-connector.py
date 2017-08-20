@@ -171,7 +171,9 @@ def main():
             custs = set([cust for job, cust in jobcust])
             for cust in custs:
                 jobs = [job for job, lcust in jobcust if cust == lcust]
-                logger.info('Customer:%s Jobs:%d Sites:%d' % (cust, len(jobs), len(datawr)))
+                logger.info('Customer:%s Jobs:%s Sites:%d' % (confcust.get_custname(cust),
+                                                              jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
+                                                              len(datawr)))
 
 
 if __name__ == '__main__':
