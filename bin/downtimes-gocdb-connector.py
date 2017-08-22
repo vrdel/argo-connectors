@@ -58,13 +58,13 @@ class GOCDBReader(object):
                                    DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
                                                                                   end.strftime(self.argDateFormat)))
             if not res:
-                raise SystemExit(1)
+                raise input.ConnectorError()
 
             doc = input.parse_xml(logger, module_class_name(self), globopts,
                                   res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI)
 
             if not doc:
-                raise SystemExit(1)
+                raise input.ConnectorError()
 
         except input.ConnectorError:
             self.state = False
@@ -191,7 +191,9 @@ def main():
             custs = set([cust for job, cust in jobcust])
             for cust in custs:
                 jobs = [job for job, lcust in jobcust if cust == lcust]
-                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts)))
+                logger.info('Customer:%s Jobs:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
+                                                                                  jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
+                                                                                  args.date[0], len(dts)))
 
 
 if __name__ == '__main__':
