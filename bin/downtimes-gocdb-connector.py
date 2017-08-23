@@ -135,7 +135,7 @@ def main():
     # calculate start and end times
     try:
         start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
-        end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+        end = datetime.datetime.strptime(args.date[1], '%Y-%m-%d')
         timestamp = start.strftime('%Y_%m_%d')
         start = start.replace(hour=0, minute=0, second=0)
         end = end.replace(hour=23, minute=59, second=59)

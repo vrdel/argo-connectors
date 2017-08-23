@@ -5,6 +5,8 @@ import modules.config
 import unittest2 as unittest
 
 from bin.downtimes_gocdb_connector import GOCDBReader as DowntimesGOCDBReader
+from bin.downtimes_gocdb_connector import main as downtimes_main
+from bin.downtimes_gocdb_connector import argparse as downtimes_argparse
 from bin.weights_vapor_connector import Vapor as VaporReader
 from bin.topology_gocdb_connector import GOCDBReader, logger
 from modules import input
@@ -236,6 +238,48 @@ class DowntimesXml(unittest.TestCase):
         mock_conn.return_value = self.downtimes_feed
         gocdb.getDowntimes = self.wrap_get_downtimes
         self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), self.downtimes)
+
+    @mock.patch('bin.downtimes_gocdb_connector.sys')
+    @mock.patch('modules.output.write_state')
+    @mock.patch('bin.downtimes_gocdb_connector.CustomerConf', autospec=True)
+    @mock.patch('bin.downtimes_gocdb_connector.argparse.ArgumentParser.parse_args')
+    @mock.patch('bin.downtimes_gocdb_connector.Global')
+    @mock.patch('bin.downtimes_gocdb_connector.GOCDBReader')
+    def testStateFile(self, gocdbreader, glob, parse_args, customerconf, write_state, mock_sys):
+        argmock = mock.Mock()
+        argmock.date = ['2017-01-19', '2017-01-19']
+        argmock.gloconf = ['tests/global.conf']
+        argmock.custconf = ['tests/customer.conf']
+        parse_args.return_value = argmock
+        customerconf.get_mapfeedjobs.return_value = self.customerconfig.get_mapfeedjobs('downtimes-gocdb-connector.py',
+                                                                                        deffeed='https://goc.egi.eu/gocdbpi/')
+        customerconf.get_fullstatedir.side_effect = ['/var/lib/argo-connectors/states//EGI/EGI_Critical', '/var/lib/argo-connectors/states//EGI/EGI_Cloudmon', '/var/lib/argo-connectors/states//EGI/EGI_Critical', '/var/lib/argo-connectors/states//EGI/EGI_Cloudmon']
+        self.globopts['generalwriteavro'] = 'False'
+        mock_sys.argv = ['downtimes-gocdb-connector.py']
+        downtimes_main.func_globals['output'].write_state = write_state
+        customerconf.side_effect = [customerconf, customerconf]
+        gocdbreader.side_effect = [gocdbreader, gocdbreader]
+        glob.side_effect = [glob, glob]
+        glob.is_complete.return_value = (True, [])
+
+        gocdbreader.state = True
+        gocdbreader.getDowntimes.return_value = self.downtimes
+        glob.parse.return_value = self.globopts
+        downtimes_main()
+        self.assertTrue(write_state.called)
+        self.assertEqual(write_state.call_count, len(self.jobs))
+        for call in write_state.call_args_list:
+            self.assertTrue(gocdbreader.state in call[0])
+            self.assertTrue('2017_01_19' in call[0])
+
+        gocdbreader.state = False
+        gocdbreader.getDowntimes.return_value = []
+        downtimes_main()
+        self.assertTrue(write_state.called)
+        self.assertEqual(write_state.call_count, 2*len(self.jobs))
+        for call in write_state.call_args_list[2:]:
+            self.assertTrue(gocdbreader.state in call[0])
+            self.assertTrue('2017_01_19' in call[0])
 
 
 if __name__ == '__main__':
