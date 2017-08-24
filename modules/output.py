@@ -117,7 +117,6 @@ class AmsPublish(object):
             return True
 
 
-
 def load_schema(schema):
     try:
         f = open(schema)

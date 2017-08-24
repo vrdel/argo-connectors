@@ -247,7 +247,7 @@ class DowntimesXml(unittest.TestCase):
     @mock.patch('bin.downtimes_gocdb_connector.GOCDBReader')
     def testStateFile(self, gocdbreader, glob, parse_args, customerconf, write_state, mock_sys):
         argmock = mock.Mock()
-        argmock.date = ['2017-01-19', '2017-01-19']
+        argmock.date = ['2017-01-19']
         argmock.gloconf = ['tests/global.conf']
         argmock.custconf = ['tests/customer.conf']
         parse_args.return_value = argmock
