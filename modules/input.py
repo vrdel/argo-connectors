@@ -48,7 +48,9 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
         return buf
 
     except SSLError as e:
-        if 'timed out' in e.args[0]:
+        if (getattr(e, 'args', False) and type(e.args) == tuple
+            and type(e.args[0]) == str
+            and 'timed out' in e.args[0]):
             raise e
         else:
             logger.critical('%sSSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
