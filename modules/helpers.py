@@ -2,8 +2,6 @@ import datetime
 import re
 import time
 
-from argo_egi_connectors.config import Global
-
 strerr = ''
 num_excp_expand = 0
 daysback = 1
@@ -11,26 +9,23 @@ daysback = 1
 class retry:
     def __init__(self, func):
         self.func = func
-        self.numr = self._parameters()[0]
-        self.timeout = self._parameters()[1]
-        self.sleepretry = self._parameters()[2]
-
-    def _parameters(self):
-        cglob = Global(None)
-        globo = cglob.parse()
-
-        numr = int(globo['ConnectionRetry'.lower()])
-        timeout = int(globo['ConnectionTimeout'.lower()])
-        sleepretry = int(globo['ConnectionSleepRetry'.lower()])
-
-        return numr, timeout, sleepretry
 
     def __call__(self, *args, **kwargs):
-        """Decorator that will repeat function calls in case of errors"""
+        """
+        Decorator that will repeat function calls in case of errors.
+
+        First three arguments of decorated function must be:
+            - logger object
+            - prefix of each log msg that is usually name of object
+              constructing msg
+            - dictionary holding num of retries, timeout and sleepretry
+              parameters
+        """
         result = None
-        # extract logger, object that called the func and number of tries
         logger = args[0]
         objname = args[1]
+        self.numr = int(args[2]['ConnectionRetry'.lower()])
+        self.sleepretry = int(args[2]['ConnectionSleepRetry'.lower()])
         loops = self.numr + 1
         try:
             i = 1

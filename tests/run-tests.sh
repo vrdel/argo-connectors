@@ -32,7 +32,7 @@ fi
 
 popd > /dev/null
 
-coverage run --source=tests -m unittest2 discover tests && coverage xml
+coverage run --source=tests -m unittest2 discover tests -v && coverage xml
 
 for f in ${files[@]}
 do

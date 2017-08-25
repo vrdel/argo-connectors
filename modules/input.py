@@ -4,7 +4,6 @@ import socket
 import xml.dom.minidom
 import os
 from xml.parsers.expat import ExpatError
-from time import sleep
 
 from argo_egi_connectors.helpers import error_message, retry
 

@@ -5,12 +5,13 @@ import modules.config
 import unittest2 as unittest
 
 from bin.downtimes_gocdb_connector import GOCDBReader as DowntimesGOCDBReader
-from bin.downtimes_gocdb_connector import main as downtimes_main
 from bin.downtimes_gocdb_connector import argparse as downtimes_argparse
+from bin.downtimes_gocdb_connector import main as downtimes_main
+from bin.topology_gocdb_connector import GOCDBReader
 from bin.weights_vapor_connector import Vapor as VaporReader
-from bin.topology_gocdb_connector import GOCDBReader, logger
 from modules import input
 from modules.helpers import module_class_name
+from modules.log import Logger
 
 class ConnectorSetup(object):
     downtimes_feed = \
@@ -176,8 +177,10 @@ class WeightsJson(unittest.TestCase):
             exec code
 
     def wrap_get_weights(self, mock_conn):
+        logger = Logger('weights-vapor-connector.py')
         self.orig_get_weights.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_weights.im_func.func_globals['input'].connection.func = mock_conn
+        self.orig_get_weights.im_func.func_globals['logger'] = logger
         return self.orig_get_weights()
 
     @mock.patch('modules.input.connection')
@@ -203,12 +206,15 @@ class DowntimesXml(unittest.TestCase):
             exec code
 
     def wrap_get_downtimes(self, start, end, mock_conn):
+        logger = Logger('downtimes-gocdb-connector.py')
         self.orig_get_downtimes.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_downtimes.im_func.func_globals['input'].connection.func = mock_conn
+        self.orig_get_downtimes.im_func.func_globals['logger'] = logger
         return self.orig_get_downtimes(start, end)
 
+    @mock.patch('modules.helpers.time.sleep')
     @mock.patch('modules.input.connection')
-    def testRetryConnection(self, mock_conn):
+    def testRetryConnection(self, mock_conn, mock_sleep):
         feeds = self.customerconfig.get_mapfeedjobs('downtimes-gocdb-connector.py', deffeed='https://goc.egi.eu/gocdbpi/')
         gocdb = DowntimesGOCDBReader(feeds.keys()[0])
         datestamp = datetime.datetime.strptime('2017-01-19', '%Y-%m-%d')
@@ -216,12 +222,15 @@ class DowntimesXml(unittest.TestCase):
         end = datestamp.replace(hour=23, minute=59, second=59)
         self.orig_get_downtimes = gocdb.getDowntimes
         gocdb.getDowntimes = self.wrap_get_downtimes
+        mock_sleep.return_value = True
         mock_conn.__name__ = 'mock_conn'
         mock_conn.side_effect = [httplib.HTTPException('Bogus'),
                                  httplib.HTTPException('Bogus'),
                                  httplib.HTTPException('Bogus')]
         self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), [])
         self.assertEqual(mock_conn.call_count, int(self.globopts['ConnectionRetry'.lower()]) + 1)
+        self.assertTrue(mock_sleep.called)
+        self.assertEqual(mock_sleep.call_count, int(self.globopts['ConnectionRetry'.lower()]))
 
     @mock.patch('modules.input.connection')
     def testXml(self, mock_conn):
@@ -255,6 +264,7 @@ class DowntimesXml(unittest.TestCase):
                                                                                         deffeed='https://goc.egi.eu/gocdbpi/')
         customerconf.get_fullstatedir.side_effect = ['/var/lib/argo-connectors/states//EGI/EGI_Critical', '/var/lib/argo-connectors/states//EGI/EGI_Cloudmon', '/var/lib/argo-connectors/states//EGI/EGI_Critical', '/var/lib/argo-connectors/states//EGI/EGI_Cloudmon']
         self.globopts['generalwriteavro'] = 'False'
+        self.globopts['generalpublishams'] = 'False'
         mock_sys.argv = ['downtimes-gocdb-connector.py']
         downtimes_main.func_globals['output'].write_state = write_state
         customerconf.side_effect = [customerconf, customerconf]
