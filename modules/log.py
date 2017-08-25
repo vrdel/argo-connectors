@@ -35,13 +35,3 @@ class Logger:
         code = """def %s(self, msg):
                     self.logger.%s(msg)""" % (func, func)
         exec code
-
-class SingletonLogger:
-    def __init__(self, connector):
-        if not getattr(self.__class__, 'shared_object', None):
-            self.__class__.shared_object = Logger(connector)
-
-    for func in ['warn', 'error', 'critical', 'info']:
-        code = """def %s(self, msg):
-                    self.__class__.shared_object.%s(msg)""" % (func, func)
-        exec code

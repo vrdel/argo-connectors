@@ -1,6 +1,6 @@
 import ConfigParser
 import os, re, errno
-from log import SingletonLogger as Logger
+from log import Logger
 
 class Global:
     """

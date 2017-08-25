@@ -8,7 +8,7 @@ from avro.io import DatumWriter, BinaryEncoder
 from io import BytesIO
 
 from argo_egi_connectors.helpers import datestamp, retry, module_class_name
-from argo_egi_connectors.log import SingletonLogger as Logger
+from argo_egi_connectors.log import Logger
 
 from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
 
