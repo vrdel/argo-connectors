@@ -231,6 +231,10 @@ class DowntimesXml(unittest.TestCase):
         self.assertEqual(mock_conn.call_count, int(self.globopts['ConnectionRetry'.lower()]) + 1)
         self.assertTrue(mock_sleep.called)
         self.assertEqual(mock_sleep.call_count, int(self.globopts['ConnectionRetry'.lower()]))
+        sleepretry = int(self.globopts['ConnectionSleepRetry'.lower()])
+        self.assertEqual(mock_sleep.call_args_list, [mock.call(sleepretry),
+                                                     mock.call(sleepretry),
+                                                     mock.call(sleepretry)])
 
     @mock.patch('modules.input.connection')
     def testXml(self, mock_conn):
