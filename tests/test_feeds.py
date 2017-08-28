@@ -5,10 +5,10 @@ import modules.config
 import unittest2 as unittest
 
 from bin.downtimes_gocdb_connector import GOCDBReader as DowntimesGOCDBReader
+from bin.downtimes_gocdb_connector import main as downtimes_main
+from bin.topology_gocdb_connector import GOCDBReader
 from bin.weights_vapor_connector import Vapor as VaporReader
-from bin.topology_gocdb_connector import GOCDBReader, logger
-from modules import input
-from modules.helpers import module_class_name
+from modules.log import Logger
 
 class ConnectorSetup(object):
     downtimes_feed = \
@@ -61,6 +61,74 @@ class ConnectorSetup(object):
                <FORMATED_START_DATE>2016-12-27 23:49</FORMATED_START_DATE>\n
                <FORMATED_END_DATE>2017-01-23 23:59</FORMATED_END_DATE>\n
            </DOWNTIME>\n
+           </results>\n"""
+
+    group_endpoints_feed = \
+        """<?xml version="1.0" encoding="UTF-8"?>\n
+           <results>\n
+           <SERVICE_ENDPOINT PRIMARY_KEY="4497G0">\n
+               <PRIMARY_KEY>8253G0</PRIMARY_KEY>\n
+               <HOSTNAME>occi-api.100percentit.com</HOSTNAME>\n
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Service&amp;id=8253</GOCDB_PORTAL_URL>\n
+               <BETA>N</BETA>\n
+               <SERVICE_TYPE>eu.egi.cloud.vm-management.occi</SERVICE_TYPE>\n
+               <CORE/>\n
+               <IN_PRODUCTION>Y</IN_PRODUCTION>\n
+               <NODE_MONITORED>Y</NODE_MONITORED>\n
+               <SITENAME>100IT</SITENAME>\n
+               <COUNTRY_NAME>United Kingdom</COUNTRY_NAME>\n
+               <COUNTRY_CODE>GB</COUNTRY_CODE>\n
+               <ROC_NAME>NGI_UK</ROC_NAME>\n
+               <URL>https://occi-api.100percentit.com:8787/occi1.1/?image=53d9172f-599f-4340-86a2-a52b425f80a3&amp;platform=openstack&amp;resource=1</URL>\n
+               <ENDPOINTS/>\n
+               <SCOPES>\n
+                   <SCOPE>EGI</SCOPE>\n
+                   <SCOPE>FedCloud</SCOPE>\n
+               </SCOPES>\n
+               <EXTENSIONS/>\n
+           </SERVICE_ENDPOINT>\n
+           <SERVICE_ENDPOINT PRIMARY_KEY="4495G0">\n
+               <PRIMARY_KEY>4495G0</PRIMARY_KEY>\n
+               <HOSTNAME>egi-cloud-accounting.100percentit.com</HOSTNAME>\n
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Service&amp;id=4495</GOCDB_PORTAL_URL>\n
+               <BETA>N</BETA>\n
+               <SERVICE_TYPE>eu.egi.cloud.accounting</SERVICE_TYPE>\n
+               <CORE/>\n
+               <IN_PRODUCTION>Y</IN_PRODUCTION>\n
+               <NODE_MONITORED>Y</NODE_MONITORED>\n
+               <SITENAME>100IT</SITENAME>\n
+               <COUNTRY_NAME>United Kingdom</COUNTRY_NAME>\n
+               <COUNTRY_CODE>GB</COUNTRY_CODE>\n
+               <ROC_NAME>NGI_UK</ROC_NAME>\n
+               <URL>100IT</URL>\n
+               <ENDPOINTS/>\n
+               <SCOPES>\n
+                   <SCOPE>EGI</SCOPE>\n
+                   <SCOPE>FedCloud</SCOPE>\n
+               </SCOPES>\n
+               <EXTENSIONS/>\n
+           </SERVICE_ENDPOINT>\n
+           <SERVICE_ENDPOINT PRIMARY_KEY="4588G0">\n
+               <PRIMARY_KEY>4588G0</PRIMARY_KEY>\n
+               <HOSTNAME>occi-api.100percentit.com</HOSTNAME>\n
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Service&amp;id=4588</GOCDB_PORTAL_URL>\n
+               <BETA>N</BETA>\n
+               <SERVICE_TYPE>eu.egi.cloud.information.bdii</SERVICE_TYPE>\n
+               <CORE/>\n
+               <IN_PRODUCTION>Y</IN_PRODUCTION>\n
+               <NODE_MONITORED>Y</NODE_MONITORED>\n
+               <SITENAME>100IT</SITENAME>\n
+               <COUNTRY_NAME>United Kingdom</COUNTRY_NAME>\n
+               <COUNTRY_CODE>GB</COUNTRY_CODE>\n
+               <ROC_NAME>NGI_UK</ROC_NAME>\n
+               <URL>ldap://site-bdii.100percentit.com:2170</URL>\n
+               <ENDPOINTS/>\n
+               <SCOPES>\n
+                   <SCOPE>EGI</SCOPE>\n
+                   <SCOPE>FedCloud</SCOPE>\n
+               </SCOPES>\n
+               <EXTENSIONS/>\n
+           </SERVICE_ENDPOINT>\n
            </results>\n"""
 
     poem = [{'metric': u'org.nordugrid.ARC-CE-ARIS',
@@ -140,10 +208,16 @@ class ConnectorSetup(object):
         self.jobs = self.customerconfig.get_jobs(customers[0])
         self.jobdir = self.customerconfig.get_fulldir(customers[0], self.jobs[0])
 
-class TopologyFeed(unittest.TestCase):
+class TopologyXml(unittest.TestCase):
     def setUp(self):
-        self.globalconfig = modules.config.Global('topology-gocdb-connector.py', 'tests/global.conf')
-        self.customerconfig = modules.config.CustomerConf('topology-gocdb-connector.py', 'tests/customer.conf')
+        self.connset = ConnectorSetup('topology-gocdb-connector.py',
+                                      'tests/global.conf',
+                                      'tests/customer.conf')
+        for c in ['globalconfig', 'customerconfig', 'globopts',
+                  'group_endpoints', 'group_groups', 'group_endpoints_feed']:
+            code = """self.%s = self.connset.%s""" % (c, c)
+            exec code
+
         feedjobs = self.customerconfig.get_mapfeedjobs('topology-gocdb-connector.py',
                                                        'GOCDB',
                                                        deffeed='https://localhost/gocdbpi/')
@@ -157,11 +231,22 @@ class TopologyFeed(unittest.TestCase):
     def wrap_get_xmldata(self, scope, pi):
         globopts = self.globalconfig.parse()
         self.orig_get_xmldata.im_func.func_globals['globopts'] = globopts
-        self.orig_get_xmldata(scope, pi)
+        self.orig_get_xmldata.im_func.func_globals['input'].connection.func = self.mock_conn
+        return self.orig_get_xmldata(scope, pi)
 
-    def testServiceEndpoints(self):
-        # group_endpoints = self.gocdbreader.getGroupOfServices()
-        pass
+    @mock.patch('modules.input.connection')
+    def testServiceEndpoints(self, mock_conn):
+        servicelist = dict()
+        mock_conn.__name__ = 'mock_conn'
+        mock_conn.return_value = self.group_endpoints_feed
+        self.mock_conn = mock_conn
+        self.gocdbreader.getServiceEndpoints(servicelist, '&scope=EGI')
+        self.gocdbreader.serviceListEGI = servicelist
+        self.gocdbreader.getGroupOfEndpoints.im_func.func_globals['fetchtype'] = 'SITES'
+        sge = sorted(self.group_endpoints, key=lambda e: e['service'])
+        obj_sge = sorted(self.gocdbreader.getGroupOfEndpoints(),
+                         key=lambda e: e['service'])
+        self.assertEqual(sge, obj_sge)
 
 class WeightsJson(unittest.TestCase):
     def setUp(self):
@@ -174,8 +259,10 @@ class WeightsJson(unittest.TestCase):
             exec code
 
     def wrap_get_weights(self, mock_conn):
+        logger = Logger('weights-vapor-connector.py')
         self.orig_get_weights.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_weights.im_func.func_globals['input'].connection.func = mock_conn
+        self.orig_get_weights.im_func.func_globals['logger'] = logger
         return self.orig_get_weights()
 
     @mock.patch('modules.input.connection')
@@ -201,12 +288,15 @@ class DowntimesXml(unittest.TestCase):
             exec code
 
     def wrap_get_downtimes(self, start, end, mock_conn):
+        logger = Logger('downtimes-gocdb-connector.py')
         self.orig_get_downtimes.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_downtimes.im_func.func_globals['input'].connection.func = mock_conn
+        self.orig_get_downtimes.im_func.func_globals['logger'] = logger
         return self.orig_get_downtimes(start, end)
 
+    @mock.patch('modules.helpers.time.sleep')
     @mock.patch('modules.input.connection')
-    def testRetryConnection(self, mock_conn):
+    def testRetryConnection(self, mock_conn, mock_sleep):
         feeds = self.customerconfig.get_mapfeedjobs('downtimes-gocdb-connector.py', deffeed='https://goc.egi.eu/gocdbpi/')
         gocdb = DowntimesGOCDBReader(feeds.keys()[0])
         datestamp = datetime.datetime.strptime('2017-01-19', '%Y-%m-%d')
@@ -214,12 +304,19 @@ class DowntimesXml(unittest.TestCase):
         end = datestamp.replace(hour=23, minute=59, second=59)
         self.orig_get_downtimes = gocdb.getDowntimes
         gocdb.getDowntimes = self.wrap_get_downtimes
+        mock_sleep.return_value = True
         mock_conn.__name__ = 'mock_conn'
         mock_conn.side_effect = [httplib.HTTPException('Bogus'),
                                  httplib.HTTPException('Bogus'),
                                  httplib.HTTPException('Bogus')]
         self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), [])
         self.assertEqual(mock_conn.call_count, int(self.globopts['ConnectionRetry'.lower()]) + 1)
+        self.assertTrue(mock_sleep.called)
+        self.assertEqual(mock_sleep.call_count, int(self.globopts['ConnectionRetry'.lower()]))
+        sleepretry = int(self.globopts['ConnectionSleepRetry'.lower()])
+        self.assertEqual(mock_sleep.call_args_list, [mock.call(sleepretry),
+                                                     mock.call(sleepretry),
+                                                     mock.call(sleepretry)])
 
     @mock.patch('modules.input.connection')
     def testXml(self, mock_conn):
@@ -236,6 +333,49 @@ class DowntimesXml(unittest.TestCase):
         mock_conn.return_value = self.downtimes_feed
         gocdb.getDowntimes = self.wrap_get_downtimes
         self.assertEqual(gocdb.getDowntimes(start, end, mock_conn), self.downtimes)
+
+    @mock.patch('bin.downtimes_gocdb_connector.sys')
+    @mock.patch('modules.output.write_state')
+    @mock.patch('bin.downtimes_gocdb_connector.CustomerConf', autospec=True)
+    @mock.patch('bin.downtimes_gocdb_connector.argparse.ArgumentParser.parse_args')
+    @mock.patch('bin.downtimes_gocdb_connector.Global')
+    @mock.patch('bin.downtimes_gocdb_connector.GOCDBReader')
+    def testStateFile(self, gocdbreader, glob, parse_args, customerconf, write_state, mock_sys):
+        argmock = mock.Mock()
+        argmock.date = ['2017-01-19']
+        argmock.gloconf = ['tests/global.conf']
+        argmock.custconf = ['tests/customer.conf']
+        parse_args.return_value = argmock
+        customerconf.get_mapfeedjobs.return_value = self.customerconfig.get_mapfeedjobs('downtimes-gocdb-connector.py',
+                                                                                        deffeed='https://goc.egi.eu/gocdbpi/')
+        customerconf.get_fullstatedir.side_effect = ['/var/lib/argo-connectors/states//EGI/EGI_Critical', '/var/lib/argo-connectors/states//EGI/EGI_Cloudmon', '/var/lib/argo-connectors/states//EGI/EGI_Critical', '/var/lib/argo-connectors/states//EGI/EGI_Cloudmon']
+        self.globopts['generalwriteavro'] = 'False'
+        self.globopts['generalpublishams'] = 'False'
+        mock_sys.argv = ['downtimes-gocdb-connector.py']
+        downtimes_main.func_globals['output'].write_state = write_state
+        customerconf.side_effect = [customerconf, customerconf]
+        gocdbreader.side_effect = [gocdbreader, gocdbreader]
+        glob.side_effect = [glob, glob]
+        glob.is_complete.return_value = (True, [])
+
+        gocdbreader.state = True
+        gocdbreader.getDowntimes.return_value = self.downtimes
+        glob.parse.return_value = self.globopts
+        downtimes_main()
+        self.assertTrue(write_state.called)
+        self.assertEqual(write_state.call_count, len(self.jobs))
+        for call in write_state.call_args_list:
+            self.assertTrue(gocdbreader.state in call[0])
+            self.assertTrue('2017_01_19' in call[0])
+
+        gocdbreader.state = False
+        gocdbreader.getDowntimes.return_value = []
+        downtimes_main()
+        self.assertTrue(write_state.called)
+        self.assertEqual(write_state.call_count, 2*len(self.jobs))
+        for call in write_state.call_args_list[2:]:
+            self.assertTrue(gocdbreader.state in call[0])
+            self.assertTrue('2017_01_19' in call[0])
 
 
 if __name__ == '__main__':

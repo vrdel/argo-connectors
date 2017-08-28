@@ -32,12 +32,12 @@ import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
-from argo_egi_connectors.log import SingletonLogger as Logger
+from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
 
-logger = Logger(os.path.basename(sys.argv[0]))
+logger = None
 
 globopts, poemopts = {}, {}
 cpoem = None

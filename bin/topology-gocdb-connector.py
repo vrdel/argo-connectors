@@ -31,13 +31,13 @@ import sys
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
-from argo_egi_connectors.log import SingletonLogger as Logger
+from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
 from urlparse import urlparse
 
-logger = Logger(os.path.basename(sys.argv[0]))
+logger = None
 
 SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint'
 SITESPI = '/gocdbpi/private/?method=get_site'
@@ -323,6 +323,7 @@ def main():
     parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
+    logger = Logger(os.path.basename(sys.argv[0]))
 
     fixed_date = None
     if args.date and date_check(args.date):

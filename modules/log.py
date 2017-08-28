@@ -21,24 +21,17 @@ class Logger:
         sh.setLevel(lv)
         self.logger.addHandler(sh)
 
-        lffs = '%(asctime)s %(name)s[%(process)s]: %(levelname)s %(message)s'
-        lff = logging.Formatter(lffs)
-        fh = logging.handlers.RotatingFileHandler(logfile, maxBytes=512*1024, backupCount=5)
-        fh.setFormatter(lff)
-        fh.setLevel(lv)
-        self.logger.addHandler(fh)
+        try:
+            lffs = '%(asctime)s %(name)s[%(process)s]: %(levelname)s %(message)s'
+            lff = logging.Formatter(lffs)
+            fh = logging.handlers.RotatingFileHandler(logfile, maxBytes=512*1024, backupCount=5)
+            fh.setFormatter(lff)
+            fh.setLevel(lv)
+            self.logger.addHandler(fh)
+        except Exception:
+            pass
 
     for func in ['warn', 'error', 'critical', 'info']:
         code = """def %s(self, msg):
                     self.logger.%s(msg)""" % (func, func)
-        exec code
-
-class SingletonLogger:
-    def __init__(self, connector):
-        if not getattr(self.__class__, 'shared_object', None):
-            self.__class__.shared_object = Logger(connector)
-
-    for func in ['warn', 'error', 'critical', 'info']:
-        code = """def %s(self, msg):
-                    self.__class__.shared_object.%s(msg)""" % (func, func)
         exec code

@@ -8,7 +8,7 @@ from avro.io import DatumWriter, BinaryEncoder
 from io import BytesIO
 
 from argo_egi_connectors.helpers import datestamp, retry, module_class_name
-from argo_egi_connectors.log import SingletonLogger as Logger
+from argo_egi_connectors.log import Logger
 
 from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
 
@@ -58,39 +58,41 @@ class AmsPublish(object):
     """
        Class represents interaction with AMS service
     """
-    def __init__(self, host, project, token, topic, report, bulk, logger, retry, timeout=60):
+    def __init__(self, host, project, token, topic, report, bulk, logger, retry, timeout=180, sleepretry=60):
         self.ams = ArgoMessagingService(host, token, project)
         self.topic = topic
         self.bulk = int(bulk)
         self.report = report
         self.timeout = int(timeout)
         self.retry = int(retry)
+        self.sleepretry = int(sleepretry)
         self.logger = logger
 
     @staticmethod
     @retry
-    def _send(logger, msgprefix, globopts, msgs, obj):
+    def _send(logger, msgprefix, retryopts, msgs, bulk, obj):
+        timeout = retryopts['ConnectionTimeout'.lower()]
         try:
-            topic = obj.ams.topic(obj.topic, timeout=obj.timeout)
+            topic = obj.ams.topic(obj.topic, timeout=timeout)
 
             if obj.bulk > 1:
-                q, r = divmod(len(msgs), obj.bulk)
+                q, r = divmod(len(msgs), bulk)
 
                 if q:
                     s = 0
-                    e = obj.bulk - 1
+                    e = bulk - 1
 
                     for i in range(q):
-                        topic.publish(msgs[s:e], timeout=obj.timeout)
-                        s += obj.bulk
-                        e += obj.bulk
-                    topic.publish(msgs[s:], timeout=obj.timeout)
+                        topic.publish(msgs[s:e], timeout=timeout)
+                        s += bulk
+                        e += bulk
+                    topic.publish(msgs[s:], timeout=timeout)
 
                 else:
-                    topic.publish(msgs, timeout=obj.timeout)
+                    topic.publish(msgs, timeout=timeout)
 
             else:
-                topic.publish(msgs, timeout=obj.timeout)
+                topic.publish(msgs, timeout=timeout)
 
         except AmsException as e:
             raise e
@@ -113,9 +115,10 @@ class AmsPublish(object):
                                         data=_avro_serialize(m)), msglist)
 
         if self._send(self.logger, module_class_name(self),
-                 {'ConnectionRetry'.lower(): self.retry}, msgs, self):
+                      {'ConnectionRetry'.lower(): self.retry,
+                       'ConnectionTimeout'.lower(): self.timeout,
+                       'ConnectionSleepRetry'.lower(): self.sleepretry}, msgs, self.bulk, self):
             return True
-
 
 
 def load_schema(schema):

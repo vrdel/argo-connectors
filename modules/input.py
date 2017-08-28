@@ -3,16 +3,14 @@ import json
 import socket
 import xml.dom.minidom
 import os
-
 from xml.parsers.expat import ExpatError
-from time import sleep
 
 from argo_egi_connectors.helpers import error_message, retry
 
-from OpenSSL.SSL import Error as SSLError
 from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
 from OpenSSL.SSL import VERIFY_PEER
 from OpenSSL.SSL import WantReadError as SSLWantReadError
+from ssl import SSLError
 
 class ConnectorError(Exception):
     pass
@@ -43,18 +41,39 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
 
         elif resp.status == 200:
             buf = resp.read()
+            if not buf:
+                raise httplib.HTTPException('Empty response')
 
         return buf
 
-    except(SSLError, socket.error, socket.timeout) as e:
+    except SSLError as e:
+        if (getattr(e, 'args', False) and type(e.args) == tuple
+            and type(e.args[0]) == str
+            and 'timed out' in e.args[0]):
+            raise e
+        else:
+            logger.critical('%sSSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                                 scheme + '://' + host,
+                                                 error_message(e)))
+        return False
+
+    except(socket.error, socket.timeout) as e:
         logger.warn('%sConnection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                     scheme + '://' + host,
                                                     error_message(e)))
         raise e
 
     except httplib.HTTPException as e:
+        logger.warn('%sHTTP error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                              scheme + '://' + host,
+                                              error_message(e)))
         raise e
 
+    except Exception as e:
+        logger.critical('%sSSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                                scheme + '://' + host,
+                                                error_message(e)))
+        return False
 
 def parse_xml(logger, objname, globopts, buf, method):
     try:

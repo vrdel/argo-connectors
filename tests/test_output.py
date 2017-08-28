@@ -242,8 +242,8 @@ class PoemAms(unittest.TestCase):
                                             self.globopts['amsbulk'],
                                             logger,
                                             int(self.globopts['connectionretry']),
-                                            int(self.globopts['connectiontimeout']))
-
+                                            int(self.globopts['connectiontimeout']),
+                                            int(self.globopts['connectionsleepretry']))
     def testPoem(self):
         @urlmatch(**self.get_topic_urlmatch)
         def get_topic_mock(url, request):
