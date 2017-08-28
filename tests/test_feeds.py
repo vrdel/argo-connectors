@@ -5,12 +5,9 @@ import modules.config
 import unittest2 as unittest
 
 from bin.downtimes_gocdb_connector import GOCDBReader as DowntimesGOCDBReader
-from bin.downtimes_gocdb_connector import argparse as downtimes_argparse
 from bin.downtimes_gocdb_connector import main as downtimes_main
 from bin.topology_gocdb_connector import GOCDBReader
 from bin.weights_vapor_connector import Vapor as VaporReader
-from modules import input
-from modules.helpers import module_class_name
 from modules.log import Logger
 
 class ConnectorSetup(object):
@@ -237,8 +234,8 @@ class TopologyXml(unittest.TestCase):
         self.orig_get_xmldata.im_func.func_globals['input'].connection.func = self.mock_conn
         return self.orig_get_xmldata(scope, pi)
 
-    def testServiceEndpoints(self):
-        mock_conn = mock.create_autospec(modules.input.connection)
+    @mock.patch('modules.input.connection')
+    def testServiceEndpoints(self, mock_conn):
         servicelist = dict()
         mock_conn.__name__ = 'mock_conn'
         mock_conn.return_value = self.group_endpoints_feed
