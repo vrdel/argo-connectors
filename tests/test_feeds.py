@@ -66,6 +66,74 @@ class ConnectorSetup(object):
            </DOWNTIME>\n
            </results>\n"""
 
+    group_endpoints_feed = \
+        """<?xml version="1.0" encoding="UTF-8"?>\n
+           <results>\n
+           <SERVICE_ENDPOINT PRIMARY_KEY="4497G0">\n
+               <PRIMARY_KEY>8253G0</PRIMARY_KEY>\n
+               <HOSTNAME>occi-api.100percentit.com</HOSTNAME>\n
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Service&amp;id=8253</GOCDB_PORTAL_URL>\n
+               <BETA>N</BETA>\n
+               <SERVICE_TYPE>eu.egi.cloud.vm-management.occi</SERVICE_TYPE>\n
+               <CORE/>\n
+               <IN_PRODUCTION>Y</IN_PRODUCTION>\n
+               <NODE_MONITORED>Y</NODE_MONITORED>\n
+               <SITENAME>100IT</SITENAME>\n
+               <COUNTRY_NAME>United Kingdom</COUNTRY_NAME>\n
+               <COUNTRY_CODE>GB</COUNTRY_CODE>\n
+               <ROC_NAME>NGI_UK</ROC_NAME>\n
+               <URL>https://occi-api.100percentit.com:8787/occi1.1/?image=53d9172f-599f-4340-86a2-a52b425f80a3&amp;platform=openstack&amp;resource=1</URL>\n
+               <ENDPOINTS/>\n
+               <SCOPES>\n
+                   <SCOPE>EGI</SCOPE>\n
+                   <SCOPE>FedCloud</SCOPE>\n
+               </SCOPES>\n
+               <EXTENSIONS/>\n
+           </SERVICE_ENDPOINT>\n
+           <SERVICE_ENDPOINT PRIMARY_KEY="4495G0">\n
+               <PRIMARY_KEY>4495G0</PRIMARY_KEY>\n
+               <HOSTNAME>egi-cloud-accounting.100percentit.com</HOSTNAME>\n
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Service&amp;id=4495</GOCDB_PORTAL_URL>\n
+               <BETA>N</BETA>\n
+               <SERVICE_TYPE>eu.egi.cloud.accounting</SERVICE_TYPE>\n
+               <CORE/>\n
+               <IN_PRODUCTION>Y</IN_PRODUCTION>\n
+               <NODE_MONITORED>Y</NODE_MONITORED>\n
+               <SITENAME>100IT</SITENAME>\n
+               <COUNTRY_NAME>United Kingdom</COUNTRY_NAME>\n
+               <COUNTRY_CODE>GB</COUNTRY_CODE>\n
+               <ROC_NAME>NGI_UK</ROC_NAME>\n
+               <URL>100IT</URL>\n
+               <ENDPOINTS/>\n
+               <SCOPES>\n
+                   <SCOPE>EGI</SCOPE>\n
+                   <SCOPE>FedCloud</SCOPE>\n
+               </SCOPES>\n
+               <EXTENSIONS/>\n
+           </SERVICE_ENDPOINT>\n
+           <SERVICE_ENDPOINT PRIMARY_KEY="4588G0">\n
+               <PRIMARY_KEY>4588G0</PRIMARY_KEY>\n
+               <HOSTNAME>occi-api.100percentit.com</HOSTNAME>\n
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Service&amp;id=4588</GOCDB_PORTAL_URL>\n
+               <BETA>N</BETA>\n
+               <SERVICE_TYPE>eu.egi.cloud.information.bdii</SERVICE_TYPE>\n
+               <CORE/>\n
+               <IN_PRODUCTION>Y</IN_PRODUCTION>\n
+               <NODE_MONITORED>Y</NODE_MONITORED>\n
+               <SITENAME>100IT</SITENAME>\n
+               <COUNTRY_NAME>United Kingdom</COUNTRY_NAME>\n
+               <COUNTRY_CODE>GB</COUNTRY_CODE>\n
+               <ROC_NAME>NGI_UK</ROC_NAME>\n
+               <URL>ldap://site-bdii.100percentit.com:2170</URL>\n
+               <ENDPOINTS/>\n
+               <SCOPES>\n
+                   <SCOPE>EGI</SCOPE>\n
+                   <SCOPE>FedCloud</SCOPE>\n
+               </SCOPES>\n
+               <EXTENSIONS/>\n
+           </SERVICE_ENDPOINT>\n
+           </results>\n"""
+
     poem = [{'metric': u'org.nordugrid.ARC-CE-ARIS',
              'profile': u'ch.cern.sam.ARGO_MON_CRITICAL',
              'service': u'ARC-CE',
@@ -143,10 +211,16 @@ class ConnectorSetup(object):
         self.jobs = self.customerconfig.get_jobs(customers[0])
         self.jobdir = self.customerconfig.get_fulldir(customers[0], self.jobs[0])
 
-class TopologyFeed(unittest.TestCase):
+class TopologyXml(unittest.TestCase):
     def setUp(self):
-        self.globalconfig = modules.config.Global('topology-gocdb-connector.py', 'tests/global.conf')
-        self.customerconfig = modules.config.CustomerConf('topology-gocdb-connector.py', 'tests/customer.conf')
+        self.connset = ConnectorSetup('topology-gocdb-connector.py',
+                                      'tests/global.conf',
+                                      'tests/customer.conf')
+        for c in ['globalconfig', 'customerconfig', 'globopts',
+                  'group_endpoints', 'group_groups', 'group_endpoints_feed']:
+            code = """self.%s = self.connset.%s""" % (c, c)
+            exec code
+
         feedjobs = self.customerconfig.get_mapfeedjobs('topology-gocdb-connector.py',
                                                        'GOCDB',
                                                        deffeed='https://localhost/gocdbpi/')
@@ -160,11 +234,22 @@ class TopologyFeed(unittest.TestCase):
     def wrap_get_xmldata(self, scope, pi):
         globopts = self.globalconfig.parse()
         self.orig_get_xmldata.im_func.func_globals['globopts'] = globopts
-        self.orig_get_xmldata(scope, pi)
+        self.orig_get_xmldata.im_func.func_globals['input'].connection.func = self.mock_conn
+        return self.orig_get_xmldata(scope, pi)
 
     def testServiceEndpoints(self):
-        # group_endpoints = self.gocdbreader.getGroupOfServices()
-        pass
+        mock_conn = mock.create_autospec(modules.input.connection)
+        servicelist = dict()
+        mock_conn.__name__ = 'mock_conn'
+        mock_conn.return_value = self.group_endpoints_feed
+        self.mock_conn = mock_conn
+        self.gocdbreader.getServiceEndpoints(servicelist, '&scope=EGI')
+        self.gocdbreader.serviceListEGI = servicelist
+        self.gocdbreader.getGroupOfEndpoints.im_func.func_globals['fetchtype'] = 'SITES'
+        sge = sorted(self.group_endpoints, key=lambda e: e['service'])
+        obj_sge = sorted(self.gocdbreader.getGroupOfEndpoints(),
+                         key=lambda e: e['service'])
+        self.assertEqual(sge, obj_sge)
 
 class WeightsJson(unittest.TestCase):
     def setUp(self):
