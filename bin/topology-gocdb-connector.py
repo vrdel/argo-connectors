@@ -196,8 +196,8 @@ class GOCDBReader:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVENDPI,
-                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
+                                                                                                      repr(e).replace('\'','').replace('\"', '')))
             raise e
 
     def getSitesInternal(self, siteList, scope):
@@ -217,8 +217,8 @@ class GOCDBReader:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SITESPI,
-                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SITESPI,
+                                                                                                        repr(e).replace('\'','').replace('\"', '')))
             raise e
 
     def getServiceGroups(self, groupList, scope):
@@ -246,8 +246,8 @@ class GOCDBReader:
             raise e
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
-                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
+                                                                                                        repr(e).replace('\'','').replace('\"', '')))
             raise e
 
 
@@ -309,7 +309,7 @@ class TopoFilter(object):
             try:
                 listofelem = filter(getit, listofelem)
             except KeyError as e:
-                logger.error('Wrong tags specified: %s' % e)
+                logger.error('Customer:%s Job:%s : Wrong tags specified: %s' % (logger.customer, logger.job, e))
         return listofelem
 
 
@@ -352,11 +352,14 @@ def main():
             fetchtype = confcust.get_gocdb_fetchtype(job)
             custname = confcust.get_custname(cust)
 
+            logger.customer = custname
+            logger.job = job
+
             ams_custopts = confcust.get_amsopts(cust)
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
             if not ams_complete:
-                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (custname, logger.job, 'ams', ' '.join(missopt)))
                 continue
 
             if fetchtype == 'ServiceGroups':
@@ -409,7 +412,7 @@ def main():
                 avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
                 ret, excep = avro.write(group_groups)
                 if not ret:
-                    logger.error(excep)
+                    logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
                 if fixed_date:
@@ -419,7 +422,7 @@ def main():
                 avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
                 ret, excep = avro.write(group_endpoints)
                 if not ret:
-                    logger.error(excep)
+                    logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))

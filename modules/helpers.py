@@ -36,16 +36,18 @@ class retry:
                     if i == loops:
                         raise e
                     else:
-                        logger.warn('%s %s() Retry:%d Sleeping:%d - %s' %
-                                    (objname, self.func.__name__, i,
-                                     self.sleepretry, error_message(e)))
+                        logger.warn('%s %s() Customer:%s Job:%s Retry:%d Sleeping:%d - %s' %
+                                    (objname, self.func.__name__,
+                                     logger.customer, logger.job,
+                                     i, self.sleepretry, error_message(e)))
                         time.sleep(self.sleepretry)
                         pass
                 else:
                     break
                 i += 1
         except Exception as e:
-            logger.error('%s %s() Giving up - %s' % (objname, self.func.__name__, error_message(e)))
+            logger.error('%s %s() Customer:%s Job:%s Giving up - %s' % (objname, self.func.__name__, logger.customer,
+                                                                        logger.job, error_message(e)))
             return False
         return result
 

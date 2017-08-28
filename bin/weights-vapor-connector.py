@@ -117,9 +117,19 @@ def main():
         weights = Vapor(feed)
         datawr = None
 
+        customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
+        customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
+        jobs = set(map(lambda jc: jc[0], jobcust))
+        jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
+        logger.job = jobs
+        logger.customer = customers
+
         w = weights.getWeights()
 
         for job, cust in jobcust:
+            logger.customer = confcust.get_custname(cust)
+            logger.job = job
+
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
@@ -164,7 +174,7 @@ def main():
                 avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
                 ret, excep = avro.write(datawr)
                 if not ret:
-                    logger.error(excep)
+                    logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
         if datawr:
