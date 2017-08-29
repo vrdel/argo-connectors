@@ -101,8 +101,9 @@ class GOCDBReader(object):
 
             except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as e:
                 self.state = False
-                logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                                                                                         repr(e).replace('\'','')))
+                logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job,
+                                                                                                            self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
+                                                                                                            repr(e).replace('\'','')))
                 return []
             else:
                 return filteredDowntimes
@@ -145,6 +146,13 @@ def main():
 
 
     for feed, jobcust in feeds.items():
+        customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
+        customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
+        jobs = set(map(lambda jc: jc[0], jobcust))
+        jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
+        logger.job = jobs
+        logger.customer = customers
+
         gocdb = GOCDBReader(feed)
         dts = gocdb.getDowntimes(start, end)
 
@@ -152,12 +160,14 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            custname = confcust.get_custname(cust)
+            logger.customer = confcust.get_custname(cust)
+            logger.job = job
+
             ams_custopts = confcust.get_amsopts(cust)
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
             if not ams_complete:
-                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (custname, job, 'ams', ' '.join(missopt)))
                 continue
 
             output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
@@ -184,7 +194,7 @@ def main():
                 avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
                 ret, excep = avro.write(dts)
                 if not ret:
-                    logger.error(excep)
+                    logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
         if gocdb.state:

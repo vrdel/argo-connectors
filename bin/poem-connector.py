@@ -93,7 +93,7 @@ class PoemReader:
 
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
-            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._urlfeed,
+            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer, self._urlfeed,
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             return [], []
         else:
@@ -133,10 +133,10 @@ class PoemReader:
         try:
             assert o.scheme != '' and o.netloc != '' and o.path != ''
         except AssertionError:
-            logger.error('Invalid POEM PI URL: %s' % (self._urlfeed))
+            logger.error('Customer:%s Invalid POEM PI URL: %s' % (logger.customer, self._urlfeed))
             raise SystemExit(1)
 
-        logger.info('Server:%s VO:%s' % (o.netloc, vo))
+        logger.info('Customer:%s Server:%s VO:%s' % (logger.customer, o.netloc, vo))
 
         try:
             res = input.connection(logger, module_class_name(self), globopts,
@@ -202,7 +202,7 @@ class PrefilterPoem:
                        p['fqan']))
         outFile.close();
 
-        logger.info('POEM file(%s): Expanded profiles for %d monitoring instances' % (fname, len(moninstance) + 1))
+        logger.info('Customer:%s POEM file(%s): Expanded profiles for %d monitoring instances' % (logger.customer, fname, len(moninstance) + 1))
 
 
 def gen_outprofiles(lprofiles, matched):
@@ -254,6 +254,16 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
+    customers = set(map(lambda c: confcust.get_custname(c), confcust.get_customers()))
+    customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
+    logger.customer = customers
+    customers = confcust.get_customers()
+    jobs = list()
+    for c in customers:
+        jobs = jobs + confcust.get_jobs(c)
+    jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
+    logger.job = jobs
+
     readerInstance = PoemReader(args.noprefilter)
     ps, psa = readerInstance.getProfiles()
 
@@ -268,6 +278,9 @@ def main():
         custname = confcust.get_custname(cust)
 
         for job in confcust.get_jobs(cust):
+            logger.customer = confcust.get_custname(cust)
+            logger.job = job
+
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
@@ -313,7 +326,7 @@ def main():
                 avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
                 ret, excep = avro.write(lfprofiles)
                 if not ret:
-                    logger.error(excep)
+                    logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
