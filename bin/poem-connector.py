@@ -93,7 +93,7 @@ class PoemReader:
 
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
-            logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed %s - %s' % (logger.customer, self._urlfeed,
+            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer, self._urlfeed,
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             return [], []
         else:

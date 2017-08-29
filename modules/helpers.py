@@ -14,7 +14,7 @@ class retry:
         """
         Decorator that will repeat function calls in case of errors.
 
-        First three arguments of decorated function must be:
+        First three arguments of decorated function should be:
             - logger object
             - prefix of each log msg that is usually name of object
               constructing msg
