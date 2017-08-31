@@ -70,7 +70,11 @@ class Vapor:
                 for ngi in json_data:
                     for site in ngi['site']:
                         key = site['id']
-                        val = site['HEPSPEC2006']
+                        if 'ComputationPower' in site:
+                            val = site['ComputationPower']
+                        else:
+                            logger.warn(module_class_name(self) + ': No ComputationPower value for NGI:%s Site:%s' % (ngi['ngi'] ,site['id']))
+                            val = '0'
                         weights[key] = val
                 return weights
             except (KeyError, IndexError) as e:
@@ -83,7 +87,7 @@ def data_out(data):
     datawr = []
     for key in data:
         w = data[key]
-        datawr.append({'type': 'hepspec', 'site': key, 'weight': w})
+        datawr.append({'type': 'computationpower', 'site': key, 'weight': w})
     return datawr
 
 
