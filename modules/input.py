@@ -79,16 +79,17 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
                                                                     error_message(e)))
         return False
 
+
 def parse_xml(logger, objname, globopts, buf, method):
     try:
         doc = xml.dom.minidom.parseString(buf)
 
     except ExpatError as e:
-        logger.error(objname + 'Customer:%s Job:%s : Error parsing XML feed %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error parsing XML feed %s - %s' % (logger.customer, logger.job, method, error_message(e)))
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + 'Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, error_message(e)))
         raise e
 
     else:
@@ -100,11 +101,11 @@ def parse_json(logger, objname, globopts, buf, method):
         doc = json.loads(buf)
 
     except ValueError as e:
-        logger.error(objname + 'Customer:%s Job:%s : Error parsing JSON feed %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error parsing JSON feed %s - %s' % (logger.customer, logger.job, method, error_message(e)))
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + 'Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, error_message(e)))
         raise e
 
     else:

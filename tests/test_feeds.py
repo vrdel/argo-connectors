@@ -63,6 +63,148 @@ class ConnectorSetup(object):
            </DOWNTIME>\n
            </results>\n"""
 
+    weights_feed = \
+         """[ {"ngi": "NGI_FRANCE", "site":
+                    [
+                        { "codeCountry":"FR",
+                            "country":"france",
+                            "description":"Grille au service de la Recherche en Ile de France",
+                            "latitude":"48.699262",
+                            "longitude":"2.170686",
+                            "ngi":"NGI_FRANCE",
+                            "subregioncode":"155",
+                            "url":"http://grif.fr/",
+                            "id":"GRIF-LLR",
+                            "Tier":"NA",
+                            "SI2000":"0",
+                            "specint2000":"0",
+                            "HEPSPEC2006":"0",
+                            "ExecutionEnvironmentLogicalCPUs":"0",
+                            "ExecutionEnvironmentPhysicalCPUs":"0",
+                            "ExecutionEnvironmentTotalInstances":"0",
+                            "ComputingManagerLogicalCPUs":"0",
+                            "ComputingManagerPhysicalCPUs":"0",
+                            "ComputationPower":"0",
+                            "WaitingJobs":"0",
+                            "RunningJobs":"410",
+                            "TotalJobs":"410",
+                            "DataStoreTotalSize":"0",
+                            "DataStoreFreeSize":"0",
+                            "DataStoreUsedSize":"0",
+                            "ServiceOnlineTotalSize":"1537617",
+                            "ServiceOnlineFreeSize":"103181",
+                            "ServiceOnlineUsedSize":"1412339",
+                            "ServiceNearlineTotalSize":"0",
+                            "ServiceNearlineFreeSize":"0",
+                            "ServiceNearlineUsedSize":"0",
+                            "TotalSize":"1537615",
+                            "FreeSize":"125269",
+                            "UsedSize":"1412344",
+                            "TotalSizeOnline":"1537615",
+                            "FreeSizeOnline":"125269",
+                            "UsedSizeOnline":"1412344",
+                            "TotalSizeNearline":"0",
+                            "FreeSizeNearline":"0",
+                            "UsedSizeNearline":"0"
+                        }
+                    ]
+                },
+                {"ngi": "NGI_FRANCE", "site":
+                    [
+                        { "id":"IN2P3-IRES",
+                            "description":"EGI Site",
+                            "url":"http://www.iphc.cnrs.fr/",
+                            "Tier":"2",
+                            "ngi":"NGI_FRANCE",
+                            "country":"france",
+                            "codeCountry":"FR",
+                            "longitude":"7.7095",
+                            "latitude":"48.6056",
+                            "logCpu":"2420",
+                            "PhyCpu":"272",
+                            "subregioncode":"155",
+                            "SI2000":"3142",
+                            "specint2000":"3142",
+                            "HEPSPEC2006":"13",
+                            "ExecutionEnvironmentLogicalCPUs":"2420",
+                            "ExecutionEnvironmentPhysicalCPUs":"272",
+                            "ExecutionEnvironmentTotalInstances":"302",
+                            "ComputingManagerLogicalCPUs":"0",
+                            "ComputingManagerPhysicalCPUs":"0",
+                            "ComputationPower":"30414.559999999998",
+                            "WaitingJobs":"691",
+                            "RunningJobs":"431",
+                            "TotalJobs":"1122",
+                            "DataStoreTotalSize":"0",
+                            "DataStoreFreeSize":"0",
+                            "DataStoreUsedSize":"0",
+                            "ServiceOnlineTotalSize":"1616089",
+                            "ServiceOnlineFreeSize":"255735",
+                            "ServiceOnlineUsedSize":"1360353",
+                            "ServiceNearlineTotalSize":"0",
+                            "ServiceNearlineFreeSize":"0",
+                            "ServiceNearlineUsedSize":"0",
+                            "TotalSize":"1604423",
+                            "FreeSize":"255752",
+                            "UsedSize":"1348671",
+                            "TotalSizeOnline":"1604423",
+                            "FreeSizeOnline":"255752",
+                            "UsedSizeOnline":"1348671",
+                            "TotalSizeNearline":"0",
+                            "FreeSizeNearline":"0",
+                            "UsedSizeNearline":"0"
+                        }
+                    ]
+                },
+                {"ngi": "NGI_DE", "site":
+                    [
+                        { "id":"FZK-LCG2",
+                            "description":"DE-KIT, Forschungszentrum Karlsruhe (FZK), GridKa",
+                            "url":"http://www.gridka.de/",
+                            "Tier":"1",
+                            "ngi":"NGI_DE",
+                            "country":"germany",
+                            "codeCountry":"DE",
+                            "longitude":"8.4321",
+                            "latitude":"49.0963",
+                            "logCpu":"20964",
+                            "PhyCpu":"0",
+                            "subregioncode":"155",
+                            "SI2000":"0",
+                            "specint2000":"0",
+                            "HEPSPEC2006":"0",
+                            "ExecutionEnvironmentLogicalCPUs":"0",
+                            "ExecutionEnvironmentPhysicalCPUs":"0",
+                            "ExecutionEnvironmentTotalInstances":"0",
+                            "ComputingManagerLogicalCPUs":"20964",
+                            "ComputingManagerPhysicalCPUs":"0",
+                            "ComputationPower":"0",
+                            "WaitingJobs":"12158",
+                            "RunningJobs":"-239724",
+                            "TotalJobs":"-227464",
+                            "DataStoreTotalSize":"0",
+                            "DataStoreFreeSize":"0",
+                            "DataStoreUsedSize":"0",
+                            "ServiceOnlineTotalSize":"0",
+                            "ServiceOnlineFreeSize":"0",
+                            "ServiceOnlineUsedSize":"0",
+                            "ServiceNearlineTotalSize":"0",
+                            "ServiceNearlineFreeSize":"0",
+                            "ServiceNearlineUsedSize":"0",
+                            "TotalSize":"0",
+                            "FreeSize":"0",
+                            "UsedSize":"0",
+                            "TotalSizeOnline":"0",
+                            "FreeSizeOnline":"0",
+                            "UsedSizeOnline":"0",
+                            "TotalSizeNearline":"0",
+                            "FreeSizeNearline":"0",
+                            "UsedSizeNearline":"0"
+                        }
+                    ]
+                }
+            ]"""
+
     group_endpoints_feed = \
         """<?xml version="1.0" encoding="UTF-8"?>\n
            <results>\n
@@ -157,9 +299,7 @@ class ConnectorSetup(object):
                   'service': u'APEL',
                   'start_time': '2017-01-19T00:00:00Z'}]
 
-    weights = [{'site': u'FZK-LCG2', 'type': 'hepspec', 'weight': u'0'},
-               {'site': u'IN2P3-IRES', 'type': 'hepspec', 'weight': u'13'},
-               {'site': u'GRIF-LLR', 'type': 'hepspec', 'weight': u'0'}]
+    weights = {u'FZK-LCG2': u'0', u'IN2P3-IRES': u'30414.559999999998', u'GRIF-LLR': u'0'}
 
     group_groups = [{'group': u'AfricaArabia', 'subgroup': u'MA-01-CNRST',
                         'tags': {'certification': u'Certified',
@@ -254,19 +394,21 @@ class WeightsJson(unittest.TestCase):
                                       'tests/global.conf',
                                       'tests/customer.conf')
         for c in ['globalconfig', 'customerconfig', 'globopts', 'jobs',
-                  'jobdir', 'weights']:
+                  'jobdir', 'weights', 'weights_feed']:
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
     def wrap_get_weights(self, mock_conn):
         logger = Logger('weights-vapor-connector.py')
+        logger.customer = 'EGI'
+        logger.job = self.jobs[0]
         self.orig_get_weights.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_weights.im_func.func_globals['input'].connection.func = mock_conn
         self.orig_get_weights.im_func.func_globals['logger'] = logger
         return self.orig_get_weights()
 
     @mock.patch('modules.input.connection')
-    def testFailJson(self, mock_conn):
+    def testJson(self, mock_conn):
         feeds = self.customerconfig.get_mapfeedjobs('weights-vapor-connector.py',
                                                     deffeed= 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info')
         vapor = VaporReader(feeds.keys()[0])
@@ -276,6 +418,10 @@ class WeightsJson(unittest.TestCase):
         mock_conn.return_value = 'Erroneous JSON feed'
         vapor.getWeights = self.wrap_get_weights
         self.assertEqual(vapor.getWeights(mock_conn), [])
+
+        mock_conn.return_value = self.weights_feed
+        vapor.getWeights = self.wrap_get_weights
+        self.assertEqual(vapor.getWeights(mock_conn), self.weights)
 
 class DowntimesXml(unittest.TestCase):
     def setUp(self):
@@ -289,6 +435,8 @@ class DowntimesXml(unittest.TestCase):
 
     def wrap_get_downtimes(self, start, end, mock_conn):
         logger = Logger('downtimes-gocdb-connector.py')
+        logger.customer = 'EGI'
+        logger.job = self.jobs[0]
         self.orig_get_downtimes.im_func.func_globals['globopts'] = self.globopts
         self.orig_get_downtimes.im_func.func_globals['input'].connection.func = mock_conn
         self.orig_get_downtimes.im_func.func_globals['logger'] = logger
