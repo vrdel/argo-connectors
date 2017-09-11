@@ -37,6 +37,7 @@ install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
 rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
+%config(noreplace) /etc/argo-egi-connectors/*
 %attr(0755,root,root) %dir %{_libexecdir}/argo-egi-connectors/
 %attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/*.py*
 
