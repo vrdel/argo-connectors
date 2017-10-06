@@ -11,6 +11,7 @@ from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
 from OpenSSL.SSL import VERIFY_PEER
 from OpenSSL.SSL import WantReadError as SSLWantReadError
 from ssl import SSLError
+from time import sleep
 
 class ConnectorError(Exception):
     pass
