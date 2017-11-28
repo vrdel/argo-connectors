@@ -362,15 +362,29 @@ class DowntimesAms(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
+        self.globopts['amspacksinglemsg'] = 'False'
         self.amspublish = output.AmsPublish(self.globopts['amshost'],
                                             self.globopts['amsproject'],
                                             self.globopts['amstoken'],
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            self.globopts['amspacksinglemsg'],
                                             logger,
                                             int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
+
+        self.globopts['amspacksinglemsg'] = 'True'
+        self.amspublish_pack = output.AmsPublish(self.globopts['amshost'],
+                                                 self.globopts['amsproject'],
+                                                 self.globopts['amstoken'],
+                                                 self.globopts['amstopic'],
+                                                 self.customerconfig.get_jobdir(self.jobs[0]),
+                                                 self.globopts['amsbulk'],
+                                                 self.globopts['amspacksinglemsg'],
+                                                 logger,
+                                                 int(self.globopts['connectionretry']),
+                                                 int(self.globopts['connectiontimeout']))
 
     def testDowntimes(self):
         @urlmatch(**self.get_topic_urlmatch)
@@ -403,8 +417,24 @@ class DowntimesAms(unittest.TestCase):
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasDowntimes'.lower()],
-                                 'downtimes', datestamp().replace('_', '-'),
-                                 self.downtimes)
+                                      'downtimes', datestamp().replace('_', '-'), self.downtimes)
+            self.assertTrue(ret)
+
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], u'KG5hZ2lvcy5jNC5jc2lyLmNvLnphDm5naS5TQU0oMjAxNy0wMS0xOVQwMDowMDowMFooMjAxNy0wMS0xOVQyMzo1OTowMFomY2UxLmdyaWQubGViZWRldi5ydQRDRSgyMDE3LTAxLTE5VDAwOjAwOjAwWigyMDE3LTAxLTE5VDIzOjU5OjAwWiZjZTEuZ3JpZC5sZWJlZGV2LnJ1CEFQRUwoMjAxNy0wMS0xOVQwMDowMDowMFooMjAxNy0wMS0xOVQyMzo1OTowMFo=')
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "downtimes")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+
+            return '{"msgIds": ["1"]}'
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasDowntimes'.lower()],
+                                            'downtimes', datestamp().replace('_', '-'),
+                                            self.downtimes)
             self.assertTrue(ret)
 
 
