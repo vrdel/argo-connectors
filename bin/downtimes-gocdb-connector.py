@@ -167,7 +167,7 @@ def main():
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
             if not ams_complete:
-                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (custname, job, 'ams', ' '.join(missopt)))
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'ams', ' '.join(missopt)))
                 continue
 
             output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
@@ -182,6 +182,7 @@ def main():
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
                                         ams_opts['amsbulk'],
+                                        ams_opts['amspacksinglemsg'],
                                         logger,
                                         int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))

@@ -311,6 +311,7 @@ def main():
                                         ams_opts['amstopic'],
                                         confcust.get_jobdir(job),
                                         ams_opts['amsbulk'],
+                                        ams_opts['amspacksinglemsg'],
                                         logger,
                                         int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))

@@ -18,7 +18,7 @@ Bundle consists of the following connectors:
  - `prefilter-egy.py`: component whose role is to filter out the messages coming from the `argo-egi-consumer`.
 
 
-Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating appropriate data for each job.Data is presented in a form of avro serialized files that are placed in job folders or can be sent to AMS service. Topology, downtimes, weights and POEM profile information all together with a metric results (status messages), represents an input for `argo-compute-engine`.
+Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating appropriate data for each job.Data is presented in a form of avro serialized entities that are placed as files in job folders or can be sent to AMS service. Topology, downtimes, weights and POEM profile information all together with a metric results (status messages), represents an input for `argo-compute-engine`.
 
 ## Installation
 
@@ -73,9 +73,10 @@ This section currently has two configuration options affecting the type of deliv
 	Token = EGIKEY
 	Project = EGI
 	Topic = TOPIC
-	Bulk = 100  
+	Bulk = 100
+	PackSingleMsg = True
 
-Section configures parameters needed for AMS service. These are the complete options needed. Some options can be shared across all customers and some like a `Token` and `Project` can be private to each customer so those options can be specified in `[CUSTOMER_*]` section of related `customer.conf`. Splitting of listed options throughout two configuration files `global.conf` and `customer.conf` works as long as the complete set of options is specified so if `Host`, `Token` and `Bulk` are specified in `global.conf`, then `AmsProject` and `AmsToken` should be specified in `customer.conf`.
+Section configures parameters needed for AMS service. These are the complete options needed. Some options can be shared across all customers and some like a `Token` and `Project` can be private to each customer so those options can be specified in `[CUSTOMER_*]` section of related `customer.conf`. Splitting of listed options throughout two configuration files `global.conf` and `customer.conf` works as long as the complete set of options is specified so if `Host`, `Token` and `Bulk` are specified in `global.conf`, then `AmsProject` and `AmsToken` should be specified in `customer.conf`. `Bulk` option specify the number of entites fetched from data source that will be wrapped in same number of AMS messages delivered to service in a single HTTP request. AMS service will be contacted until all fetched entities are delivered. If `PackSingleMsg` is enabled, then all fetched entities will be sent in a single AMS messsage and `Bulk` will be ignored.
 
 	[Authentication]
 	VerifyServerCert = False
@@ -193,7 +194,7 @@ So, in a `TopoFetchType` option customer can either specify:
 
 ###### Tags
 
-Tags represent a fine-grained control of what is being written in output files. It's a convenient way of selecting only certain entities, being it Sites, Service groups or Service endpoints based on appropriate criteria. Tags are optional so if a certain tag for a corresponding entity is omitted, than filtering is not done. In that case, it can be considered that entity is fetched for all its values of an omitted tag.
+Tags represent a fine-grained control of what part of topology each job is interested. It's a convenient way of selecting only certain entities, being it Sites, Service groups or Service endpoints based on appropriate criteria. Tags are optional so if a certain tag for a corresponding entity is omitted, then filtering is not done. In that case, it can be considered that entity is fetched for all available values of an omitted tag.
 
 Group of group tags are different for a different type of fetch. Tags and values for a different entities existing in EGI infrastructure are:
 
@@ -215,6 +216,11 @@ Tags for selecting group of endpoints are:
 * Production = `{Y, N}`
 * Monitored = `{Y, N}`
 * Scope = `{EGI, Local}`
+
+Additionally, topology can be filtered for certain NGI or Site and since they are part of group of groups abstract, those should be specified in `TopoSelectGroupOfGroups` option. Examples:
+
+    TopoSelectGroupOfGroups = NGI:EGI.eu
+    TopoSelectGroupOfGroups = Site:egee.srce.hr
 
 ##### Data feeds
 
@@ -439,4 +445,10 @@ Connectors are using following GOCDB PI methods:
 - [GOCDB - get_site_method](https://wiki.egi.eu/wiki/GOCDB/PI/get_site_method)
 
 `poem-connector.py` is using POEM PI method:
+
 - [POEM - metrics_in_profiles](http://argoeu.github.io/guides/poem/)
+
+ARGO Messaging Service:
+
+- [Topic publish](http://argoeu.github.io/messaging/v1/api_topics/)
+- [Messages forming](http://argoeu.github.io/messaging/v1/overview/#messages)

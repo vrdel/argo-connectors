@@ -1,5 +1,6 @@
 import datetime
 import os
+import json
 
 import avro.schema
 from avro.datafile import DataFileWriter
@@ -58,7 +59,8 @@ class AmsPublish(object):
     """
        Class represents interaction with AMS service
     """
-    def __init__(self, host, project, token, topic, report, bulk, logger, retry, timeout=180, sleepretry=60):
+    def __init__(self, host, project, token, topic, report, bulk, packsingle,
+                 logger, retry, timeout=180, sleepretry=60):
         self.ams = ArgoMessagingService(host, token, project)
         self.topic = topic
         self.bulk = int(bulk)
@@ -67,6 +69,7 @@ class AmsPublish(object):
         self.retry = int(retry)
         self.sleepretry = int(sleepretry)
         self.logger = logger
+        self.packsingle = eval(packsingle)
 
     @staticmethod
     @retry
@@ -75,7 +78,7 @@ class AmsPublish(object):
         try:
             topic = obj.ams.topic(obj.topic, timeout=timeout)
 
-            if obj.bulk > 1:
+            if bulk > 1:
                 q, r = divmod(len(msgs), bulk)
 
                 if q:
@@ -105,14 +108,27 @@ class AmsPublish(object):
             avro_writer = DatumWriter(opened_schema)
             bytesio = BytesIO()
             encoder = BinaryEncoder(bytesio)
-            avro_writer.write(msg, encoder)
+            if isinstance(msg, list):
+                for m in msg:
+                    avro_writer.write(m, encoder)
+            else:
+                avro_writer.write(msg, encoder)
 
             return bytesio.getvalue()
 
-        msgs = map(lambda m: AmsMessage(attributes={'partition_date': date,
-                                                    'report': self.report,
-                                                    'type': msgtype},
-                                        data=_avro_serialize(m)), msglist)
+        if self.packsingle:
+            self.bulk = 1
+            msg = AmsMessage(attributes={'partition_date': date,
+                                         'report': self.report,
+                                         'type': msgtype},
+                             data=_avro_serialize(msglist))
+            msgs = [msg]
+
+        else:
+            msgs = map(lambda m: AmsMessage(attributes={'partition_date': date,
+                                                        'report': self.report,
+                                                        'type': msgtype},
+                                            data=_avro_serialize(m)), msglist)
 
         if self._send(self.logger, module_class_name(self),
                       {'ConnectionRetry'.lower(): self.retry,

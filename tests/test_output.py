@@ -234,16 +234,30 @@ class PoemAms(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
+        self.globopts['amspacksinglemsg'] = 'False'
         self.amspublish = output.AmsPublish(self.globopts['amshost'],
                                             self.globopts['amsproject'],
                                             self.globopts['amstoken'],
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            self.globopts['amspacksinglemsg'],
                                             logger,
                                             int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']),
                                             int(self.globopts['connectionsleepretry']))
+
+        self.globopts['amspacksinglemsg'] = 'True'
+        self.amspublish_pack = output.AmsPublish(self.globopts['amshost'],
+                                                 self.globopts['amsproject'],
+                                                 self.globopts['amstoken'],
+                                                 self.globopts['amstopic'],
+                                                 self.customerconfig.get_jobdir(self.jobs[0]),
+                                                 self.globopts['amsbulk'],
+                                                 self.globopts['amspacksinglemsg'],
+                                                 logger,
+                                                 int(self.globopts['connectionretry']),
+                                                 int(self.globopts['connectiontimeout']))
     def testPoem(self):
         @urlmatch(**self.get_topic_urlmatch)
         def get_topic_mock(url, request):
@@ -272,13 +286,30 @@ class PoemAms(unittest.TestCase):
 
             return '{"msgIds": ["1", "2", "3"]}'
 
-
         with HTTMock(get_topic_mock, publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasPoem'.lower()],
                                  'poem', datestamp().replace('_', '-'),
                                  self.poem)
             self.assertTrue(ret)
 
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            # Check request produced by ams client
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], "OmNoLmNlcm4uc2FtLkFSR09fTU9OX0NSSVRJQ0FMDEFSQy1DRTJvcmcubm9yZHVncmlkLkFSQy1DRS1BUklTAgQIZnFhbgAEdm8Gb3BzADpjaC5jZXJuLnNhbS5BUkdPX01PTl9DUklUSUNBTAxBUkMtQ0Uyb3JnLm5vcmR1Z3JpZC5BUkMtQ0UtSUdURgIECGZxYW4ABHZvBm9wcwA6Y2guY2Vybi5zYW0uQVJHT19NT05fQ1JJVElDQUwMQVJDLUNFNm9yZy5ub3JkdWdyaWQuQVJDLUNFLXJlc3VsdAIECGZxYW4ABHZvBm9wcwA=")
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "poem")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+
+            return '{"msgIds": ["1"]}'
+
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasPoem'.lower()],
+                                 'poem', datestamp().replace('_', '-'),
+                                 self.poem)
+            self.assertTrue(ret)
 
 class WeightsAms(unittest.TestCase):
     get_topic_urlmatch = dict(netloc='localhost',
@@ -298,15 +329,29 @@ class WeightsAms(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
+        self.globopts['amspacksinglemsg'] = 'False'
         self.amspublish = output.AmsPublish(self.globopts['amshost'],
                                             self.globopts['amsproject'],
                                             self.globopts['amstoken'],
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            self.globopts['amspacksinglemsg'],
                                             logger,
                                             int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
+
+        self.globopts['amspacksinglemsg'] = 'True'
+        self.amspublish_pack = output.AmsPublish(self.globopts['amshost'],
+                                                 self.globopts['amsproject'],
+                                                 self.globopts['amstoken'],
+                                                 self.globopts['amstopic'],
+                                                 self.customerconfig.get_jobdir(self.jobs[0]),
+                                                 self.globopts['amsbulk'],
+                                                 self.globopts['amspacksinglemsg'],
+                                                 logger,
+                                                 int(self.globopts['connectionretry']),
+                                                 int(self.globopts['connectiontimeout']))
 
     def testWeights(self):
         @urlmatch(**self.get_topic_urlmatch)
@@ -343,6 +388,28 @@ class WeightsAms(unittest.TestCase):
                                  self.weights)
             self.assertTrue(ret)
 
+        @urlmatch(**self.get_topic_urlmatch)
+        def get_topic_mock(url, request):
+            # Return the details of a topic in json format
+            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
+
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            # Check request produced by ams client
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], "DmhlcHNwZWMQRlpLLUxDRzICMA5oZXBzcGVjFElOMlAzLUlSRVMEMTMOaGVwc3BlYxBHUklGLUxMUgIw")
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "weights")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+            return '{"msgIds": ["1"]}'
+
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasWeights'.lower()],
+                                 'weights', datestamp().replace('_', '-'),
+                                 self.weights)
+            self.assertTrue(ret)
 
 class DowntimesAms(unittest.TestCase):
     get_topic_urlmatch = dict(netloc='localhost',
@@ -362,15 +429,29 @@ class DowntimesAms(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
+        self.globopts['amspacksinglemsg'] = 'False'
         self.amspublish = output.AmsPublish(self.globopts['amshost'],
                                             self.globopts['amsproject'],
                                             self.globopts['amstoken'],
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            self.globopts['amspacksinglemsg'],
                                             logger,
                                             int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
+
+        self.globopts['amspacksinglemsg'] = 'True'
+        self.amspublish_pack = output.AmsPublish(self.globopts['amshost'],
+                                                 self.globopts['amsproject'],
+                                                 self.globopts['amstoken'],
+                                                 self.globopts['amstopic'],
+                                                 self.customerconfig.get_jobdir(self.jobs[0]),
+                                                 self.globopts['amsbulk'],
+                                                 self.globopts['amspacksinglemsg'],
+                                                 logger,
+                                                 int(self.globopts['connectionretry']),
+                                                 int(self.globopts['connectiontimeout']))
 
     def testDowntimes(self):
         @urlmatch(**self.get_topic_urlmatch)
@@ -403,8 +484,24 @@ class DowntimesAms(unittest.TestCase):
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasDowntimes'.lower()],
-                                 'downtimes', datestamp().replace('_', '-'),
-                                 self.downtimes)
+                                      'downtimes', datestamp().replace('_', '-'), self.downtimes)
+            self.assertTrue(ret)
+
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], u'KG5hZ2lvcy5jNC5jc2lyLmNvLnphDm5naS5TQU0oMjAxNy0wMS0xOVQwMDowMDowMFooMjAxNy0wMS0xOVQyMzo1OTowMFomY2UxLmdyaWQubGViZWRldi5ydQRDRSgyMDE3LTAxLTE5VDAwOjAwOjAwWigyMDE3LTAxLTE5VDIzOjU5OjAwWiZjZTEuZ3JpZC5sZWJlZGV2LnJ1CEFQRUwoMjAxNy0wMS0xOVQwMDowMDowMFooMjAxNy0wMS0xOVQyMzo1OTowMFo=')
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "downtimes")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+
+            return '{"msgIds": ["1"]}'
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasDowntimes'.lower()],
+                                            'downtimes', datestamp().replace('_', '-'),
+                                            self.downtimes)
             self.assertTrue(ret)
 
 
@@ -426,15 +523,29 @@ class TopologyAms(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
+        self.globopts['amspacksinglemsg'] = 'False'
         self.amspublish = output.AmsPublish(self.globopts['amshost'],
                                             self.globopts['amsproject'],
                                             self.globopts['amstoken'],
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            self.globopts['amspacksinglemsg'],
                                             logger,
                                             int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
+
+        self.globopts['amspacksinglemsg'] = 'True'
+        self.amspublish_pack = output.AmsPublish(self.globopts['amshost'],
+                                                 self.globopts['amsproject'],
+                                                 self.globopts['amstoken'],
+                                                 self.globopts['amstopic'],
+                                                 self.customerconfig.get_jobdir(self.jobs[0]),
+                                                 self.globopts['amsbulk'],
+                                                 self.globopts['amspacksinglemsg'],
+                                                 logger,
+                                                 int(self.globopts['connectionretry']),
+                                                 int(self.globopts['connectiontimeout']))
 
     def testGroupGroups(self):
         @urlmatch(**self.get_topic_urlmatch)
@@ -467,6 +578,24 @@ class TopologyAms(unittest.TestCase):
 
         with HTTMock(get_topic_mock, publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
+                                       'group_groups', datestamp().replace('_', '-'), self.group_groups)
+            self.assertTrue(ret)
+
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            # Check request produced by ams client
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], "Bk5HSRhBZnJpY2FBcmFiaWEWTUEtMDEtQ05SU1QCBgpzY29wZQZFR0kcaW5mcmFzdHJ1Y3R1cmUUUHJvZHVjdGlvbhpjZXJ0aWZpY2F0aW9uEkNlcnRpZmllZAAGTkdJGEFmcmljYUFyYWJpYSJNQS0wNC1DTlJTVC1BVExBUwIGCnNjb3BlBkVHSRxpbmZyYXN0cnVjdHVyZRRQcm9kdWN0aW9uGmNlcnRpZmljYXRpb24SQ2VydGlmaWVkAAZOR0kYQWZyaWNhQXJhYmlhFlpBLVVDVC1JQ1RTAgYKc2NvcGUGRUdJHGluZnJhc3RydWN0dXJlFFByb2R1Y3Rpb24aY2VydGlmaWNhdGlvbhJTdXNwZW5kZWQA")
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "group_groups")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+
+            return '{"msgIds": ["1"]}'
+
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
                                        'group_groups', datestamp().replace('_', '-'), self.group_groups)
             self.assertTrue(ret)
 
@@ -503,3 +632,21 @@ class TopologyAms(unittest.TestCase):
             ret = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
                                        'group_endpoints', datestamp().replace('_', '-'), self.group_endpoints)
             self.assertTrue(ret)
+
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            # Check request produced by ams client
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], "ClNJVEVTCjEwMElUPmV1LmVnaS5jbG91ZC52bS1tYW5hZ2VtZW50Lm9jY2kyb2NjaS1hcGkuMTAwcGVyY2VudGl0LmNvbQIGCnNjb3BlBkVHSRRwcm9kdWN0aW9uAjESbW9uaXRvcmVkAjEAClNJVEVTCjEwMElULmV1LmVnaS5jbG91ZC5hY2NvdW50aW5nSmVnaS1jbG91ZC1hY2NvdW50aW5nLjEwMHBlcmNlbnRpdC5jb20CBgpzY29wZQZFR0kUcHJvZHVjdGlvbgIxEm1vbml0b3JlZAIxAApTSVRFUwoxMDBJVDpldS5lZ2kuY2xvdWQuaW5mb3JtYXRpb24uYmRpaTJvY2NpLWFwaS4xMDBwZXJjZW50aXQuY29tAgYKc2NvcGUGRUdJFHByb2R1Y3Rpb24CMRJtb25pdG9yZWQCMQA=")
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "group_endpoints")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+            return '{"msgIds": ["1"]}'
+
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
+                                       'group_endpoints', datestamp().replace('_', '-'), self.group_endpoints)
+            self.assertTrue(ret)
+

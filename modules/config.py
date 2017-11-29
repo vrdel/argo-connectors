@@ -7,7 +7,7 @@ class Global:
        Class represents parser for global.conf
     """
     # options common for all connectors
-    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk']}
+    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk', 'PackSingleMsg']}
     conf_general = {'General': ['PublishAms', 'WriteAvro']}
     conf_certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                      'VerifyServerCert']}
@@ -270,7 +270,7 @@ class CustomerConf:
                     'weights-vapor-connector.py': ['WeightsFeed'],
                     'prefilter-egi.py': []}
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic']
+    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic', 'AmsPackSingleMsg']
     tenantdir = ''
 
     def __init__(self, caller, confpath, **kwargs):

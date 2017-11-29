@@ -32,15 +32,18 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(opts_nocall['authenticationhostkey'], '/etc/grid-security/hostkey.pem')
         self.assertEqual(opts_nocall['amstopic'], 'TOPIC')
         self.assertEqual(opts_nocall['amsbulk'], '100')
+        self.assertEqual(opts_nocall['amspacksinglemsg'], 'True')
 
     def testAmsOpts(self):
         opts = self.globalconfig.parse()
         ams_incomplete = dict(amshost='host', amstoken='token')
         complete, missing = self.globalconfig.is_complete(ams_incomplete, 'ams')
         self.assertFalse(complete)
-        self.assertEqual(missing, set(['amsproject', 'amstopic', 'amsbulk']))
+        self.assertEqual(missing, set(['amsproject', 'amstopic', 'amsbulk', 'amspacksinglemsg']))
         merged = self.globalconfig.merge_opts(ams_incomplete, 'ams')
-        self.assertEqual(merged, dict(amshost='host', amsproject='EGI', amstoken='token', amstopic='TOPIC', amsbulk='100'))
+        self.assertEqual(merged, dict(amshost='host', amsproject='EGI',
+                                      amstoken='token', amstopic='TOPIC',
+                                      amsbulk='100', amspacksinglemsg='True'))
 
     def testCustomerParse(self):
         opts = self.customerconfig.parse()
