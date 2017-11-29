@@ -94,7 +94,7 @@ For every connector, connection will timeout after `180` seconds specified in `T
 
 	[Prefilter]
 	ConsumerFilePath = /var/lib/argo-egi-consumer/argo-consumer_log_DATE.avro
-PoemNameMapping = poem_name_mapping.cfg
+    PoemNameMapping = poem_name_mapping.cfg
 	PoemExpandedProfiles = %(EGIDir)s/poem_sync_DATE.out
 	LookbackPoemExpandedProfiles = 5
 
