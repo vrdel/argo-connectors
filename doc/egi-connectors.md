@@ -18,7 +18,7 @@ Bundle consists of the following connectors:
  - `prefilter-egy.py`: component whose role is to filter out the messages coming from the `argo-egi-consumer`.
 
 
-Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating appropriate data for each job.Data is presented in a form of avro serialized files that are placed in job folders or can be sent to AMS service. Topology, downtimes, weights and POEM profile information all together with a metric results (status messages), represents an input for `argo-compute-engine`.
+Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating appropriate data for each job.Data is presented in a form of avro serialized entities that are placed as files in job folders or can be sent to AMS service. Topology, downtimes, weights and POEM profile information all together with a metric results (status messages), represents an input for `argo-compute-engine`.
 
 ## Installation
 
@@ -73,9 +73,10 @@ This section currently has two configuration options affecting the type of deliv
 	Token = EGIKEY
 	Project = EGI
 	Topic = TOPIC
-	Bulk = 100  
+	Bulk = 100
+    PackSingleMsg = True
 
-Section configures parameters needed for AMS service. These are the complete options needed. Some options can be shared across all customers and some like a `Token` and `Project` can be private to each customer so those options can be specified in `[CUSTOMER_*]` section of related `customer.conf`. Splitting of listed options throughout two configuration files `global.conf` and `customer.conf` works as long as the complete set of options is specified so if `Host`, `Token` and `Bulk` are specified in `global.conf`, then `AmsProject` and `AmsToken` should be specified in `customer.conf`.
+Section configures parameters needed for AMS service. These are the complete options needed. Some options can be shared across all customers and some like a `Token` and `Project` can be private to each customer so those options can be specified in `[CUSTOMER_*]` section of related `customer.conf`. Splitting of listed options throughout two configuration files `global.conf` and `customer.conf` works as long as the complete set of options is specified so if `Host`, `Token` and `Bulk` are specified in `global.conf`, then `AmsProject` and `AmsToken` should be specified in `customer.conf`. `Bulk` option specify the number of entites fetched from data source that will be wrapped in same number of AMS messages delivered to service in a single HTTP request. AMS service will be contacted until all fetched entities are delivered. If `PackSingleMsg` is enabled, then all fetched entities will be sent in a single AMS messsage and `Bulk` will be ignored.
 
 	[Authentication]
 	VerifyServerCert = False
@@ -93,7 +94,7 @@ For every connector, connection will timeout after `180` seconds specified in `T
 
 	[Prefilter]
 	ConsumerFilePath = /var/lib/argo-egi-consumer/argo-consumer_log_DATE.avro
-	PoemNameMapping = poem_name_mapping.cfg
+PoemNameMapping = poem_name_mapping.cfg
 	PoemExpandedProfiles = %(EGIDir)s/poem_sync_DATE.out
 	LookbackPoemExpandedProfiles = 5
 
@@ -193,7 +194,7 @@ So, in a `TopoFetchType` option customer can either specify:
 
 ###### Tags
 
-Tags represent a fine-grained control of what is being written in output files. It's a convenient way of selecting only certain entities, being it Sites, Service groups or Service endpoints based on appropriate criteria. Tags are optional so if a certain tag for a corresponding entity is omitted, than filtering is not done. In that case, it can be considered that entity is fetched for all its values of an omitted tag.
+Tags represent a fine-grained control of what is being written in output files. It's a convenient way of selecting only certain entities, being it Sites, Service groups or Service endpoints based on appropriate criteria. Tags are optional so if a certain tag for a corresponding entity is omitted, then filtering is not done. In that case, it can be considered that entity is fetched for all its values of an omitted tag.
 
 Group of group tags are different for a different type of fetch. Tags and values for a different entities existing in EGI infrastructure are:
 
