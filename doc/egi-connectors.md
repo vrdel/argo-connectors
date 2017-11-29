@@ -194,7 +194,7 @@ So, in a `TopoFetchType` option customer can either specify:
 
 ###### Tags
 
-Tags represent a fine-grained control of what is being written in output files. It's a convenient way of selecting only certain entities, being it Sites, Service groups or Service endpoints based on appropriate criteria. Tags are optional so if a certain tag for a corresponding entity is omitted, then filtering is not done. In that case, it can be considered that entity is fetched for all its values of an omitted tag.
+Tags represent a fine-grained control of what part of topology each job is interested. It's a convenient way of selecting only certain entities, being it Sites, Service groups or Service endpoints based on appropriate criteria. Tags are optional so if a certain tag for a corresponding entity is omitted, then filtering is not done. In that case, it can be considered that entity is fetched for all available values of an omitted tag.
 
 Group of group tags are different for a different type of fetch. Tags and values for a different entities existing in EGI infrastructure are:
 
@@ -216,6 +216,11 @@ Tags for selecting group of endpoints are:
 * Production = `{Y, N}`
 * Monitored = `{Y, N}`
 * Scope = `{EGI, Local}`
+
+Additionally, topology can be filtered for certain NGI or Site and since they are part of group of groups abstract, those should be specified in `TopoSelectGroupOfGroups` option. Examples:
+
+    TopoSelectGroupOfGroups = NGI:EGI.eu
+    TopoSelectGroupOfGroups = Site:egee.srce.hr
 
 ##### Data feeds
 
@@ -440,4 +445,10 @@ Connectors are using following GOCDB PI methods:
 - [GOCDB - get_site_method](https://wiki.egi.eu/wiki/GOCDB/PI/get_site_method)
 
 `poem-connector.py` is using POEM PI method:
+
 - [POEM - metrics_in_profiles](http://argoeu.github.io/guides/poem/)
+
+ARGO Messaging Service:
+
+- [Topic publish](http://argoeu.github.io/messaging/v1/api_topics/)
+- [Messages forming](http://argoeu.github.io/messaging/v1/overview/#messages)
