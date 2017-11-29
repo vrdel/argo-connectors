@@ -74,7 +74,7 @@ This section currently has two configuration options affecting the type of deliv
 	Project = EGI
 	Topic = TOPIC
 	Bulk = 100
-    PackSingleMsg = True
+	PackSingleMsg = True
 
 Section configures parameters needed for AMS service. These are the complete options needed. Some options can be shared across all customers and some like a `Token` and `Project` can be private to each customer so those options can be specified in `[CUSTOMER_*]` section of related `customer.conf`. Splitting of listed options throughout two configuration files `global.conf` and `customer.conf` works as long as the complete set of options is specified so if `Host`, `Token` and `Bulk` are specified in `global.conf`, then `AmsProject` and `AmsToken` should be specified in `customer.conf`. `Bulk` option specify the number of entites fetched from data source that will be wrapped in same number of AMS messages delivered to service in a single HTTP request. AMS service will be contacted until all fetched entities are delivered. If `PackSingleMsg` is enabled, then all fetched entities will be sent in a single AMS messsage and `Bulk` will be ignored.
 
@@ -94,7 +94,7 @@ For every connector, connection will timeout after `180` seconds specified in `T
 
 	[Prefilter]
 	ConsumerFilePath = /var/lib/argo-egi-consumer/argo-consumer_log_DATE.avro
-    PoemNameMapping = poem_name_mapping.cfg
+	PoemNameMapping = poem_name_mapping.cfg
 	PoemExpandedProfiles = %(EGIDir)s/poem_sync_DATE.out
 	LookbackPoemExpandedProfiles = 5
 
