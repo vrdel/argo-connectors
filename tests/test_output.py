@@ -298,15 +298,29 @@ class WeightsAms(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
+        self.globopts['amspacksinglemsg'] = 'False'
         self.amspublish = output.AmsPublish(self.globopts['amshost'],
                                             self.globopts['amsproject'],
                                             self.globopts['amstoken'],
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            self.globopts['amspacksinglemsg'],
                                             logger,
                                             int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']))
+
+        self.globopts['amspacksinglemsg'] = 'True'
+        self.amspublish_pack = output.AmsPublish(self.globopts['amshost'],
+                                                 self.globopts['amsproject'],
+                                                 self.globopts['amstoken'],
+                                                 self.globopts['amstopic'],
+                                                 self.customerconfig.get_jobdir(self.jobs[0]),
+                                                 self.globopts['amsbulk'],
+                                                 self.globopts['amspacksinglemsg'],
+                                                 logger,
+                                                 int(self.globopts['connectionretry']),
+                                                 int(self.globopts['connectiontimeout']))
 
     def testWeights(self):
         @urlmatch(**self.get_topic_urlmatch)
@@ -343,6 +357,28 @@ class WeightsAms(unittest.TestCase):
                                  self.weights)
             self.assertTrue(ret)
 
+        @urlmatch(**self.get_topic_urlmatch)
+        def get_topic_mock(url, request):
+            # Return the details of a topic in json format
+            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
+
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            # Check request produced by ams client
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], "DmhlcHNwZWMQRlpLLUxDRzICMA5oZXBzcGVjFElOMlAzLUlSRVMEMTMOaGVwc3BlYxBHUklGLUxMUgIw")
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "weights")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+            return '{"msgIds": ["1"]}'
+
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasWeights'.lower()],
+                                 'weights', datestamp().replace('_', '-'),
+                                 self.weights)
+            self.assertTrue(ret)
 
 class DowntimesAms(unittest.TestCase):
     get_topic_urlmatch = dict(netloc='localhost',
