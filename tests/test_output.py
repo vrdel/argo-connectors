@@ -234,16 +234,30 @@ class PoemAms(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
+        self.globopts['amspacksinglemsg'] = 'False'
         self.amspublish = output.AmsPublish(self.globopts['amshost'],
                                             self.globopts['amsproject'],
                                             self.globopts['amstoken'],
                                             self.globopts['amstopic'],
                                             self.customerconfig.get_jobdir(self.jobs[0]),
                                             self.globopts['amsbulk'],
+                                            self.globopts['amspacksinglemsg'],
                                             logger,
                                             int(self.globopts['connectionretry']),
                                             int(self.globopts['connectiontimeout']),
                                             int(self.globopts['connectionsleepretry']))
+
+        self.globopts['amspacksinglemsg'] = 'True'
+        self.amspublish_pack = output.AmsPublish(self.globopts['amshost'],
+                                                 self.globopts['amsproject'],
+                                                 self.globopts['amstoken'],
+                                                 self.globopts['amstopic'],
+                                                 self.customerconfig.get_jobdir(self.jobs[0]),
+                                                 self.globopts['amsbulk'],
+                                                 self.globopts['amspacksinglemsg'],
+                                                 logger,
+                                                 int(self.globopts['connectionretry']),
+                                                 int(self.globopts['connectiontimeout']))
     def testPoem(self):
         @urlmatch(**self.get_topic_urlmatch)
         def get_topic_mock(url, request):
@@ -272,13 +286,30 @@ class PoemAms(unittest.TestCase):
 
             return '{"msgIds": ["1", "2", "3"]}'
 
-
         with HTTMock(get_topic_mock, publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasPoem'.lower()],
                                  'poem', datestamp().replace('_', '-'),
                                  self.poem)
             self.assertTrue(ret)
 
+        @urlmatch(**self.publish_topic_urlmatch)
+        def publish_pack_mock(url, request):
+            assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
+            # Check request produced by ams client
+            req_body = json.loads(request.body)
+            self.assertEqual(req_body["messages"][0]["data"], "OmNoLmNlcm4uc2FtLkFSR09fTU9OX0NSSVRJQ0FMDEFSQy1DRTJvcmcubm9yZHVncmlkLkFSQy1DRS1BUklTAgQIZnFhbgAEdm8Gb3BzADpjaC5jZXJuLnNhbS5BUkdPX01PTl9DUklUSUNBTAxBUkMtQ0Uyb3JnLm5vcmR1Z3JpZC5BUkMtQ0UtSUdURgIECGZxYW4ABHZvBm9wcwA6Y2guY2Vybi5zYW0uQVJHT19NT05fQ1JJVElDQUwMQVJDLUNFNm9yZy5ub3JkdWdyaWQuQVJDLUNFLXJlc3VsdAIECGZxYW4ABHZvBm9wcwA=")
+            self.assertEqual(req_body["messages"][0]["attributes"]["type"], "poem")
+            self.assertEqual(req_body["messages"][0]["attributes"]["report"], "EGI_Critical")
+            self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
+
+            return '{"msgIds": ["1"]}'
+
+
+        with HTTMock(get_topic_mock, publish_pack_mock):
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasPoem'.lower()],
+                                 'poem', datestamp().replace('_', '-'),
+                                 self.poem)
+            self.assertTrue(ret)
 
 class WeightsAms(unittest.TestCase):
     get_topic_urlmatch = dict(netloc='localhost',
