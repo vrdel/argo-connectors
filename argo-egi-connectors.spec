@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.5.9
+Version: 1.6.0
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -47,6 +47,17 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Thu Nov 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.6.0-1%{?dist}
+- ARGO-965 Support for packing connectors data in a single AMS message
+- ARGO-921 Use ComputationPower instead of HEPSPEC2006 value for weights
+- ARGO-906 No explicit exit on connection problem so state file will be written
+- ARGO-886 Finer retry logic
+- ARGO-872 Tenant and jobname in retries log msgs
+- ARGO-853 Connectors retry to fetch data
+- ARGO-843 Write/send data as it is data for passed date
+- ARGO-842 Connectors dedicated file logger
+- ARGO-549 Use of AMS for delivering topology, downtimes, POEM profile and weights
+- added unit tests
 * Tue Apr 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.9-1%{?dist}
 - ARGO-724 Each connector must try to create states directory structure
 * Wed Mar 29 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.8-1%{?dist}
