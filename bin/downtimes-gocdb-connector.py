@@ -28,13 +28,14 @@ import argparse
 import datetime
 import os
 import sys
-import copy
 from urlparse import urlparse
 
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
+
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_xml, module_class_name, ConnectorError, write_state
+from argo_egi_connectors.helpers import filename_date, module_class_name
 
 logger = None
 
@@ -53,15 +54,19 @@ class GOCDBReader(object):
         filteredDowntimes = list()
 
         try:
-            res = make_connection(logger, globopts, self._o.scheme, self._o.netloc,
-                                DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
-                                                                                end.strftime(self.argDateFormat)),
-                                module_class_name(self))
+            res = input.connection(logger, module_class_name(self), globopts, self._o.scheme, self._o.netloc,
+                                   DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
+                                                                                  end.strftime(self.argDateFormat)))
+            if not res:
+                raise input.ConnectorError()
 
-            doc = parse_xml(logger, res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                            module_class_name(self))
+            doc = input.parse_xml(logger, module_class_name(self), globopts,
+                                  res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI)
 
-        except ConnectorError:
+            if not doc:
+                raise input.ConnectorError()
+
+        except input.ConnectorError:
             self.state = False
             return []
 
@@ -96,8 +101,9 @@ class GOCDBReader(object):
 
             except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as e:
                 self.state = False
-                logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                                                                                         repr(e).replace('\'','')))
+                logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job,
+                                                                                                            self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
+                                                                                                            repr(e).replace('\'','')))
                 return []
             else:
                 return filteredDowntimes
@@ -111,13 +117,8 @@ def main():
     args = parser.parse_args()
 
     logger = Logger(os.path.basename(sys.argv[0]))
-    certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile', 'VerifyServerCert']}
-    schemas = {'AvroSchemas': ['Downtimes']}
-    output = {'Output': ['Downtimes']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, state)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     confpath = args.custconf[0] if args.custconf else None
@@ -137,14 +138,21 @@ def main():
         start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
         end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
         timestamp = start.strftime('%Y_%m_%d')
+        start = start.replace(hour=0, minute=0, second=0)
+        end = end.replace(hour=23, minute=59, second=59)
     except ValueError as e:
         logger.error(e)
         raise SystemExit(1)
 
-    start = start.replace(hour=0, minute=0, second=0)
-    end = end.replace(hour=23, minute=59, second=59)
 
     for feed, jobcust in feeds.items():
+        customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
+        customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
+        jobs = set(map(lambda jc: jc[0], jobcust))
+        jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
+        logger.job = jobs
+        logger.customer = customers
+
         gocdb = GOCDBReader(feed)
         dts = gocdb.getDowntimes(start, end)
 
@@ -152,21 +160,52 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+            logger.customer = confcust.get_custname(cust)
+            logger.job = job
+
+            ams_custopts = confcust.get_amsopts(cust)
+            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
+            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
+            if not ams_complete:
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'ams', ' '.join(missopt)))
+                continue
+
+            output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
 
             if not gocdb.state:
                 continue
 
-            custname = confcust.get_custname(cust)
-            filename = gen_fname_repdate(logger, globopts['OutputDowntimes'.lower()], jobdir, datestamp=timestamp)
-            avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename,
-                            dts, os.path.basename(sys.argv[0]))
-            avro.write()
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
+                                        ams_opts['amsbulk'],
+                                        ams_opts['amspacksinglemsg'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
+                                        int(globopts['ConnectionTimeout'.lower()]))
+
+                ams.send(globopts['AvroSchemasDowntimes'.lower()], 'downtimes',
+                         timestamp.replace('_', '-'), dts)
+
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)
+                avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+                ret, excep = avro.write(dts)
+                if not ret:
+                    logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
+                    raise SystemExit(1)
 
         if gocdb.state:
             custs = set([cust for job, cust in jobcust])
             for cust in custs:
                 jobs = [job for job, lcust in jobcust if cust == lcust]
-                logger.info('Customer:%s Jobs:%d Fetched Date:%s Endpoints:%d' % (cust, len(jobs), args.date[0], len(dts)))
+                logger.info('Customer:%s Jobs:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
+                                                                                  jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
+                                                                                  args.date[0], len(dts)))
 
-main()
+
+if __name__ == '__main__':
+    main()

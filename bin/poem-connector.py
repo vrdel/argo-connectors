@@ -25,18 +25,20 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 import argparse
-import datetime
 import os
 import re
 import sys
 import urlparse
 
-from argo_egi_connectors.writers import AvroWriter
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from argo_egi_connectors import input
+from argo_egi_connectors import output
+from argo_egi_connectors.log import Logger
+
 from argo_egi_connectors.config import CustomerConf, PoemConf, Global
-from argo_egi_connectors.helpers import gen_fname_repdate, make_connection, parse_json, module_class_name, ConnectorError, write_state
+from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
 
 logger = None
+
 globopts, poemopts = {}, {}
 cpoem = None
 custname = ''
@@ -91,7 +93,7 @@ class PoemReader:
 
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
-            logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._urlfeed,
+            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer, self._urlfeed,
                                                                                      repr(e).replace('\'','').replace('\"', '')))
             return [], []
         else:
@@ -131,18 +133,24 @@ class PoemReader:
         try:
             assert o.scheme != '' and o.netloc != '' and o.path != ''
         except AssertionError:
-            logger.error('Invalid POEM PI URL: %s' % (self._urlfeed))
+            logger.error('Customer:%s Invalid POEM PI URL: %s' % (logger.customer, self._urlfeed))
             raise SystemExit(1)
 
-        logger.info('Server:%s VO:%s' % (o.netloc, vo))
+        logger.info('Customer:%s Server:%s VO:%s' % (logger.customer, o.netloc, vo))
 
         try:
-            res = make_connection(logger, globopts, o.scheme, o.netloc,
-                                o.path + '?' + o.query,
-                                module_class_name(self))
-            json_data = parse_json(logger, res, self._urlfeed, module_class_name(self))
+            res = input.connection(logger, module_class_name(self), globopts,
+                                   o.scheme, o.netloc, o.path + '?' + o.query)
+            if not res:
+                raise input.ConnectorError()
 
-        except ConnectorError:
+            json_data = input.parse_json(logger, module_class_name(self),
+                                         globopts, res, self._urlfeed)
+
+            if not json_data:
+                raise input.ConnectorError()
+
+        except input.ConnectorError:
             self.state = False
 
         else:
@@ -175,6 +183,7 @@ class PoemReader:
         else:
             return entries
 
+
 class PrefilterPoem:
     def __init__(self):
         self.outputFileFormat = '%s\001%s\001%s\001%s\001%s\001%s\001%s\r\n'
@@ -193,7 +202,8 @@ class PrefilterPoem:
                        p['fqan']))
         outFile.close();
 
-        logger.info('POEM file(%s): Expanded profiles for %d monitoring instances' % (fname, len(moninstance) + 1))
+        logger.info('Customer:%s POEM file(%s): Expanded profiles for %d monitoring instances' % (logger.customer, fname, len(moninstance) + 1))
+
 
 def gen_outprofiles(lprofiles, matched):
     lfprofiles = []
@@ -209,6 +219,7 @@ def gen_outprofiles(lprofiles, matched):
 
     return lfprofiles
 
+
 def main():
     global logger, globopts
     parser = argparse.ArgumentParser(description='Fetch POEM profile for every job of the customer and write POEM expanded profiles needed for prefilter for EGI customer')
@@ -216,18 +227,17 @@ def main():
     parser.add_argument('-np', dest='noprefilter', help='do not write POEM expanded profiles for prefilter', required=False, action='store_true')
     parser.add_argument('-p', dest='poemconf', nargs=1, metavar='poem-connector.conf', help='path to poem-connector configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
+    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
     args = parser.parse_args()
 
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    certs = {'Authentication': ['HostKey', 'HostCert', 'VerifyServerCert', 'CAPath', 'CAFile']}
-    schemas = {'AvroSchemas': ['Poem']}
-    prefilter = {'Prefilter': ['PoemExpandedProfiles']}
-    output = {'Output': ['Poem']}
-    conn = {'Connection': ['Timeout', 'Retry']}
-    state = {'InputState': ['SaveDir', 'Days']}
+    fixed_date = None
+    if args.date and date_check(args.date):
+        fixed_date = args.date
+
     confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(confpath, certs, schemas, output, conn, prefilter, state)
+    cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
     servers = {'PoemServer': ['Host', 'VO']}
@@ -244,12 +254,22 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
+    customers = set(map(lambda c: confcust.get_custname(c), confcust.get_customers()))
+    customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
+    logger.customer = customers
+    customers = confcust.get_customers()
+    jobs = list()
+    for c in customers:
+        jobs = jobs + confcust.get_jobs(c)
+    jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
+    logger.job = jobs
+
     readerInstance = PoemReader(args.noprefilter)
     ps, psa = readerInstance.getProfiles()
 
     if not args.noprefilter and ps:
         poempref = PrefilterPoem()
-        preffname = gen_fname_repdate(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
+        preffname = filename_date(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '')
         poempref.writeProfiles(ps, preffname)
 
     for cust in confcust.get_customers():
@@ -258,10 +278,20 @@ def main():
         custname = confcust.get_custname(cust)
 
         for job in confcust.get_jobs(cust):
+            logger.customer = confcust.get_custname(cust)
+            logger.job = job
+
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()])
+            ams_custopts = confcust.get_amsopts(cust)
+            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
+            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
+            if not ams_complete:
+                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
+                continue
+
+            output.write_state(sys.argv[0], jobstatedir, readerInstance.state, globopts['InputStateDays'.lower()])
 
             if not readerInstance.state:
                 continue
@@ -269,11 +299,39 @@ def main():
             profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
-            filename = gen_fname_repdate(logger, globopts['OutputPoem'.lower()], jobdir)
-            avro = AvroWriter(globopts['AvroSchemasPoem'.lower()], filename,
-                              lfprofiles, os.path.basename(sys.argv[0]))
-            avro.write()
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                if fixed_date:
+                    partdate = fixed_date
+                else:
+                    partdate = datestamp().replace('_', '-')
+
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
+                                        ams_opts['amsbulk'],
+                                        ams_opts['amspacksinglemsg'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
+                                        int(globopts['ConnectionTimeout'.lower()]))
+
+                ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
+                         partdate, lfprofiles)
+
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                if fixed_date:
+                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir, fixed_date.replace('-', '_'))
+                else:
+                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
+                ret, excep = avro.write(lfprofiles)
+                if not ret:
+                    logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
+                    raise SystemExit(1)
 
             logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
 
-main()
+
+if __name__ == '__main__':
+    main()

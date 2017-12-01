@@ -1,14 +1,15 @@
 Name: argo-egi-connectors
-Version: 1.5.9
+Version: 1.6.0
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
 Url: http://argoeu.github.io/guides/sync/
-Vendor: SRCE <dvrcic@srce.hr, lgjenero@gmail.com>
+Vendor: SRCE <dvrcic@srce.hr>
 
 Obsoletes: ar-sync
 Prefix: %{_prefix}
+Requires: argo-ams-library
 Requires: avro
 Requires: pyOpenSSL
 Source0: %{name}-%{version}.tar.gz
@@ -18,7 +19,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
 Installs the components for syncing ARGO Compute Engine
-with GOCDB, VO topology and POEM definitions per day.
+with GOCDB, VAPOR and POEM definitions per day.
 
 %prep
 %setup -n %{name}-%{version}
@@ -29,20 +30,34 @@ python setup.py build
 %install
 python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/
+install --directory %{buildroot}/%{_localstatedir}/log/argo-connectors/
 install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
+%config(noreplace) /etc/argo-egi-connectors/*
 %attr(0755,root,root) %dir %{_libexecdir}/argo-egi-connectors/
 %attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/*.py*
 
 %attr(0644,root,root) %{_sysconfdir}/cron.d/*
 
 %attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
+%attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Thu Nov 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.6.0-1%{?dist}
+- ARGO-965 Support for packing connectors data in a single AMS message
+- ARGO-921 Use ComputationPower instead of HEPSPEC2006 value for weights
+- ARGO-906 No explicit exit on connection problem so state file will be written
+- ARGO-886 Finer retry logic
+- ARGO-872 Tenant and jobname in retries log msgs
+- ARGO-853 Connectors retry to fetch data
+- ARGO-843 Write/send data as it is data for passed date
+- ARGO-842 Connectors dedicated file logger
+- ARGO-549 Use of AMS for delivering topology, downtimes, POEM profile and weights
+- added unit tests
 * Tue Apr 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.9-1%{?dist}
 - ARGO-724 Each connector must try to create states directory structure
 * Wed Mar 29 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.8-1%{?dist}

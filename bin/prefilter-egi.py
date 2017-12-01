@@ -31,9 +31,10 @@ import os
 import sys
 import time
 
-from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.writers import Logger
-from argo_egi_connectors.helpers import gen_fname_repdate
+from argo_egi_connectors.config import Global
+from argo_egi_connectors.helpers import filename_date
+from argo_egi_connectors.log import Logger
+
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
@@ -54,7 +55,7 @@ def poemProfileFilenameCheck(year, month, day):
         year = dt.strftime("%Y")
         month = dt.strftime("%m")
         day = dt.strftime("%d")
-        fileName = gen_fname_repdate(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '', datestamp = year + '_' + month + '_' + day)
+        fileName = filename_date(logger, globopts['PrefilterPoemExpandedProfiles'.lower()], '', stamp = year + '_' + month + '_' + day)
         if os.path.isfile(fileName):
             break
         if count >= int(globopts['PrefilterLookbackPoemExpandedProfiles'.lower()]):
@@ -77,7 +78,7 @@ def loadNGIs(*args, **kwargs):
             poemfile = kwargs['poemfile']
         assert poemfile is not None
         poemProfileFile = open(poemfile, 'r')
-    except (IOError, AssertionError) as e:
+    except (IOError, AssertionError):
         logger.error('Cannot open POEM file with expanded profiles for every monitoring instance')
         raise SystemExit(1)
 
@@ -260,7 +261,7 @@ def getProfilesForConsumerMessage(profileTree, nameMapping, logItem):
 
 
 def prefilterit(reader, writer, ngis, profiles, nameMapping):
-    num_falsemonhost, num_falseprofile, num_falseroc, num_msgs, rejected = 0, 0, 0, 0, 0
+    num_falsemonhost, num_falseprofile, num_falseroc, num_msgs, = 0, 0, 0, 0
     for logItem in reader:
         num_msgs += 1
         if not logItem.get('monitoring_host'):
@@ -306,15 +307,10 @@ def main():
     global logger
     logger = Logger(os.path.basename(sys.argv[0]))
 
-    prefilter = {'Prefilter': ['ConsumerFilePath', 'PoemExpandedProfiles', 'PoemNameMapping', 'LookbackPoemExpandedProfiles']}
-    schemas = {'AvroSchemas': ['Prefilter']}
-    output = {'Output': ['Prefilter']}
     confpath = options.gloconf if options.gloconf else None
-    cglob = Global(confpath, schemas, output, prefilter)
+    cglob = Global(sys.argv[0], confpath)
     global globopts
     globopts = cglob.parse()
-
-    stats = ()
 
     if options.cfile and options.date:
         parser.print_help()
@@ -341,12 +337,12 @@ def main():
     if options.cfile:
         inputFile = options.cfile
     else:
-        inputFile = gen_fname_repdate(logger, globopts['PrefilterConsumerFilePath'.lower()], '', datestamp=year + '-' + month + '-' + day)
+        inputFile = filename_date(logger, globopts['PrefilterConsumerFilePath'.lower()], '', stamp=year + '-' + month + '-' + day)
     if options.ofile:
         fname = options.ofile + '_DATE.avro'
-        outputFile = gen_fname_repdate(logger, fname, '', datestamp=year + '_' + month + '_' + day)
+        outputFile = filename_date(logger, fname, '', stamp=year + '_' + month + '_' + day)
     else:
-        outputFile = gen_fname_repdate(logger, globopts['OutputPrefilter'.lower()], '', datestamp=year + '_' + month + '_' + day)
+        outputFile = filename_date(logger, globopts['OutputPrefilter'.lower()], '', stamp=year + '_' + month + '_' + day)
 
 
     try:

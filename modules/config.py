@@ -1,39 +1,181 @@
 import ConfigParser
 import os, re, errno
-from argo_egi_connectors.writers import SingletonLogger as Logger
+from log import Logger
 
 class Global:
-    def __init__(self, confpath, *args, **kwargs):
+    """
+       Class represents parser for global.conf
+    """
+    # options common for all connectors
+    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk', 'PackSingleMsg']}
+    conf_general = {'General': ['PublishAms', 'WriteAvro']}
+    conf_certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
+                                     'VerifyServerCert']}
+    conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry']}
+    conf_state = {'InputState': ['SaveDir', 'Days']}
+
+    # options specific for every connector
+    conf_topo_schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints',
+                                         'TopologyGroupOfGroups']}
+    conf_topo_output = {'Output': ['TopologyGroupOfEndpoints',
+                                   'TopologyGroupOfGroups']}
+    conf_downtimes_schemas = {'AvroSchemas': ['Downtimes']}
+    conf_downtimes_output = {'Output': ['Downtimes']}
+    conf_weights_schemas = {'AvroSchemas': ['Weights']}
+    conf_weights_output = {'Output': ['Weights']}
+    conf_poem_output = {'Output': ['Poem']}
+    conf_poem_schemas = {'AvroSchemas': ['Poem']}
+    conf_poem_prefilter = {'Prefilter': ['PoemExpandedProfiles']}
+    conf_prefilter_prefilter = {'Prefilter': ['ConsumerFilePath',
+                                              'PoemExpandedProfiles',
+                                              'PoemNameMapping',
+                                              'LookbackPoemExpandedProfiles']}
+    conf_prefilter_schemas = {'AvroSchemas': ['Prefilter']}
+    conf_prefilter_output = {'Output': ['Prefilter']}
+
+    def __init__(self, caller, confpath=None, **kwargs):
+        self.optional = dict()
+
         self.logger = Logger(str(self.__class__))
-        self._args = args
         self._filename = '/etc/argo-egi-connectors/global.conf' if not confpath else confpath
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
 
+        self.optional.update(self._lowercase_dict(self.conf_ams))
+
+        self.shared_secopts = self._merge_dict(self.conf_ams,
+                                               self.conf_general,
+                                               self.conf_certs, self.conf_conn,
+                                               self.conf_state)
+        self.secopts = {'topology-gocdb-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_topo_schemas,
+                                         self.conf_topo_output),
+                        'downtimes-gocdb-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_downtimes_schemas,
+                                         self.conf_downtimes_output),
+                        'weights-vapor-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_weights_schemas,
+                                         self.conf_weights_output),
+                        'poem-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_poem_schemas,
+                                         self.conf_poem_output,
+                                         self.conf_poem_prefilter),
+                        'prefilter-egi.py':
+                        self._merge_dict(self.conf_general,
+                                         self.conf_prefilter_output,
+                                         self.conf_prefilter_schemas,
+                                         self.conf_prefilter_prefilter)
+                        }
+
+        if caller:
+            self.caller_secopts = self.secopts[os.path.basename(caller)]
+        else:
+            self.caller_secopts = self.shared_secopts
+
+    def _merge_dict(self, *args):
+        newd = dict()
+        for d in args:
+            newd.update(d)
+        return newd
+
+    def _lowercase_dict(self, d):
+        newd = dict()
+        for k in d.iterkeys():
+            opts = [o.lower() for o in d[k]]
+            newd[k.lower()] = opts
+        return newd
+
+    def merge_opts(self, custamsopt, section):
+        newd = custamsopt.copy()
+        opts = [o for o in self.options.keys() if o.startswith(section)]
+        for o in opts:
+            if o in newd:
+                continue
+            newd.update({o: self.options[o]})
+
+        return newd
+
+    def is_complete(self, opts, section):
+        all = set([section+o for o in self.optional[section]])
+        diff = all.symmetric_difference(opts.keys())
+        if diff:
+            return (False, diff)
+        return (True, None)
+
+    def _concat_sectopt(self, d):
+        opts = list()
+
+        for k in d.iterkeys():
+            for v in d[k]:
+                opts.append(k+v)
+
+        return opts
+
+    def _one_active(self, options):
+        loweropts = self._lowercase_dict(options)
+
+        lval = [eval(self.options[k]) for k in self._concat_sectopt(loweropts)]
+
+        if any(lval):
+            return True
+        else:
+            return False
+
     def parse(self):
         config = ConfigParser.ConfigParser()
+
         if not os.path.exists(self._filename):
             self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
+
         config.read(self._filename)
         options = {}
 
+        lower_section = [sec.lower() for sec in config.sections()]
+
         try:
-            for arg in self._args:
-                for sect, opts in arg.items():
-                    if sect not in config.sections():
-                        raise ConfigParser.NoSectionError(sect.lower())
-                    for opt in opts:
-                        for section in config.sections():
-                            if section.lower().startswith(sect.lower()):
+            for sect, opts in self.caller_secopts.items():
+                if (sect.lower() not in lower_section and
+                    sect.lower() not in self.optional.keys()):
+                    raise ConfigParser.NoSectionError(sect.lower())
+
+                for opt in opts:
+                    for section in config.sections():
+                        if section.lower().startswith(sect.lower()):
+                            try:
                                 optget = config.get(section, opt)
                                 if self._checkpath and os.path.isfile(optget) is False:
                                     raise OSError(errno.ENOENT, optget)
+
+                                if ('output' in section.lower() and
+                                    'DATE' not in optget):
+                                        logger.error('No DATE placeholder in %s' % option)
+                                        raise SystemExit(1)
+
                                 options.update({(sect+opt).lower(): optget})
+
+                            except ConfigParser.NoOptionError as e:
+                                s = e.section.lower()
+                                if (s in self.optional.keys() and
+                                    e.option in self.optional[s]):
+                                    pass
+                                else:
+                                    raise e
+
+            self.options = options
+
+            if not self._one_active(self.conf_general):
+                self.logger.error('At least one of %s needs to be True' % (', '.join(self._concat_sectopt(self.conf_general))))
+                raise SystemExit(1)
+
         except ConfigParser.NoOptionError as e:
             self.logger.error(e.message)
             raise SystemExit(1)
         except ConfigParser.NoSectionError as e:
-            self.logger.error("No section '%s' defined" % (e.args[0]))
+            self.logger.error("%s defined" % (e.args[0]))
             raise SystemExit(1)
         except OSError as e:
             self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
@@ -114,19 +256,21 @@ class PoemConf:
         return poemservers
 
 class CustomerConf:
+    """
+       Class with parser for customer.conf and additional helper methods
+    """
     _custattrs = None
     _cust = {}
     _defjobattrs = {'topology-gocdb-connector.py' : ['TopoFetchType',
                                                      'TopoSelectGroupOfGroups',
                                                      'TopoSelectGroupOfEndpoints',
-                                                     'TopoType','TopoFeed'],
-                    'topology-vo-connector.py': ['TopoSelectGroupOfGroups',
-                                                 'TopoType', 'TopoFeed'],
+                                                     'TopoFeed'],
                     'poem-connector.py': [],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed'],
                     'prefilter-egi.py': []}
     _jobs, _jobattrs = {}, None
+    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic', 'AmsPackSingleMsg']
     tenantdir = ''
 
     def __init__(self, caller, confpath, **kwargs):
@@ -147,18 +291,36 @@ class CustomerConf:
             raise SystemExit(1)
         config.read(self._filename)
 
+        lower_custopt = [oo.lower() for oo in self._cust_optional]
+
         for section in config.sections():
             if section.lower().startswith('CUSTOMER_'.lower()):
+                amsopts = dict()
+                amshost, amstoken, amsproject, amstopic = None, None, None, None
+
                 try:
                     custjobs = config.get(section, 'Jobs').split(',')
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                     custname = config.get(section, 'Name')
+
+                    for o in lower_custopt:
+                        try:
+                            code = "amsopts.update(%s = config.get(section, '%s'))" % (o, o)
+                            exec code
+                        except ConfigParser.NoOptionError as e:
+                            if e.option in lower_custopt:
+                                pass
+                            else:
+                                raise e
+
                 except ConfigParser.NoOptionError as e:
                     self.logger.error(e.message)
                     raise SystemExit(1)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
+                if amsopts:
+                    self._cust[section].update(AmsOpts=amsopts)
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -210,6 +372,12 @@ class CustomerConf:
 
     def get_jobdir(self, job):
         return self._dir_from_sect(job, self._jobs)
+
+    def get_amsopts(self, cust):
+        if 'AmsOpts' in self._cust[cust]:
+            return self._cust[cust]['AmsOpts']
+        else:
+            return dict()
 
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
@@ -274,7 +442,7 @@ class CustomerConf:
                     tags.update({m[0]: m[1]})
             else:
                 self.logger.error("Could not parse option %s: %s" % (option, tagstr))
-                return {}
+                return dict()
         return tags
 
     def get_gocdb_ggtags(self, job):
@@ -285,9 +453,6 @@ class CustomerConf:
 
     def get_vo_ggtags(self, job):
         return self._get_tags(job, 'TopoSelectGroupOfGroups')
-
-    def _get_toponame(self, job):
-        return self._jobs[job]['TopoType']
 
     def _get_feed(self, job, key):
         try:
@@ -323,16 +488,12 @@ class CustomerConf:
         for c in self.get_customers():
             for job in self.get_jobs(c):
                 if 'topology' in caller:
-                    if self._get_toponame(job) == name:
-                        feedurl = self._get_feed(job, 'TopoFeed')
-                        if feedurl:
-                            self._update_feeds(feeds, feedurl, job, c)
-                        elif not feedurl and name == 'VOFeed':
-                            self.logger.error("Could not get VO TopoFeed for job %s" % job)
-                            raise SystemExit(1)
-                        else:
-                            feedurl = deffeed
-                            self._update_feeds(feeds, feedurl, job, c)
+                    feedurl = self._get_feed(job, 'TopoFeed')
+                    if feedurl:
+                        self._update_feeds(feeds, feedurl, job, c)
+                    else:
+                        feedurl = deffeed
+                        self._update_feeds(feeds, feedurl, job, c)
                 elif 'downtimes' in caller:
                     feedurl = self._get_feed(job, 'DowntimesFeed')
                     if feedurl:
