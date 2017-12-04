@@ -43,7 +43,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %attr(0644,root,root) %{_sysconfdir}/cron.d/*
 
-%attr(0750,root,root) %dir %{_sharedstatedir}/argo-connectors/
+%attr(0755,root,root) %dir %{_sharedstatedir}/argo-connectors/
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
