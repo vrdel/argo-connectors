@@ -1,8 +1,9 @@
-FROM centos:centos6
+FROM centos:6.9
 MAINTAINER Themis Zamani themiszamani@gmail.com
 
-RUN yum -y update && \
-    yum install -y \
+RUN yum -y install epel-release 
+RUN yum -y makecache; yum -y update
+RUN yum install -y \
         gcc \
         git \
         libffi \
@@ -12,16 +13,15 @@ RUN yum -y update && \
         python \
         python-argparse \
         python-devel \
+        python-pip \
         python-setuptools \
         tar \
         wget
-
-RUN easy_install pip
-
 RUN pip install \
         argo_ams_library \
         avro \
         coverage \
+		cffi \
         cryptography \
         discover \
         httmock \
