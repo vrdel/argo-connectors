@@ -21,7 +21,7 @@ RUN pip install \
         argo_ams_library \
         avro \
         coverage \
-		cffi \
+        cffi \
         cryptography \
         discover \
         httmock \
