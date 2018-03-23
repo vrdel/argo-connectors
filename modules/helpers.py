@@ -39,7 +39,7 @@ class retry:
                         logger.warn('%s %s() Customer:%s Job:%s Retry:%d Sleeping:%d - %s' %
                                     (objname, self.func.__name__,
                                      logger.customer, logger.job,
-                                     i, self.sleepretry, error_message(e)))
+                                     i, self.sleepretry, repr(e)))
                         time.sleep(self.sleepretry)
                         pass
                 else:
@@ -47,28 +47,9 @@ class retry:
                 i += 1
         except Exception as e:
             logger.error('%s %s() Customer:%s Job:%s Giving up - %s' % (objname, self.func.__name__, logger.customer,
-                                                                        logger.job, error_message(e)))
+                                                                        logger.job, repr(e)))
             return False
         return result
-
-def error_message(exception):
-    global strerr, num_excp_expand
-    if isinstance(exception, Exception) and getattr(exception, 'args', False):
-        num_excp_expand += 1
-        if not error_message(exception.args):
-            return strerr
-    elif isinstance(exception, dict):
-        for s in exception.iteritems():
-            error_message(s)
-    elif isinstance(exception, list):
-        for s in exception:
-            error_message(s)
-    elif isinstance(exception, tuple):
-        for s in exception:
-            error_message(s)
-    elif isinstance(exception, str):
-        if num_excp_expand <= 1:
-            strerr += exception + ' '
 
 def date_check(arg):
     if re.search("[0-9]{4}-[0-9]{2}-[0-9]{2}", arg):
