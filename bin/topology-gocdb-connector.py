@@ -28,6 +28,7 @@ import argparse
 import copy
 import os
 import sys
+import re
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
@@ -50,14 +51,19 @@ custname = ''
 
 isok = True
 
+
+def rem_nonalpha(string):
+    return re.sub(r'\W*', '', string)
+
+
 class GOCDBReader:
     def __init__(self, feed, scopes):
         self._o = urlparse(feed)
         self.scopes = scopes if scopes else set(['NoScope'])
         for scope in self.scopes:
-            code = "self.serviceList%s = dict(); " % scope
-            code += "self.groupList%s = dict();" % scope
-            code += "self.siteList%s = dict()" % scope
+            code = "self.serviceList%s = dict(); " % rem_nonalpha(scope)
+            code += "self.groupList%s = dict();" % rem_nonalpha(scope)
+            code += "self.siteList%s = dict()" % rem_nonalpha(scope)
             exec code
         self.fetched = False
         self.state = True
@@ -70,7 +76,7 @@ class GOCDBReader:
         groups, gl = list(), list()
 
         for scope in self.scopes:
-            code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % scope
+            code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
             exec code
 
         for d in gl:
@@ -97,7 +103,7 @@ class GOCDBReader:
 
         if fetchtype == "ServiceGroups":
             for scope in self.scopes:
-                code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % scope
+                code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
                 exec code
             for d in gl:
                 g = dict()
@@ -110,7 +116,7 @@ class GOCDBReader:
         else:
             gg = []
             for scope in self.scopes:
-                code = "gg = gg + sorted([value for key, value in self.siteList%s.iteritems()], key=lambda s: s['ngi'])" % scope
+                code = "gg = gg + sorted([value for key, value in self.siteList%s.iteritems()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
                 exec code
 
             for gr in gg:
@@ -133,7 +139,7 @@ class GOCDBReader:
 
         groupofendpoints, ge = list(), list()
         for scope in self.scopes:
-            code = "ge = ge + sorted([value for key, value in self.serviceList%s.iteritems()], key=lambda s: s['site'])" % scope
+            code = "ge = ge + sorted([value for key, value in self.serviceList%s.iteritems()], key=lambda s: s['site'])" % rem_nonalpha(scope)
             exec code
 
         for gr in ge:
@@ -153,9 +159,9 @@ class GOCDBReader:
         scopequery = "'&scope='+scope"
         for scope in self.scopes:
             try:
-                eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
                 self.fetched = True
             except Exception:
                 self.state = False
