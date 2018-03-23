@@ -5,7 +5,7 @@ import xml.dom.minidom
 import os
 from xml.parsers.expat import ExpatError
 
-from argo_egi_connectors.helpers import error_message, retry
+from argo_egi_connectors.helpers import retry
 
 from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
 from OpenSSL.SSL import VERIFY_PEER
@@ -13,8 +13,10 @@ from OpenSSL.SSL import WantReadError as SSLWantReadError
 from ssl import SSLError
 from time import sleep
 
+
 class ConnectorError(Exception):
     pass
+
 
 @retry
 def connection(logger, msgprefix, globopts, scheme, host, url):
@@ -55,29 +57,29 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
         else:
             logger.critical('%sCustomer:%s Job:%s SSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                         logger.customer, logger.job,
-                                                                        scheme + '://' + host,
-                                                                        error_message(e)))
+                                                                        scheme + '://' + host + url,
+                                                                        repr(e)))
         return False
 
     except(socket.error, socket.timeout) as e:
         logger.warn('%sCustomer:%s Job:%s Connection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                        logger.customer, logger.job,
-                                                                       scheme + '://' + host,
-                                                                       error_message(e)))
+                                                                       scheme + '://' + host + url,
+                                                                       repr(e)))
         raise e
 
     except httplib.HTTPException as e:
         logger.warn('%sCustomer:%s Job:%s HTTP error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                  logger.customer, logger.job,
-                                                                 scheme + '://' + host,
-                                                                 error_message(e)))
+                                                                 scheme + '://' + host + url,
+                                                                 repr(e)))
         raise e
 
     except Exception as e:
         logger.critical('%sCustomer:%s Job:%s SSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                     logger.customer, logger.job,
-                                                                    scheme + '://' + host,
-                                                                    error_message(e)))
+                                                                    scheme + '://' + host + url,
+                                                                    repr(e)))
         return False
 
 
@@ -86,11 +88,11 @@ def parse_xml(logger, objname, globopts, buf, method):
         doc = xml.dom.minidom.parseString(buf)
 
     except ExpatError as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error parsing XML feed %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error parsing XML feed %s - %s' % (logger.customer, logger.job, method, repr(e)))
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, repr(e)))
         raise e
 
     else:
@@ -102,11 +104,11 @@ def parse_json(logger, objname, globopts, buf, method):
         doc = json.loads(buf)
 
     except ValueError as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error parsing JSON feed %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error parsing JSON feed %s - %s' % (logger.customer, logger.job, method, repr(e)))
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, error_message(e)))
+        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, repr(e)))
         raise e
 
     else:

@@ -28,6 +28,7 @@ import argparse
 import copy
 import os
 import sys
+import re
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
@@ -50,17 +51,23 @@ custname = ''
 
 isok = True
 
+
+def rem_nonalpha(string):
+    return re.sub(r'\W*', '', string)
+
+
 class GOCDBReader:
-    def __init__(self, feed, scopes):
+    def __init__(self, feed, scopes, paging=False):
         self._o = urlparse(feed)
         self.scopes = scopes if scopes else set(['NoScope'])
         for scope in self.scopes:
-            code = "self.serviceList%s = dict(); " % scope
-            code += "self.groupList%s = dict();" % scope
-            code += "self.siteList%s = dict()" % scope
+            code = "self.serviceList%s = dict(); " % rem_nonalpha(scope)
+            code += "self.groupList%s = dict();" % rem_nonalpha(scope)
+            code += "self.siteList%s = dict()" % rem_nonalpha(scope)
             exec code
         self.fetched = False
         self.state = True
+        self.paging = paging
 
     def getGroupOfServices(self):
         if not self.fetched:
@@ -70,7 +77,7 @@ class GOCDBReader:
         groups, gl = list(), list()
 
         for scope in self.scopes:
-            code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % scope
+            code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
             exec code
 
         for d in gl:
@@ -97,7 +104,7 @@ class GOCDBReader:
 
         if fetchtype == "ServiceGroups":
             for scope in self.scopes:
-                code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % scope
+                code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
                 exec code
             for d in gl:
                 g = dict()
@@ -110,7 +117,7 @@ class GOCDBReader:
         else:
             gg = []
             for scope in self.scopes:
-                code = "gg = gg + sorted([value for key, value in self.siteList%s.iteritems()], key=lambda s: s['ngi'])" % scope
+                code = "gg = gg + sorted([value for key, value in self.siteList%s.iteritems()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
                 exec code
 
             for gr in gg:
@@ -133,7 +140,7 @@ class GOCDBReader:
 
         groupofendpoints, ge = list(), list()
         for scope in self.scopes:
-            code = "ge = ge + sorted([value for key, value in self.serviceList%s.iteritems()], key=lambda s: s['site'])" % scope
+            code = "ge = ge + sorted([value for key, value in self.serviceList%s.iteritems()], key=lambda s: s['site'])" % rem_nonalpha(scope)
             exec code
 
         for gr in ge:
@@ -153,9 +160,9 @@ class GOCDBReader:
         scopequery = "'&scope='+scope"
         for scope in self.scopes:
             try:
-                eval("self.getSitesInternal(self.siteList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceGroups(self.groupList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (scope, '' if scope == 'NoScope' else scopequery))
+                eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
                 self.fetched = True
             except Exception:
                 self.state = False
@@ -173,9 +180,8 @@ class GOCDBReader:
                               self._o.scheme + '://' + self._o.netloc + pi)
         return doc
 
-    def getServiceEndpoints(self, serviceList, scope):
+    def _get_service_endpoints(self, serviceList, scope, doc):
         try:
-            doc = self._get_xmldata(scope, SERVENDPI)
             services = doc.getElementsByTagName('SERVICE_ENDPOINT')
             for service in services:
                 serviceId = ''
@@ -192,17 +198,39 @@ class GOCDBReader:
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
-        except input.ConnectorError as e:
-            raise e
-
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
                                                                                                       repr(e).replace('\'','').replace('\"', '')))
             raise e
 
-    def getSitesInternal(self, siteList, scope):
+    def getServiceEndpoints(self, serviceList, scope):
         try:
-            doc = self._get_xmldata(scope, SITESPI)
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._get_xmldata(scope, SERVENDPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._get_service_endpoints(serviceList, scope, doc)
+
+            else:
+                doc = self._get_xmldata(scope, SERVENDPI)
+                self._get_service_endpoints(serviceList, scope, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
+    def _get_sites_internal(self, siteList, scope, doc):
+        try:
             sites = doc.getElementsByTagName('SITE')
             for site in sites:
                 siteName = site.getAttribute('NAME')
@@ -213,15 +241,38 @@ class GOCDBReader:
                 siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
                 siteList[siteName]['scope'] = scope.split('=')[1]
 
-        except input.ConnectorError as e:
-            raise e
-
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SITESPI,
                                                                                                         repr(e).replace('\'','').replace('\"', '')))
             raise e
 
-    def getServiceGroups(self, groupList, scope):
+    def getSitesInternal(self, siteList, scope):
+        try:
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._get_xmldata(scope, SITESPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._get_sites_internal(siteList, scope, doc)
+
+            else:
+                doc = self._get_xmldata(scope, SITESPI)
+                self._get_sites_internal(siteList, scope, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
+    def _get_service_groups(self, groupList, scope, doc):
         try:
             doc = self._get_xmldata(scope, SERVGROUPPI)
             groups = doc.getElementsByTagName('SERVICE_GROUP')
@@ -242,13 +293,37 @@ class GOCDBReader:
                     serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
                     groupList[groupId]['services'].append(serviceDict)
 
-        except input.ConnectorError as e:
-            raise e
-
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
                                                                                                         repr(e).replace('\'','').replace('\"', '')))
             raise e
+
+    def getServiceGroups(self, groupList, scope):
+        try:
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._get_xmldata(scope, SERVGROUPPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._get_service_groups(groupList, scope, doc)
+
+            else:
+                doc = self._get_xmldata(scope, SERVGROUPPI)
+                self._get_service_groups(groupList, scope, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
 
 
 class TopoFilter(object):
@@ -342,7 +417,8 @@ def main():
 
     for feed, jobcust in feeds.items():
         scopes = confcust.get_feedscopes(feed, jobcust)
-        gocdb = GOCDBReader(feed, scopes)
+        paging = confcust.is_paginated(feed, jobcust)
+        gocdb = GOCDBReader(feed, scopes, paging)
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
