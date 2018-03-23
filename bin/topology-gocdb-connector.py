@@ -57,7 +57,7 @@ def rem_nonalpha(string):
 
 
 class GOCDBReader:
-    def __init__(self, feed, scopes):
+    def __init__(self, feed, scopes, paging=False):
         self._o = urlparse(feed)
         self.scopes = scopes if scopes else set(['NoScope'])
         for scope in self.scopes:
@@ -67,6 +67,7 @@ class GOCDBReader:
             exec code
         self.fetched = False
         self.state = True
+        self.paging = paging
 
     def getGroupOfServices(self):
         if not self.fetched:
@@ -179,9 +180,8 @@ class GOCDBReader:
                               self._o.scheme + '://' + self._o.netloc + pi)
         return doc
 
-    def getServiceEndpoints(self, serviceList, scope):
+    def _get_service_endpoints(self, serviceList, scope, doc):
         try:
-            doc = self._get_xmldata(scope, SERVENDPI)
             services = doc.getElementsByTagName('SERVICE_ENDPOINT')
             for service in services:
                 serviceId = ''
@@ -198,17 +198,39 @@ class GOCDBReader:
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
-        except input.ConnectorError as e:
-            raise e
-
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
                                                                                                       repr(e).replace('\'','').replace('\"', '')))
             raise e
 
-    def getSitesInternal(self, siteList, scope):
+    def getServiceEndpoints(self, serviceList, scope):
         try:
-            doc = self._get_xmldata(scope, SITESPI)
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._get_xmldata(scope, SERVENDPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._get_service_endpoints(serviceList, scope, doc)
+
+            else:
+                doc = self._get_xmldata(scope, SERVENDPI)
+                self._get_service_endpoints(serviceList, scope, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
+    def _get_sites_internal(self, siteList, scope, doc):
+        try:
             sites = doc.getElementsByTagName('SITE')
             for site in sites:
                 siteName = site.getAttribute('NAME')
@@ -219,15 +241,38 @@ class GOCDBReader:
                 siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
                 siteList[siteName]['scope'] = scope.split('=')[1]
 
-        except input.ConnectorError as e:
-            raise e
-
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SITESPI,
                                                                                                         repr(e).replace('\'','').replace('\"', '')))
             raise e
 
-    def getServiceGroups(self, groupList, scope):
+    def getSitesInternal(self, siteList, scope):
+        try:
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._get_xmldata(scope, SITESPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._get_sites_internal(siteList, scope, doc)
+
+            else:
+                doc = self._get_xmldata(scope, SITESPI)
+                self._get_sites_internal(siteList, scope, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
+    def _get_service_groups(self, groupList, scope, doc):
         try:
             doc = self._get_xmldata(scope, SERVGROUPPI)
             groups = doc.getElementsByTagName('SERVICE_GROUP')
@@ -248,13 +293,37 @@ class GOCDBReader:
                     serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
                     groupList[groupId]['services'].append(serviceDict)
 
-        except input.ConnectorError as e:
-            raise e
-
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
                                                                                                         repr(e).replace('\'','').replace('\"', '')))
             raise e
+
+    def getServiceGroups(self, groupList, scope):
+        try:
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._get_xmldata(scope, SERVGROUPPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._get_service_groups(groupList, scope, doc)
+
+            else:
+                doc = self._get_xmldata(scope, SERVGROUPPI)
+                self._get_service_groups(groupList, scope, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
 
 
 class TopoFilter(object):
@@ -348,7 +417,8 @@ def main():
 
     for feed, jobcust in feeds.items():
         scopes = confcust.get_feedscopes(feed, jobcust)
-        gocdb = GOCDBReader(feed, scopes)
+        paging = confcust.is_paginated(feed, jobcust)
+        gocdb = GOCDBReader(feed, scopes, paging)
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
