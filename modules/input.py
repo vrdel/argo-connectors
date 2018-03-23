@@ -57,28 +57,28 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
         else:
             logger.critical('%sCustomer:%s Job:%s SSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                         logger.customer, logger.job,
-                                                                        scheme + '://' + host,
+                                                                        scheme + '://' + host + url,
                                                                         repr(e)))
         return False
 
     except(socket.error, socket.timeout) as e:
         logger.warn('%sCustomer:%s Job:%s Connection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                        logger.customer, logger.job,
-                                                                       scheme + '://' + host,
+                                                                       scheme + '://' + host + url,
                                                                        repr(e)))
         raise e
 
     except httplib.HTTPException as e:
         logger.warn('%sCustomer:%s Job:%s HTTP error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                  logger.customer, logger.job,
-                                                                 scheme + '://' + host,
+                                                                 scheme + '://' + host + url,
                                                                  repr(e)))
         raise e
 
     except Exception as e:
         logger.critical('%sCustomer:%s Job:%s SSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
                                                                     logger.customer, logger.job,
-                                                                    scheme + '://' + host,
+                                                                    scheme + '://' + host + url,
                                                                     repr(e)))
         return False
 
