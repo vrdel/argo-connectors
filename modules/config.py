@@ -264,7 +264,8 @@ class CustomerConf:
     _defjobattrs = {'topology-gocdb-connector.py' : ['TopoFetchType',
                                                      'TopoSelectGroupOfGroups',
                                                      'TopoSelectGroupOfEndpoints',
-                                                     'TopoFeed'],
+                                                     'TopoFeed',
+                                                     'TopoFeedPaging'],
                     'poem-connector.py': [],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed'],
@@ -272,6 +273,7 @@ class CustomerConf:
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic', 'AmsPackSingleMsg']
     tenantdir = ''
+    deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
     def __init__(self, caller, confpath, **kwargs):
         self.logger = Logger(str(self.__class__))
@@ -461,6 +463,16 @@ class CustomerConf:
             feed = ''
         return feed
 
+    def _is_paginated(self, job):
+        paging = False
+
+        try:
+            paging = self._jobs[job]['TopoFeedPaging']
+        except KeyError:
+            pass
+
+        return paging
+
     def _update_feeds(self, feeds, feedurl, job, cust):
         if feedurl in feeds.keys():
             feeds[feedurl].append((job, cust))
@@ -482,6 +494,16 @@ class CustomerConf:
                         distinct_scopes.update([g[1]])
 
         return distinct_scopes
+
+    def is_paginated(self, feed, jobcust):
+        paginated = False
+
+        for job, cust in jobcust:
+            paginated = self._is_paginated(job)
+            if paginated:
+                break
+
+        return eval(str(paginated))
 
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}
