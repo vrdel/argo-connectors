@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.6.0
+Version: 1.6.1
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -47,6 +47,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Tue Mar 27 2018 Daniel Vrcic <dvrcic@srce.hr> - 1.6.1-1%{?dist}
+- selectively use GOCDB paginated API for topology 
 * Thu Nov 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.6.0-1%{?dist}
 - ARGO-965 Support for packing connectors data in a single AMS message
 - ARGO-921 Use ComputationPower instead of HEPSPEC2006 value for weights
