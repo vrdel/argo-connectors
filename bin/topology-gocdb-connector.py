@@ -57,7 +57,7 @@ def rem_nonalpha(string):
 
 
 class GOCDBReader:
-    def __init__(self, feed, scopes, paging=False):
+    def __init__(self, feed, scopes, paging=False, auth=None):
         self._o = urlparse(feed)
         self.scopes = scopes if scopes else set(['NoScope'])
         for scope in self.scopes:
@@ -68,6 +68,7 @@ class GOCDBReader:
         self.fetched = False
         self.state = True
         self.paging = paging
+        self.custauth = auth
 
     def getGroupOfServices(self):
         if not self.fetched:
@@ -172,7 +173,7 @@ class GOCDBReader:
 
     def _get_xmldata(self, scope, pi):
         res = input.connection(logger, module_class_name(self), globopts,
-                               self._o.scheme, self._o.netloc, pi + scope)
+                               self._o.scheme, self._o.netloc, pi + scope, custauth=self.custauth)
         if not res:
             raise input.ConnectorError()
 
@@ -389,7 +390,7 @@ class TopoFilter(object):
 
 
 def main():
-    global logger, globopts
+    global logger, globopts, confcust
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
@@ -418,7 +419,8 @@ def main():
     for feed, jobcust in feeds.items():
         scopes = confcust.get_feedscopes(feed, jobcust)
         paging = confcust.is_paginated(feed, jobcust)
-        gocdb = GOCDBReader(feed, scopes, paging)
+        authopts = confcust.get_authopts(feed, jobcust)
+        gocdb = GOCDBReader(feed, scopes, paging, auth=authopts)
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)

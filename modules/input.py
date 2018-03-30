@@ -1,8 +1,9 @@
+import base64
 import httplib
 import json
+import os
 import socket
 import xml.dom.minidom
-import os
 from xml.parsers.expat import ExpatError
 
 from argo_egi_connectors.helpers import retry
@@ -19,7 +20,7 @@ class ConnectorError(Exception):
 
 
 @retry
-def connection(logger, msgprefix, globopts, scheme, host, url):
+def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
     try:
         buf = None
 
@@ -36,7 +37,13 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
             conn = httplib.HTTPConnection(host, 80,
                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
 
-        conn.request('GET', url)
+        if custauth:
+            if eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
+                userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':' \
+                                            + custauth['AuthenticationHttpPass'.lower()])
+                conn.request('GET', url, headers={'Authorization': 'Basic ' + userpass})
+        else:
+            conn.request('GET', url)
         resp = conn.getresponse()
 
         if resp.status != 200:
@@ -76,10 +83,10 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
         raise e
 
     except Exception as e:
-        logger.critical('%sCustomer:%s Job:%s SSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                                    logger.customer, logger.job,
-                                                                    scheme + '://' + host + url,
-                                                                    repr(e)))
+        logger.critical('%sCustomer:%s Job:%s Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                                                logger.customer, logger.job,
+                                                                scheme + '://' + host + url,
+                                                                repr(e)))
         return False
 
 
