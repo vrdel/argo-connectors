@@ -419,8 +419,14 @@ def main():
     for feed, jobcust in feeds.items():
         scopes = confcust.get_feedscopes(feed, jobcust)
         paging = confcust.is_paginated(feed, jobcust)
-        authopts = confcust.get_authopts(feed, jobcust)
-        gocdb = GOCDBReader(feed, scopes, paging, auth=authopts)
+        auth_custopts = confcust.get_authopts(feed, jobcust)
+        auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
+        auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
+        if auth_complete:
+            gocdb = GOCDBReader(feed, scopes, paging, auth=auth_opts)
+        else:
+            logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
+            continue
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)
