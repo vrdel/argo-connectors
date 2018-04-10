@@ -43,6 +43,15 @@ DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
 
 globopts = {}
 
+
+def getText(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+
 class GOCDBReader(object):
     def __init__(self, feed, auth=None):
         self._o = urlparse(feed)
@@ -77,13 +86,11 @@ class GOCDBReader(object):
             try:
                 for downtime in downtimes:
                     classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-                    hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                    serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                    startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-                    assert startStr != ''
-                    endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
-                    assert endStr != ''
-                    severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
+                    hostname = getText(downtime.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    serviceType = getText(downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    startStr = getText(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
+                    endStr = getText(downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes)
+                    severity = getText(downtime.getElementsByTagName('SEVERITY')[0].childNodes)
 
                     startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
                     endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
