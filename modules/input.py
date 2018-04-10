@@ -38,14 +38,13 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
             conn = httplib.HTTPConnection(host, 80,
                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
 
-        if custauth:
-            if eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
-                userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':' \
-                                            + custauth['AuthenticationHttpPass'.lower()])
-                conn.request('GET', url, headers={'Authorization': 'Basic ' + userpass})
-        else:
-            conn.request('GET', url)
+        headers = {}
+        if custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
+            userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':' \
+                                        + custauth['AuthenticationHttpPass'.lower()])
+            headers={'Authorization': 'Basic ' + userpass}
 
+        conn.request('GET', url, headers=headers)
         resp = conn.getresponse()
 
         if resp.status >= 300 and resp.status < 400:
@@ -63,7 +62,6 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
 
         else:
             raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
-
 
         return buf
 
@@ -99,6 +97,9 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
                                                                 scheme + '://' + host + url,
                                                                 repr(e)))
         return False
+
+    finally:
+        conn.close()
 
 
 def parse_xml(logger, objname, globopts, buf, method):
