@@ -4,7 +4,6 @@ import json
 import os
 import socket
 import xml.dom.minidom
-from xml.parsers.expat import ExpatError
 
 from argo_egi_connectors.helpers import retry
 
@@ -13,6 +12,8 @@ from OpenSSL.SSL import VERIFY_PEER
 from OpenSSL.SSL import WantReadError as SSLWantReadError
 from ssl import SSLError
 from time import sleep
+from xml.parsers.expat import ExpatError
+from urlparse import urlparse
 
 
 class ConnectorError(Exception):
@@ -44,15 +45,25 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
                 conn.request('GET', url, headers={'Authorization': 'Basic ' + userpass})
         else:
             conn.request('GET', url)
+
         resp = conn.getresponse()
 
-        if resp.status != 200:
-            raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
+        if resp.status >= 300 and resp.status < 400:
+            headers = resp.getheaders()
+            location = filter(lambda h: 'location' in h, headers)
+            redir = urlparse(location[0][1])
+
+            return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path, custauth=custauth)
 
         elif resp.status == 200:
             buf = resp.read()
             if not buf:
                 raise httplib.HTTPException('Empty response')
+
+
+        else:
+            raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
+
 
         return buf
 
