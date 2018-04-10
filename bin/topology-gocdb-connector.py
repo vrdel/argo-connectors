@@ -171,14 +171,14 @@ class GOCDBReader:
         return groupofendpoints
 
     def loadDataIfNeeded(self):
-        scopequery = "'&scope='+scope"
         for scope in self.scopes:
+            scopequery = "'&scope='+scope" if scope != 'NoScope' else "'&scope='"
             try:
-                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (rem_nonalpha(scope), scopequery))
                 if fetchtype == 'ServiceGroups':
-                    eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                    eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), scopequery))
                 else:
-                    eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                    eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), scopequery))
                 self.fetched = True
             except Exception:
                 self.state = False
