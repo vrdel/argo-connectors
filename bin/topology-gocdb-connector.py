@@ -98,8 +98,10 @@ class GOCDBReader:
                 g['hostname'] = service['hostname']
                 g['group_monitored'] = d['monitored']
                 g['tags'] = {'scope' : d['scope'], \
-                            'monitored' : '1' if service['monitored'] == "Y" else '0', \
-                            'production' : '1' if service['production'] == "Y" else '0'}
+                            'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
+                                                 service['monitored'].lower() == 'True'.lower() else '0', \
+                            'production' : '1' if service['production'].lower() == 'Y'.lower() or \
+                                                  service['production'].lower() == 'True'.lower() else '0'}
                 groups.append(g)
 
         return groups
@@ -120,7 +122,8 @@ class GOCDBReader:
                 g['type'] = 'PROJECT'
                 g['group'] = custname
                 g['subgroup'] = d['name']
-                g['tags'] = {'monitored' : '1' if d['monitored'] == 'Y' else '0',
+                g['tags'] = {'monitored' : '1' if d['monitored'].lower() == 'Y'.lower() or \
+                                                  d['monitored'].lower() == 'True'.lower() else '0',
                             'scope' : d['scope']}
                 groupofgroups.append(g)
         else:
@@ -159,8 +162,10 @@ class GOCDBReader:
             g['service'] = gr['type']
             g['hostname'] = gr['hostname']
             g['tags'] = {'scope' : gr['scope'], \
-                         'monitored' : '1' if gr['monitored'] == "Y" else '0', \
-                         'production' : '1' if gr['production'] == "Y" else '0'}
+                         'monitored' : '1' if gr['monitored'] == 'Y' or \
+                                              gr['monitored'] == 'True' else '0', \
+                         'production' : '1' if gr['production'] == 'Y' or \
+                                               gr['production'] == 'True' else '0'}
             groupofendpoints.append(g)
 
         return groupofendpoints
