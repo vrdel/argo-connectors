@@ -49,7 +49,7 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
 
         if resp.status >= 300 and resp.status < 400:
             headers = resp.getheaders()
-            location = filter(lambda h: 'location' in h, headers)
+            location = filter(lambda h: 'location' in h[0], headers)
             redir = urlparse(location[0][1])
 
             return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path, custauth=custauth)
