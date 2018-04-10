@@ -50,7 +50,10 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         if resp.status >= 300 and resp.status < 400:
             headers = resp.getheaders()
             location = filter(lambda h: 'location' in h[0], headers)
-            redir = urlparse(location[0][1])
+            if location:
+                redir = urlparse(location[0][1])
+            else:
+                raise httplib.HTTPException('No Location header set for redirect')
 
             return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path, custauth=custauth)
 
@@ -58,7 +61,6 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
             buf = resp.read()
             if not buf:
                 raise httplib.HTTPException('Empty response')
-
 
         else:
             raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
