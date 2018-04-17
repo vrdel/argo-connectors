@@ -175,10 +175,8 @@ class GOCDBReader:
             scopequery = "'&scope='+scope" if scope != 'NoScope' else "'&scope='"
             try:
                 eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (rem_nonalpha(scope), scopequery))
-                if fetchtype == 'ServiceGroups':
-                    eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), scopequery))
-                else:
-                    eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), scopequery))
+                eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), scopequery))
+                eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), scopequery))
                 self.fetched = True
             except Exception:
                 self.state = False
