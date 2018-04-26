@@ -55,7 +55,7 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
             else:
                 raise httplib.HTTPException('No Location header set for redirect')
 
-            return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path, custauth=custauth)
+            return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path + '?' + redir.query, custauth=custauth)
 
         elif resp.status == 200:
             buf = resp.read()
