@@ -43,12 +43,22 @@ DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
 
 globopts = {}
 
+
+def getText(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+
 class GOCDBReader(object):
-    def __init__(self, feed):
+    def __init__(self, feed, auth=None):
         self._o = urlparse(feed)
         self.argDateFormat = "%Y-%m-%d"
         self.WSDateFormat = "%Y-%m-%d %H:%M"
         self.state = True
+        self.custauth = auth
 
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
@@ -56,7 +66,8 @@ class GOCDBReader(object):
         try:
             res = input.connection(logger, module_class_name(self), globopts, self._o.scheme, self._o.netloc,
                                    DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
-                                                                                  end.strftime(self.argDateFormat)))
+                                                                                  end.strftime(self.argDateFormat)),
+                                   custauth=self.custauth)
             if not res:
                 raise input.ConnectorError()
 
@@ -75,13 +86,11 @@ class GOCDBReader(object):
             try:
                 for downtime in downtimes:
                     classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-                    hostname = downtime.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                    serviceType = downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                    startStr = downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes[0].data
-                    assert startStr != ''
-                    endStr = downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes[0].data
-                    assert endStr != ''
-                    severity = downtime.getElementsByTagName('SEVERITY')[0].childNodes[0].data
+                    hostname = getText(downtime.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    serviceType = getText(downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    startStr = getText(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
+                    endStr = getText(downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes)
+                    severity = getText(downtime.getElementsByTagName('SEVERITY')[0].childNodes)
 
                     startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
                     endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
@@ -153,8 +162,17 @@ def main():
         logger.job = jobs
         logger.customer = customers
 
-        gocdb = GOCDBReader(feed)
-        dts = gocdb.getDowntimes(start, end)
+        auth_custopts = confcust.get_authopts(feed, jobcust)
+        auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
+        auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
+        if auth_complete:
+            gocdb = GOCDBReader(feed, auth=auth_opts)
+            dts = gocdb.getDowntimes(start, end)
+        else:
+            logger.error('Customer:%s Jobs:%s %s options incomplete, missing %s'
+                         % (logger.customer, logger.job, 'authentication',
+                            ''.join(missing)))
+            continue
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)

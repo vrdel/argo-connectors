@@ -45,6 +45,16 @@ class TestConfig(unittest.TestCase):
                                       amstoken='token', amstopic='TOPIC',
                                       amsbulk='100', amspacksinglemsg='True'))
 
+    def testHttpAuthOpts(self):
+        globalopts = self.globalconfig.parse()
+        feeds = self.customerconfig.get_mapfeedjobs('topology-gocdb-connector.py', 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
+        jobcust = feeds.items()[0][1]
+        auth_custopts = self.customerconfig.get_authopts('foofeed', jobcust)
+        auth_opts = self.globalconfig.merge_opts(auth_custopts, 'authentication')
+        complete, missing = self.globalconfig.is_complete(auth_opts, 'authentication')
+        self.assertEqual(complete, False)
+        self.assertEqual(missing, set(['authenticationhttppass']))
+
     def testCustomerParse(self):
         opts = self.customerconfig.parse()
         customers = self.customerconfig.get_customers()

@@ -76,8 +76,6 @@ class AmsPublish(object):
     def _send(logger, msgprefix, retryopts, msgs, bulk, obj):
         timeout = retryopts['ConnectionTimeout'.lower()]
         try:
-            topic = obj.ams.topic(obj.topic, timeout=timeout)
-
             if bulk > 1:
                 q, r = divmod(len(msgs), bulk)
 
@@ -86,16 +84,16 @@ class AmsPublish(object):
                     e = bulk - 1
 
                     for i in range(q):
-                        topic.publish(msgs[s:e], timeout=timeout)
+                        obj.ams.publish(obj.topic, msgs[s:e], timeout=timeout)
                         s += bulk
                         e += bulk
-                    topic.publish(msgs[s:], timeout=timeout)
+                    obj.ams.publish(obj.topic, msgs[s:], timeout=timeout)
 
                 else:
-                    topic.publish(msgs, timeout=timeout)
+                    obj.ams.publish(obj.topic, msgs, timeout=timeout)
 
             else:
-                topic.publish(msgs, timeout=timeout)
+                obj.ams.publish(obj.topic, msgs, timeout=timeout)
 
         except AmsException as e:
             raise e

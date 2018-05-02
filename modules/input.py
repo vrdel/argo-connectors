@@ -1,9 +1,9 @@
+import base64
 import httplib
 import json
+import os
 import socket
 import xml.dom.minidom
-import os
-from xml.parsers.expat import ExpatError
 
 from argo_egi_connectors.helpers import retry
 
@@ -12,6 +12,8 @@ from OpenSSL.SSL import VERIFY_PEER
 from OpenSSL.SSL import WantReadError as SSLWantReadError
 from ssl import SSLError
 from time import sleep
+from xml.parsers.expat import ExpatError
+from urlparse import urlparse
 
 
 class ConnectorError(Exception):
@@ -19,7 +21,7 @@ class ConnectorError(Exception):
 
 
 @retry
-def connection(logger, msgprefix, globopts, scheme, host, url):
+def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
     try:
         buf = None
 
@@ -36,16 +38,32 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
             conn = httplib.HTTPConnection(host, 80,
                                           timeout=int(globopts['ConnectionTimeout'.lower()]))
 
-        conn.request('GET', url)
+        headers = {}
+        if custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
+            userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':' \
+                                        + custauth['AuthenticationHttpPass'.lower()])
+            headers={'Authorization': 'Basic ' + userpass}
+
+        conn.request('GET', url, headers=headers)
         resp = conn.getresponse()
 
-        if resp.status != 200:
-            raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
+        if resp.status >= 300 and resp.status < 400:
+            headers = resp.getheaders()
+            location = filter(lambda h: 'location' in h[0], headers)
+            if location:
+                redir = urlparse(location[0][1])
+            else:
+                raise httplib.HTTPException('No Location header set for redirect')
+
+            return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path + '?' + redir.query, custauth=custauth)
 
         elif resp.status == 200:
             buf = resp.read()
             if not buf:
                 raise httplib.HTTPException('Empty response')
+
+        else:
+            raise httplib.HTTPException('Response: %s %s' % (resp.status, resp.reason))
 
         return buf
 
@@ -76,11 +94,14 @@ def connection(logger, msgprefix, globopts, scheme, host, url):
         raise e
 
     except Exception as e:
-        logger.critical('%sCustomer:%s Job:%s SSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                                    logger.customer, logger.job,
-                                                                    scheme + '://' + host + url,
-                                                                    repr(e)))
+        logger.critical('%sCustomer:%s Job:%s Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
+                                                                logger.customer, logger.job,
+                                                                scheme + '://' + host + url,
+                                                                repr(e)))
         return False
+
+    finally:
+        conn.close()
 
 
 def parse_xml(logger, objname, globopts, buf, method):
