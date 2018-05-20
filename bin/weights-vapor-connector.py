@@ -145,7 +145,13 @@ def main():
                 logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
                 continue
 
-            output.write_state(sys.argv[0], jobstatedir, weights.state, globopts['InputStateDays'.lower()])
+            if fixed_date:
+                output.write_state(sys.argv[0], jobstatedir, weights.state,
+                                   globopts['InputStateDays'.lower()],
+                                   fixed_date.replace('-', '_'))
+            else:
+                output.write_state(sys.argv[0], jobstatedir, weights.state,
+                                   globopts['InputStateDays'.lower()])
 
             if not weights.state:
                 continue
