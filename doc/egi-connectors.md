@@ -83,8 +83,11 @@ Section configures parameters needed for AMS service. These are the complete opt
 	CAPAth = /etc/grid-security/certificates
 	HostKey = /etc/grid-security/hostkey.pem
 	HostCert = /etc/grid-security/hostcert.pem
+    UsePlainHttpAuth = False
+    HttpUser = xxxx
+    HttpPass = xxxx
 
-Each component that talks to GOCDB or POEM peer authenticates itself with a host certificate. `HostKey` indicates the private and `HostCert` indicates the public part of certificate. Additionally, server certificate can be validated with the help of `pyOpenSSL` rounding up the mutual authentication. `CAPath` contains certificates of authorities from which chain will be tried to be built upon validating.
+Each component that talks to GOCDB or POEM peer authenticates itself with a host certificate. `HostKey` indicates the private and `HostCert` indicates the public part of certificate. Additionally, server certificate can be validated with the help of `pyOpenSSL` rounding up the mutual authentication. `CAPath` contains certificates of authorities from which chain will be tried to be built upon validating. Basic HTTP authentication is also available for GOCDB-like services meaning that if `UsePlainHttpAuth` is set to `True`, `topology-gocdb-connector.py` and `downtimes-gocdb-connector.py` will use `HttpUser` and `HttpPass` to authenticate to service. Basic HTTP authentication options can be private to each customer so although it can be disabled globally, customer can enable them in `customer.conf` specifying `AuthenticationUsePlainHttpAuth`, `AuthenticationHttpUser` and `AuthenticationHttpPass` in `[CUSTOMER_*]` section.
 
 	[Connection]
 	Timeout = 180

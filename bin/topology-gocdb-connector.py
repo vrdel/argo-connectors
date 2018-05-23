@@ -56,8 +56,16 @@ def rem_nonalpha(string):
     return re.sub(r'\W*', '', string)
 
 
+def getText(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+
 class GOCDBReader:
-    def __init__(self, feed, scopes, paging=False):
+    def __init__(self, feed, scopes, paging=False, auth=None):
         self._o = urlparse(feed)
         self.scopes = scopes if scopes else set(['NoScope'])
         for scope in self.scopes:
@@ -68,6 +76,7 @@ class GOCDBReader:
         self.fetched = False
         self.state = True
         self.paging = paging
+        self.custauth = auth
 
     def getGroupOfServices(self):
         if not self.fetched:
@@ -89,8 +98,10 @@ class GOCDBReader:
                 g['hostname'] = service['hostname']
                 g['group_monitored'] = d['monitored']
                 g['tags'] = {'scope' : d['scope'], \
-                            'monitored' : '1' if service['monitored'] == "Y" else '0', \
-                            'production' : '1' if service['production'] == "Y" else '0'}
+                            'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
+                                                 service['monitored'].lower() == 'True'.lower() else '0', \
+                            'production' : '1' if service['production'].lower() == 'Y'.lower() or \
+                                                  service['production'].lower() == 'True'.lower() else '0'}
                 groups.append(g)
 
         return groups
@@ -111,7 +122,8 @@ class GOCDBReader:
                 g['type'] = 'PROJECT'
                 g['group'] = custname
                 g['subgroup'] = d['name']
-                g['tags'] = {'monitored' : '1' if d['monitored'] == 'Y' else '0',
+                g['tags'] = {'monitored' : '1' if d['monitored'].lower() == 'Y'.lower() or \
+                                                  d['monitored'].lower() == 'True'.lower() else '0',
                             'scope' : d['scope']}
                 groupofgroups.append(g)
         else:
@@ -150,19 +162,21 @@ class GOCDBReader:
             g['service'] = gr['type']
             g['hostname'] = gr['hostname']
             g['tags'] = {'scope' : gr['scope'], \
-                         'monitored' : '1' if gr['monitored'] == "Y" else '0', \
-                         'production' : '1' if gr['production'] == "Y" else '0'}
+                         'monitored' : '1' if gr['monitored'] == 'Y' or \
+                                              gr['monitored'] == 'True' else '0', \
+                         'production' : '1' if gr['production'] == 'Y' or \
+                                               gr['production'] == 'True' else '0'}
             groupofendpoints.append(g)
 
         return groupofendpoints
 
     def loadDataIfNeeded(self):
-        scopequery = "'&scope='+scope"
         for scope in self.scopes:
+            scopequery = "'&scope='+scope" if scope != 'NoScope' else "'&scope='"
             try:
-                eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
-                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (rem_nonalpha(scope), '' if scope == 'NoScope' else scopequery))
+                eval("self.getServiceEndpoints(self.serviceList%s, %s)" % (rem_nonalpha(scope), scopequery))
+                eval("self.getServiceGroups(self.groupList%s, %s)" % (rem_nonalpha(scope), scopequery))
+                eval("self.getSitesInternal(self.siteList%s, %s)" % (rem_nonalpha(scope), scopequery))
                 self.fetched = True
             except Exception:
                 self.state = False
@@ -172,7 +186,7 @@ class GOCDBReader:
 
     def _get_xmldata(self, scope, pi):
         res = input.connection(logger, module_class_name(self), globopts,
-                               self._o.scheme, self._o.netloc, pi + scope)
+                               self._o.scheme, self._o.netloc, pi + scope, custauth=self.custauth)
         if not res:
             raise input.ConnectorError()
 
@@ -189,12 +203,12 @@ class GOCDBReader:
                     serviceId = str(service.attributes['PRIMARY_KEY'].value)
                 if serviceId not in serviceList:
                     serviceList[serviceId] = {}
-                serviceList[serviceId]['hostname'] = service.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                serviceList[serviceId]['type'] = service.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                serviceList[serviceId]['monitored'] = service.getElementsByTagName('NODE_MONITORED')[0].childNodes[0].data
-                serviceList[serviceId]['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
-                serviceList[serviceId]['site'] = service.getElementsByTagName('SITENAME')[0].childNodes[0].data
-                serviceList[serviceId]['roc'] = service.getElementsByTagName('ROC_NAME')[0].childNodes[0].data
+                serviceList[serviceId]['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                serviceList[serviceId]['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                serviceList[serviceId]['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                serviceList[serviceId]['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                serviceList[serviceId]['site'] = getText(service.getElementsByTagName('SITENAME')[0].childNodes)
+                serviceList[serviceId]['roc'] = getText(service.getElementsByTagName('ROC_NAME')[0].childNodes)
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
@@ -236,9 +250,9 @@ class GOCDBReader:
                 siteName = site.getAttribute('NAME')
                 if siteName not in siteList:
                     siteList[siteName] = {'site': siteName}
-                siteList[siteName]['infrastructure'] = site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes[0].data
-                siteList[siteName]['certification'] = site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes[0].data
-                siteList[siteName]['ngi'] = site.getElementsByTagName('ROC')[0].childNodes[0].data
+                siteList[siteName]['infrastructure'] = getText(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
+                siteList[siteName]['certification'] = getText(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
+                siteList[siteName]['ngi'] = getText(site.getElementsByTagName('ROC')[0].childNodes)
                 siteList[siteName]['scope'] = scope.split('=')[1]
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -280,17 +294,17 @@ class GOCDBReader:
                 groupId = group.getAttribute('PRIMARY_KEY')
                 if groupId not in groupList:
                     groupList[groupId] = {}
-                groupList[groupId]['name'] = group.getElementsByTagName('NAME')[0].childNodes[0].data
-                groupList[groupId]['monitored'] = group.getElementsByTagName('MONITORED')[0].childNodes[0].data
+                groupList[groupId]['name'] = getText(group.getElementsByTagName('NAME')[0].childNodes)
+                groupList[groupId]['monitored'] = getText(group.getElementsByTagName('MONITORED')[0].childNodes)
                 groupList[groupId]['scope'] = scope.split('=')[1]
                 groupList[groupId]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
                 for service in services:
                     serviceDict = {}
-                    serviceDict['hostname'] = service.getElementsByTagName('HOSTNAME')[0].childNodes[0].data
-                    serviceDict['type'] = service.getElementsByTagName('SERVICE_TYPE')[0].childNodes[0].data
-                    serviceDict['monitored'] = service.getElementsByTagName('NODE_MONITORED')[0].childNodes[0].data
-                    serviceDict['production'] = service.getElementsByTagName('IN_PRODUCTION')[0].childNodes[0].data
+                    serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                    serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                     groupList[groupId]['services'].append(serviceDict)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -389,7 +403,7 @@ class TopoFilter(object):
 
 
 def main():
-    global logger, globopts
+    global logger, globopts, confcust
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
@@ -418,7 +432,14 @@ def main():
     for feed, jobcust in feeds.items():
         scopes = confcust.get_feedscopes(feed, jobcust)
         paging = confcust.is_paginated(feed, jobcust)
-        gocdb = GOCDBReader(feed, scopes, paging)
+        auth_custopts = confcust.get_authopts(feed, jobcust)
+        auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
+        auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
+        if auth_complete:
+            gocdb = GOCDBReader(feed, scopes, paging, auth=auth_opts)
+        else:
+            logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
+            continue
 
         for job, cust in jobcust:
             jobdir = confcust.get_fulldir(cust, job)

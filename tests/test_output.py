@@ -217,10 +217,6 @@ class WeightsAvro(unittest.TestCase):
 
 
 class PoemAms(unittest.TestCase):
-    get_topic_urlmatch = dict(netloc='localhost',
-                              path='/v1/projects/EGI/topics/TOPIC',
-                              method='GET')
-
     publish_topic_urlmatch = dict(netloc='localhost',
                                   path='/v1/projects/EGI/topics/TOPIC:publish',
                                   method='POST')
@@ -259,11 +255,6 @@ class PoemAms(unittest.TestCase):
                                                  int(self.globopts['connectionretry']),
                                                  int(self.globopts['connectiontimeout']))
     def testPoem(self):
-        @urlmatch(**self.get_topic_urlmatch)
-        def get_topic_mock(url, request):
-            # Return the details of a topic in json format
-            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
-
         @urlmatch(**self.publish_topic_urlmatch)
         def publish_bulk_mock(url, request):
             assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
@@ -286,7 +277,7 @@ class PoemAms(unittest.TestCase):
 
             return '{"msgIds": ["1", "2", "3"]}'
 
-        with HTTMock(get_topic_mock, publish_bulk_mock):
+        with HTTMock(publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasPoem'.lower()],
                                  'poem', datestamp().replace('_', '-'),
                                  self.poem)
@@ -305,17 +296,13 @@ class PoemAms(unittest.TestCase):
             return '{"msgIds": ["1"]}'
 
 
-        with HTTMock(get_topic_mock, publish_pack_mock):
+        with HTTMock(publish_pack_mock):
             ret = self.amspublish_pack.send(self.globopts['AvroSchemasPoem'.lower()],
                                  'poem', datestamp().replace('_', '-'),
                                  self.poem)
             self.assertTrue(ret)
 
 class WeightsAms(unittest.TestCase):
-    get_topic_urlmatch = dict(netloc='localhost',
-                              path='/v1/projects/EGI/topics/TOPIC',
-                              method='GET')
-
     publish_topic_urlmatch = dict(netloc='localhost',
                                   path='/v1/projects/EGI/topics/TOPIC:publish',
                                   method='POST')
@@ -354,11 +341,6 @@ class WeightsAms(unittest.TestCase):
                                                  int(self.globopts['connectiontimeout']))
 
     def testWeights(self):
-        @urlmatch(**self.get_topic_urlmatch)
-        def get_topic_mock(url, request):
-            # Return the details of a topic in json format
-            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
-
         @urlmatch(**self.publish_topic_urlmatch)
         def publish_bulk_mock(url, request):
             assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
@@ -382,16 +364,11 @@ class WeightsAms(unittest.TestCase):
             return '{"msgIds": ["1", "2", "3"]}'
 
 
-        with HTTMock(get_topic_mock, publish_bulk_mock):
+        with HTTMock(publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasWeights'.lower()],
                                  'weights', datestamp().replace('_', '-'),
                                  self.weights)
             self.assertTrue(ret)
-
-        @urlmatch(**self.get_topic_urlmatch)
-        def get_topic_mock(url, request):
-            # Return the details of a topic in json format
-            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
 
         @urlmatch(**self.publish_topic_urlmatch)
         def publish_pack_mock(url, request):
@@ -404,18 +381,13 @@ class WeightsAms(unittest.TestCase):
             self.assertEqual(req_body["messages"][0]["attributes"]["partition_date"], datestamp().replace('_', '-'))
             return '{"msgIds": ["1"]}'
 
-
-        with HTTMock(get_topic_mock, publish_pack_mock):
+        with HTTMock(publish_pack_mock):
             ret = self.amspublish_pack.send(self.globopts['AvroSchemasWeights'.lower()],
                                  'weights', datestamp().replace('_', '-'),
                                  self.weights)
             self.assertTrue(ret)
 
 class DowntimesAms(unittest.TestCase):
-    get_topic_urlmatch = dict(netloc='localhost',
-                              path='/v1/projects/EGI/topics/TOPIC',
-                              method='GET')
-
     publish_topic_urlmatch = dict(netloc='localhost',
                                   path='/v1/projects/EGI/topics/TOPIC:publish',
                                   method='POST')
@@ -454,11 +426,6 @@ class DowntimesAms(unittest.TestCase):
                                                  int(self.globopts['connectiontimeout']))
 
     def testDowntimes(self):
-        @urlmatch(**self.get_topic_urlmatch)
-        def get_topic_mock(url, request):
-            # Return the details of a topic in json format
-            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
-
         @urlmatch(**self.publish_topic_urlmatch)
         def publish_bulk_mock(url, request):
             assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
@@ -481,8 +448,7 @@ class DowntimesAms(unittest.TestCase):
 
             return '{"msgIds": ["1", "2", "3"]}'
 
-
-        with HTTMock(get_topic_mock, publish_bulk_mock):
+        with HTTMock(publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasDowntimes'.lower()],
                                       'downtimes', datestamp().replace('_', '-'), self.downtimes)
             self.assertTrue(ret)
@@ -498,7 +464,7 @@ class DowntimesAms(unittest.TestCase):
 
             return '{"msgIds": ["1"]}'
 
-        with HTTMock(get_topic_mock, publish_pack_mock):
+        with HTTMock(publish_pack_mock):
             ret = self.amspublish_pack.send(self.globopts['AvroSchemasDowntimes'.lower()],
                                             'downtimes', datestamp().replace('_', '-'),
                                             self.downtimes)
@@ -506,10 +472,6 @@ class DowntimesAms(unittest.TestCase):
 
 
 class TopologyAms(unittest.TestCase):
-    get_topic_urlmatch = dict(netloc='localhost',
-                              path='/v1/projects/EGI/topics/TOPIC',
-                              method='GET')
-
     publish_topic_urlmatch = dict(netloc='localhost',
                                   path='/v1/projects/EGI/topics/TOPIC:publish',
                                   method='POST')
@@ -548,11 +510,6 @@ class TopologyAms(unittest.TestCase):
                                                  int(self.globopts['connectiontimeout']))
 
     def testGroupGroups(self):
-        @urlmatch(**self.get_topic_urlmatch)
-        def get_topic_mock(url, request):
-            # Return the details of a topic in json format
-            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
-
         @urlmatch(**self.publish_topic_urlmatch)
         def publish_bulk_mock(url, request):
             assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
@@ -576,7 +533,7 @@ class TopologyAms(unittest.TestCase):
             return '{"msgIds": ["1", "2", "3"]}'
 
 
-        with HTTMock(get_topic_mock, publish_bulk_mock):
+        with HTTMock(publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
                                        'group_groups', datestamp().replace('_', '-'), self.group_groups)
             self.assertTrue(ret)
@@ -594,17 +551,12 @@ class TopologyAms(unittest.TestCase):
             return '{"msgIds": ["1"]}'
 
 
-        with HTTMock(get_topic_mock, publish_pack_mock):
+        with HTTMock(publish_pack_mock):
             ret = self.amspublish_pack.send(self.globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
                                        'group_groups', datestamp().replace('_', '-'), self.group_groups)
             self.assertTrue(ret)
 
     def testGroupEndpoints(self):
-        @urlmatch(**self.get_topic_urlmatch)
-        def get_topic_mock(url, request):
-            # Return the details of a topic in json format
-            return response(200, '{"name": "/projects/EGI/topics/TOPIC"}', None, None, 5, request)
-
         @urlmatch(**self.publish_topic_urlmatch)
         def publish_bulk_mock(url, request):
             assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
@@ -628,7 +580,7 @@ class TopologyAms(unittest.TestCase):
             return '{"msgIds": ["1", "2", "3"]}'
 
 
-        with HTTMock(get_topic_mock, publish_bulk_mock):
+        with HTTMock(publish_bulk_mock):
             ret = self.amspublish.send(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
                                        'group_endpoints', datestamp().replace('_', '-'), self.group_endpoints)
             self.assertTrue(ret)
@@ -645,7 +597,7 @@ class TopologyAms(unittest.TestCase):
             return '{"msgIds": ["1"]}'
 
 
-        with HTTMock(get_topic_mock, publish_pack_mock):
+        with HTTMock(publish_pack_mock):
             ret = self.amspublish_pack.send(self.globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
                                        'group_endpoints', datestamp().replace('_', '-'), self.group_endpoints)
             self.assertTrue(ret)

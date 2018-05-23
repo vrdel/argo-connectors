@@ -9,8 +9,9 @@ class Global:
     # options common for all connectors
     conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk', 'PackSingleMsg']}
     conf_general = {'General': ['PublishAms', 'WriteAvro']}
-    conf_certs = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
-                                     'VerifyServerCert']}
+    conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
+                                    'VerifyServerCert', 'UsePlainHttpAuth',
+                                    'HttpUser', 'HttpPass']}
     conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry']}
     conf_state = {'InputState': ['SaveDir', 'Days']}
 
@@ -41,10 +42,11 @@ class Global:
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
 
         self.optional.update(self._lowercase_dict(self.conf_ams))
+        self.optional.update(self._lowercase_dict(self.conf_auth))
 
         self.shared_secopts = self._merge_dict(self.conf_ams,
                                                self.conf_general,
-                                               self.conf_certs, self.conf_conn,
+                                               self.conf_auth, self.conf_conn,
                                                self.conf_state)
         self.secopts = {'topology-gocdb-connector.py':
                         self._merge_dict(self.shared_secopts,
@@ -88,8 +90,8 @@ class Global:
             newd[k.lower()] = opts
         return newd
 
-    def merge_opts(self, custamsopt, section):
-        newd = custamsopt.copy()
+    def merge_opts(self, custopt, section):
+        newd = custopt.copy()
         opts = [o for o in self.options.keys() if o.startswith(section)]
         for o in opts:
             if o in newd:
@@ -271,7 +273,9 @@ class CustomerConf:
                     'weights-vapor-connector.py': ['WeightsFeed'],
                     'prefilter-egi.py': []}
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic', 'AmsPackSingleMsg']
+    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
+                      'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
+                      'AuthenticationHttpUser', 'AuthenticationHttpPass']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -297,8 +301,7 @@ class CustomerConf:
 
         for section in config.sections():
             if section.lower().startswith('CUSTOMER_'.lower()):
-                amsopts = dict()
-                amshost, amstoken, amsproject, amstopic = None, None, None, None
+                optopts = dict()
 
                 try:
                     custjobs = config.get(section, 'Jobs').split(',')
@@ -308,7 +311,7 @@ class CustomerConf:
 
                     for o in lower_custopt:
                         try:
-                            code = "amsopts.update(%s = config.get(section, '%s'))" % (o, o)
+                            code = "optopts.update(%s = config.get(section, '%s'))" % (o, o)
                             exec code
                         except ConfigParser.NoOptionError as e:
                             if e.option in lower_custopt:
@@ -321,13 +324,21 @@ class CustomerConf:
                     raise SystemExit(1)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
-                if amsopts:
-                    self._cust[section].update(AmsOpts=amsopts)
+                if optopts:
+                    ams, auth = {}, {}
+                    for k, v in optopts.iteritems():
+                        if k.startswith('ams'):
+                            ams.update({k: v})
+                        if k.startswith('authentication'):
+                            auth.update({k: v})
+                    self._cust[section].update(AmsOpts=ams)
+                    self._cust[section].update(AuthOpts=auth)
 
                 if self._custattrs:
                     for attr in self._custattrs:
                         if config.has_option(section, attr):
                             self._cust[section].update({attr: config.get(section, attr)})
+
 
         for cust in self._cust:
             for job in self._cust[cust]['Jobs']:
@@ -380,6 +391,13 @@ class CustomerConf:
             return self._cust[cust]['AmsOpts']
         else:
             return dict()
+
+    def get_authopts(self, feed, jobcust):
+        for job, cust in jobcust:
+            if 'AuthOpts' in self._cust[cust]:
+                return self._cust[cust]['AuthOpts']
+            else:
+                return dict()
 
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'

@@ -205,6 +205,94 @@ class ConnectorSetup(object):
                 }
             ]"""
 
+    group_groups_feed = \
+        """<?xml version="1.0" encoding="UTF-8"?>
+           <results>
+           <SITE ID="40" PRIMARY_KEY="73G0" NAME="TU-Kosice">
+               <PRIMARY_KEY>73G0</PRIMARY_KEY>
+               <SHORT_NAME>TU-Kosice</SHORT_NAME>
+               <OFFICIAL_NAME>Technical University of Kosice</OFFICIAL_NAME>
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Site&amp;id=40</GOCDB_PORTAL_URL>
+               <HOME_URL>http://www.tuke.sk</HOME_URL>
+               <CONTACT_EMAIL>grid-adm@lists.tuke.sk</CONTACT_EMAIL>
+               <CONTACT_TEL>+421 55 602 5123</CONTACT_TEL>
+               <GIIS_URL>ldap://mon.grid.tuke.sk:2170/Mds-Vo-name=TU-Kosice,o=grid</GIIS_URL>
+               <COUNTRY_CODE>SK</COUNTRY_CODE>
+               <COUNTRY>Slovakia</COUNTRY>
+               <ROC>NGI_SK</ROC>
+               <PRODUCTION_INFRASTRUCTURE>Production</PRODUCTION_INFRASTRUCTURE>
+               <CERTIFICATION_STATUS>Certified</CERTIFICATION_STATUS>
+               <TIMEZONE>Europe/Bratislava</TIMEZONE>
+               <LATITUDE>48.73</LATITUDE>
+               <LONGITUDE>21.24</LONGITUDE>
+               <CSIRT_EMAIL>grid-adm@lists.tuke.sk</CSIRT_EMAIL>
+               <NOTIFICATIONS>FALSE</NOTIFICATIONS>
+               <DOMAIN>
+               <DOMAIN_NAME>tuke.sk</DOMAIN_NAME>
+               </DOMAIN>
+               <SITE_IP>0.0.0.0/255.255.255.255</SITE_IP>
+               <SCOPES>
+               <SCOPE>EGI</SCOPE>
+               </SCOPES>
+               <EXTENSIONS/>
+           </SITE>
+           <SITE ID="41" PRIMARY_KEY="201G0" NAME="IISAS-Bratislava">
+               <PRIMARY_KEY>201G0</PRIMARY_KEY>
+               <SHORT_NAME>IISAS-Bratislava</SHORT_NAME>
+               <OFFICIAL_NAME>Institute of Informatics, Slovak Academy of Sciences, Bratislava</OFFICIAL_NAME>
+               <SITE_DESCRIPTION>IISAS Bratislava production EGI site</SITE_DESCRIPTION>
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Site&amp;id=41</GOCDB_PORTAL_URL>
+               <CONTACT_EMAIL>grid-admin.ui@sav.sk</CONTACT_EMAIL>
+               <CONTACT_TEL>+421-2-5941-1289</CONTACT_TEL>
+               <GIIS_URL>ldap://sbdii.ui.savba.sk:2170/Mds-Vo-name=IISAS-Bratislava,o=grid</GIIS_URL>
+               <COUNTRY_CODE>SK</COUNTRY_CODE>
+               <COUNTRY>Slovakia</COUNTRY>
+               <ROC>NGI_SK</ROC>
+               <PRODUCTION_INFRASTRUCTURE>Production</PRODUCTION_INFRASTRUCTURE>
+               <CERTIFICATION_STATUS>Certified</CERTIFICATION_STATUS>
+               <TIMEZONE>Europe/Bratislava</TIMEZONE>
+               <LATITUDE>48.17</LATITUDE>
+               <LONGITUDE>17.07</LONGITUDE>
+               <CSIRT_EMAIL>grid-admin.ui@sav.sk</CSIRT_EMAIL>
+               <NOTIFICATIONS>FALSE</NOTIFICATIONS>
+               <DOMAIN>
+               <DOMAIN_NAME>ui.savba.sk</DOMAIN_NAME>
+               </DOMAIN>
+               <SITE_IP>0.0.0.0/255.255.255.255</SITE_IP>
+               <SCOPES>
+               <SCOPE>EGI</SCOPE>
+               </SCOPES>
+               <EXTENSIONS/>
+           </SITE>
+           <SITE ID="42" PRIMARY_KEY="8G0" NAME="prague_cesnet_lcg2_cert">
+               <PRIMARY_KEY>8G0</PRIMARY_KEY>
+               <SHORT_NAME>prague_cesnet_lcg2_cert</SHORT_NAME>
+               <OFFICIAL_NAME>Prague Cesnet</OFFICIAL_NAME>
+               <GOCDB_PORTAL_URL>https://goc.egi.eu/portal/index.php?Page_Type=Site&amp;id=42</GOCDB_PORTAL_URL>
+               <HOME_URL>www.cesnet.cz</HOME_URL>
+               <CONTACT_EMAIL>lcg-admin@fzu.cz</CONTACT_EMAIL>
+               <CONTACT_TEL>+420 2 6605 2145</CONTACT_TEL>
+               <GIIS_URL> ldap://skurut16.cesnet.cz:2170/mds-vo-name=prague_cesnet_lcg2_cert,o=grid</GIIS_URL>
+               <COUNTRY_CODE>CZ</COUNTRY_CODE>
+               <COUNTRY>Czech Republic</COUNTRY>
+               <ROC>NGI_CZ</ROC>
+               <PRODUCTION_INFRASTRUCTURE>Production</PRODUCTION_INFRASTRUCTURE>
+               <CERTIFICATION_STATUS>Closed</CERTIFICATION_STATUS>
+               <TIMEZONE>Europe/Prague</TIMEZONE>
+               <CSIRT_EMAIL>lcg-admin@fzu.cz</CSIRT_EMAIL>
+               <NOTIFICATIONS>FALSE</NOTIFICATIONS>
+               <DOMAIN>
+               <DOMAIN_NAME>cesnet.cz</DOMAIN_NAME>
+               </DOMAIN>
+               <SITE_IP>0.0.0.0/255.255.255.255</SITE_IP>
+               <SCOPES>
+               <SCOPE>EGI</SCOPE>
+               </SCOPES>
+               <EXTENSIONS/>
+               </SITE>
+           </results>
+        """
+
     group_endpoints_feed = \
         """<?xml version="1.0" encoding="UTF-8"?>\n
            <results>\n
@@ -301,20 +389,20 @@ class ConnectorSetup(object):
 
     weights = {u'FZK-LCG2': u'0', u'IN2P3-IRES': u'30414.559999999998', u'GRIF-LLR': u'0'}
 
-    group_groups = [{'group': u'AfricaArabia', 'subgroup': u'MA-01-CNRST',
+    group_groups = [{'group': u'NGI_SK', 'subgroup': u'IISAS-Bratislava',
                         'tags': {'certification': u'Certified',
-                                'infrastructure': u'Production',
-                                'scope': 'EGI'},
+                                 'infrastructure': u'Production',
+                                 'scope': 'EGI'},
                         'type': 'NGI'},
-                    {'group': u'AfricaArabia', 'subgroup': u'MA-04-CNRST-ATLAS',
+                    {'group': u'NGI_SK', 'subgroup': u'TU-Kosice',
                         'tags': {'certification': u'Certified',
-                                'infrastructure': u'Production',
-                                'scope': 'EGI'},
+                                 'infrastructure': u'Production',
+                                 'scope': 'EGI'},
                         'type': 'NGI'},
-                    {'group': u'AfricaArabia', 'subgroup': u'ZA-UCT-ICTS',
-                        'tags': {'certification': u'Suspended',
-                                'infrastructure': u'Production',
-                                'scope': 'EGI'},
+                    {'group': u'NGI_CZ', 'subgroup': u'prague_cesnet_lcg2_cert',
+                        'tags': {'certification': u'Closed',
+                                 'infrastructure': u'Production',
+                                 'scope': 'EGI'},
                         'type': 'NGI'}]
 
     group_endpoints = [{'group': u'100IT',
@@ -354,7 +442,8 @@ class TopologyXml(unittest.TestCase):
                                       'tests/global.conf',
                                       'tests/customer.conf')
         for c in ['globalconfig', 'customerconfig', 'globopts',
-                  'group_endpoints', 'group_groups', 'group_endpoints_feed']:
+                  'group_endpoints', 'group_groups', 'group_endpoints_feed',
+                  'group_groups_feed']:
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
@@ -387,6 +476,20 @@ class TopologyXml(unittest.TestCase):
         obj_sge = sorted(self.gocdbreader.getGroupOfEndpoints(),
                          key=lambda e: e['service'])
         self.assertEqual(sge, obj_sge)
+
+    @mock.patch('modules.input.connection')
+    def testSites(self, mock_conn):
+        siteslist = dict()
+        mock_conn.__name__ = 'mock_conn'
+        mock_conn.return_value = self.group_groups_feed
+        self.mock_conn = mock_conn
+        self.gocdbreader.getSitesInternal(siteslist, '&scope=EGI')
+        self.gocdbreader.siteListEGI = siteslist
+        self.gocdbreader.getGroupOfGroups.im_func.func_globals['fetchtype'] = 'SITES'
+        sgg = sorted(self.group_groups, key=lambda e: e['subgroup'])
+        obj_sgg = sorted(self.gocdbreader.getGroupOfGroups(),
+                         key=lambda e: e['subgroup'])
+        self.assertEqual(sgg, obj_sgg)
 
 class WeightsJson(unittest.TestCase):
     def setUp(self):
