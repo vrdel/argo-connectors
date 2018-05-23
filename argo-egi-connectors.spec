@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.6.1
+Version: 1.7.0
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Wed May 23 2018 Daniel Vrcic <dvrcic@srce.hr> - 1.7.0-1%{?dist}
+- ARGO-1093 Support for GOCDB paginated topology API
+- ARGO-1080 add support for basic-auth in Connectors
+- ARGO-966 Lower state files permissions
 * Tue Mar 27 2018 Daniel Vrcic <dvrcic@srce.hr> - 1.6.1-1%{?dist}
 - selectively use GOCDB paginated API for topology 
 * Thu Nov 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.6.0-1%{?dist}
