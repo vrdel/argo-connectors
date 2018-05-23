@@ -465,7 +465,13 @@ def main():
                 group_endpoints = gocdb.getGroupOfEndpoints()
             group_groups = gocdb.getGroupOfGroups()
 
-            output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()])
+            if fixed_date:
+                output.write_state(sys.argv[0], jobstatedir, gocdb.state,
+                                   globopts['InputStateDays'.lower()],
+                                   fixed_date.replace('-', '_'))
+            else:
+                output.write_state(sys.argv[0], jobstatedir, gocdb.state,
+                                   globopts['InputStateDays'.lower()])
 
             if not gocdb.state:
                 continue
