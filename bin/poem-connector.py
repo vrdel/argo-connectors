@@ -311,7 +311,7 @@ def main():
                 if fixed_date:
                     partdate = fixed_date
                 else:
-                    partdate = datestamp().replace('_', '-')
+                    partdate = datestamp(1).replace('_', '-')
 
                 ams = output.AmsPublish(ams_opts['amshost'],
                                         ams_opts['amsproject'],
