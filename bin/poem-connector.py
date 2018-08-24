@@ -49,16 +49,18 @@ class PoemReader:
     def __init__(self):
         self.state = True
 
-    def getProfiles(self, Profiles, PoemServer):
+    def getProfiles(self, Profiles, namespace, PoemServer):
 
         try:
-            validProfiles = self.loadValidProfiles(Profiles, PoemServer)
+            validProfiles = self.loadValidProfiles([namespace[i].upper() + '.' + Profiles[i] for i in range(len(namespace))],
+                                                   PoemServer)
 
             profileListAvro = []
 
             for profile in validProfiles.values():
                 for metric in profile['metrics']:
-                    profileListAvro.append({'profile' : profile['namespace'] + '.' + profile['name'], \
+                    ProfileNamespace = namespace[Profiles.index(profile['name'])]
+                    profileListAvro.append({'profile' : ProfileNamespace + '.' + profile['name'], \
                                             'metric' : metric['name'], \
                                             'service' : metric['service_flavour'], \
                                             'vo' : profile['vo'], \
@@ -183,7 +185,8 @@ def main():
     customers = confcust.get_customers()
     jobs = list()
     poemserver = dict()
-    nsprofiles = list()
+    profiles = list()
+    namespace = list()
     for c in customers:
         jobs = jobs + confcust.get_jobs(c)
         for j in jobs:
@@ -196,12 +199,13 @@ def main():
                     poemserver[confcust.get_poemserver_host(j)] = val + [confcust.get_poemserver_vo(j)]
             else:
                 poemserver[confcust.get_poemserver_host(j)] = confcust.get_poemserver_vo(j)
-            nsprofiles = nsprofiles + [confcust.get_namespace(j) + '.' + s for s in confcust.get_profiles(j)]
+            profiles = profiles + confcust.get_profiles(j)
+            namespace = namespace + [confcust.get_namespace(j)]
     jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
     logger.job = jobs
 
     readerInstance = PoemReader()
-    psa = readerInstance.getProfiles(nsprofiles, poemserver)
+    psa = readerInstance.getProfiles(profiles, namespace, poemserver)
 
     for cust in confcust.get_customers():
         # write profiles
