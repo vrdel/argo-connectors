@@ -26,13 +26,6 @@ class Global:
     conf_weights_output = {'Output': ['Weights']}
     conf_poem_output = {'Output': ['Poem']}
     conf_poem_schemas = {'AvroSchemas': ['Poem']}
-    conf_poem_prefilter = {'Prefilter': ['PoemExpandedProfiles']}
-    conf_prefilter_prefilter = {'Prefilter': ['ConsumerFilePath',
-                                              'PoemExpandedProfiles',
-                                              'PoemNameMapping',
-                                              'LookbackPoemExpandedProfiles']}
-    conf_prefilter_schemas = {'AvroSchemas': ['Prefilter']}
-    conf_prefilter_output = {'Output': ['Prefilter']}
 
     def __init__(self, caller, confpath=None, **kwargs):
         self.optional = dict()
@@ -63,13 +56,7 @@ class Global:
                         'poem-connector.py':
                         self._merge_dict(self.shared_secopts,
                                          self.conf_poem_schemas,
-                                         self.conf_poem_output,
-                                         self.conf_poem_prefilter),
-                        'prefilter-egi.py':
-                        self._merge_dict(self.conf_general,
-                                         self.conf_prefilter_output,
-                                         self.conf_prefilter_schemas,
-                                         self.conf_prefilter_prefilter)
+                                         self.conf_poem_output)
                         }
 
         if caller:
@@ -200,8 +187,8 @@ class CustomerConf:
                                           'PoemServerVO',
                                           'PoemNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
-                    'weights-vapor-connector.py': ['WeightsFeed'],
-                    'prefilter-egi.py': []}
+                    'weights-vapor-connector.py': ['WeightsFeed']
+                    }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
                       'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
