@@ -255,8 +255,8 @@ def main():
                                         int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))
 
-                # ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
-                #          partdate, lfprofiles)
+                ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
+                         partdate, lfprofiles)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:

@@ -198,7 +198,7 @@ class CustomerConf:
                                                      'TopoFeedPaging'],
                     'poem-connector.py': ['PoemServerHost',
                                           'PoemServerVO',
-                                          'Namespace'],
+                                          'PoemNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed'],
                     'prefilter-egi.py': []}
@@ -488,4 +488,4 @@ class CustomerConf:
         return self._jobs[job]['PoemServerVO']
 
     def get_namespace(self, job):
-        return self._jobs[job]['Namespace']
+        return self._jobs[job]['PoemNamespace']
