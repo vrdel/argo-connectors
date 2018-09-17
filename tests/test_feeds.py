@@ -674,5 +674,42 @@ class DowntimesXml(unittest.TestCase):
             self.assertTrue(gocdbreader.state in call[0])
             self.assertTrue('2017_01_19' in call[0])
 
+class PoemJson(unittest.TestCase):
+    def setUp(self):
+        self.connset = ConnectorSetup('poem-connector.py',
+                                      'tests/global.conf',
+                                      'tests/customer.conf')
+        for c in ['globalconfig', 'customerconfig', 'globopts', 'jobs', 'poem_feed', 'poem']:
+            code = """self.%s = self.connset.%s""" % (c, c)
+            exec code
+
+        self.poemreader = PoemReader()
+        self.orig_loadProfilesFromServer = self.poemreader.loadProfilesFromServer
+        self.poemreader.loadProfilesFromServer = self.wrap_loadProfilesFromServer
+
+    def wrap_loadProfilesFromServer(self, server, vo, profiles):
+        logger = Logger('poem-connector.py')
+        logger.customer = 'EGI'
+        logger.job = self.jobs[1]
+        self.orig_loadProfilesFromServer.im_func.func_globals['globopts'] = self.globopts
+        self.orig_loadProfilesFromServer.im_func.func_globals['input'].connection.func = self.mock_conn
+        self.orig_loadProfilesFromServer.im_func.func_globals['logger'] = logger
+        return self.orig_loadProfilesFromServer(server, vo, profiles)
+
+    @mock.patch('modules.input.connection')
+    def testgetProfiles(self, mock_conn):
+        profiles = self.customerconfig.get_profiles(self.jobs[1])
+        namespace = [self.customerconfig.get_namespace(self.jobs[1]),]
+        server = {self.customerconfig.get_poemserver_host(self.jobs[1]):
+                      [self.customerconfig.get_poemserver_vo(self.jobs[1]),]}
+        mock_conn.__name__ = 'mock_conn'
+        mock_conn.return_value = 'Erroneous JSON feed'
+        self.mock_conn = mock_conn
+        self.assertEqual(self.poemreader.getProfiles(profiles, namespace, server), [])
+
+        mock_conn.return_value = self.poem_feed
+        self.mock_conn = mock_conn
+        self.assertEqual(self.poemreader.getProfiles(profiles, namespace, server), self.poem)
+
 if __name__ == '__main__':
     unittest.main()
