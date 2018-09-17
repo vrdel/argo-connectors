@@ -8,6 +8,7 @@ from bin.downtimes_gocdb_connector import GOCDBReader as DowntimesGOCDBReader
 from bin.downtimes_gocdb_connector import main as downtimes_main
 from bin.topology_gocdb_connector import GOCDBReader
 from bin.weights_vapor_connector import Vapor as VaporReader
+from bin.poem_connector import PoemReader
 from modules.log import Logger
 
 class ConnectorSetup(object):
@@ -361,18 +362,63 @@ class ConnectorSetup(object):
            </SERVICE_ENDPOINT>\n
            </results>\n"""
 
-    poem = [{'metric': u'org.nordugrid.ARC-CE-ARIS',
-             'profile': u'ch.cern.sam.ARGO_MON_CRITICAL',
-             'service': u'ARC-CE',
-             'tags': {'fqan': u'', 'vo': 'ops'}},
-            {'metric': u'org.nordugrid.ARC-CE-IGTF',
-             'profile': u'ch.cern.sam.ARGO_MON_CRITICAL',
-             'service': u'ARC-CE',
-             'tags': {'fqan': u'', 'vo': 'ops'}},
-            {'metric': u'org.nordugrid.ARC-CE-result',
-             'profile': u'ch.cern.sam.ARGO_MON_CRITICAL',
-             'service': u'ARC-CE',
-             'tags': {'fqan': u'', 'vo': 'ops'}}]
+    poem_feed = """[
+        {"name": "ops", 
+         "profiles":
+             [
+                 {"name": "FEDCLOUD", 
+                  "namespace": "ch.cern.SAM", 
+                  "description": "Profile for Fedcloud CentOS 7 instance", 
+                  "metrics": 
+                      [
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi", 
+                           "name": "eu.egi.cloud.OCCI-AppDB-Sync", 
+                           "fqan": ""}, 
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi",
+                           "name": "eu.egi.cloud.OCCI-Categories", 
+                           "fqan": ""}, 
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi", 
+                           "name": "eu.egi.cloud.OCCI-Context", 
+                           "fqan": ""}, 
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi", 
+                           "name": "eu.egi.cloud.OCCI-VM-OIDC", 
+                           "fqan": ""}, 
+                          {"service_flavour": "org.openstack.nova", 
+                           "name": "eu.egi.cloud.OpenStack-VM-OIDC", 
+                           "fqan": ""}, 
+                          {"service_flavour": "org.openstack.nova", 
+                           "name": "eu.egi.cloud.OpenStack-VM-VOMS-OIDC", 
+                           "fqan": ""}
+                      ]
+                  }
+                 ]
+         }
+        ]"""
+
+    poem = [{'metric': u'eu.egi.cloud.OCCI-AppDB-Sync',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OCCI-Categories',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OCCI-Context',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OCCI-VM-OIDC',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OpenStack-VM-OIDC',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'org.openstack.nova',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OpenStack-VM-VOMS-OIDC',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'org.openstack.nova',
+             'fqan': u'', 'vo': 'ops'}]
 
     downtimes = [{'end_time': '2017-01-19T23:59:00Z',
                   'hostname': u'nagios.c4.csir.co.za',
@@ -627,7 +673,6 @@ class DowntimesXml(unittest.TestCase):
         for call in write_state.call_args_list[2:]:
             self.assertTrue(gocdbreader.state in call[0])
             self.assertTrue('2017_01_19' in call[0])
-
 
 if __name__ == '__main__':
     unittest.main()
