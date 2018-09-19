@@ -60,7 +60,7 @@ class TestConfig(unittest.TestCase):
         customers = self.customerconfig.get_customers()
         self.assertEqual(customers, ['CUSTOMER_EGI'])
         jobs = self.customerconfig.get_jobs(customers[0])
-        self.assertEqual(jobs, ['JOB_EGICritical', 'JOB_EGICloudmon'])
+        self.assertEqual(jobs, ['JOB_EGICritical', 'JOB_EGIFedcloud'])
         custdir = self.customerconfig.get_custdir(customers[0])
         self.assertEqual(custdir, '/var/lib/argo-connectors/EGI/')
         ggtags = self.customerconfig.get_gocdb_ggtags(jobs[0])
@@ -70,14 +70,25 @@ class TestConfig(unittest.TestCase):
         getags = self.customerconfig.get_gocdb_getags(jobs[0])
         self.assertEqual(getags, {'Scope': 'EGI', 'Production': 'Y', 'Monitored': 'Y'})
         profiles = self.customerconfig.get_profiles(jobs[0])
-        self.assertEqual(profiles, ['ROC_CRITICAL'])
+        self.assertEqual(profiles, ['ARGO_MON_CRITICAL'])
         feedjobs = self.customerconfig.get_mapfeedjobs('topology-gocdb-connector.py',
                                                        'GOCDB',
                                                        deffeed='https://goc.egi.eu/gocdbpi/')
         self.assertEqual(feedjobs, {'https://goc.egi.eu/gocdbpi/':
                                     [('JOB_EGICritical', 'CUSTOMER_EGI'),
-                                     ('JOB_EGICloudmon', 'CUSTOMER_EGI')]})
+                                     ('JOB_EGIFedcloud', 'CUSTOMER_EGI')]})
 
+    def testPoemServerOpts(self):
+        customerconfig = modules.config.CustomerConf('poem-connector.py', 'tests/customer.conf')
+        opts = customerconfig.parse()
+        customers = self.customerconfig.get_customers()
+        jobs = self.customerconfig.get_jobs(customers[0])
+        namespace = self.customerconfig.get_namespace(jobs[0])
+        self.assertEqual(namespace, 'ch.cern.SAM')
+        serverhost = self.customerconfig.get_poemserver_host(jobs[0])
+        self.assertEqual(serverhost, 'poem-devel.argo.grnet.gr')
+        vo = self.customerconfig.get_poemserver_vo(jobs[0])
+        self.assertEqual(vo, 'ops')
 
 
 if __name__ == '__main__':
