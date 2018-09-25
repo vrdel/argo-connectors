@@ -52,8 +52,9 @@ class PoemReader:
     def getProfiles(self, Profiles, namespace, PoemServer):
 
         try:
-            validProfiles = self.loadValidProfiles([namespace[i].upper() + '.' + Profiles[i] for i in range(len(namespace))],
-                                                   PoemServer)
+            for url, vos in PoemServer.items():
+                for vo in vos:
+                    validProfiles = self.loadProfilesFromServer(url, vo, [namespace[i].upper() + '.' + Profiles[i] for i in range(len(namespace))])
 
             profileListAvro = []
 
@@ -73,24 +74,6 @@ class PoemReader:
             return []
         else:
             return profileListAvro
-
-    def loadValidProfiles(self, Profiles, PoemServers):
-        validProfiles = dict()
-
-        try:
-            for url, vos in PoemServers.items():
-                for vo in vos:
-                    serverProfiles = self.loadProfilesFromServer(url, vo, Profiles)
-                    for profile in serverProfiles.keys():
-                        if not profile in validProfiles.keys():
-                            validProfiles[profile] = serverProfiles[profile]
-                            validProfiles[profile]['vo'] = vo
-
-        except Exception as e:
-            raise e
-
-        else:
-            return validProfiles
 
     def loadProfilesFromServer(self, server, vo, Profiles):
         validProfiles = dict()
@@ -133,6 +116,9 @@ class PoemReader:
                 for profile in json_data[0]['profiles']:
                     if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in Profiles:
                         validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
+
+                for profile in validProfiles.keys():
+                    validProfiles[profile]['vo'] = vo
 
             except Exception as e:
                 raise e
