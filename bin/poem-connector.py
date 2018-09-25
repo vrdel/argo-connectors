@@ -198,7 +198,7 @@ def main():
                     val = [poemserver[confcust.get_poemserver_host(j)]]
                     poemserver[confcust.get_poemserver_host(j)] = val + [confcust.get_poemserver_vo(j)]
             else:
-                poemserver[confcust.get_poemserver_host(j)] = confcust.get_poemserver_vo(j)
+                poemserver[confcust.get_poemserver_host(j)] = [confcust.get_poemserver_vo(j)]
             profiles = profiles + confcust.get_profiles(j)
             namespace = namespace + [confcust.get_namespace(j)]
     jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
