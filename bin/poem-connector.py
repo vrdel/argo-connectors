@@ -43,7 +43,7 @@ globopts, poemopts = {}, {}
 cpoem = None
 custname = ''
 
-MIPAPI = '/poem/api/0.2/json/metrics_in_profiles?vo_name='
+MIPAPI = '/poem/api/0.2/json/metrics_in_profiles?'
 
 class PoemReader:
     def __init__(self):
@@ -53,8 +53,7 @@ class PoemReader:
 
         try:
             for url, vos in PoemServer.items():
-                for vo in vos:
-                    validProfiles = self.loadProfilesFromServer(url, vo, [namespace[i].upper() + '.' + Profiles[i] for i in range(len(namespace))])
+                validProfiles = self.loadProfilesFromServer(url, list(set(vos)), namespace, Profiles)
 
             profileListAvro = []
 
@@ -66,7 +65,7 @@ class PoemReader:
                                             'service' : metric['service_flavour'], \
                                             'vo' : profile['vo'], \
                                             'fqan' : metric['fqan']})
-
+        #
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
             logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer, self._urlfeed,
@@ -75,7 +74,7 @@ class PoemReader:
         else:
             return profileListAvro
 
-    def loadProfilesFromServer(self, server, vo, Profiles):
+    def loadProfilesFromServer(self, server, vo, namespace, Profiles):
         validProfiles = dict()
 
         doFilterProfiles = False
@@ -85,7 +84,17 @@ class PoemReader:
         if not server.startswith('http'):
             server = 'https://' + server
 
-        self._urlfeed = server + MIPAPI + vo
+        self._urlfeed = server + MIPAPI
+        for i in vo:
+            self._urlfeed = self._urlfeed + 'vo_name=' + i + '&'
+
+        for j in Profiles:
+            self._urlfeed = self._urlfeed + 'profile=' + j + '&'
+
+        self._urlfeed = self._urlfeed[:-1]
+
+        Profiles = [namespace[i].upper() + '.' + Profiles[i] for i in range(len(namespace))]
+
         o = urlparse.urlparse(self._urlfeed, allow_fragments=True)
 
         try:
@@ -94,7 +103,8 @@ class PoemReader:
             logger.error('Customer:%s Invalid POEM PI URL: %s' % (logger.customer, self._urlfeed))
             raise SystemExit(1)
 
-        logger.info('Customer:%s Server:%s VO:%s' % (logger.customer, o.netloc, vo))
+        logger.info('Customer:%s Server:%s VO:%s' % (logger.customer, o.netloc, vo[0] if len(vo) == 1 else\
+                                                     '{0}'.format(','.join(vo))))
 
         try:
             res = input.connection(logger, module_class_name(self), globopts,
@@ -116,9 +126,6 @@ class PoemReader:
                 for profile in json_data[0]['profiles']:
                     if not doFilterProfiles or profile['namespace'].upper()+'.'+profile['name'] in Profiles:
                         validProfiles[profile['namespace'].upper()+'.'+profile['name']] = profile
-
-                for profile in validProfiles.keys():
-                    validProfiles[profile]['vo'] = vo
 
             except Exception as e:
                 raise e
