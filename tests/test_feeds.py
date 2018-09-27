@@ -368,7 +368,8 @@ class ConnectorSetup(object):
              [
                  {"name": "FEDCLOUD", 
                   "namespace": "ch.cern.SAM", 
-                  "description": "Profile for Fedcloud CentOS 7 instance", 
+                  "description": "Profile for Fedcloud CentOS 7 instance",
+                  "vo": "ops", 
                   "metrics": 
                       [
                           {"service_flavour": "eu.egi.cloud.vm-management.occi", 
@@ -479,6 +480,7 @@ class ConnectorSetup(object):
         self.globopts = self.globalconfig.parse()
         self.customerconfig.parse()
         customers = self.customerconfig.get_customers()
+        self.custname = self.customerconfig.get_custname(customers[0])
         self.jobs = self.customerconfig.get_jobs(customers[0])
         self.jobdir = self.customerconfig.get_fulldir(customers[0], self.jobs[0])
 
@@ -683,25 +685,25 @@ class PoemJson(unittest.TestCase):
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
-        self.poemreader = PoemReader()
+        self.poemreader = PoemReader('EGI', self.jobs[1])
         self.orig_loadProfilesFromServer = self.poemreader.loadProfilesFromServer
         self.poemreader.loadProfilesFromServer = self.wrap_loadProfilesFromServer
 
-    def wrap_loadProfilesFromServer(self, server, vo, profiles):
+    def wrap_loadProfilesFromServer(self, server, vo, namespace, profiles):
         logger = Logger('poem-connector.py')
         logger.customer = 'EGI'
         logger.job = self.jobs[1]
         self.orig_loadProfilesFromServer.im_func.func_globals['globopts'] = self.globopts
         self.orig_loadProfilesFromServer.im_func.func_globals['input'].connection.func = self.mock_conn
         self.orig_loadProfilesFromServer.im_func.func_globals['logger'] = logger
-        return self.orig_loadProfilesFromServer(server, vo, profiles)
+        return self.orig_loadProfilesFromServer(server, vo, namespace, profiles)
 
     @mock.patch('modules.input.connection')
     def testgetProfiles(self, mock_conn):
         profiles = self.customerconfig.get_profiles(self.jobs[1])
-        namespace = [self.customerconfig.get_namespace(self.jobs[1]),]
+        namespace = self.customerconfig.get_namespace(self.jobs[1])
         server = {self.customerconfig.get_poemserver_host(self.jobs[1]):
-                      [self.customerconfig.get_poemserver_vo(self.jobs[1]),]}
+                      self.customerconfig.get_poemserver_vo(self.jobs[1])}
         mock_conn.__name__ = 'mock_conn'
         mock_conn.return_value = 'Erroneous JSON feed'
         self.mock_conn = mock_conn
