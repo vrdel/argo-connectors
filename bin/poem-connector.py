@@ -46,14 +46,28 @@ custname = ''
 MIPAPI = '/poem/api/0.2/json/metrics_in_profiles?'
 
 class PoemReader:
-    def __init__(self):
+    def __init__(self, customer, job):
         self.state = True
+        self.customer = customer
+        self.job = job
 
     def getProfiles(self, Profiles, namespace, PoemServer):
 
         try:
             validProfiles = self.loadProfilesFromServer(PoemServer.keys()[0], PoemServer.values()[0], namespace,
                                                         Profiles)
+            name = []
+            for item in validProfiles.keys():
+                name.append(item.split('.')[-1])
+
+            if len(name) == 0:
+                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': no profiles were fetched!')
+                self.state = False
+                raise SystemExit(1)
+            elif len(name) < len(Profiles):
+                logger.warn('Customer:' + self.customer + ' Job:' + self.job + ': profile(s) %s were not fetched.'
+                            %','.join(set(Profiles) - set(name)))
+                self.state = False
 
             profileListAvro = []
 
@@ -184,7 +198,7 @@ def main():
             namespace = confcust.get_namespace(job)
             poemserver[confcust.get_poemserver_host(job)] = confcust.get_poemserver_vo(job)
 
-            readerInstance = PoemReader()
+            readerInstance = PoemReader(custname, job)
             psa = readerInstance.getProfiles(profiles, namespace, poemserver)
 
             jobdir = confcust.get_fulldir(cust, job)
