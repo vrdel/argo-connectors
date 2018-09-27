@@ -88,7 +88,7 @@ class TestConfig(unittest.TestCase):
         serverhost = self.customerconfig.get_poemserver_host(jobs[0])
         self.assertEqual(serverhost, 'poem-devel.argo.grnet.gr')
         vo = self.customerconfig.get_poemserver_vo(jobs[0])
-        self.assertEqual(vo, 'ops')
+        self.assertEqual(vo, ['ops'])
 
 
 if __name__ == '__main__':
