@@ -198,8 +198,8 @@ def main():
             namespace = confcust.get_namespace(job)
             poemserver[confcust.get_poemserver_host(job)] = confcust.get_poemserver_vo(job)
 
-            readerInstance = PoemReader(custname, job)
-            psa = readerInstance.getProfiles(profiles, namespace, poemserver)
+            poem = PoemReader(custname, job)
+            psa = poem.getProfiles(profiles, namespace, poemserver)
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -213,15 +213,15 @@ def main():
 
             if fixed_date:
                 output.write_state(sys.argv[0], jobstatedir,
-                                   readerInstance.state,
+                                   poem.state,
                                    globopts['InputStateDays'.lower()],
                                    fixed_date.replace('-', '_'))
             else:
                 output.write_state(sys.argv[0], jobstatedir,
-                                   readerInstance.state,
+                                   poem.state,
                                    globopts['InputStateDays'.lower()])
 
-            if not readerInstance.state:
+            if not poem.state:
                 continue
 
             lfprofiles = gen_outprofiles(psa, profiles)
