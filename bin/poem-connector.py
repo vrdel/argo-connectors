@@ -186,12 +186,12 @@ def main():
             if confcust.get_poemserver_host(j) in poemserver:
                 if isinstance(poemserver[confcust.get_poemserver_host(j)], (list,)):
                     poemserver[confcust.get_poemserver_host(j)] = poemserver[confcust.get_poemserver_host(j)] + \
-                                                                  [confcust.get_poemserver_vo(j)]
+                                                                  confcust.get_poemserver_vo(j)
                 else:
                     val = [poemserver[confcust.get_poemserver_host(j)]]
-                    poemserver[confcust.get_poemserver_host(j)] = val + [confcust.get_poemserver_vo(j)]
+                    poemserver[confcust.get_poemserver_host(j)] = val + confcust.get_poemserver_vo(j)
             else:
-                poemserver[confcust.get_poemserver_host(j)] = [confcust.get_poemserver_vo(j)]
+                poemserver[confcust.get_poemserver_host(j)] = confcust.get_poemserver_vo(j)
             profiles = profiles + confcust.get_profiles(j)
             namespace = namespace + [confcust.get_namespace(j)] * len(confcust.get_profiles(j))
     jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
