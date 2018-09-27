@@ -193,7 +193,7 @@ def main():
             else:
                 poemserver[confcust.get_poemserver_host(j)] = [confcust.get_poemserver_vo(j)]
             profiles = profiles + confcust.get_profiles(j)
-            namespace = namespace + [confcust.get_namespace(j)]
+            namespace = namespace + [confcust.get_namespace(j)] * len(confcust.get_profiles(j))
     jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
     logger.job = jobs
 
