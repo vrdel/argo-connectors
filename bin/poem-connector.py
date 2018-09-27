@@ -50,17 +50,17 @@ class PoemReader:
         self.state = True
 
     def getProfiles(self, Profiles, namespace, PoemServer):
+        validProfilesName = []
 
         try:
             for url, vos in PoemServer.items():
-                validProfiles = self.loadProfilesFromServer(url, list(set(vos)), namespace, Profiles)
+                validProfiles = self.loadProfilesFromServer(url, vos, namespace, Profiles)
 
             profileListAvro = []
 
             for profile in validProfiles.values():
                 for metric in profile['metrics']:
-                    ProfileNamespace = namespace[Profiles.index(profile['name'])]
-                    profileListAvro.append({'profile' : ProfileNamespace + '.' + profile['name'], \
+                    profileListAvro.append({'profile' : namespace + '.' + profile['name'], \
                                             'metric' : metric['name'], \
                                             'service' : metric['service_flavour'], \
                                             'vo' : profile['vo'], \
@@ -93,7 +93,7 @@ class PoemReader:
 
         self._urlfeed = self._urlfeed[:-1]
 
-        Profiles = [namespace[i].upper() + '.' + Profiles[i] for i in range(len(namespace))]
+        Profiles = [namespace.upper() + '.' + Profiles[i] for i in range(len(Profiles))]
 
         o = urlparse.urlparse(self._urlfeed, allow_fragments=True)
 
@@ -172,42 +172,21 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
-    customers = set(map(lambda c: confcust.get_custname(c), confcust.get_customers()))
-    customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
-    logger.customer = customers
-    customers = confcust.get_customers()
-    jobs = list()
-    poemserver = dict()
-    profiles = list()
-    namespace = list()
-    for c in customers:
-        jobs = jobs + confcust.get_jobs(c)
-        for j in jobs:
-            if confcust.get_poemserver_host(j) in poemserver:
-                if isinstance(poemserver[confcust.get_poemserver_host(j)], (list,)):
-                    poemserver[confcust.get_poemserver_host(j)] = poemserver[confcust.get_poemserver_host(j)] + \
-                                                                  confcust.get_poemserver_vo(j)
-                else:
-                    val = [poemserver[confcust.get_poemserver_host(j)]]
-                    poemserver[confcust.get_poemserver_host(j)] = val + confcust.get_poemserver_vo(j)
-            else:
-                poemserver[confcust.get_poemserver_host(j)] = confcust.get_poemserver_vo(j)
-            profiles = profiles + confcust.get_profiles(j)
-            namespace = namespace + [confcust.get_namespace(j)] * len(confcust.get_profiles(j))
-    jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
-    logger.job = jobs
-
-    readerInstance = PoemReader()
-    psa = readerInstance.getProfiles(profiles, namespace, poemserver)
-
     for cust in confcust.get_customers():
-        # write profiles
 
         custname = confcust.get_custname(cust)
 
         for job in confcust.get_jobs(cust):
             logger.customer = confcust.get_custname(cust)
             logger.job = job
+
+            poemserver = dict()
+            profiles = confcust.get_profiles(job)
+            namespace = confcust.get_namespace(job)
+            poemserver[confcust.get_poemserver_host(job)] = confcust.get_poemserver_vo(job)
+
+            readerInstance = PoemReader()
+            psa = readerInstance.getProfiles(profiles, namespace, poemserver)
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -232,7 +211,6 @@ def main():
             if not readerInstance.state:
                 continue
 
-            profiles = confcust.get_profiles(job)
             lfprofiles = gen_outprofiles(psa, profiles)
 
             if eval(globopts['GeneralPublishAms'.lower()]):
