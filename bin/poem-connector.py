@@ -50,11 +50,10 @@ class PoemReader:
         self.state = True
 
     def getProfiles(self, Profiles, namespace, PoemServer):
-        validProfilesName = []
 
         try:
-            for url, vos in PoemServer.items():
-                validProfiles = self.loadProfilesFromServer(url, vos, namespace, Profiles)
+            validProfiles = self.loadProfilesFromServer(PoemServer.keys()[0], PoemServer.values()[0], namespace,
+                                                        Profiles)
 
             profileListAvro = []
 
