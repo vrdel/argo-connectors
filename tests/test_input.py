@@ -723,7 +723,7 @@ class PoemJson(unittest.TestCase):
         self.poemreader.state = True
         with self.assertRaises(SystemExit) as cm:
             self.poemreader.getProfiles(['ARGO_MON_CRITICAL'], namespace, server)
-        self.assertEqual(cm.exception.code, 1)
+            self.assertEqual(cm.exception.code, 1)
         self.assertFalse(self.poemreader.state)
 
 if __name__ == '__main__':
