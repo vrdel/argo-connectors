@@ -61,13 +61,13 @@ class PoemReader:
                 name.append(item.split('.')[-1])
 
             if len(name) == 0:
-                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': no profiles were fetched!')
                 self.state = False
+                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': no profiles were fetched!')
                 raise SystemExit(1)
             elif len(name) < len(Profiles):
+                self.state = False
                 logger.warn('Customer:' + self.customer + ' Job:' + self.job + ': profile(s) %s were not fetched.'
                             %','.join(set(Profiles) - set(name)))
-                self.state = False
 
             profileListAvro = []
 
