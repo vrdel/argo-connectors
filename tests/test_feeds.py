@@ -686,6 +686,7 @@ class PoemJson(unittest.TestCase):
             exec code
 
         self.poemreader = PoemReader('EGI', self.jobs[1])
+        self.poemreader.state = True
         self.orig_loadProfilesFromServer = self.poemreader.loadProfilesFromServer
         self.poemreader.loadProfilesFromServer = self.wrap_loadProfilesFromServer
 
@@ -708,10 +709,22 @@ class PoemJson(unittest.TestCase):
         mock_conn.return_value = 'Erroneous JSON feed'
         self.mock_conn = mock_conn
         self.assertEqual(self.poemreader.getProfiles(profiles, namespace, server), [])
+        self.assertFalse(self.poemreader.state)
 
         mock_conn.return_value = self.poem_feed
         self.mock_conn = mock_conn
+        self.poemreader.state = True
         self.assertEqual(self.poemreader.getProfiles(profiles, namespace, server), self.poem)
+        self.assertTrue(self.poemreader.state)
+
+        self.assertEqual(self.poemreader.getProfiles(profiles + ['ARGO_MON_CRITICAL'], namespace, server), self.poem)
+        self.assertFalse(self.poemreader.state)
+
+        self.poemreader.state = True
+        with self.assertRaises(SystemExit) as cm:
+            self.poemreader.getProfiles(['ARGO_MON_CRITICAL'], namespace, server)
+        self.assertEqual(cm.exception.code, 1)
+        self.assertFalse(self.poemreader.state)
 
 if __name__ == '__main__':
     unittest.main()
