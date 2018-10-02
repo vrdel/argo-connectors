@@ -6,7 +6,7 @@ import unittest2 as unittest
 
 from bin.downtimes_gocdb_connector import GOCDBReader as DowntimesGOCDBReader
 from bin.downtimes_gocdb_connector import main as downtimes_main
-from bin.topology_gocdb_connector import GOCDBReader
+from bin.topology_gocdb_connector import GOCDBReader, TopoFilter
 from bin.weights_vapor_connector import Vapor as VaporReader
 from modules.log import Logger
 
@@ -390,20 +390,56 @@ class ConnectorSetup(object):
     weights = {u'FZK-LCG2': u'0', u'IN2P3-IRES': u'30414.559999999998', u'GRIF-LLR': u'0'}
 
     group_groups = [{'group': u'NGI_SK', 'subgroup': u'IISAS-Bratislava',
-                        'tags': {'certification': u'Certified',
-                                 'infrastructure': u'Production',
-                                 'scope': 'EGI'},
-                        'type': 'NGI'},
+                     'tags': {'certification': u'Certified',
+                              'infrastructure': u'Production',
+                              'scope': 'EGI'},
+                     'type': 'NGI'},
                     {'group': u'NGI_SK', 'subgroup': u'TU-Kosice',
-                        'tags': {'certification': u'Certified',
-                                 'infrastructure': u'Production',
-                                 'scope': 'EGI'},
-                        'type': 'NGI'},
+                     'tags': {'certification': u'Certified',
+                              'infrastructure': u'Production',
+                              'scope': 'EGI'},
+                     'type': 'NGI'},
                     {'group': u'NGI_CZ', 'subgroup': u'prague_cesnet_lcg2_cert',
-                        'tags': {'certification': u'Closed',
-                                 'infrastructure': u'Production',
-                                 'scope': 'EGI'},
-                        'type': 'NGI'}]
+                     'tags': {'certification': u'Closed',
+                              'infrastructure': u'Production',
+                              'scope': 'EGI'},
+                     'type': 'NGI'}]
+
+    group_groups_servicegroup_filter = [
+        {'group': 'EGI', 'subgroup': u'NGI_CH_SERVICES',
+         'tags': {'monitored': '1', 'scope': 'EGI'},
+         'type': 'PROJECT'},
+        {'group': 'EGI', 'subgroup': u'SLA_TEST_B',
+         'tags': {'monitored': '1', 'scope': 'EGI'},
+         'type': 'PROJECT'},
+        {'group': 'EGI', 'subgroup': u'NGI_HU_SERVICES',
+         'tags': {'monitored': '1', 'scope': 'EGI'},
+         'type': 'PROJECT'},
+        {'group': 'EGI', 'subgroup': u'SLA_TEST',
+         'tags': {'monitored': '1', 'scope': 'EGI'},
+         'type': 'PROJECT'},
+    ]
+
+    group_groups_sites_filter = [
+        {"group": "NGI_HR", "tags": {"scope": "EGI", "infrastructure":
+                                     "Production", "certification":
+                                     "Certified"},
+         "type": "NGI", "subgroup": "egee.irb.hr"},
+        {"group": "NGI_HR", "tags": {"scope": "EGI", "infrastructure":
+                                     "Production", "certification":
+                                     "Certified"},
+         "type": "NGI", "subgroup": "egee.srce.hr"}
+    ]
+
+    group_endpoints_sites_filter = [
+        {"group": "egee.irb.hr", "hostname": "lorienmaster.irb.hr",
+         "type": "SITES", "service": "Site-BDII",
+         "tags": {"scope": "EGI", "production": "1", "monitored": "1"}},
+        {"group": "egee.srce.hr", "hostname": "se.srce.egi.cro-ngi.hr",
+         "type": "SITES", "service": "gLite-APEL", "tags": {"scope": "EGI",
+                                                    "production": "1",
+                                                    "monitored": "1"}}
+    ]
 
     group_endpoints = [{'group': u'100IT',
                         'hostname': u'occi-api.100percentit.com',
@@ -427,6 +463,33 @@ class ConnectorSetup(object):
                                  'scope': 'EGI'},
                         'type': 'SITES'}]
 
+    group_endpoints_servicegroup_filter = [
+        {'group': u'SLA_TEST_B',
+         'group_monitored': u'Y',
+         'hostname': u'snf-189278.vm.okeanos.grnet.gr',
+         'service': u'eu.egi.MPI',
+         'tags': {'monitored': '1', 'production': '1', 'scope': 'EGI'},
+         'type': 'SERVICEGROUPS'},
+        {'group': u'SLA_TEST',
+         'group_monitored': u'Y',
+         'hostname': u'se01.marie.hellasgrid.gr',
+         'service': u'SRM',
+         'tags': {'monitored': '1', 'production': '1', 'scope': 'EGI'},
+         'type': 'SERVICEGROUPS'},
+        {'group': u'NGI_HU_SERVICES',
+         'group_monitored': u'Y',
+         'hostname': u'grid153.kfki.hu',
+         'service': u'MyProxy',
+         'tags': {'monitored': '1', 'production': '1', 'scope': 'EGI'},
+         'type': 'SERVICEGROUPS'},
+        {'group': u'NGI_HU_SERVICES',
+         'group_monitored': u'Y',
+         'hostname': u'grid146.kfki.hu',
+         'service': u'ngi.ARGUS',
+         'tags': {'monitored': '1', 'production': '1', 'scope': 'EGI'},
+         'type': 'SERVICEGROUPS'}
+    ]
+
     def __init__(self, connector, gconf, cconf):
         self.globalconfig = modules.config.Global(connector, gconf)
         self.customerconfig = modules.config.CustomerConf(connector, cconf)
@@ -443,7 +506,9 @@ class TopologyXml(unittest.TestCase):
                                       'tests/customer.conf')
         for c in ['globalconfig', 'customerconfig', 'globopts',
                   'group_endpoints', 'group_groups', 'group_endpoints_feed',
-                  'group_groups_feed']:
+                  'group_groups_feed', 'group_groups_servicegroup_filter',
+                  'group_endpoints_servicegroup_filter',
+                  'group_endpoints_sites_filter', 'group_groups_sites_filter']:
             code = """self.%s = self.connset.%s""" % (c, c)
             exec code
 
@@ -490,6 +555,53 @@ class TopologyXml(unittest.TestCase):
         obj_sgg = sorted(self.gocdbreader.getGroupOfGroups(),
                          key=lambda e: e['subgroup'])
         self.assertEqual(sgg, obj_sgg)
+
+    def testTopoFilter(self):
+        groupfilter = {'Monitored': 'Y',
+                       'Scope': 'EGI',
+                       'ServiceGroup': 'SLA_TEST'}
+        subgroupfilter = {'Monitored': 'Y',
+                          'Production': 'Y',
+                          'Scope': 'EGI'}
+        tf = TopoFilter(self.group_groups_servicegroup_filter,
+                        self.group_endpoints_servicegroup_filter,
+                        groupfilter,
+                        subgroupfilter)
+        self.assertEqual(tf.gg, [{'group': 'EGI', 'subgroup': u'SLA_TEST',
+                                  'tags': {'monitored': '1', 'scope': 'EGI'},
+                                  'type': 'PROJECT'}])
+        self.assertEqual(tf.ge, [{'group': u'SLA_TEST',
+                                  'group_monitored': 'Y',
+                                  'hostname': 'se01.marie.hellasgrid.gr',
+                                  'service': 'SRM',
+                                  'tags': {'monitored': '1',
+                                           'production': '1',
+                                           'scope': 'EGI'},
+                                  'type': 'SERVICEGROUPS'}])
+        groupfilter = {'Infrastructure': 'Production',
+                       'Scope': 'EGI',
+                       'Certification': 'Certified',
+                       'Site': 'egee.srce.hr'}
+        subgroupfilter = {'Monitored': 'Y',
+                          'Production': 'Y',
+                          'Scope': 'EGI'}
+        tf = TopoFilter(self.group_groups_sites_filter,
+                        self.group_endpoints_sites_filter,
+                        groupfilter,
+                        subgroupfilter)
+        self.assertEqual(tf.gg, [{'group': 'NGI_HR', 'subgroup': 'egee.srce.hr',
+                                  'tags': {'certification': 'Certified',
+                                           'infrastructure': 'Production',
+                                           'scope': 'EGI'},
+                                  'type': 'NGI'}])
+        self.assertEqual(tf.ge, [{'group': 'egee.srce.hr',
+                                  'hostname': 'se.srce.egi.cro-ngi.hr',
+                                  'service': 'gLite-APEL',
+                                  'tags': {'monitored': '1',
+                                           'production': '1',
+                                           'scope': 'EGI'},
+                                  'type': 'SITES'}])
+
 
 class WeightsJson(unittest.TestCase):
     def setUp(self):
