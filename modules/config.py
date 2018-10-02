@@ -472,7 +472,10 @@ class CustomerConf:
         return self._jobs[job]['PoemServerHost']
 
     def get_poemserver_vo(self, job):
-        return self._jobs[job]['PoemServerVO']
+        vo = self._jobs[job]['PoemServerVO'].split(',')
+        for i, p in enumerate(vo):
+            vo[i] = p.strip()
+        return vo
 
     def get_namespace(self, job):
         return self._jobs[job]['PoemNamespace']
