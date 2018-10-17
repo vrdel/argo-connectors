@@ -8,6 +8,7 @@ from bin.downtimes_gocdb_connector import GOCDBReader as DowntimesGOCDBReader
 from bin.downtimes_gocdb_connector import main as downtimes_main
 from bin.topology_gocdb_connector import GOCDBReader
 from bin.weights_vapor_connector import Vapor as VaporReader
+from bin.poem_connector import PoemReader
 from modules.log import Logger
 
 class ConnectorSetup(object):
@@ -361,18 +362,64 @@ class ConnectorSetup(object):
            </SERVICE_ENDPOINT>\n
            </results>\n"""
 
-    poem = [{'metric': u'org.nordugrid.ARC-CE-ARIS',
-             'profile': u'ch.cern.sam.ARGO_MON_CRITICAL',
-             'service': u'ARC-CE',
-             'tags': {'fqan': u'', 'vo': 'ops'}},
-            {'metric': u'org.nordugrid.ARC-CE-IGTF',
-             'profile': u'ch.cern.sam.ARGO_MON_CRITICAL',
-             'service': u'ARC-CE',
-             'tags': {'fqan': u'', 'vo': 'ops'}},
-            {'metric': u'org.nordugrid.ARC-CE-result',
-             'profile': u'ch.cern.sam.ARGO_MON_CRITICAL',
-             'service': u'ARC-CE',
-             'tags': {'fqan': u'', 'vo': 'ops'}}]
+    poem_feed = """[
+        {"name": "ops", 
+         "profiles":
+             [
+                 {"name": "FEDCLOUD", 
+                  "namespace": "ch.cern.SAM", 
+                  "description": "Profile for Fedcloud CentOS 7 instance",
+                  "vo": "ops", 
+                  "metrics": 
+                      [
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi", 
+                           "name": "eu.egi.cloud.OCCI-AppDB-Sync", 
+                           "fqan": ""}, 
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi",
+                           "name": "eu.egi.cloud.OCCI-Categories", 
+                           "fqan": ""}, 
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi", 
+                           "name": "eu.egi.cloud.OCCI-Context", 
+                           "fqan": ""}, 
+                          {"service_flavour": "eu.egi.cloud.vm-management.occi", 
+                           "name": "eu.egi.cloud.OCCI-VM-OIDC", 
+                           "fqan": ""}, 
+                          {"service_flavour": "org.openstack.nova", 
+                           "name": "eu.egi.cloud.OpenStack-VM-OIDC", 
+                           "fqan": ""}, 
+                          {"service_flavour": "org.openstack.nova", 
+                           "name": "eu.egi.cloud.OpenStack-VM-VOMS-OIDC", 
+                           "fqan": ""}
+                      ]
+                  }
+                 ]
+         }
+        ]"""
+
+    poem = [{'metric': u'eu.egi.cloud.OCCI-AppDB-Sync',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OCCI-Categories',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OCCI-Context',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OCCI-VM-OIDC',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'eu.egi.cloud.vm-management.occi',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OpenStack-VM-OIDC',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'org.openstack.nova',
+             'fqan': u'', 'vo': 'ops'},
+            {'metric': u'eu.egi.cloud.OpenStack-VM-VOMS-OIDC',
+             'profile': u'ch.cern.SAM.FEDCLOUD',
+             'service': u'org.openstack.nova',
+             'fqan': u'', 'vo': 'ops'}]
 
     downtimes = [{'end_time': '2017-01-19T23:59:00Z',
                   'hostname': u'nagios.c4.csir.co.za',
@@ -433,6 +480,7 @@ class ConnectorSetup(object):
         self.globopts = self.globalconfig.parse()
         self.customerconfig.parse()
         customers = self.customerconfig.get_customers()
+        self.custname = self.customerconfig.get_custname(customers[0])
         self.jobs = self.customerconfig.get_jobs(customers[0])
         self.jobdir = self.customerconfig.get_fulldir(customers[0], self.jobs[0])
 
@@ -628,6 +676,55 @@ class DowntimesXml(unittest.TestCase):
             self.assertTrue(gocdbreader.state in call[0])
             self.assertTrue('2017_01_19' in call[0])
 
+class PoemJson(unittest.TestCase):
+    def setUp(self):
+        self.connset = ConnectorSetup('poem-connector.py',
+                                      'tests/global.conf',
+                                      'tests/customer.conf')
+        for c in ['globalconfig', 'customerconfig', 'globopts', 'jobs', 'poem_feed', 'poem']:
+            code = """self.%s = self.connset.%s""" % (c, c)
+            exec code
+
+        self.poemreader = PoemReader('EGI', self.jobs[1])
+        self.poemreader.state = True
+        self.orig_loadProfilesFromServer = self.poemreader.loadProfilesFromServer
+        self.poemreader.loadProfilesFromServer = self.wrap_loadProfilesFromServer
+
+    def wrap_loadProfilesFromServer(self, server, vo, namespace, profiles):
+        logger = Logger('poem-connector.py')
+        logger.customer = 'EGI'
+        logger.job = self.jobs[1]
+        self.orig_loadProfilesFromServer.im_func.func_globals['globopts'] = self.globopts
+        self.orig_loadProfilesFromServer.im_func.func_globals['input'].connection.func = self.mock_conn
+        self.orig_loadProfilesFromServer.im_func.func_globals['logger'] = logger
+        return self.orig_loadProfilesFromServer(server, vo, namespace, profiles)
+
+    @mock.patch('modules.input.connection')
+    def testgetProfiles(self, mock_conn):
+        profiles = self.customerconfig.get_profiles(self.jobs[1])
+        namespace = self.customerconfig.get_namespace(self.jobs[1])
+        server = {self.customerconfig.get_poemserver_host(self.jobs[1]):
+                      self.customerconfig.get_poemserver_vo(self.jobs[1])}
+        mock_conn.__name__ = 'mock_conn'
+        mock_conn.return_value = 'Erroneous JSON feed'
+        self.mock_conn = mock_conn
+        self.assertEqual(self.poemreader.getProfiles(profiles, namespace, server), [])
+        self.assertFalse(self.poemreader.state)
+
+        mock_conn.return_value = self.poem_feed
+        self.mock_conn = mock_conn
+        self.poemreader.state = True
+        self.assertEqual(self.poemreader.getProfiles(profiles, namespace, server), self.poem)
+        self.assertTrue(self.poemreader.state)
+
+        self.assertEqual(self.poemreader.getProfiles(profiles + ['ARGO_MON_CRITICAL'], namespace, server), self.poem)
+        self.assertFalse(self.poemreader.state)
+
+        self.poemreader.state = True
+        with self.assertRaises(SystemExit) as cm:
+            self.poemreader.getProfiles(['ARGO_MON_CRITICAL'], namespace, server)
+            self.assertEqual(cm.exception.code, 1)
+        self.assertFalse(self.poemreader.state)
 
 if __name__ == '__main__':
     unittest.main()
