@@ -224,10 +224,11 @@ Tags for selecting group of endpoints are:
 * Monitored = `{Y, N}`
 * Scope = `{EGI, Local}`
 
-Additionally, topology can be filtered for certain NGI or Site and since they are part of group of groups abstract, those should be specified in `TopoSelectGroupOfGroups` option. Examples:
+Additionally, topology can be filtered for certain NGI, Site or ServiceGroup and since they are part of group of groups abstract, those should be specified in `TopoSelectGroupOfGroups` option. Multiple entities can be specified by putting them in parenthesis and separating by comma. Examples:
 
     TopoSelectGroupOfGroups = NGI:EGI.eu
     TopoSelectGroupOfGroups = Site:egee.srce.hr
+    TopoSelectGroupOfGroups = ServiceGroup:(egee.irb.hr,egee.srce.hr)
 
 ##### Data feeds
 
