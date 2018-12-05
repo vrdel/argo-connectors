@@ -346,16 +346,17 @@ class TopoFilter(object):
         self.ge = ge
         self.ggfilter = copy.copy(ggfilter)
         self.gefilter = copy.copy(gefilter)
-        self.sitefilter = self.extract_filter('site', self.ggfilter)
-        self.ngifilter = self.extract_filter('ngi', self.ggfilter)
+        self.subgroupfilter = self.extract_filter('site', self.ggfilter) or \
+            self.extract_filter('servicegroup', self.ggfilter)
+        self.groupfilter = self.extract_filter('ngi', self.ggfilter)
         self.topofilter()
 
     def topofilter(self):
-        if self.sitefilter:
-            self.gg = filter(lambda e: e['subgroup'].lower() in self.sitefilter, self.gg)
+        if self.subgroupfilter:
+            self.gg = filter(lambda e: e['subgroup'].lower() in self.subgroupfilter, self.gg)
 
-        if self.ngifilter:
-            self.gg = filter(lambda e: e['group'].lower() in self.ngifilter, self.gg)
+        if self.groupfilter:
+            self.gg = filter(lambda e: e['group'].lower() in self.groupfilter, self.gg)
 
         if self.ggfilter:
             self.gg = self.filter_tags(self.ggfilter, self.gg)
@@ -489,7 +490,7 @@ def main():
                 if fixed_date:
                     partdate = fixed_date
                 else:
-                    partdate = datestamp().replace('_', '-')
+                    partdate = datestamp(1).replace('_', '-')
 
                 ams = output.AmsPublish(ams_opts['amshost'],
                                         ams_opts['amsproject'],

@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.7.0
+Version: 1.7.1
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -47,6 +47,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Fri Nov 30 2018 Daniel Vrcic <dvrcic@srce.hr>, Katarina Zailac <kzailac@srce.hr> - 1.7.1-1%{?dist}
+- ARGO-1428 ServiceGroup topology filtering
+- ARGO-1370 Optimize connectors queries to POEM
+- ARGO-1269 Refactor poem-connector
+- ARGO-1236 Datestamp of AMS msg does not match corresponding avro filename 
 * Wed May 23 2018 Daniel Vrcic <dvrcic@srce.hr> - 1.7.0-1%{?dist}
 - ARGO-1093 Support for GOCDB paginated topology API
 - ARGO-1080 add support for basic-auth in Connectors
