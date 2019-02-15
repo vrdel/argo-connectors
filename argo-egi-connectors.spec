@@ -11,7 +11,8 @@ Obsoletes: ar-sync
 Prefix: %{_prefix}
 Requires: argo-ams-library
 Requires: avro
-Requires: pyOpenSSL
+Requires: python-requests
+Requires: python2-ndg_httpsclient
 Source0: %{name}-%{version}.tar.gz
 
 BuildArch: noarch
