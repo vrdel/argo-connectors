@@ -6,7 +6,6 @@ import xml.dom.minidom
 
 from argo_egi_connectors.helpers import retry
 
-from ssl import SSLError
 from xml.parsers.expat import ExpatError
 from urlparse import urlparse
 
@@ -58,7 +57,7 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
 
         return buf
 
-    except SSLError as e:
+    except requests.exceptions.SSLError as e:
         if (getattr(e, 'args', False) and type(e.args) == tuple
             and type(e.args[0]) == str
             and 'timed out' in e.args[0]):
