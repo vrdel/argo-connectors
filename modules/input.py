@@ -1,18 +1,12 @@
 import base64
-import httplib
 import json
-import os
 import requests
 import socket
 import xml.dom.minidom
 
 from argo_egi_connectors.helpers import retry
 
-from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
-from OpenSSL.SSL import VERIFY_PEER
-from OpenSSL.SSL import WantReadError as SSLWantReadError
 from ssl import SSLError
-from time import sleep
 from xml.parsers.expat import ExpatError
 from urlparse import urlparse
 
