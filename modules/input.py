@@ -33,14 +33,10 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
             headers={'Authorization': 'Basic ' + userpass}
 
         if scheme.startswith('https'):
-            if eval(globopts['AuthenticationVerifyServerCert'.lower()]):
-                verify_cert(host, int(globopts['ConnectionTimeout'.lower()]),
-                            globopts['AuthenticationCAPath'.lower()],
-                            globopts['AuthenticationCAFile'.lower()])
             response = requests.get('https://'+ host + url, headers=headers,
                                     cert=(globopts['AuthenticationHostCert'.lower()],
                                           globopts['AuthenticationHostKey'.lower()]),
-                                    verify=False,
+                                    verify=eval(globopts['AuthenticationVerifyServerCert'.lower()]),
                                     timeout=int(globopts['ConnectionTimeout'.lower()]))
             response.raise_for_status()
         else:
@@ -132,64 +128,3 @@ def parse_json(logger, objname, globopts, buf, method):
 
     else:
         return doc
-
-
-def verify_cert(host, timeout, capath, cafile):
-    def verify_cert(host, ca, timeout):
-        server_ctx = Context(TLSv1_METHOD)
-        server_cert_chain = []
-
-        if os.path.isdir(ca):
-            server_ctx.load_verify_locations(None, ca)
-        else:
-            server_ctx.load_verify_locations(ca, None)
-
-        def verify_cb(conn, cert, errnum, depth, ok):
-            server_cert_chain.append(cert)
-            return ok
-        server_ctx.set_verify(VERIFY_PEER, verify_cb)
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setblocking(1)
-        sock.settimeout(timeout)
-        sock.connect((host, 443))
-
-        server_conn = Connection(server_ctx, sock)
-        server_conn.set_connect_state()
-
-        def iosock_try():
-            ok = True
-            try:
-                server_conn.do_handshake()
-                sleep(0.5)
-            except SSLWantReadError as e:
-                ok = False
-                pass
-            except Exception as e:
-                raise e
-            return ok
-
-        try:
-            while True:
-                if iosock_try():
-                    break
-
-            server_subject = server_cert_chain[-1].get_subject()
-            if host != server_subject.CN:
-                raise SSLError('Server certificate CN does not match %s' % host)
-
-        except SSLError as e:
-            raise e
-        finally:
-            server_conn.shutdown()
-            server_conn.close()
-
-        return True
-
-    try:
-        verify_cert(host, capath, timeout)
-    except SSLError:
-        verify_cert(host, cafile, timeout)
-
-
-    return True
