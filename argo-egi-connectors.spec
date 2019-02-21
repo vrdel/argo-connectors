@@ -1,5 +1,5 @@
 Name: argo-egi-connectors
-Version: 1.7.1
+Version: 1.7.2
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
@@ -11,7 +11,8 @@ Obsoletes: ar-sync
 Prefix: %{_prefix}
 Requires: argo-ams-library
 Requires: avro
-Requires: pyOpenSSL
+Requires: python-requests
+Requires: python2-ndg_httpsclient
 Source0: %{name}-%{version}.tar.gz
 
 BuildArch: noarch
@@ -47,6 +48,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Wed Feb 20 2019 Daniel Vrcic <dvrcic@srce.hr> - 1.7.2-1%{?dist}
+- ARGO-1674 Use requests library in connectors
 * Fri Nov 30 2018 Daniel Vrcic <dvrcic@srce.hr>, Katarina Zailac <kzailac@srce.hr> - 1.7.1-1%{?dist}
 - ARGO-1428 ServiceGroup topology filtering
 - ARGO-1370 Optimize connectors queries to POEM
