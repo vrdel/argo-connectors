@@ -18,7 +18,6 @@ class ConnectorError(Exception):
 def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
     try:
         buf = None
-        import ipdb; ipdb.set_trace()
 
         headers = {}
         if custauth and msgprefix == 'PoemReader':
