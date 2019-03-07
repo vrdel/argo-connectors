@@ -183,12 +183,11 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
-    auth_opts = dict((k, v) for k, v in globopts.items() if 'authentication'
-                      in k)
-
     for cust in confcust.get_customers():
 
         custname = confcust.get_custname(cust)
+        auth_custopts = confcust.get_token(cust)
+        auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
 
         for job in confcust.get_jobs(cust):
             logger.customer = confcust.get_custname(cust)

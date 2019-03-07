@@ -192,7 +192,8 @@ class CustomerConf:
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
                       'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
-                      'AuthenticationHttpUser', 'AuthenticationHttpPass']
+                      'AuthenticationHttpUser', 'AuthenticationHttpPass',
+                      'AuthenticationPoemToken']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -327,6 +328,12 @@ class CustomerConf:
 
     def get_custname(self, cust):
         return self._cust[cust]['Name']
+
+    def get_token(self, cust):
+        if 'AuthOpts' in self._cust[cust]:
+            return self._cust[cust]['AuthOpts']
+        else:
+            return dict()
 
     def make_dirstruct(self, root=None):
         dirs = []
