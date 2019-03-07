@@ -20,12 +20,12 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         buf = None
 
         headers = {}
-        if custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
+        if custauth and msgprefix == 'PoemReader':
+            headers = {'x-api-key': custauth['AuthenticationPoemToken'.lower()]}
+        elif msgprefix != 'PoemReader' and custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
             userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':' \
                                         + custauth['AuthenticationHttpPass'.lower()])
             headers={'Authorization': 'Basic ' + userpass}
-        elif custauth and msgprefix == 'PoemReader':
-            headers = {'x-api-key': custauth['AuthenticationPoemToken'.lower()]}
 
         if scheme.startswith('https'):
             response = requests.get('https://'+ host + url, headers=headers,
