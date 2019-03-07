@@ -18,14 +18,15 @@ class ConnectorError(Exception):
 def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
     try:
         buf = None
+        import ipdb; ipdb.set_trace()
 
         headers = {}
-        if custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
+        if custauth and msgprefix == 'PoemReader':
+            headers = {'x-api-key': custauth['AuthenticationPoemToken'.lower()]}
+        elif msgprefix != 'PoemReader' and custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
             userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':' \
                                         + custauth['AuthenticationHttpPass'.lower()])
             headers={'Authorization': 'Basic ' + userpass}
-        elif custauth and msgprefix == 'PoemReader':
-            headers = {'x-api-key': custauth['AuthenticationPoemToken'.lower()]}
 
         if scheme.startswith('https'):
             response = requests.get('https://'+ host + url, headers=headers,
