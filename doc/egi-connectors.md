@@ -19,6 +19,10 @@ Bundle consists of the following connectors:
 
 Connectors are syncing data on a daily basis. They are aware of the certain customer, associated jobs and their attributes and are generating appropriate data for each job. Data is presented in a form of avro serialized entities that are placed as files in job folders or can be sent to AMS service. Topology, downtimes, weights and POEM profile information all together with a metric results (status messages), represents an input for `argo-compute-engine`.
 
+### Script `replay-avro-data.py`
+
+The bundle also contains a helper script `replay-avro-data.py` which is intended to send data from a generated avro file to AMS service with customizable date. The script is executed manually and it requires that all the parameters needed for AMS service are passed as arguments to the script (AMS host, project, token, topic, report, avro file with the data we want to send, avro schema, message type and date).
+
 ## Installation
 
 Installation narrows down to simply installing the package:
@@ -185,7 +189,7 @@ Besides `Dirname` option that is common for all connectors, some of them have jo
 	TopoSelectGroupOfEndpoints = Monitored:Y, Scope:EGI, Production:Y
 	TopoSelectGroupOfGroups = Monitored:Y, Scope:EGI
 
-This is an example of the job that fetchs topology from GOCDB. `Profiles`, `PoemNamespace`, `PoemServerHost` and `PoemServerVO` are attributes relevant to `poem-connector.py` so for this job `poem-connector.py` will write FEDCLOUD profile in EGI_Fedcloud job folder under /EGI directory. `Topo*` attributes are relevant for `topology-gocdb-connector.py`. `TopoFeed` attribute in the context of the GOCDB topology is optional. If it's specified, it will override default source of topology which is https://goc.egi.eu/gocdbpi/ 
+This is an example of the job that fetches topology from GOCDB. `Profiles`, `PoemNamespace`, `PoemServerHost` and `PoemServerVO` are attributes relevant to `poem-connector.py` so for this job `poem-connector.py` will write FEDCLOUD profile in EGI_Fedcloud job folder under /EGI directory. `Topo*` attributes are relevant for `topology-gocdb-connector.py`. `TopoFeed` attribute in the context of the GOCDB topology is optional. If it's specified, it will override default source of topology which is https://goc.egi.eu/gocdbpi/ 
 
 Topology is separated in two abstracts: 
 
