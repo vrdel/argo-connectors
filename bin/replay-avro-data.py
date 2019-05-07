@@ -3,6 +3,9 @@ import argparse
 from argo_egi_connectors.output import AmsPublish, load_schema
 from avro.datafile import DataFileReader
 from avro.io import DatumReader
+import logging
+import os
+import sys
 
 
 class AvroReader:
@@ -35,6 +38,20 @@ class AvroReader:
             return False, e
 
         return True, data
+
+
+class Logger:
+    def __init__(self, name):
+        lfs = '%(name)s[%(process)s]: %(levelname)s %(message)s'
+        lf = logging.Formatter(lfs)
+        lv = logging.INFO
+
+        logging.basicConfig(format=lfs, level=logging.INFO, stream=sys.stdout)
+        self.logger = logging.getLogger(name)
+        sh = logging.StreamHandler()
+        sh.setFormatter(lf)
+        sh.setLevel(lv)
+        self.logger.addHandler(sh)
 
 
 def main():
@@ -75,10 +92,11 @@ def main():
     amsreport = args.report  # report - dirname from customer.conf is used for this one
     amsbulk = 100
     amspacksinglemsg = True
+    amslogger = Logger(os.path.basename(sys.argv[0]))
     connectionretry = 3
 
     ams = AmsPublish(amshost, amsproject, amstoken, amstopic, amsreport,
-                     amsbulk, amspacksinglemsg, connectionretry)
+                     amsbulk, amspacksinglemsg, amslogger, connectionretry)
 
     ams.send(args.schema, args.msgtype, args.date, data)
 
