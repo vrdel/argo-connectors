@@ -42,19 +42,19 @@ def main():
         description="Helper tool that can replay avro data on AMS with "
                     "customizable datestamp"
     )
-    parser.add_argument("-a", dest='host', nargs=1, metavar="ams_host",
+    parser.add_argument("-a", dest='host', metavar="ams_host",
                         help="ams host", type=str, required=True)
-    parser.add_argument("-p", dest="project", nargs=1, metavar="ams_host",
+    parser.add_argument("-p", dest="project", metavar="ams_project",
                         help="ams project", type=str, required=True)
-    parser.add_argument("-t", dest="token", nargs=1, metavar="ams_token",
+    parser.add_argument("-t", dest="token", metavar="ams_token",
                         help="ams token", type=str, required=True)
-    parser.add_argument("-o", dest="topic", nargs=1, metavar="ams_topic",
+    parser.add_argument("-o", dest="topic", metavar="ams_topic",
                         help="ams topic", type=str, required=True)
-    parser.add_argument("-r", dest="report", nargs=1, metavar="report",
+    parser.add_argument("-r", dest="report", metavar="report",
                         help="report", type=str, required=True)
-    parser.add_argument("-f", dest="avrofile", nargs=1, metavar="avro_file",
+    parser.add_argument("-f", dest="avrofile", metavar="avro_file",
                         help="input avro file", type=str, required=True)
-    parser.add_argument("-s", dest="schema", nargs=1, metavar="avro_schema",
+    parser.add_argument("-s", dest="schema", metavar="avro_schema",
                         help="avro schema", type=str, required=True)
     parser.add_argument("-m", dest="msgtype", metavar="msgtype",
                         help="message type", type=str, required=True)
@@ -71,13 +71,14 @@ def main():
     amshost = args.host  # ams host
     amsproject = args.project  # ams project
     amstoken = args.token  # ams token
+    amstopic = args.topic  # ams topic
     amsreport = args.report  # report - dirname from customer.conf is used for this one
     amsbulk = 100
     amspacksinglemsg = True
     connectionretry = 3
 
-    ams = AmsPublish(amshost, amsproject, amstoken, amsreport, amsbulk,
-                     amspacksinglemsg, connectionretry)
+    ams = AmsPublish(amshost, amsproject, amstoken, amstopic, amsreport,
+                     amsbulk, amspacksinglemsg, connectionretry)
 
     ams.send(args.schema, args.msgtype, args.date, data)
 
