@@ -42,7 +42,7 @@ def main():
         description="Helper tool that can replay avro data on AMS with "
                     "customizable datestamp"
     )
-    parser.add_argument("-h", dest='host', nargs=1, metavar="ams_host",
+    parser.add_argument("-a", dest='host', nargs=1, metavar="ams_host",
                         help="ams host", type=str, required=True)
     parser.add_argument("-p", dest="project", nargs=1, metavar="ams_host",
                         help="ams project", type=str, required=True)
