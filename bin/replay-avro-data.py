@@ -91,7 +91,7 @@ def main():
     amstopic = args.topic  # ams topic
     amsreport = args.report  # report - dirname from customer.conf is used for this one
     amsbulk = 100
-    amspacksinglemsg = True
+    amspacksinglemsg = 'True'
     amslogger = Logger(os.path.basename(sys.argv[0]))
     connectionretry = 3
 
