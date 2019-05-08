@@ -25,6 +25,7 @@ setup(name=NAME,
                   ('/usr/libexec/argo-egi-connectors', ['bin/downtimes-gocdb-connector.py', \
                                                         'bin/poem-connector.py', \
                                                         'bin/topology-gocdb-connector.py', \
-                                                        'bin/weights-vapor-connector.py']),
+                                                        'bin/weights-vapor-connector.py', \
+                                                        'bin/replay-avro-data.py']),
                   ('/etc/argo-egi-connectors/schemas', glob.glob('etc/schemas/*.avsc')),
                   ('/etc/cron.d', glob.glob('cronjobs/*'))])
