@@ -39,129 +39,86 @@ from argo_egi_connectors.helpers import filename_date, module_class_name, datest
 
 logger = None
 
-globopts, poemopts = {}, {}
-cpoem = None
+globopts = dict()
 custname = ''
+API_PATH = '/api/v2/metric_profiles'
 
-MIPAPI = '/poem/api/v2/profiles/'
 
-class PoemReader:
-    def __init__(self, customer, job, auth=None):
+class WebAPI(object):
+    def __init__(self, customer, job, profiles, namespace, host, token):
         self.state = True
         self.customer = customer
         self.job = job
-        self.custauth = auth
+        self.host = host
+        self.token = token
+        self.profiles = profiles
+        self.namespace = namespace
 
-    def getProfiles(self, Profiles, namespace, PoemServer):
-
+    def get_profiles(self):
         try:
-            validProfiles = self.loadProfilesFromServer(PoemServer.keys()[0], PoemServer.values()[0], namespace,
-                                                        Profiles)
-            name = []
-            for item in validProfiles.keys():
-                name.append(item.split('.')[-1])
+            fetched_profiles = self._fetch()
+            target_profiles = filter(lambda profile: profile['name'] in self.profiles, fetched_profiles)
+            profile_list = list()
 
-            if len(name) == 0:
+            if len(target_profiles) == 0:
                 self.state = False
-                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': no profiles were fetched!')
+                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': No profiles {0} were found!'.format(', '.join(self.profiles)))
+
                 raise SystemExit(1)
-            elif len(name) < len(Profiles):
-                self.state = False
-                logger.warn('Customer:' + self.customer + ' Job:' + self.job + ': profile(s) %s were not fetched.'
-                            %','.join(set(Profiles) - set(name)))
 
-            profileListAvro = []
+            for profile in target_profiles:
+                for service in profile['services']:
+                    for metric in service['metrics']:
+                        profile_list.append({
+                            'profile': '{0}.{1}'.format(self.namespace, profile['name']),
+                            'metric': metric,
+                            'service': service['service']
+                        })
 
-            for profile in validProfiles.values():
-                for metric in profile['metric_instances']:
-                    profileListAvro.append({'profile': namespace + '.' + profile['name'], \
-                                            'metric': metric['metric'], \
-                                            'service': metric['service_flavour'], \
-                                            'vo': profile['vo']})
-        #
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
-            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer, self._urlfeed,
-                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer,
+                                                                                                  self.host + API_PATH,
+                                                                                                  repr(e).replace('\'','').replace('\"', '')))
             return []
         else:
-            return profileListAvro
+            return self._format(profile_list)
 
-    def loadProfilesFromServer(self, server, vo, namespace, Profiles):
-        validProfiles = dict()
-
-        if not server.startswith('http'):
-            server = 'https://' + server
-
-        self._urlfeed = server + MIPAPI
-
-        # It is possible to have multiple profiles in customer.conf file,
-        # so multiple queries are made possible
-        profiles_data = []
-        for j in Profiles:
-            self._urlfeed = self._urlfeed + j
-
-            o = urlparse.urlparse(self._urlfeed, allow_fragments=True)
-
-            try:
-                assert o.scheme != '' and o.netloc != '' and o.path != ''
-            except AssertionError:
-                logger.error('Customer:%s Invalid POEM PI URL: %s' % (logger.customer, self._urlfeed))
-                raise SystemExit(1)
-
-            logger.info('Customer:%s Server:%s VO:%s' % (logger.customer, o.netloc, vo[0] if len(vo) == 1 else\
-                                                     '{0}'.format(','.join(vo))))
-
-            try:
-                res = input.connection(logger, module_class_name(self),
-                                       globopts, o.scheme, o.netloc, o.path,
-                                       custauth=self.custauth)
-                if not res:
-                    raise input.ConnectorError()
-
-                json_data = input.parse_json(logger, module_class_name(self),
-                                         globopts, res, self._urlfeed)
-
-                if not json_data:
-                    raise input.ConnectorError()
-
-                # Checking if the requested VO is associated with the profile.
-                if json_data['vo'] in vo:
-                    profiles_data.append(json_data)
-
-            except input.ConnectorError:
-                self.state = False
-
+    def _fetch(self):
         try:
-            for profile in profiles_data:
-                if profile['name'] in Profiles:
-                    validProfiles[namespace.upper() + '.' + profile['name']] = \
-                        profile
+            res = input.connection(logger, module_class_name(self), globopts,
+                                   'https', self.host, API_PATH,
+                                   custauth={'WebAPIToken'.lower(): self.token})
+            if not res:
+                raise input.ConnectorError()
 
-        except Exception as e:
-            raise e
+            json_data = input.parse_json(logger, module_class_name(self),
+                                        globopts, res, self.host + API_PATH)
 
-        else:
-            return validProfiles
+            if not json_data or not json_data.get('data', False):
+                raise input.ConnectorError()
 
-def gen_outprofiles(lprofiles, matched):
-    lfprofiles = []
+            return json_data['data']
 
-    for p in lprofiles:
-        if p['profile'].split('.')[-1] in matched:
+        except input.ConnectorError:
+            self.state = False
+
+    def _format(self, profile_list):
+        profiles = []
+
+        for p in profile_list:
             pt = dict()
             pt['metric'] = p['metric']
             pt['profile'] = p['profile']
             pt['service'] = p['service']
-            pt['tags'] = {'vo' : p['vo']}
-            lfprofiles.append(pt)
+            profiles.append(pt)
 
-    return lfprofiles
+        return profiles
 
 
 def main():
     global logger, globopts
-    parser = argparse.ArgumentParser(description='Fetch POEM profile for every job of the customer and write POEM expanded profiles needed for prefilter for EGI customer')
+    parser = argparse.ArgumentParser(description='Fetch metric profile for every job of the customer')
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
@@ -184,22 +141,18 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
     for cust in confcust.get_customers():
-
         custname = confcust.get_custname(cust)
         auth_custopts = confcust.get_token(cust)
-        auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
 
         for job in confcust.get_jobs(cust):
             logger.customer = confcust.get_custname(cust)
             logger.job = job
 
-            poemserver = dict()
             profiles = confcust.get_profiles(job)
-            namespace = confcust.get_namespace(job)
-            poemserver[confcust.get_poemserver_host(job)] = confcust.get_poemserver_vo(job)
-
-            poem = PoemReader(custname, job, auth_opts)
-            psa = poem.getProfiles(profiles, namespace, poemserver)
+            webapi = WebAPI(custname, job, profiles, confcust.get_namespace(job),
+                            globopts['WebAPIHost'.lower()],
+                            globopts['WebAPIToken'.lower()])
+            fetched_profiles = webapi.get_profiles()
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -213,18 +166,16 @@ def main():
 
             if fixed_date:
                 output.write_state(sys.argv[0], jobstatedir,
-                                   poem.state,
+                                   webapi.state,
                                    globopts['InputStateDays'.lower()],
                                    fixed_date.replace('-', '_'))
             else:
                 output.write_state(sys.argv[0], jobstatedir,
-                                   poem.state,
+                                   webapi.state,
                                    globopts['InputStateDays'.lower()])
 
-            if not poem.state:
+            if not webapi.state:
                 continue
-
-            lfprofiles = gen_outprofiles(psa, profiles)
 
             if eval(globopts['GeneralPublishAms'.lower()]):
                 if fixed_date:
@@ -243,21 +194,21 @@ def main():
                                         int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))
 
-                ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
-                         partdate, lfprofiles)
+                ams.send(globopts['AvroSchemasMetricProfile'.lower()], 'metric_profile',
+                         partdate, fetched_profiles)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
-                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir, fixed_date.replace('-', '_'))
+                    filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir, fixed_date.replace('-', '_'))
                 else:
-                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
-                avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
-                ret, excep = avro.write(lfprofiles)
+                    filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasMetricProfile'.lower()], filename)
+                ret, excep = avro.write(fetched_profiles)
                 if not ret:
                     logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
-            logger.info('Customer:'+custname+' Job:'+job+' Profiles:%s Tuples:%d' % (','.join(profiles), len(lfprofiles)))
+            logger.info('Customer:' + custname + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))
 
 
 if __name__ == '__main__':

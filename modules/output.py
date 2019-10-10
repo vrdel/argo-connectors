@@ -148,8 +148,8 @@ def write_state(caller, statedir, state, savedays, date=None):
     filenamenew = ''
     if 'topology' in caller:
         filenamebase = 'topology-ok'
-    elif 'poem' in caller:
-        filenamebase = 'poem-ok'
+    elif 'metricprofile' in caller:
+        filenamebase = 'metricprofile-ok'
     elif 'weights' in caller:
         filenamebase = 'weights-ok'
     elif 'downtimes' in caller:
