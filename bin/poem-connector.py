@@ -55,114 +55,51 @@ class WebAPI(object):
     def get_profiles(self):
         try:
             fetched_profiles = self._fetch()
-            name = []
-            for item in validProfiles.keys():
-                name.append(item.split('.')[-1])
+            target_profiles = filter(lambda profile: profile['name'] in self.profiles, fetched_profiles)
+            profile_list = list()
 
-            if len(name) == 0:
+            if len(target_profiles) == 0:
                 self.state = False
-                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': no profiles were fetched!')
+                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': No profiles {0} were found!'.format(', '.join(self.profiles)))
+
                 raise SystemExit(1)
-            elif len(name) < len(Profiles):
-                self.state = False
-                logger.warn('Customer:' + self.customer + ' Job:' + self.job + ': profile(s) %s were not fetched.'
-                            %','.join(set(Profiles) - set(name)))
 
-            profileListAvro = []
+            for profile in target_profiles:
+                for service in profile['services']:
+                    for metric in service['metrics']:
+                        profile_list.append({
+                            'profile': profile['name'],
+                            'metric': metric,
+                            'service': service['service']
+                        })
 
-            for profile in validProfiles.values():
-                for metric in profile['metric_instances']:
-                    profileListAvro.append({'profile': namespace + '.' + profile['name'], \
-                                            'metric': metric['metric'], \
-                                            'service': metric['service_flavour'], \
-                                            'vo': profile['vo']})
-        #
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
-            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer, self._urlfeed,
-                                                                                     repr(e).replace('\'','').replace('\"', '')))
+            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer,
+                                                                                                  self.host + API_PATH,
+                                                                                                  repr(e).replace('\'','').replace('\"', '')))
             return []
         else:
-            return profileListAvro
+            return profile_list
 
     def _fetch(self):
         try:
             res = input.connection(logger, module_class_name(self), globopts,
                                    'https', self.host, API_PATH,
                                    custauth={'WebAPIToken'.lower(): self.token})
-            import ipdb; ipdb.set_trace()
             if not res:
                 raise input.ConnectorError()
 
             json_data = input.parse_json(logger, module_class_name(self),
                                         globopts, res, self.host + API_PATH)
 
-            if not json_data:
+            if not json_data or not json_data.get('data', False):
                 raise input.ConnectorError()
 
-            # Checking if the requested VO is associated with the profile.
-            if json_data['vo'] in vo:
-                profiles_data.append(json_data)
+            return json_data['data']
 
         except input.ConnectorError:
             self.state = False
-
-    def loadProfilesFromServer(self, server, vo, namespace, Profiles):
-        validProfiles = dict()
-
-        if not server.startswith('http'):
-            server = 'https://' + server
-
-        self._urlfeed = server + API_PATH
-
-        # It is possible to have multiple profiles in customer.conf file,
-        # so multiple queries are made possible
-        profiles_data = []
-        for j in Profiles:
-            self._urlfeed = self._urlfeed + j
-
-            o = urlparse.urlparse(self._urlfeed, allow_fragments=True)
-
-            try:
-                assert o.scheme != '' and o.netloc != '' and o.path != ''
-            except AssertionError:
-                logger.error('Customer:%s Invalid POEM PI URL: %s' % (logger.customer, self._urlfeed))
-                raise SystemExit(1)
-
-            logger.info('Customer:%s Server:%s VO:%s' % (logger.customer, o.netloc, vo[0] if len(vo) == 1 else\
-                                                     '{0}'.format(','.join(vo))))
-
-            try:
-                res = input.connection(logger, module_class_name(self),
-                                       globopts, o.scheme, o.netloc, o.path,
-                                       custauth=self.custauth)
-                if not res:
-                    raise input.ConnectorError()
-
-                json_data = input.parse_json(logger, module_class_name(self),
-                                             globopts, res, self._urlfeed)
-
-                if not json_data:
-                    raise input.ConnectorError()
-
-                # Checking if the requested VO is associated with the profile.
-                if json_data['vo'] in vo:
-                    profiles_data.append(json_data)
-
-            except input.ConnectorError:
-                self.state = False
-
-        try:
-            for profile in profiles_data:
-                if profile['name'] in Profiles:
-                    validProfiles[namespace.upper() + '.' + profile['name']] = \
-                        profile
-
-        except Exception as e:
-            raise e
-
-        else:
-            return validProfiles
 
 def gen_outprofiles(lprofiles, matched):
     lfprofiles = []
@@ -173,7 +110,6 @@ def gen_outprofiles(lprofiles, matched):
             pt['metric'] = p['metric']
             pt['profile'] = p['profile']
             pt['service'] = p['service']
-            pt['tags'] = {'vo' : p['vo']}
             lfprofiles.append(pt)
 
     return lfprofiles
