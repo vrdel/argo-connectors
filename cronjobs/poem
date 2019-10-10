@@ -1,1 +1,0 @@
-2 0 * * * root /usr/libexec/argo-egi-connectors/poem-connector.py

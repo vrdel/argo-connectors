@@ -193,15 +193,15 @@ def main():
                                         int(globopts['ConnectionRetry'.lower()]),
                                         int(globopts['ConnectionTimeout'.lower()]))
 
-                ams.send(globopts['AvroSchemasPoem'.lower()], 'metric_profile',
+                ams.send(globopts['AvroSchemasMetricProfile'.lower()], 'metric_profile',
                          partdate, fetched_profiles)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
-                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir, fixed_date.replace('-', '_'))
+                    filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir, fixed_date.replace('-', '_'))
                 else:
-                    filename = filename_date(logger, globopts['OutputPoem'.lower()], jobdir)
-                avro = output.AvroWriter(globopts['AvroSchemasPoem'.lower()], filename)
+                    filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasMetricProfile'.lower()], filename)
                 ret, excep = avro.write(fetched_profiles)
                 if not ret:
                     logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))

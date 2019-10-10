@@ -24,9 +24,9 @@ class Global:
     conf_downtimes_output = {'Output': ['Downtimes']}
     conf_weights_schemas = {'AvroSchemas': ['Weights']}
     conf_weights_output = {'Output': ['Weights']}
-    conf_poem_output = {'Output': ['Poem']}
-    conf_poem_schemas = {'AvroSchemas': ['Poem']}
-    conf_poem_webapi= {'WebAPI': ['Token', 'Host']}
+    conf_metricprofile_output = {'Output': ['MetricProfile']}
+    conf_metricprofile_schemas = {'AvroSchemas': ['MetricProfile']}
+    conf_metricprofile_webapi= {'WebAPI': ['Token', 'Host']}
 
     def __init__(self, caller, confpath=None, **kwargs):
         self.optional = dict()
@@ -54,11 +54,11 @@ class Global:
                         self._merge_dict(self.shared_secopts,
                                          self.conf_weights_schemas,
                                          self.conf_weights_output),
-                        'poem-connector.py':
+                        'metricprofile-webapi-connector.py':
                         self._merge_dict(self.shared_secopts,
-                                         self.conf_poem_webapi,
-                                         self.conf_poem_schemas,
-                                         self.conf_poem_output)
+                                         self.conf_metricprofile_webapi,
+                                         self.conf_metricprofile_schemas,
+                                         self.conf_metricprofile_output)
                         }
 
         if caller:
@@ -185,9 +185,9 @@ class CustomerConf:
                                                      'TopoSelectGroupOfEndpoints',
                                                      'TopoFeed',
                                                      'TopoFeedPaging'],
-                    'poem-connector.py': ['PoemServerHost',
-                                          'PoemServerVO',
-                                          'PoemNamespace'],
+                    'metricprofile-webapi-connector.py': ['PoemServerHost',
+                                                          'PoemServerVO',
+                                                          'PoemNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed']
                     }

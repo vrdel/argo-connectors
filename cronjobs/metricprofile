@@ -1,0 +1,1 @@
+2 0 * * * root /usr/libexec/argo-egi-connectors/metricprofile-webapi-connector.py
