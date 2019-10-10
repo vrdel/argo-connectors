@@ -43,20 +43,19 @@ globopts, poemopts = {}, {}
 cpoem = None
 custname = ''
 
-MIPAPI = '/poem/api/v2/profiles/'
+API_PATH = '/v2/metric_profiles'
 
-class PoemReader:
-    def __init__(self, customer, job, auth=None):
+class WebAPI(object):
+    def __init__(self, customer, job, profiles, host, token):
         self.state = True
         self.customer = customer
         self.job = job
-        self.custauth = auth
+        self.host = host
+        self.token = token
 
-    def getProfiles(self, Profiles, namespace, PoemServer):
-
+    def get_profiles(self, profiles_list):
         try:
-            validProfiles = self.loadProfilesFromServer(PoemServer.keys()[0], PoemServer.values()[0], namespace,
-                                                        Profiles)
+            fetched_profiles = self._fetch(profiles_list)
             name = []
             for item in validProfiles.keys():
                 name.append(item.split('.')[-1])
@@ -87,13 +86,16 @@ class PoemReader:
         else:
             return profileListAvro
 
+    def _fetch(self, profiles_list):
+        pass
+
     def loadProfilesFromServer(self, server, vo, namespace, Profiles):
         validProfiles = dict()
 
         if not server.startswith('http'):
             server = 'https://' + server
 
-        self._urlfeed = server + MIPAPI
+        self._urlfeed = server + API_PATH
 
         # It is possible to have multiple profiles in customer.conf file,
         # so multiple queries are made possible
@@ -187,19 +189,16 @@ def main():
 
         custname = confcust.get_custname(cust)
         auth_custopts = confcust.get_token(cust)
-        auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
 
         for job in confcust.get_jobs(cust):
             logger.customer = confcust.get_custname(cust)
             logger.job = job
 
-            poemserver = dict()
             profiles = confcust.get_profiles(job)
-            namespace = confcust.get_namespace(job)
-            poemserver[confcust.get_poemserver_host(job)] = confcust.get_poemserver_vo(job)
-
-            poem = PoemReader(custname, job, auth_opts)
-            psa = poem.getProfiles(profiles, namespace, poemserver)
+            webapi = WebAPI(custname, job, profiles,
+                          globopts['WebAPIHost'].lower(),
+                          globopts['WebAPIToken'].lower())
+            psa = webapi.get_profiles()
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -213,15 +212,15 @@ def main():
 
             if fixed_date:
                 output.write_state(sys.argv[0], jobstatedir,
-                                   poem.state,
+                                   webapi.state,
                                    globopts['InputStateDays'.lower()],
                                    fixed_date.replace('-', '_'))
             else:
                 output.write_state(sys.argv[0], jobstatedir,
-                                   poem.state,
+                                   webapi.state,
                                    globopts['InputStateDays'.lower()])
 
-            if not poem.state:
+            if not webapi.state:
                 continue
 
             lfprofiles = gen_outprofiles(psa, profiles)
