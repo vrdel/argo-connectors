@@ -39,11 +39,9 @@ from argo_egi_connectors.helpers import filename_date, module_class_name, datest
 
 logger = None
 
-globopts, poemopts = {}, {}
-cpoem = None
+globopts = dict()
 custname = ''
-
-API_PATH = '/v2/metric_profiles'
+API_PATH = '/api/v2/metric_profiles'
 
 class WebAPI(object):
     def __init__(self, customer, job, profiles, host, token):
@@ -52,10 +50,11 @@ class WebAPI(object):
         self.job = job
         self.host = host
         self.token = token
+        self.profiles = profiles
 
-    def get_profiles(self, profiles_list):
+    def get_profiles(self):
         try:
-            fetched_profiles = self._fetch(profiles_list)
+            fetched_profiles = self._fetch()
             name = []
             for item in validProfiles.keys():
                 name.append(item.split('.')[-1])
@@ -86,8 +85,27 @@ class WebAPI(object):
         else:
             return profileListAvro
 
-    def _fetch(self, profiles_list):
-        pass
+    def _fetch(self):
+        try:
+            res = input.connection(logger, module_class_name(self), globopts,
+                                   'https', self.host, API_PATH,
+                                   custauth={'WebAPIToken'.lower(): self.token})
+            import ipdb; ipdb.set_trace()
+            if not res:
+                raise input.ConnectorError()
+
+            json_data = input.parse_json(logger, module_class_name(self),
+                                        globopts, res, self.host + API_PATH)
+
+            if not json_data:
+                raise input.ConnectorError()
+
+            # Checking if the requested VO is associated with the profile.
+            if json_data['vo'] in vo:
+                profiles_data.append(json_data)
+
+        except input.ConnectorError:
+            self.state = False
 
     def loadProfilesFromServer(self, server, vo, namespace, Profiles):
         validProfiles = dict()
@@ -122,7 +140,7 @@ class WebAPI(object):
                     raise input.ConnectorError()
 
                 json_data = input.parse_json(logger, module_class_name(self),
-                                         globopts, res, self._urlfeed)
+                                             globopts, res, self._urlfeed)
 
                 if not json_data:
                     raise input.ConnectorError()
@@ -196,8 +214,8 @@ def main():
 
             profiles = confcust.get_profiles(job)
             webapi = WebAPI(custname, job, profiles,
-                          globopts['WebAPIHost'].lower(),
-                          globopts['WebAPIToken'].lower())
+                          globopts['WebAPIHost'.lower()],
+                          globopts['WebAPIToken'.lower()])
             psa = webapi.get_profiles()
 
             jobdir = confcust.get_fulldir(cust, job)

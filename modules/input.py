@@ -20,8 +20,9 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         buf = None
 
         headers = {}
-        if custauth and msgprefix == 'PoemReader':
-            headers = {'x-api-key': custauth['AuthenticationPoemToken'.lower()]}
+        if custauth and msgprefix == 'WebAPI':
+            headers = {'x-api-key': custauth['WebApiToken'.lower()],
+                       'Accept': 'application/json'}
         elif msgprefix != 'PoemReader' and custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
             userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':' \
                                         + custauth['AuthenticationHttpPass'.lower()])
