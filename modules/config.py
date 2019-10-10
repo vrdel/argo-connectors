@@ -185,9 +185,7 @@ class CustomerConf:
                                                      'TopoSelectGroupOfEndpoints',
                                                      'TopoFeed',
                                                      'TopoFeedPaging'],
-                    'metricprofile-webapi-connector.py': ['PoemServerHost',
-                                                          'PoemServerVO',
-                                                          'PoemNamespace'],
+                    'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed']
                     }
@@ -476,14 +474,5 @@ class CustomerConf:
 
         return feeds
 
-    def get_poemserver_host(self, job):
-        return self._jobs[job]['PoemServerHost']
-
-    def get_poemserver_vo(self, job):
-        vo = self._jobs[job]['PoemServerVO'].split(',')
-        for i, p in enumerate(vo):
-            vo[i] = p.strip()
-        return vo
-
     def get_namespace(self, job):
-        return self._jobs[job]['PoemNamespace']
+        return self._jobs[job]['MetricProfileNamespace']

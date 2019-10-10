@@ -660,7 +660,6 @@ class TopologyXml(unittest.TestCase):
                                            'scope': 'EGI'},
                                   'type': 'SITES'}])
 
-
 class WeightsJson(unittest.TestCase):
     def setUp(self):
         self.connset = ConnectorSetup('weights-vapor-connector.py',

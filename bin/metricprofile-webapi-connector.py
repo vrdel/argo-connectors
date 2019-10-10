@@ -45,13 +45,14 @@ API_PATH = '/api/v2/metric_profiles'
 
 
 class WebAPI(object):
-    def __init__(self, customer, job, profiles, host, token):
+    def __init__(self, customer, job, profiles, namespace, host, token):
         self.state = True
         self.customer = customer
         self.job = job
         self.host = host
         self.token = token
         self.profiles = profiles
+        self.namespace = namespace
 
     def get_profiles(self):
         try:
@@ -69,7 +70,7 @@ class WebAPI(object):
                 for service in profile['services']:
                     for metric in service['metrics']:
                         profile_list.append({
-                            'profile': profile['name'],
+                            'profile': '{0}.{1}'.format(self.namespace, profile['name']),
                             'metric': metric,
                             'service': service['service']
                         })
@@ -148,7 +149,7 @@ def main():
             logger.job = job
 
             profiles = confcust.get_profiles(job)
-            webapi = WebAPI(custname, job, profiles,
+            webapi = WebAPI(custname, job, profiles, confcust.get_namespace(job),
                             globopts['WebAPIHost'.lower()],
                             globopts['WebAPIToken'.lower()])
             fetched_profiles = webapi.get_profiles()
