@@ -11,7 +11,7 @@ class Global:
     conf_general = {'General': ['PublishAms', 'WriteAvro']}
     conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                     'VerifyServerCert', 'UsePlainHttpAuth',
-                                    'HttpUser', 'HttpPass', 'PoemToken']}
+                                    'HttpUser', 'HttpPass']}
     conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry']}
     conf_state = {'InputState': ['SaveDir', 'Days']}
 
@@ -26,6 +26,7 @@ class Global:
     conf_weights_output = {'Output': ['Weights']}
     conf_poem_output = {'Output': ['Poem']}
     conf_poem_schemas = {'AvroSchemas': ['Poem']}
+    conf_poem_webapi= {'WebAPI': ['Token', 'Host']}
 
     def __init__(self, caller, confpath=None, **kwargs):
         self.optional = dict()
@@ -55,6 +56,7 @@ class Global:
                                          self.conf_weights_output),
                         'poem-connector.py':
                         self._merge_dict(self.shared_secopts,
+                                         self.conf_poem_webapi,
                                          self.conf_poem_schemas,
                                          self.conf_poem_output)
                         }
@@ -192,8 +194,7 @@ class CustomerConf:
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
                       'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
-                      'AuthenticationHttpUser', 'AuthenticationHttpPass',
-                      'AuthenticationPoemToken']
+                      'AuthenticationHttpUser', 'AuthenticationHttpPass']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
