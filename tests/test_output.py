@@ -191,7 +191,7 @@ class WeightsAvro(unittest.TestCase):
 
 class WeightsAvro(unittest.TestCase):
     def setUp(self):
-        self.connset = ConnectorSetup('poem-connector.py',
+        self.connset = ConnectorSetup('weights-vapor-connector.py',
                                       'tests/global.conf',
                                       'tests/customer.conf')
         for c in ['globalconfig', 'customerconfig', 'globopts', 'jobs',
@@ -203,12 +203,12 @@ class WeightsAvro(unittest.TestCase):
     @mock.patch('modules.output.open')
     def testWeights(self, mock_open, mock_lschema):
         mock_avrofile = mock.create_autospec(output.DataFileWriter)
-        filename = filename_date(logger, self.globopts['OutputPoem'.lower()], self.jobdir)
-        m = output.AvroWriter(self.globopts['AvroSchemasPoem'.lower()], filename)
+        filename = filename_date(logger, self.globopts['OutputWeights'.lower()], self.jobdir)
+        m = output.AvroWriter(self.globopts['AvroSchemasWeights'.lower()], filename)
         m.datawrite = mock_avrofile
         m.write(self.poem)
         mock_open.assert_called_with(filename, 'w+')
-        mock_lschema.assert_called_with(self.globopts['AvroSchemasPoem'.lower()])
+        mock_lschema.assert_called_with(self.globopts['AvroSchemasWeights'.lower()])
         self.assertTrue(mock_avrofile.append.called)
         self.assertEqual(mock_avrofile.append.call_count, 3)
         self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.poem[0])), 0)
@@ -216,13 +216,13 @@ class WeightsAvro(unittest.TestCase):
         self.assertEqual(mock_avrofile.append.mock_calls.index(mock.call(self.poem[2])), 2)
 
 
-class PoemAms(unittest.TestCase):
+class MetricProfileAms(unittest.TestCase):
     publish_topic_urlmatch = dict(netloc='localhost',
                                   path='/v1/projects/EGI/topics/TOPIC:publish',
                                   method='POST')
 
     def setUp(self):
-        self.connset = ConnectorSetup('poem-connector.py',
+        self.connset = ConnectorSetup('metricprofile-webapi-connector.py',
                                       'tests/global.conf',
                                       'tests/customer.conf')
         for c in ['globalconfig', 'customerconfig', 'globopts', 'jobs',
@@ -254,7 +254,7 @@ class PoemAms(unittest.TestCase):
                                                  logger,
                                                  int(self.globopts['connectionretry']),
                                                  int(self.globopts['connectiontimeout']))
-    def testPoem(self):
+    def testMetricProfile(self):
         @urlmatch(**self.publish_topic_urlmatch)
         def publish_bulk_mock(url, request):
             assert url.path == "/v1/projects/EGI/topics/TOPIC:publish"
@@ -278,7 +278,7 @@ class PoemAms(unittest.TestCase):
             return '{"msgIds": ["1", "2", "3"]}'
 
         with HTTMock(publish_bulk_mock):
-            ret = self.amspublish.send(self.globopts['AvroSchemasPoem'.lower()],
+            ret = self.amspublish.send(self.globopts['AvroSchemasMetricProfile'.lower()],
                                  'poem', datestamp().replace('_', '-'),
                                  self.poem)
             self.assertTrue(ret)
@@ -297,7 +297,7 @@ class PoemAms(unittest.TestCase):
 
 
         with HTTMock(publish_pack_mock):
-            ret = self.amspublish_pack.send(self.globopts['AvroSchemasPoem'.lower()],
+            ret = self.amspublish_pack.send(self.globopts['AvroSchemasMetricProfile'.lower()],
                                  'poem', datestamp().replace('_', '-'),
                                  self.poem)
             self.assertTrue(ret)
