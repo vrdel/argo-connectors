@@ -14,6 +14,7 @@ class Global:
                                     'HttpUser', 'HttpPass']}
     conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry']}
     conf_state = {'InputState': ['SaveDir', 'Days']}
+    conf_webapi= {'WebAPI': ['Token', 'Host']}
 
     # options specific for every connector
     conf_topo_schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints',
@@ -26,7 +27,6 @@ class Global:
     conf_weights_output = {'Output': ['Weights']}
     conf_metricprofile_output = {'Output': ['MetricProfile']}
     conf_metricprofile_schemas = {'AvroSchemas': ['MetricProfile']}
-    conf_metricprofile_webapi= {'WebAPI': ['Token', 'Host']}
 
     def __init__(self, caller, confpath=None, **kwargs):
         self.optional = dict()
@@ -37,11 +37,13 @@ class Global:
 
         self.optional.update(self._lowercase_dict(self.conf_ams))
         self.optional.update(self._lowercase_dict(self.conf_auth))
+        self.optional.update(self._lowercase_dict(self.conf_webapi))
 
         self.shared_secopts = self._merge_dict(self.conf_ams,
                                                self.conf_general,
                                                self.conf_auth, self.conf_conn,
-                                               self.conf_state)
+                                               self.conf_state,
+                                               self.conf_webapi)
         self.secopts = {'topology-gocdb-connector.py':
                         self._merge_dict(self.shared_secopts,
                                          self.conf_topo_schemas,
@@ -56,7 +58,6 @@ class Global:
                                          self.conf_weights_output),
                         'metricprofile-webapi-connector.py':
                         self._merge_dict(self.shared_secopts,
-                                         self.conf_metricprofile_webapi,
                                          self.conf_metricprofile_schemas,
                                          self.conf_metricprofile_output)
                         }
@@ -192,7 +193,7 @@ class CustomerConf:
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
                       'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
-                      'AuthenticationHttpUser', 'AuthenticationHttpPass']
+                      'AuthenticationHttpUser', 'AuthenticationHttpPass', 'WebAPIToken']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -242,14 +243,17 @@ class CustomerConf:
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
                 if optopts:
-                    ams, auth = {}, {}
+                    ams, auth, webapi = {}, {}, {}
                     for k, v in optopts.iteritems():
                         if k.startswith('ams'):
                             ams.update({k: v})
                         if k.startswith('authentication'):
                             auth.update({k: v})
+                        if k.startswith('webapi'):
+                            webapi.update({k: v})
                     self._cust[section].update(AmsOpts=ams)
                     self._cust[section].update(AuthOpts=auth)
+                    self._cust[section].update(WebAPIOpts=webapi)
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -328,9 +332,9 @@ class CustomerConf:
     def get_custname(self, cust):
         return self._cust[cust]['Name']
 
-    def get_token(self, cust):
-        if 'AuthOpts' in self._cust[cust]:
-            return self._cust[cust]['AuthOpts']
+    def get_webapiopts(self, cust):
+        if 'WebAPIOpts' in self._cust[cust]:
+            return self._cust[cust]['WebAPIOpts']
         else:
             return dict()
 

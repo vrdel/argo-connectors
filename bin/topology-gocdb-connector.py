@@ -339,7 +339,6 @@ class GOCDBReader:
             raise e
 
 
-
 class TopoFilter(object):
     def __init__(self, gg, ge, ggfilter, gefilter):
         self.gg = gg

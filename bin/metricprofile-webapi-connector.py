@@ -142,16 +142,23 @@ def main():
 
     for cust in confcust.get_customers():
         custname = confcust.get_custname(cust)
-        auth_custopts = confcust.get_token(cust)
 
         for job in confcust.get_jobs(cust):
             logger.customer = confcust.get_custname(cust)
             logger.job = job
 
             profiles = confcust.get_profiles(job)
+            webapi_custopts = confcust.get_webapiopts(cust)
+            webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+            webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+
+            if not webapi_complete:
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (custname, logger.job, 'webapi', ' '.join(missopt)))
+                continue
+
             webapi = WebAPI(custname, job, profiles, confcust.get_namespace(job),
-                            globopts['WebAPIHost'.lower()],
-                            globopts['WebAPIToken'.lower()])
+                            webapi_opts['webapihost'],
+                            webapi_opts['webapitoken'])
             fetched_profiles = webapi.get_profiles()
 
             jobdir = confcust.get_fulldir(cust, job)
