@@ -48,6 +48,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Fri Nov 8 2019 Daniel Vrcic <dvrcic@srce.hr> - 1.7.3-1%{?dist}
+- ARGO-2017 - Token per tenants config option
+- ARGO-2013 - Metric profiles WEB-API connector
+- ARGO-1549 - New helper tool that can replay avro data on AMS with customizable datestamp
+- ARGO-1575 - Switch poem-connector to use new token protected POEM API
 * Wed Feb 20 2019 Daniel Vrcic <dvrcic@srce.hr> - 1.7.2-1%{?dist}
 - ARGO-1674 Use requests library in connectors
 * Fri Nov 30 2018 Daniel Vrcic <dvrcic@srce.hr>, Katarina Zailac <kzailac@srce.hr> - 1.7.1-1%{?dist}
