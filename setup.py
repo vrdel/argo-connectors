@@ -16,15 +16,16 @@ def get_ver():
 setup(name=NAME,
       version=get_ver(),
       author='SRCE',
-      author_email='dvrcic@srce.hr, lgjenero@gmail.com',
-      description='Components generate input for ARGO Compute Engine',
+      author_email='dvrcic@srce.hr, kzailac@srce.hr',
+      description='Components generate input data for ARGO Compute Engine',
       url='http://argoeu.github.io/guides/sync/',
       package_dir={'argo_egi_connectors': 'modules/'},
       packages=['argo_egi_connectors'],
       data_files=[('/etc/argo-egi-connectors', glob.glob('etc/*.conf')),
                   ('/usr/libexec/argo-egi-connectors', ['bin/downtimes-gocdb-connector.py', \
-                                                        'bin/poem-connector.py', \
+                                                        'bin/metricprofile-webapi-connector.py', \
                                                         'bin/topology-gocdb-connector.py', \
-                                                        'bin/weights-vapor-connector.py']),
+                                                        'bin/weights-vapor-connector.py', \
+                                                        'bin/replay-avro-data.py']),
                   ('/etc/argo-egi-connectors/schemas', glob.glob('etc/schemas/*.avsc')),
                   ('/etc/cron.d', glob.glob('cronjobs/*'))])

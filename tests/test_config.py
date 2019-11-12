@@ -78,17 +78,13 @@ class TestConfig(unittest.TestCase):
                                     [('JOB_EGICritical', 'CUSTOMER_EGI'),
                                      ('JOB_EGIFedcloud', 'CUSTOMER_EGI')]})
 
-    def testPoemServerOpts(self):
-        customerconfig = modules.config.CustomerConf('poem-connector.py', 'tests/customer.conf')
+    def testMetricProfileOpts(self):
+        customerconfig = modules.config.CustomerConf('metricprofile-webapi-connector.py', 'tests/customer.conf')
         opts = customerconfig.parse()
         customers = self.customerconfig.get_customers()
         jobs = self.customerconfig.get_jobs(customers[0])
         namespace = self.customerconfig.get_namespace(jobs[0])
         self.assertEqual(namespace, 'ch.cern.SAM')
-        serverhost = self.customerconfig.get_poemserver_host(jobs[0])
-        self.assertEqual(serverhost, 'poem-devel.argo.grnet.gr')
-        vo = self.customerconfig.get_poemserver_vo(jobs[0])
-        self.assertEqual(vo, ['ops'])
 
 
 if __name__ == '__main__':
