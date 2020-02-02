@@ -160,7 +160,7 @@ class GOCDBReader:
             g['type'] = fetchtype.upper()
             g['group'] = gr['site']
             g['service'] = gr['type']
-            g['hostname'] = gr['hostname']
+            g['hostname'] = '{0}+{1}'.format(gr['service_id'], gr['hostname'])
             g['tags'] = {'scope' : gr['scope'], \
                          'monitored' : '1' if gr['monitored'] == 'Y' or \
                                               gr['monitored'] == 'True' else '0', \
@@ -209,6 +209,7 @@ class GOCDBReader:
                 serviceList[serviceId]['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                 serviceList[serviceId]['site'] = getText(service.getElementsByTagName('SITENAME')[0].childNodes)
                 serviceList[serviceId]['roc'] = getText(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                serviceList[serviceId]['service_id'] = serviceId
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
