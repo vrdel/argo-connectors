@@ -181,11 +181,12 @@ class CustomerConf:
     """
     _custattrs = None
     _cust = {}
-    _defjobattrs = {'topology-gocdb-connector.py' : ['TopoFetchType',
-                                                     'TopoSelectGroupOfGroups',
-                                                     'TopoSelectGroupOfEndpoints',
-                                                     'TopoFeed',
-                                                     'TopoFeedPaging'],
+    _defjobattrs = {'topology-gocdb-connector.py': ['TopoFetchType',
+                                                    'TopoSelectGroupOfGroups',
+                                                    'TopoSelectGroupOfEndpoints',
+                                                    'TopoUIDServiceEndpoints',
+                                                    'TopoFeed',
+                                                    'TopoFeedPaging'],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed']
@@ -449,6 +450,9 @@ class CustomerConf:
                 break
 
         return eval(str(paginated))
+
+    def pass_uidserviceendpoints(self, job):
+        return self._jobs[job]['TopoUIDServiceEndpoints']
 
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}
