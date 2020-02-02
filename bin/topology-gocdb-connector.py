@@ -95,7 +95,7 @@ class GOCDBReader:
                 g['type'] = fetchtype.upper()
                 g['group'] = d['name']
                 g['service'] = service['type']
-                g['hostname'] = service['hostname']
+                g['hostname'] = '{0}+{1}'.format(service['service_id'], service['hostname'])
                 g['group_monitored'] = d['monitored']
                 g['tags'] = {'scope' : d['scope'], \
                             'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
@@ -303,6 +303,7 @@ class GOCDBReader:
                 for service in services:
                     serviceDict = {}
                     serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    serviceDict['service_id'] = getText(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
                     serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
                     serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
