@@ -520,28 +520,6 @@ class ConnectorSetup(object):
                                  'scope': 'EGI'},
                         'type': 'SITES'}]
 
-    group_endpoints_uid = [{'group': u'100IT',
-                        'hostname': u'occi-api.100percentit.com_4497G0',
-                        'service': u'eu.egi.cloud.vm-management.occi',
-                        'tags': {'monitored': '1',
-                                 'production': '1',
-                                 'scope': 'EGI'},
-                        'type': 'SITES'},
-                        {'group': u'100IT',
-                        'hostname': u'egi-cloud-accounting.100percentit.com_4495G0',
-                        'service': u'eu.egi.cloud.accounting',
-                        'tags': {'monitored': '1',
-                                 'production': '1',
-                                 'scope': 'EGI'},
-                        'type': 'SITES'},
-                        {'group': u'100IT',
-                        'hostname': u'occi-api.100percentit.com_4588G0',
-                        'service': u'eu.egi.cloud.information.bdii',
-                        'tags': {'monitored': '1',
-                                 'production': '1',
-                                 'scope': 'EGI'},
-                        'type': 'SITES'}]
-
     group_endpoints_servicegroup_filter = [
         {'group': u'SLA_TEST_B',
          'group_monitored': u'Y',
@@ -585,7 +563,7 @@ class TopologyXml(unittest.TestCase):
                                       'tests/global.conf',
                                       'tests/customer.conf')
         for c in ['globalconfig', 'customerconfig', 'globopts',
-                  'group_endpoints', 'group_endpoints_uid', 'group_groups', 'group_endpoints_feed',
+                  'group_endpoints', 'group_groups', 'group_endpoints_feed',
                   'group_groups_feed', 'group_groups_servicegroup_filter',
                   'group_endpoints_servicegroup_filter',
                   'group_endpoints_sites_filter', 'group_groups_sites_filter']:
@@ -619,20 +597,6 @@ class TopologyXml(unittest.TestCase):
         self.gocdbreader.getGroupOfEndpoints.im_func.func_globals['fetchtype'] = 'SITES'
         sge = sorted(self.group_endpoints, key=lambda e: e['service'])
         obj_sge = sorted(self.gocdbreader.getGroupOfEndpoints(),
-                         key=lambda e: e['service'])
-        self.assertEqual(sge, obj_sge)
-
-    @mock.patch('modules.input.connection')
-    def testUIDServiceEndpoints(self, mock_conn):
-        servicelist = dict()
-        mock_conn.__name__ = 'mock_conn'
-        mock_conn.return_value = self.group_endpoints_feed
-        self.mock_conn = mock_conn
-        self.gocdbreader.getServiceEndpoints(servicelist, '&scope=EGI')
-        self.gocdbreader.serviceListEGI = servicelist
-        self.gocdbreader.getGroupOfEndpoints.im_func.func_globals['fetchtype'] = 'SITES'
-        sge = sorted(self.group_endpoints_uid, key=lambda e: e['service'])
-        obj_sge = sorted(self.gocdbreader.getGroupOfEndpoints(True),
                          key=lambda e: e['service'])
         self.assertEqual(sge, obj_sge)
 
