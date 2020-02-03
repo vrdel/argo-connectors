@@ -78,7 +78,7 @@ class GOCDBReader:
         self.paging = paging
         self.custauth = auth
 
-    def getGroupOfServices(self, uidservtype):
+    def getGroupOfServices(self, uidservtype=False):
         if not self.fetched:
             if not self.state or not self.loadDataIfNeeded():
                 return []
@@ -148,7 +148,7 @@ class GOCDBReader:
 
         return groupofgroups
 
-    def getGroupOfEndpoints(self, uidservtype):
+    def getGroupOfEndpoints(self, uidservtype=False):
         if not self.fetched:
             if not self.state or not self.loadDataIfNeeded():
                 return []
