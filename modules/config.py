@@ -452,7 +452,13 @@ class CustomerConf:
         return eval(str(paginated))
 
     def pass_uidserviceendpoints(self, job):
-        return self._jobs[job]['TopoUIDServiceEndpoints']
+        do_pass = False
+        try:
+            do_pass = bool(self._jobs[job]['TopoUIDServiceEndpoints'])
+        except KeyError:
+            pass
+
+        return do_pass
 
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}
