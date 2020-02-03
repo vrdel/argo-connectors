@@ -95,7 +95,7 @@ class GOCDBReader:
                 g['type'] = fetchtype.upper()
                 g['group'] = d['name']
                 g['service'] = service['type']
-                g['hostname'] = service['hostname']
+                g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 g['group_monitored'] = d['monitored']
                 g['tags'] = {'scope' : d['scope'], \
                             'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
@@ -160,7 +160,7 @@ class GOCDBReader:
             g['type'] = fetchtype.upper()
             g['group'] = gr['site']
             g['service'] = gr['type']
-            g['hostname'] = gr['hostname']
+            g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
             g['tags'] = {'scope' : gr['scope'], \
                          'monitored' : '1' if gr['monitored'] == 'Y' or \
                                               gr['monitored'] == 'True' else '0', \
@@ -209,6 +209,7 @@ class GOCDBReader:
                 serviceList[serviceId]['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                 serviceList[serviceId]['site'] = getText(service.getElementsByTagName('SITENAME')[0].childNodes)
                 serviceList[serviceId]['roc'] = getText(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                serviceList[serviceId]['service_id'] = serviceId
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
@@ -302,6 +303,10 @@ class GOCDBReader:
                 for service in services:
                     serviceDict = {}
                     serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    try:
+                        serviceDict['service_id'] = getText(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                    except IndexError:
+                        serviceDict['service_id'] = service.getAttribute('PRIMARY_KEY')
                     serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
                     serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
@@ -447,6 +452,7 @@ def main():
 
             global fetchtype, custname
             fetchtype = confcust.get_gocdb_fetchtype(job)
+            uidservtype = confcust.pass_uidserviceendpoints(job)
             custname = confcust.get_custname(cust)
 
             logger.customer = custname
