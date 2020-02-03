@@ -1,7 +1,7 @@
 FROM centos:6.9
 MAINTAINER Themis Zamani themiszamani@gmail.com
 
-RUN yum -y install epel-release 
+RUN yum -y install epel-release
 RUN yum -y makecache; yum -y update
 RUN yum install -y \
         gcc \
@@ -14,18 +14,18 @@ RUN yum install -y \
         python-argparse \
         python-devel \
         python-pip \
-        python-setuptools \
         tar \
         wget
 RUN pip install \
         argo_ams_library \
         avro \
-        coverage \
         cffi \
-        cryptography \
+        coverage==4.5.4 \
+        cryptography==2.1.4 \
         discover \
         httmock \
         mock \
         pyOpenSSL \
+        setuptools \
         requests \
         unittest2
