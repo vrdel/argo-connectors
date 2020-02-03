@@ -78,7 +78,7 @@ class GOCDBReader:
         self.paging = paging
         self.custauth = auth
 
-    def getGroupOfServices(self):
+    def getGroupOfServices(self, uidservtype=False):
         if not self.fetched:
             if not self.state or not self.loadDataIfNeeded():
                 return []
@@ -95,7 +95,10 @@ class GOCDBReader:
                 g['type'] = fetchtype.upper()
                 g['group'] = d['name']
                 g['service'] = service['type']
-                g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
+                if uidservtype:
+                    g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
+                else:
+                    g['hostname'] = service['hostname']
                 g['group_monitored'] = d['monitored']
                 g['tags'] = {'scope' : d['scope'], \
                             'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
@@ -145,7 +148,7 @@ class GOCDBReader:
 
         return groupofgroups
 
-    def getGroupOfEndpoints(self):
+    def getGroupOfEndpoints(self, uidservtype=False):
         if not self.fetched:
             if not self.state or not self.loadDataIfNeeded():
                 return []
@@ -160,12 +163,15 @@ class GOCDBReader:
             g['type'] = fetchtype.upper()
             g['group'] = gr['site']
             g['service'] = gr['type']
-            g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
-            g['tags'] = {'scope' : gr['scope'], \
-                         'monitored' : '1' if gr['monitored'] == 'Y' or \
-                                              gr['monitored'] == 'True' else '0', \
-                         'production' : '1' if gr['production'] == 'Y' or \
-                                               gr['production'] == 'True' else '0'}
+            if uidservtype:
+                g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
+            else:
+                g['hostname'] = gr['hostname']
+            g['tags'] = {'scope': gr['scope'], \
+                         'monitored': '1' if gr['monitored'] == 'Y' or \
+                                             gr['monitored'] == 'True' else '0', \
+                         'production': '1' if gr['production'] == 'Y' or \
+                                              gr['production'] == 'True' else '0'}
             groupofendpoints.append(g)
 
         return groupofendpoints
@@ -466,9 +472,9 @@ def main():
                 continue
 
             if fetchtype == 'ServiceGroups':
-                group_endpoints = gocdb.getGroupOfServices()
+                group_endpoints = gocdb.getGroupOfServices(uidservtype)
             else:
-                group_endpoints = gocdb.getGroupOfEndpoints()
+                group_endpoints = gocdb.getGroupOfEndpoints(uidservtype)
             group_groups = gocdb.getGroupOfGroups()
 
             if fixed_date:
