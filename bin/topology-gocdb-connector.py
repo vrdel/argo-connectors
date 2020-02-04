@@ -459,7 +459,7 @@ def main():
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
             global fetchtype, custname
-            fetchtype = confcust.get_gocdb_fetchtype(job)
+            fetchtype = confcust.get_fetchtype(job)
             uidservtype = confcust.pass_uidserviceendpoints(job)
             custname = confcust.get_custname(cust)
 

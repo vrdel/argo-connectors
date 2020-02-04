@@ -26,9 +26,10 @@ def is_feed(feed):
 
 
 class EOSCReader(object):
-    def __init__(self, data, uidservtype=False):
+    def __init__(self, data, uidservtype=False, fetchtype='ServiceGroups'):
         self.data = data
         self.uidservtype = uidservtype
+        self.fetchtype = fetchtype
 
     def _construct_fqdn(self, http_endpoint):
         return urlparse(http_endpoint).netloc
@@ -54,7 +55,7 @@ class EOSCReader(object):
         for entity in self.data:
             tmp_dict = dict()
 
-            tmp_dict['type'] = 'SERVICEGROUPS'
+            tmp_dict['type'] = self.fetchtype.upper()
             tmp_dict['group'] = entity['SITENAME-SERVICEGROUP']
             tmp_dict['service'] = entity['SERVICE_TYPE']
             if self.uidservtype:
@@ -99,6 +100,7 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             logger.customer = confcust.get_custname(cust)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+            fetchtype = confcust.get_fetchtype(job)
 
             state = None
             logger.job = job
@@ -117,7 +119,7 @@ def main():
                 try:
                     with open(feeds.keys()[0]) as fp:
                         js = json.load(fp)
-                        eosc = EOSCReader(js, uidservtype)
+                        eosc = EOSCReader(js, uidservtype, fetchtype)
                         group_groups = eosc.get_groupgroups()
                         group_endpoints = eosc.get_groupendpoints()
                         state = True
@@ -180,7 +182,7 @@ def main():
                     logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
-            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(SERVICEGROUPS):%d' % numgg)
+            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
 
 
 if __name__ == '__main__':

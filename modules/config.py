@@ -379,7 +379,7 @@ class CustomerConf:
             profiles[i] = p.strip()
         return profiles
 
-    def get_gocdb_fetchtype(self, job):
+    def get_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']
 
     def _get_tags(self, job, option):
