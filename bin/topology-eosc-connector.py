@@ -131,6 +131,29 @@ def main():
             numge = len(group_endpoints)
             numgg = len(group_groups)
 
+            if eval(globopts['GeneralPublishAms'.lower()]):
+                if fixed_date:
+                    partdate = fixed_date
+                else:
+                    partdate = datestamp(1).replace('_', '-')
+
+                ams = output.AmsPublish(ams_opts['amshost'],
+                                        ams_opts['amsproject'],
+                                        ams_opts['amstoken'],
+                                        ams_opts['amstopic'],
+                                        confcust.get_jobdir(job),
+                                        ams_opts['amsbulk'],
+                                        ams_opts['amspacksinglemsg'],
+                                        logger,
+                                        int(globopts['ConnectionRetry'.lower()]),
+                                        int(globopts['ConnectionTimeout'.lower()]))
+
+                ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
+                         'group_groups', partdate, group_groups)
+
+                ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
+                         'group_endpoints', partdate, group_endpoints)
+
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
                     filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir, fixed_date.replace('-', '_'))
@@ -152,7 +175,6 @@ def main():
                     logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
-            import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     main()
