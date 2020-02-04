@@ -33,7 +33,7 @@ class EOSCReader(object):
         return urlparse(http_endpoint).netloc
 
     def get_groupgroups(self):
-        groups = dict()
+        groups = list()
 
         for entity in self.data:
             tmp_dict = dict()
@@ -43,12 +43,12 @@ class EOSCReader(object):
             tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
             tmp_dict['tags'] = {'monitored' : '1', 'scope' : 'EOSC'}
 
-            groups.update(tmp_dict)
+            groups.append(tmp_dict)
 
         return groups
 
     def get_groupendpoints(self):
-        groups = dict()
+        groups = list()
 
         for entity in self.data:
             tmp_dict = dict()
@@ -59,7 +59,7 @@ class EOSCReader(object):
             tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(entity['URL']))
             tmp_dict['tags'] = {'scope': 'EOSC', 'monitored': '1'}
 
-            groups.update(tmp_dict)
+            groups.append(tmp_dict)
 
         return groups
 
@@ -92,14 +92,14 @@ def main():
         custname = confcust.get_custname(cust)
 
         for job in confcust.get_jobs(cust):
-            state = None
-
+            jobdir = confcust.get_fulldir(cust, job)
             logger.customer = confcust.get_custname(cust)
-            logger.job = job
-
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            custname = confcust.get_custname(cust)
+            state = None
+            logger.job = job
+            logger.customer = custname
+
             ams_custopts = confcust.get_amsopts(cust)
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
@@ -128,7 +128,31 @@ def main():
                 output.write_state(sys.argv[0], jobstatedir, state,
                                    globopts['InputStateDays'.lower()])
 
+            numge = len(group_endpoints)
+            numgg = len(group_groups)
 
+            if eval(globopts['GeneralWriteAvro'.lower()]):
+                if fixed_date:
+                    filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir, fixed_date.replace('-', '_'))
+                else:
+                    filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+                ret, excep = avro.write(group_groups)
+                if not ret:
+                    logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
+                    raise SystemExit(1)
+
+                if fixed_date:
+                    filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir, fixed_date.replace('-', '_'))
+                else:
+                    filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+                ret, excep = avro.write(group_endpoints)
+                if not ret:
+                    logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
+                    raise SystemExit(1)
+
+            import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     main()
