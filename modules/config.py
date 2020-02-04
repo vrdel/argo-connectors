@@ -460,7 +460,7 @@ class CustomerConf:
     def pass_uidserviceendpoints(self, job):
         do_pass = False
         try:
-            do_pass = bool(self._jobs[job]['TopoUIDServiceEndpoints'])
+            do_pass = eval(self._jobs[job]['TopoUIDServiceEndpoints'])
         except KeyError:
             pass
 

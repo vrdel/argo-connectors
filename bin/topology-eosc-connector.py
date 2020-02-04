@@ -26,8 +26,9 @@ def is_feed(feed):
 
 
 class EOSCReader(object):
-    def __init__(self, data):
+    def __init__(self, data, uidservtype=False):
         self.data = data
+        self.uidservtype = uidservtype
 
     def _construct_fqdn(self, http_endpoint):
         return urlparse(http_endpoint).netloc
@@ -41,7 +42,7 @@ class EOSCReader(object):
             tmp_dict['type'] = 'PROJECT'
             tmp_dict['group'] = 'EOSC'
             tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
-            tmp_dict['tags'] = {'monitored' : '1', 'scope' : 'EOSC'}
+            tmp_dict['tags'] = {'monitored': '1', 'scope': 'EOSC'}
 
             groups.append(tmp_dict)
 
@@ -56,7 +57,10 @@ class EOSCReader(object):
             tmp_dict['type'] = 'SERVICEGROUPS'
             tmp_dict['group'] = entity['SITENAME-SERVICEGROUP']
             tmp_dict['service'] = entity['SERVICE_TYPE']
-            tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(entity['URL']))
+            if self.uidservtype:
+                tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(entity['URL']))
+            else:
+                tmp_dict['hostname'] = self._construct_fqdn(entity['URL'])
             tmp_dict['tags'] = {'scope': 'EOSC', 'monitored': '1'}
 
             groups.append(tmp_dict)
@@ -100,6 +104,7 @@ def main():
             logger.job = job
             logger.customer = custname
 
+            uidservtype = confcust.pass_uidserviceendpoints(job)
             ams_custopts = confcust.get_amsopts(cust)
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
@@ -112,7 +117,7 @@ def main():
                 try:
                     with open(feeds.keys()[0]) as fp:
                         js = json.load(fp)
-                        eosc = EOSCReader(js)
+                        eosc = EOSCReader(js, uidservtype)
                         group_groups = eosc.get_groupgroups()
                         group_endpoints = eosc.get_groupendpoints()
                         state = True
