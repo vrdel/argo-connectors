@@ -1,19 +1,16 @@
 #!/usr/bin/python
 
 import argparse
-import copy
 import os
 import sys
-import re
 import json
 
-from argo_egi_connectors import input
+from urlparse import urlparse
+
 from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
-
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
-from urlparse import urlparse
+from argo_egi_connectors.helpers import filename_date, datestamp, date_check
 
 
 def is_feed(feed):
@@ -70,7 +67,6 @@ class EOSCReader(object):
 
 
 def main():
-    global logger, globopts, confcust
     parser = argparse.ArgumentParser(description="""Fetch and construct entities from EOSC-PORTAL feed""")
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
@@ -187,4 +183,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
