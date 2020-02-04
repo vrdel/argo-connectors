@@ -5,6 +5,7 @@ import copy
 import os
 import sys
 import re
+import json
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
@@ -13,6 +14,16 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
 from urlparse import urlparse
+
+
+def is_feed(feed):
+    data = urlparse(feed)
+
+    if not data.netloc:
+        return False
+    else:
+        return True
+
 
 def main():
     global logger, globopts, confcust
@@ -50,9 +61,18 @@ def main():
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
 
-            source = confcust.get_mapfeedjobs(sys.argv[0])
-            import ipdb; ipdb.set_trace()
-            pass
+            feeds = confcust.get_mapfeedjobs(sys.argv[0])
+            if is_feed(feeds.keys()[0]):
+                # TODO: handle case when topology will be served remotely
+                pass
+            else:
+                try:
+                    with open(feeds.keys()[0]) as fp:
+                        js = json.load(fp)
+                except IOError as exc:
+                    logger.error('Customer:%s Job:%s : Problem opening %s - %s' % (logger.customer, logger.job, feeds.keys()[0], repr(exc)))
+
+
 
 
 if __name__ == '__main__':
