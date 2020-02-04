@@ -92,8 +92,12 @@ def main():
         custname = confcust.get_custname(cust)
 
         for job in confcust.get_jobs(cust):
+            state = None
+
             logger.customer = confcust.get_custname(cust)
             logger.job = job
+
+            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
             custname = confcust.get_custname(cust)
             ams_custopts = confcust.get_amsopts(cust)
@@ -111,9 +115,18 @@ def main():
                         eosc = EOSCReader(js)
                         group_groups = eosc.get_groupgroups()
                         group_endpoints = eosc.get_groupendpoints()
+                        state = True
                 except IOError as exc:
                     logger.error('Customer:%s Job:%s : Problem opening %s - %s' % (logger.customer, logger.job, feeds.keys()[0], repr(exc)))
+                    state = False
 
+            if fixed_date:
+                output.write_state(sys.argv[0], jobstatedir, state,
+                                   globopts['InputStateDays'.lower()],
+                                   fixed_date.replace('-', '_'))
+            else:
+                output.write_state(sys.argv[0], jobstatedir, state,
+                                   globopts['InputStateDays'.lower()])
 
 
 
