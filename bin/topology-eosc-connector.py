@@ -175,6 +175,8 @@ def main():
                     logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
+            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(SERVICEGROUPS):%d' % numgg)
+
 
 if __name__ == '__main__':
     main()
