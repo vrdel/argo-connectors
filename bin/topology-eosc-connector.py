@@ -25,6 +25,26 @@ def is_feed(feed):
         return True
 
 
+class EOSCReader(object):
+    def __init__(self, data):
+        self.data = data
+
+    def get_groupgroups(self):
+        groups = dict()
+
+        for entity in self.data:
+            tmp_dict = dict()
+
+            tmp_dict['type'] = 'PROJECT'
+            tmp_dict['group'] = 'EOSC'
+            tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
+            tmp_dict['tags'] = {'monitored' : '1', 'scope' : 'EOSC'}
+
+            groups.update(tmp_dict)
+
+        return groups
+
+
 def main():
     global logger, globopts, confcust
     parser = argparse.ArgumentParser(description="""Fetch and construct entities from EOSC-PORTAL feed""")
@@ -69,6 +89,9 @@ def main():
                 try:
                     with open(feeds.keys()[0]) as fp:
                         js = json.load(fp)
+                        eosc = EOSCReader(js)
+                        group_groups = eosc.get_groupgroups()
+                        import ipdb; ipdb.set_trace()
                 except IOError as exc:
                     logger.error('Customer:%s Job:%s : Problem opening %s - %s' % (logger.customer, logger.job, feeds.keys()[0], repr(exc)))
 
