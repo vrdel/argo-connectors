@@ -29,6 +29,9 @@ class EOSCReader(object):
     def __init__(self, data):
         self.data = data
 
+    def _construct_fqdn(self, http_endpoint):
+        return urlparse(http_endpoint).netloc
+
     def get_groupgroups(self):
         groups = dict()
 
@@ -39,6 +42,22 @@ class EOSCReader(object):
             tmp_dict['group'] = 'EOSC'
             tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
             tmp_dict['tags'] = {'monitored' : '1', 'scope' : 'EOSC'}
+
+            groups.update(tmp_dict)
+
+        return groups
+
+    def get_groupendpoints(self):
+        groups = dict()
+
+        for entity in self.data:
+            tmp_dict = dict()
+
+            tmp_dict['type'] = 'SERVICEGROUPS'
+            tmp_dict['group'] = entity['SITENAME-SERVICEGROUP']
+            tmp_dict['service'] = entity['SERVICE_TYPE']
+            tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(entity['URL']))
+            tmp_dict['tags'] = {'scope': 'EOSC', 'monitored': '1'}
 
             groups.update(tmp_dict)
 
@@ -91,7 +110,7 @@ def main():
                         js = json.load(fp)
                         eosc = EOSCReader(js)
                         group_groups = eosc.get_groupgroups()
-                        import ipdb; ipdb.set_trace()
+                        group_endpoints = eosc.get_groupendpoints()
                 except IOError as exc:
                     logger.error('Customer:%s Job:%s : Problem opening %s - %s' % (logger.customer, logger.job, feeds.keys()[0], repr(exc)))
 
