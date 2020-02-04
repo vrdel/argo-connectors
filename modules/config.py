@@ -48,6 +48,10 @@ class Global:
                         self._merge_dict(self.shared_secopts,
                                          self.conf_topo_schemas,
                                          self.conf_topo_output),
+                        'topology-eosc-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_topo_schemas,
+                                         self.conf_topo_output),
                         'downtimes-gocdb-connector.py':
                         self._merge_dict(self.shared_secopts,
                                          self.conf_downtimes_schemas,
@@ -187,6 +191,8 @@ class CustomerConf:
                                                     'TopoUIDServiceEndpoints',
                                                     'TopoFeed',
                                                     'TopoFeedPaging'],
+                    'topology-eosc-connector.py': ['TopoFeed', 'TopoFile', 'TopoFetchType',
+                                                   'TopoUIDServiceEndpoints'],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed'],
                     'weights-vapor-connector.py': ['WeightsFeed']
@@ -465,7 +471,9 @@ class CustomerConf:
         for c in self.get_customers():
             for job in self.get_jobs(c):
                 if 'topology' in caller:
-                    feedurl = self._get_feed(job, 'TopoFeed')
+                    feedurl = self._get_feed(job, 'TopoFile')
+                    if not feedurl:
+                        feedurl = self._get_feed(job, 'TopoFeed')
                     if feedurl:
                         self._update_feeds(feeds, feedurl, job, c)
                     else:
