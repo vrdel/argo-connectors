@@ -52,13 +52,27 @@ def getText(nodelist):
     return ''.join(rc)
 
 
+def all_same(elemlist):
+    prev = None
+
+    for el in elemlist:
+        if prev is None:
+            prev = el
+        else:
+            if el != prev:
+                return False
+            else:
+                return True
+
+
 class GOCDBReader(object):
-    def __init__(self, feed, auth=None):
+    def __init__(self, feed, auth=None, uid=False):
         self._o = urlparse(feed)
         self.argDateFormat = "%Y-%m-%d"
         self.WSDateFormat = "%Y-%m-%d %H:%M"
         self.state = True
         self.custauth = auth
+        self.uid = uid
 
     def getDowntimes(self, start, end):
         filteredDowntimes = list()
@@ -91,7 +105,10 @@ class GOCDBReader(object):
                     startStr = getText(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
                     endStr = getText(downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes)
                     severity = getText(downtime.getElementsByTagName('SEVERITY')[0].childNodes)
-
+                    try:
+                        serviceId = getText(downtime.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                    except IndexError:
+                        serviceId = downtime.getAttribute('PRIMARY_KEY')
                     startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
                     endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
 
@@ -102,7 +119,10 @@ class GOCDBReader(object):
 
                     if classification == 'SCHEDULED' and severity == 'OUTAGE':
                         dt = dict()
-                        dt['hostname'] = hostname
+                        if self.uid:
+                            dt['hostname'] = '{0}_{1}'.format(hostname, serviceId)
+                        else:
+                            dt['hostname'] = hostname
                         dt['service'] = serviceType
                         dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
                         dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
@@ -116,6 +136,7 @@ class GOCDBReader(object):
                 return []
             else:
                 return filteredDowntimes
+
 
 def main():
     global logger, globopts
@@ -137,7 +158,6 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
-
     if len(args.date) == 0:
         print parser.print_help()
         raise SystemExit(1)
@@ -153,28 +173,37 @@ def main():
         logger.error(e)
         raise SystemExit(1)
 
-
+    j = 0
     for feed, jobcust in feeds.items():
         customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
         customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
-        jobs = set(map(lambda jc: jc[0], jobcust))
-        jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
+        ljobs = set(map(lambda jc: jc[0], jobcust))
+        jobs = ljobs.pop() if len(ljobs) == 1 else '({0})'.format(','.join(ljobs))
         logger.job = jobs
         logger.customer = customers
+        uidjob = confcust.pass_uidserviceendpoints(ljobs)
 
         auth_custopts = confcust.get_authopts(feed, jobcust)
         auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
         auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
-        if auth_complete:
-            gocdb = GOCDBReader(feed, auth=auth_opts)
-            dts = gocdb.getDowntimes(start, end)
-        else:
+        if not auth_complete:
             logger.error('Customer:%s Jobs:%s %s options incomplete, missing %s'
-                         % (logger.customer, logger.job, 'authentication',
+                        % (logger.customer, logger.job, 'authentication',
                             ''.join(missing)))
             continue
 
+        # do fetch only once
+        if all_same(uidjob):
+            gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
+            dts = gocdb.getDowntimes(start, end)
+
         for job, cust in jobcust:
+            # fetch for every job because of different TopoUIDServiceEndpoints
+            # setting for each job
+            if not all_same(uidjob):
+                gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
+                dts = gocdb.getDowntimes(start, end)
+
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
@@ -215,6 +244,8 @@ def main():
                 if not ret:
                     logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
+
+            j += 1
 
         if gocdb.state:
             custs = set([cust for job, cust in jobcust])

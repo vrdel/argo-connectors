@@ -10,6 +10,7 @@ from bin.topology_gocdb_connector import GOCDBReader, TopoFilter
 from bin.weights_vapor_connector import Vapor as VaporReader
 from modules.log import Logger
 
+
 class ConnectorSetup(object):
     downtimes_feed = \
         """<?xml version="1.0" encoding="UTF-8"?>\n<results>\n
@@ -579,6 +580,7 @@ class ConnectorSetup(object):
         self.jobs = self.customerconfig.get_jobs(customers[0])
         self.jobdir = self.customerconfig.get_fulldir(customers[0], self.jobs[0])
 
+
 class TopologyXml(unittest.TestCase):
     def setUp(self):
         self.connset = ConnectorSetup('topology-gocdb-connector.py',
@@ -696,6 +698,7 @@ class TopologyXml(unittest.TestCase):
                                            'scope': 'EGI'},
                                   'type': 'SITES'}])
 
+
 class WeightsJson(unittest.TestCase):
     def setUp(self):
         self.connset = ConnectorSetup('weights-vapor-connector.py',
@@ -730,6 +733,7 @@ class WeightsJson(unittest.TestCase):
         mock_conn.return_value = self.weights_feed
         vapor.getWeights = self.wrap_get_weights
         self.assertEqual(vapor.getWeights(mock_conn), self.weights)
+
 
 class DowntimesXml(unittest.TestCase):
     def setUp(self):
@@ -832,6 +836,7 @@ class DowntimesXml(unittest.TestCase):
         for call in write_state.call_args_list[2:]:
             self.assertTrue(gocdbreader.state in call[0])
             self.assertTrue('2017_01_19' in call[0])
+
 
 if __name__ == '__main__':
     unittest.main()

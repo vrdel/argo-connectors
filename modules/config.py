@@ -1,8 +1,12 @@
 import ConfigParser
-import os, re, errno
+import errno
+import os
+import re
+
 from log import Logger
 
-class Global:
+
+class Global(object):
     """
        Class represents parser for global.conf
     """
@@ -14,7 +18,7 @@ class Global:
                                     'HttpUser', 'HttpPass']}
     conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry']}
     conf_state = {'InputState': ['SaveDir', 'Days']}
-    conf_webapi= {'WebAPI': ['Token', 'Host']}
+    conf_webapi = {'WebAPI': ['Token', 'Host']}
 
     # options specific for every connector
     conf_topo_schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints',
@@ -45,6 +49,10 @@ class Global:
                                                self.conf_state,
                                                self.conf_webapi)
         self.secopts = {'topology-gocdb-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_topo_schemas,
+                                         self.conf_topo_output),
+                        'topology-eosc-connector.py':
                         self._merge_dict(self.shared_secopts,
                                          self.conf_topo_schemas,
                                          self.conf_topo_output),
@@ -175,7 +183,8 @@ class Global:
 
         return options
 
-class CustomerConf:
+
+class CustomerConf(object):
     """
        Class with parser for customer.conf and additional helper methods
     """
@@ -187,8 +196,10 @@ class CustomerConf:
                                                     'TopoUIDServiceEndpoints',
                                                     'TopoFeed',
                                                     'TopoFeedPaging'],
+                    'topology-eosc-connector.py': ['TopoFeed', 'TopoFile', 'TopoFetchType',
+                                                   'TopoUIDServiceEndpoints'],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
-                    'downtimes-gocdb-connector.py': ['DowntimesFeed'],
+                    'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
                     'weights-vapor-connector.py': ['WeightsFeed']
                     }
     _jobs, _jobattrs = {}, None
@@ -373,7 +384,7 @@ class CustomerConf:
             profiles[i] = p.strip()
         return profiles
 
-    def get_gocdb_fetchtype(self, job):
+    def get_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']
 
     def _get_tags(self, job, option):
@@ -452,20 +463,33 @@ class CustomerConf:
         return eval(str(paginated))
 
     def pass_uidserviceendpoints(self, job):
-        do_pass = False
-        try:
-            do_pass = bool(self._jobs[job]['TopoUIDServiceEndpoints'])
-        except KeyError:
-            pass
+        if not isinstance(job, set):
+            do_pass = False
+            try:
+                do_pass = eval(self._jobs[job]['TopoUIDServiceEndpoints'])
+            except KeyError:
+                pass
 
-        return do_pass
+            return do_pass
+        else:
+            ret = list()
+
+            for jb in job:
+                try:
+                    do_pass = eval(self._jobs[jb]['TopoUIDServiceEndpoints'])
+                    ret.append(do_pass)
+                except KeyError:
+                    ret.append(False)
+            return ret
 
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}
         for c in self.get_customers():
             for job in self.get_jobs(c):
                 if 'topology' in caller:
-                    feedurl = self._get_feed(job, 'TopoFeed')
+                    feedurl = self._get_feed(job, 'TopoFile')
+                    if not feedurl:
+                        feedurl = self._get_feed(job, 'TopoFeed')
                     if feedurl:
                         self._update_feeds(feeds, feedurl, job, c)
                     else:

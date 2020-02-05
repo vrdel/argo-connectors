@@ -221,7 +221,7 @@ class GOCDBReader:
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
-                                                                                                      repr(e).replace('\'','').replace('\"', '')))
+                                                                                                      repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getServiceEndpoints(self, serviceList, scope):
@@ -264,7 +264,7 @@ class GOCDBReader:
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SITESPI,
-                                                                                                        repr(e).replace('\'','').replace('\"', '')))
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getSitesInternal(self, siteList, scope):
@@ -397,8 +397,10 @@ class TopoFilter(object):
         for attr in tags.keys():
             def getit(elem):
                 value = elem['tags'][attr.lower()]
-                if value == '1': value = 'Y'
-                elif value == '0': value = 'N'
+                if value == '1':
+                    value = 'Y'
+                elif value == '0':
+                    value = 'N'
                 if isinstance(tags[attr], list):
                     for a in tags[attr]:
                         if value.lower() == a.lower():
@@ -457,7 +459,7 @@ def main():
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
             global fetchtype, custname
-            fetchtype = confcust.get_gocdb_fetchtype(job)
+            fetchtype = confcust.get_fetchtype(job)
             uidservtype = confcust.pass_uidserviceendpoints(job)
             custname = confcust.get_custname(cust)
 
@@ -541,21 +543,21 @@ def main():
                     logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
-            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))
+            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
                 selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selge, selgg = '', ''
                 if getags:
                     for key, value in getags.items():
                         if isinstance(value, list):
-                            value = '['+','.join(value)+']'
+                            value = '[' + ','.join(value) + ']'
                         selge += '%s:%s,' % (key, value)
                     selstr += 'Endpoints(%s):' % selge[:len(selge) - 1]
                     selstr += '%d ' % (len(group_endpoints))
                 if ggtags:
                     for key, value in ggtags.items():
                         if isinstance(value, list):
-                            value = '['+','.join(value)+']'
+                            value = '[' + ','.join(value) + ']'
                         selgg += '%s:%s,' % (key, value)
                     selstr += 'Groups(%s):' % selgg[:len(selgg) - 1]
                     selstr += '%d' % (len(group_groups))
