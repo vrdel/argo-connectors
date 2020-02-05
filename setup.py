@@ -25,6 +25,7 @@ setup(name=NAME,
                   ('/usr/libexec/argo-egi-connectors', ['bin/downtimes-gocdb-connector.py',
                                                         'bin/metricprofile-webapi-connector.py',
                                                         'bin/topology-gocdb-connector.py',
+                                                        'bin/topology-eosc-connector.py',
                                                         'bin/weights-vapor-connector.py',
                                                         'bin/replay-avro-data.py']),
                   ('/etc/argo-egi-connectors/schemas', glob.glob('etc/schemas/*.avsc'))])
