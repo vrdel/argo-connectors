@@ -14,6 +14,7 @@ RUN yum install -y \
         python-argparse \
         python-devel \
         python-pip \
+        python-requests \
         tar \
         wget
 RUN pip install \
@@ -24,8 +25,7 @@ RUN pip install \
         cryptography==2.1.4 \
         discover \
         httmock \
-        mock \
+        mock==2.0.0 \
         pyOpenSSL \
         setuptools \
-        requests \
         unittest2
