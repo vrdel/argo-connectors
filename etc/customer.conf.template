@@ -26,7 +26,6 @@ TopoFeedPaging = True
 [JOB_EOSCCritical]
 Dirname = Critical
 Profiles = EOSC_CRITICAL
-TopoType = EOSCPORTAL
 TopoFile = /etc/argo-egi-connectors/services_eosc.json
 TopoFetchType = ServiceGroups
 TopoUIDServiceEndpoints = True

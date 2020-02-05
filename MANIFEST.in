@@ -1,6 +1,6 @@
 include bin/*.py
 include cronjobs/*
-include etc/*.conf
+include etc/*.conf.template
 include etc/schemas/*.avsc
 include modules/*.py
 include argo-egi-connectors.spec
