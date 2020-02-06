@@ -99,7 +99,7 @@ class Global(object):
         return newd
 
     def is_complete(self, opts, section):
-        all = set([section+o for o in self.optional[section]])
+        all = set([section + o for o in self.optional[section]])
         diff = all.symmetric_difference(opts.keys())
         if diff:
             return (False, diff)
@@ -110,7 +110,7 @@ class Global(object):
 
         for k in d.iterkeys():
             for v in d[k]:
-                opts.append(k+v)
+                opts.append(k + v)
 
         return opts
 
@@ -199,8 +199,8 @@ class CustomerConf(object):
                     'topology-eosc-connector.py': ['TopoFeed', 'TopoFile', 'TopoFetchType',
                                                    'TopoUIDServiceEndpoints'],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
-                    'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
-                    'weights-vapor-connector.py': ['WeightsFeed']
+                    'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints', 'DowntimesEmpty'],
+                    'weights-vapor-connector.py': ['WeightsFeed', 'WeightsEmpty']
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
@@ -438,7 +438,6 @@ class CustomerConf(object):
             feeds[feedurl].append((job, cust))
 
     def get_feedscopes(self, feed, jobcust):
-        ggtags, getags = [], []
         distinct_scopes = set()
         for job, cust in jobcust:
             gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
@@ -511,6 +510,15 @@ class CustomerConf(object):
                         self._update_feeds(feeds, feedurl, job, c)
 
         return feeds
+
+    def send_empty(self, caller, job):
+        try:
+            if 'downtimes' in caller:
+                return eval(self._jobs[job]['DowntimesEmpty'])
+            elif 'weights' in caller:
+                return eval(self._jobs[job]['WeightsEmpty'])
+        except KeyError:
+            return False
 
     def get_namespace(self, job):
         namespace = None
