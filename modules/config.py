@@ -99,7 +99,7 @@ class Global(object):
         return newd
 
     def is_complete(self, opts, section):
-        all = set([section+o for o in self.optional[section]])
+        all = set([section + o for o in self.optional[section]])
         diff = all.symmetric_difference(opts.keys())
         if diff:
             return (False, diff)
@@ -110,7 +110,7 @@ class Global(object):
 
         for k in d.iterkeys():
             for v in d[k]:
-                opts.append(k+v)
+                opts.append(k + v)
 
         return opts
 
@@ -205,7 +205,8 @@ class CustomerConf(object):
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
                       'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
-                      'AuthenticationHttpUser', 'AuthenticationHttpPass', 'WebAPIToken']
+                      'AuthenticationHttpUser', 'AuthenticationHttpPass',
+                      'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -255,7 +256,7 @@ class CustomerConf(object):
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
                 if optopts:
-                    ams, auth, webapi = {}, {}, {}
+                    ams, auth, webapi, empty_data = {}, {}, {}, {}
                     for k, v in optopts.iteritems():
                         if k.startswith('ams'):
                             ams.update({k: v})
@@ -263,9 +264,12 @@ class CustomerConf(object):
                             auth.update({k: v})
                         if k.startswith('webapi'):
                             webapi.update({k: v})
+                        if k.endswith('empty'):
+                            empty_data.update({k: v})
                     self._cust[section].update(AmsOpts=ams)
                     self._cust[section].update(AuthOpts=auth)
                     self._cust[section].update(WebAPIOpts=webapi)
+                    self._cust[section].update(EmptyDataOpts=empty_data)
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -438,7 +442,6 @@ class CustomerConf(object):
             feeds[feedurl].append((job, cust))
 
     def get_feedscopes(self, feed, jobcust):
-        ggtags, getags = [], []
         distinct_scopes = set()
         for job, cust in jobcust:
             gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
@@ -511,6 +514,15 @@ class CustomerConf(object):
                         self._update_feeds(feeds, feedurl, job, c)
 
         return feeds
+
+    def send_empty(self, caller, cust):
+        try:
+            if 'downtimes' in caller:
+                return eval(self._cust[cust]['EmptyDataOpts']['downtimesempty'])
+            elif 'weights' in caller:
+                return eval(self._cust[cust]['EmptyDataOpts']['weightsempty'])
+        except KeyError:
+            return False
 
     def get_namespace(self, job):
         namespace = None
