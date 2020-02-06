@@ -192,17 +192,27 @@ def main():
                             ''.join(missing)))
             continue
 
+        write_empty = confcust.send_empty(sys.argv[0], list(ljobs)[j])
+
         # do fetch only once
         if all_same(uidjob):
             gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
-            dts = gocdb.getDowntimes(start, end)
+            if not write_empty:
+                dts = gocdb.getDowntimes(start, end)
+            else:
+                dts = []
+                gocdb.state = True
 
         for job, cust in jobcust:
             # fetch for every job because of different TopoUIDServiceEndpoints
             # setting for each job
             if not all_same(uidjob):
                 gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
-                dts = gocdb.getDowntimes(start, end)
+                if not write_empty:
+                    dts = gocdb.getDowntimes(start, end)
+                else:
+                    dts = []
+                    gocdb.state = True
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
