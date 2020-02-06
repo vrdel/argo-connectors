@@ -178,7 +178,7 @@ def main():
         customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
         customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
         ljobs = set(map(lambda jc: jc[0], jobcust))
-        jobs = ljobs.pop() if len(ljobs) == 1 else '({0})'.format(','.join(ljobs))
+        jobs = list(ljobs)[0] if len(ljobs) == 1 else '({0})'.format(','.join(ljobs))
         logger.job = jobs
         logger.customer = customers
         uidjob = confcust.pass_uidserviceendpoints(ljobs)
