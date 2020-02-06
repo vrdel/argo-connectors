@@ -513,4 +513,10 @@ class CustomerConf(object):
         return feeds
 
     def get_namespace(self, job):
-        return self._jobs[job]['MetricProfileNamespace']
+        namespace = None
+        try:
+            namespace = self._jobs[job]['MetricProfileNamespace']
+        except KeyError:
+            pass
+
+        return namespace
