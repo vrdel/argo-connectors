@@ -199,13 +199,14 @@ class CustomerConf(object):
                     'topology-eosc-connector.py': ['TopoFeed', 'TopoFile', 'TopoFetchType',
                                                    'TopoUIDServiceEndpoints'],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
-                    'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints', 'DowntimesEmpty'],
-                    'weights-vapor-connector.py': ['WeightsFeed', 'WeightsEmpty']
+                    'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
+                    'weights-vapor-connector.py': ['WeightsFeed']
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
                       'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
-                      'AuthenticationHttpUser', 'AuthenticationHttpPass', 'WebAPIToken']
+                      'AuthenticationHttpUser', 'AuthenticationHttpPass',
+                      'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -255,7 +256,7 @@ class CustomerConf(object):
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
                 if optopts:
-                    ams, auth, webapi = {}, {}, {}
+                    ams, auth, webapi, empty_data = {}, {}, {}, {}
                     for k, v in optopts.iteritems():
                         if k.startswith('ams'):
                             ams.update({k: v})
@@ -263,9 +264,12 @@ class CustomerConf(object):
                             auth.update({k: v})
                         if k.startswith('webapi'):
                             webapi.update({k: v})
+                        if k.endswith('empty'):
+                            empty_data.update({k: v})
                     self._cust[section].update(AmsOpts=ams)
                     self._cust[section].update(AuthOpts=auth)
                     self._cust[section].update(WebAPIOpts=webapi)
+                    self._cust[section].update(EmptyDataOpts=empty_data)
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -511,12 +515,12 @@ class CustomerConf(object):
 
         return feeds
 
-    def send_empty(self, caller, job):
+    def send_empty(self, caller, cust):
         try:
             if 'downtimes' in caller:
-                return eval(self._jobs[job]['DowntimesEmpty'])
+                return eval(self._cust[cust]['EmptyDataOpts']['downtimesempty'])
             elif 'weights' in caller:
-                return eval(self._jobs[job]['WeightsEmpty'])
+                return eval(self._cust[cust]['EmptyDataOpts']['weightsempty'])
         except KeyError:
             return False
 
