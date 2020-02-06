@@ -117,22 +117,29 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed=VAPORPI)
 
+    j = 0
     for feed, jobcust in feeds.items():
         weights = Vapor(feed)
         datawr = None
 
         customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
         customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
-        jobs = set(map(lambda jc: jc[0], jobcust))
-        jobs = jobs.pop() if len(jobs) == 1 else '({0})'.format(','.join(jobs))
+        sjobs = set(map(lambda jc: jc[0], jobcust))
+        jobs = list(sjobs)[0] if len(sjobs) == 1 else '({0})'.format(','.join(sjobs))
         logger.job = jobs
         logger.customer = customers
-
-        w = weights.getWeights()
 
         for job, cust in jobcust:
             logger.customer = confcust.get_custname(cust)
             logger.job = job
+
+            write_empty = confcust.send_empty(sys.argv[0], cust)
+
+            if not write_empty:
+                w = weights.getWeights()
+            else:
+                w = []
+                weights.state = True
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -188,7 +195,9 @@ def main():
                     logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
-        if datawr:
+            j += 1
+
+        if datawr or write_empty:
             custs = set([cust for job, cust in jobcust])
             for cust in custs:
                 jobs = [job for job, lcust in jobcust if cust == lcust]

@@ -159,7 +159,7 @@ def main():
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
 
     if len(args.date) == 0:
-        print parser.print_help()
+        print(parser.print_help())
         raise SystemExit(1)
 
     # calculate start and end times
@@ -177,11 +177,11 @@ def main():
     for feed, jobcust in feeds.items():
         customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
         customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
-        ljobs = set(map(lambda jc: jc[0], jobcust))
-        jobs = list(ljobs)[0] if len(ljobs) == 1 else '({0})'.format(','.join(ljobs))
+        sjobs = set(map(lambda jc: jc[0], jobcust))
+        jobs = list(sjobs)[0] if len(sjobs) == 1 else '({0})'.format(','.join(sjobs))
         logger.job = jobs
         logger.customer = customers
-        uidjob = confcust.pass_uidserviceendpoints(ljobs)
+        uidjob = confcust.pass_uidserviceendpoints(sjobs)
 
         auth_custopts = confcust.get_authopts(feed, jobcust)
         auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -192,7 +192,10 @@ def main():
                             ''.join(missing)))
             continue
 
-        write_empty = confcust.send_empty(sys.argv[0], list(ljobs)[j])
+        # we don't have multiple tenant definitions in one
+        # customer file so we can safely assume one tenant/customer
+        cust = jobcust[0][1]
+        write_empty = confcust.send_empty(sys.argv[0], cust)
 
         # do fetch only once
         if all_same(uidjob):
