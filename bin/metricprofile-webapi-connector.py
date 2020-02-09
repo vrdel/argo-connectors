@@ -70,11 +70,11 @@ class WebAPI(object):
                 for service in profile['services']:
                     for metric in service['metrics']:
                         if self.namespace:
-                            profile = '{0}.{1}'.format(self.namespace, profile['name'])
+                            profile_name = '{0}.{1}'.format(self.namespace, profile['name'])
                         else:
-                            profile = profile['name']
+                            profile_name = profile['name']
                         profile_list.append({
-                            'profile': profile,
+                            'profile': profile_name,
                             'metric': metric,
                             'service': service['service']
                         })

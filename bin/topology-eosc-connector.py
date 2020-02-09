@@ -131,6 +131,9 @@ def main():
                 output.write_state(sys.argv[0], jobstatedir, state,
                                    globopts['InputStateDays'.lower()])
 
+            if not state:
+                continue
+
             numge = len(group_endpoints)
             numgg = len(group_groups)
 
