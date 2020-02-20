@@ -73,11 +73,11 @@ class WebAPI(object):
                             profile_name = '{0}.{1}'.format(self.namespace, profile['name'])
                         else:
                             profile_name = profile['name']
-                        profile_list.append({
-                            'profile': profile_name,
-                            'metric': metric,
-                            'service': service['service']
-                        })
+                            profile_list.append({
+                                'profile': profile_name,
+                                'metric': metric,
+                                'service': service['service']
+                            })
 
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
@@ -97,7 +97,7 @@ class WebAPI(object):
                 raise input.ConnectorError()
 
             json_data = input.parse_json(logger, module_class_name(self),
-                                        globopts, res, self.host + API_PATH)
+                                         globopts, res, self.host + API_PATH)
 
             if not json_data or not json_data.get('data', False):
                 raise input.ConnectorError()

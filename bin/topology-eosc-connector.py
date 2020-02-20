@@ -55,11 +55,12 @@ class EOSCReader(object):
             tmp_dict['type'] = self.fetchtype.upper()
             tmp_dict['group'] = entity['SITENAME-SERVICEGROUP']
             tmp_dict['service'] = entity['SERVICE_TYPE']
+            info_url = entity['URL']
             if self.uidservtype:
-                tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(entity['URL']))
+                tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(info_url))
             else:
                 tmp_dict['hostname'] = self._construct_fqdn(entity['URL'])
-            tmp_dict['tags'] = {'scope': 'EOSC', 'monitored': '1'}
+            tmp_dict['tags'] = {'scope': 'EOSC', 'monitored': '1', 'info.URL': info_url}
 
             groups.append(tmp_dict)
 
