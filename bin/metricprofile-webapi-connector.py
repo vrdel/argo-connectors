@@ -73,11 +73,11 @@ class WebAPI(object):
                             profile_name = '{0}.{1}'.format(self.namespace, profile['name'])
                         else:
                             profile_name = profile['name']
-                            profile_list.append({
-                                'profile': profile_name,
-                                'metric': metric,
-                                'service': service['service']
-                            })
+                        profile_list.append({
+                            'profile': profile_name,
+                            'metric': metric,
+                            'service': service['service']
+                        })
 
         except (KeyError, IndexError, AttributeError, TypeError) as e:
             self.state = False
