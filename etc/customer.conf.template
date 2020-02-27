@@ -26,6 +26,6 @@ TopoFeedPaging = True
 [JOB_EOSCCritical]
 Dirname = Critical
 Profiles = EOSC_CRITICAL
-TopoFile = /etc/argo-egi-connectors/services_eosc.json
+TopoFeed = https://marketplace.grid.cyfronet.pl/api/services
 TopoFetchType = ServiceGroups
 TopoUIDServiceEndpoints = True
