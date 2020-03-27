@@ -17,7 +17,6 @@ pipeline {
                     agent {
                         docker {
                             image 'argo.registry:5000/epel-6-egi'
-                            args '-u jenkins:jenkins'
                         }
                     }
                     steps {
@@ -33,7 +32,6 @@ pipeline {
                     agent {
                         docker {
                             image 'argo.registry:5000/epel-7-egi'
-                            args '-u jenkins:jenkins'
                         }
                     }
                     steps {
