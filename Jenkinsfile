@@ -25,7 +25,6 @@ pipeline {
                             cd ${WORKSPACE}/$PROJECT_DIR
                             ${WORKSPACE}/$PROJECT_DIR/tests/run-tests.sh
                         '''
-                        cobertura coberturaReportFile: '**/coverage.xml'
                     }
                 }
                 stage ('Test Centos 7') {
@@ -40,7 +39,6 @@ pipeline {
                             cd ${WORKSPACE}/$PROJECT_DIR
                             ${WORKSPACE}/$PROJECT_DIR/tests/run-tests.sh
                         '''
-                        cobertura coberturaReportFile: '**/coverage.xml'
                     }
                 }
             }
