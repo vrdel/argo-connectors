@@ -16,7 +16,7 @@ pipeline {
                 stage ('Test Centos 6') {
                     agent {
                         docker {
-                            image 'argo.registry:5000/epel-6-ams'
+                            image 'argo.registry:5000/epel-6-egi'
                             args '-u jenkins:jenkins'
                         }
                     }
@@ -32,7 +32,7 @@ pipeline {
                 stage ('Test Centos 7') {
                     agent {
                         docker {
-                            image 'argo.registry:5000/epel-7-ams'
+                            image 'argo.registry:5000/epel-7-egi'
                             args '-u jenkins:jenkins'
                         }
                     }
