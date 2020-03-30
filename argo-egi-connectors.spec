@@ -1,11 +1,11 @@
 Name: argo-egi-connectors
-Version: 1.7.2
+Version: 1.7.4
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
 Url: http://argoeu.github.io/guides/sync/
-Vendor: SRCE <dvrcic@srce.hr>
+Vendor: SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
 
 Obsoletes: ar-sync
 Prefix: %{_prefix}
@@ -46,6 +46,12 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Mon Mar 30 2020 Daniel Vrcic <dvrcic@srce.hr> - 1.7.4-1%{dist}
+- ARGO-2247 Pass URL from EOSC topology
+- ARGO-2225 Support for creating empty weights and downtimes data
+- ARGO-2221 Metric profile namespace optional 
+- ARGO-2210 Introduce topology connector for EOSC-PORTAL
+- ARGO-2209 Pass PRIMARY_KEY of GOCDB service endpoint as a unique service endpoint identifier 
 * Fri Nov 8 2019 Daniel Vrcic <dvrcic@srce.hr> - 1.7.3-1%{?dist}
 - ARGO-2017 - Token per tenants config option
 - ARGO-2013 - Metric profiles WEB-API connector
