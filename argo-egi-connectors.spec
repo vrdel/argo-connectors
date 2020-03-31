@@ -1,11 +1,11 @@
 Name: argo-egi-connectors
-Version: 1.7.2
+Version: 1.7.4
 Release: 1%{?dist}
 Group: EGI/SA4
 License: ASL 2.0
 Summary: Components generate input for ARGO Compute Engine
 Url: http://argoeu.github.io/guides/sync/
-Vendor: SRCE <dvrcic@srce.hr>
+Vendor: SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
 
 Obsoletes: ar-sync
 Prefix: %{_prefix}
@@ -42,12 +42,16 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_libexecdir}/argo-egi-connectors/
 %attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/*.py*
 
-%attr(0644,root,root) %{_sysconfdir}/cron.d/*
-
 %attr(0755,root,root) %dir %{_sharedstatedir}/argo-connectors/
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Mon Mar 30 2020 Daniel Vrcic <dvrcic@srce.hr> - 1.7.4-1%{dist}
+- ARGO-2247 Pass URL from EOSC topology
+- ARGO-2225 Support for creating empty weights and downtimes data
+- ARGO-2221 Metric profile namespace optional 
+- ARGO-2210 Introduce topology connector for EOSC-PORTAL
+- ARGO-2209 Pass PRIMARY_KEY of GOCDB service endpoint as a unique service endpoint identifier 
 * Fri Nov 8 2019 Daniel Vrcic <dvrcic@srce.hr> - 1.7.3-1%{?dist}
 - ARGO-2017 - Token per tenants config option
 - ARGO-2013 - Metric profiles WEB-API connector
@@ -59,13 +63,13 @@ rm -rf $RPM_BUILD_ROOT
 - ARGO-1428 ServiceGroup topology filtering
 - ARGO-1370 Optimize connectors queries to POEM
 - ARGO-1269 Refactor poem-connector
-- ARGO-1236 Datestamp of AMS msg does not match corresponding avro filename 
+- ARGO-1236 Datestamp of AMS msg does not match corresponding avro filename
 * Wed May 23 2018 Daniel Vrcic <dvrcic@srce.hr> - 1.7.0-1%{?dist}
 - ARGO-1093 Support for GOCDB paginated topology API
 - ARGO-1080 add support for basic-auth in Connectors
 - ARGO-966 Lower state files permissions
 * Tue Mar 27 2018 Daniel Vrcic <dvrcic@srce.hr> - 1.6.1-1%{?dist}
-- selectively use GOCDB paginated API for topology 
+- selectively use GOCDB paginated API for topology
 * Thu Nov 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.6.0-1%{?dist}
 - ARGO-965 Support for packing connectors data in a single AMS message
 - ARGO-921 Use ComputationPower instead of HEPSPEC2006 value for weights
@@ -83,21 +87,21 @@ rm -rf $RPM_BUILD_ROOT
 - ARGO-766 Remove SRMv2 service type mapping
 * Mon Mar 20 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.7-1%{?dist}
 - ARGO-767 Remove topology-vo connector
-- refactored topology filtering 
+- refactored topology filtering
 - removed schema migration helper
 * Fri Mar 17 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.6-1%{?dist}
-- ARGO-762 Remove inspection logic of HEPSPEC factors for previous days 
+- ARGO-762 Remove inspection logic of HEPSPEC factors for previous days
 * Thu Mar 9 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.5-1%{?dist}
 - ARGO-713 Topology connector should be able to pick only particular NGI or site
 * Mon Jan 30 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.4-1%{?dist}
-- ARGO-667 filter endpoints whose groups are filtered in groups of groups 
+- ARGO-667 filter endpoints whose groups are filtered in groups of groups
 * Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-3%{?dist}
 - prefilter output datestamp with underscores
 * Wed Jan 25 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-2%{?dist}
-- prefilter datestamp extracted from arg tuple 
+- prefilter datestamp extracted from arg tuple
 * Thu Jan 19 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.3-1%{?dist}
 - poem and output files as arguments to prefilter
-- refactored filename datestamp creation 
+- refactored filename datestamp creation
 * Wed Jan 4 2017 Daniel Vrcic <dvrcic@srce.hr> - 1.5.2-1%{?dist}
 - ARGO-550 Introduce states that can be checked by Nagios probe
 * Thu Nov 24 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.5.1-2%{?dist}
@@ -108,7 +112,7 @@ rm -rf $RPM_BUILD_ROOT
 - ARGO-584 Ensure to catch all exceptions of underlying library
 * Sat Sep 24 2016 Themis Zamani <themiszamani@gmail.com> - 1.5.0-1%{?dist}
 - New RPM package release
-* Wed Aug 31 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-2%{?dist} 
+* Wed Aug 31 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-2%{?dist}
 - make use of VAPOR service for weights
 - extended cert verification with CAfile bundle
 * Tue Feb 16 2016 Daniel Vrcic <dvrcic@srce.hr> - 1.4.6-1%{?dist}
@@ -124,7 +128,7 @@ rm -rf $RPM_BUILD_ROOT
 - log failed VO and weights connections
   https://github.com/ARGOeu/ARGO/issues/179
 - added connection timeout for all connectors
-- config files can be passed as arguments to every component 
+- config files can be passed as arguments to every component
   https://github.com/ARGOeu/ARGO/issues/180
 - added connection retry feature forr all connectors
 - prefilter explicit input and output
@@ -208,10 +212,10 @@ rm -rf $RPM_BUILD_ROOT
 - added Dirname optional option for VO config
 - correctly renamed avro schemas
 * Mon Mar 30 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-7%{?dist}
-- added README.md with a basic project info  
+- added README.md with a basic project info
 * Sun Mar 29 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-6%{?dist}
 - renamed weights and more configs refactoring
-- put scripts back into libexec 
+- put scripts back into libexec
 * Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-5%{?dist}
 - minor code cleanups and renamed connectors to reflect the source of data
 * Fri Mar 27 2015 Daniel Vrcic <dvrcic@srce.hr> - 1.4.0-4%{?dist}

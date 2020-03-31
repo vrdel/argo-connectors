@@ -16,7 +16,7 @@ pushd bin/ > /dev/null
 
 for f in [a-z]*.py
 do
-    link=${f//-/_} 
+    link=${f//-/_}
     if [[ ! -L $link ]]
     then
         ln -s $f $link
@@ -25,7 +25,7 @@ do
 done
 
 if [[ ! -e __init__.py ]]
-then 
+then
     touch __init__.py
     files[${#files[@]}]="bin/__init__.py"
 fi

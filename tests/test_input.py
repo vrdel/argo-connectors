@@ -10,6 +10,7 @@ from bin.topology_gocdb_connector import GOCDBReader, TopoFilter
 from bin.weights_vapor_connector import Vapor as VaporReader
 from modules.log import Logger
 
+
 class ConnectorSetup(object):
     downtimes_feed = \
         """<?xml version="1.0" encoding="UTF-8"?>\n<results>\n
@@ -520,6 +521,28 @@ class ConnectorSetup(object):
                                  'scope': 'EGI'},
                         'type': 'SITES'}]
 
+    group_endpoints_uid = [{'group': u'100IT',
+                        'hostname': u'occi-api.100percentit.com_4497G0',
+                        'service': u'eu.egi.cloud.vm-management.occi',
+                        'tags': {'monitored': '1',
+                                 'production': '1',
+                                 'scope': 'EGI'},
+                        'type': 'SITES'},
+                        {'group': u'100IT',
+                        'hostname': u'egi-cloud-accounting.100percentit.com_4495G0',
+                        'service': u'eu.egi.cloud.accounting',
+                        'tags': {'monitored': '1',
+                                 'production': '1',
+                                 'scope': 'EGI'},
+                        'type': 'SITES'},
+                        {'group': u'100IT',
+                        'hostname': u'occi-api.100percentit.com_4588G0',
+                        'service': u'eu.egi.cloud.information.bdii',
+                        'tags': {'monitored': '1',
+                                 'production': '1',
+                                 'scope': 'EGI'},
+                        'type': 'SITES'}]
+
     group_endpoints_servicegroup_filter = [
         {'group': u'SLA_TEST_B',
          'group_monitored': u'Y',
@@ -557,13 +580,14 @@ class ConnectorSetup(object):
         self.jobs = self.customerconfig.get_jobs(customers[0])
         self.jobdir = self.customerconfig.get_fulldir(customers[0], self.jobs[0])
 
+
 class TopologyXml(unittest.TestCase):
     def setUp(self):
         self.connset = ConnectorSetup('topology-gocdb-connector.py',
                                       'tests/global.conf',
                                       'tests/customer.conf')
         for c in ['globalconfig', 'customerconfig', 'globopts',
-                  'group_endpoints', 'group_groups', 'group_endpoints_feed',
+                  'group_endpoints', 'group_endpoints_uid', 'group_groups', 'group_endpoints_feed',
                   'group_groups_feed', 'group_groups_servicegroup_filter',
                   'group_endpoints_servicegroup_filter',
                   'group_endpoints_sites_filter', 'group_groups_sites_filter']:
@@ -597,6 +621,20 @@ class TopologyXml(unittest.TestCase):
         self.gocdbreader.getGroupOfEndpoints.im_func.func_globals['fetchtype'] = 'SITES'
         sge = sorted(self.group_endpoints, key=lambda e: e['service'])
         obj_sge = sorted(self.gocdbreader.getGroupOfEndpoints(),
+                         key=lambda e: e['service'])
+        self.assertEqual(sge, obj_sge)
+
+    @mock.patch('modules.input.connection')
+    def testUIDServiceEndpoints(self, mock_conn):
+        servicelist = dict()
+        mock_conn.__name__ = 'mock_conn'
+        mock_conn.return_value = self.group_endpoints_feed
+        self.mock_conn = mock_conn
+        self.gocdbreader.getServiceEndpoints(servicelist, '&scope=EGI')
+        self.gocdbreader.serviceListEGI = servicelist
+        self.gocdbreader.getGroupOfEndpoints.im_func.func_globals['fetchtype'] = 'SITES'
+        sge = sorted(self.group_endpoints_uid, key=lambda e: e['service'])
+        obj_sge = sorted(self.gocdbreader.getGroupOfEndpoints(True),
                          key=lambda e: e['service'])
         self.assertEqual(sge, obj_sge)
 
@@ -660,6 +698,7 @@ class TopologyXml(unittest.TestCase):
                                            'scope': 'EGI'},
                                   'type': 'SITES'}])
 
+
 class WeightsJson(unittest.TestCase):
     def setUp(self):
         self.connset = ConnectorSetup('weights-vapor-connector.py',
@@ -694,6 +733,7 @@ class WeightsJson(unittest.TestCase):
         mock_conn.return_value = self.weights_feed
         vapor.getWeights = self.wrap_get_weights
         self.assertEqual(vapor.getWeights(mock_conn), self.weights)
+
 
 class DowntimesXml(unittest.TestCase):
     def setUp(self):
@@ -796,6 +836,7 @@ class DowntimesXml(unittest.TestCase):
         for call in write_state.call_args_list[2:]:
             self.assertTrue(gocdbreader.state in call[0])
             self.assertTrue('2017_01_19' in call[0])
+
 
 if __name__ == '__main__':
     unittest.main()

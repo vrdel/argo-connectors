@@ -78,7 +78,7 @@ class GOCDBReader:
         self.paging = paging
         self.custauth = auth
 
-    def getGroupOfServices(self):
+    def getGroupOfServices(self, uidservtype=False):
         if not self.fetched:
             if not self.state or not self.loadDataIfNeeded():
                 return []
@@ -95,7 +95,10 @@ class GOCDBReader:
                 g['type'] = fetchtype.upper()
                 g['group'] = d['name']
                 g['service'] = service['type']
-                g['hostname'] = service['hostname']
+                if uidservtype:
+                    g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
+                else:
+                    g['hostname'] = service['hostname']
                 g['group_monitored'] = d['monitored']
                 g['tags'] = {'scope' : d['scope'], \
                             'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
@@ -145,7 +148,7 @@ class GOCDBReader:
 
         return groupofgroups
 
-    def getGroupOfEndpoints(self):
+    def getGroupOfEndpoints(self, uidservtype=False):
         if not self.fetched:
             if not self.state or not self.loadDataIfNeeded():
                 return []
@@ -160,12 +163,15 @@ class GOCDBReader:
             g['type'] = fetchtype.upper()
             g['group'] = gr['site']
             g['service'] = gr['type']
-            g['hostname'] = gr['hostname']
-            g['tags'] = {'scope' : gr['scope'], \
-                         'monitored' : '1' if gr['monitored'] == 'Y' or \
-                                              gr['monitored'] == 'True' else '0', \
-                         'production' : '1' if gr['production'] == 'Y' or \
-                                               gr['production'] == 'True' else '0'}
+            if uidservtype:
+                g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
+            else:
+                g['hostname'] = gr['hostname']
+            g['tags'] = {'scope': gr['scope'], \
+                         'monitored': '1' if gr['monitored'] == 'Y' or \
+                                             gr['monitored'] == 'True' else '0', \
+                         'production': '1' if gr['production'] == 'Y' or \
+                                              gr['production'] == 'True' else '0'}
             groupofendpoints.append(g)
 
         return groupofendpoints
@@ -209,12 +215,13 @@ class GOCDBReader:
                 serviceList[serviceId]['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                 serviceList[serviceId]['site'] = getText(service.getElementsByTagName('SITENAME')[0].childNodes)
                 serviceList[serviceId]['roc'] = getText(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                serviceList[serviceId]['service_id'] = serviceId
                 serviceList[serviceId]['scope'] = scope.split('=')[1]
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
-                                                                                                      repr(e).replace('\'','').replace('\"', '')))
+                                                                                                      repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getServiceEndpoints(self, serviceList, scope):
@@ -257,7 +264,7 @@ class GOCDBReader:
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SITESPI,
-                                                                                                        repr(e).replace('\'','').replace('\"', '')))
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getSitesInternal(self, siteList, scope):
@@ -302,6 +309,10 @@ class GOCDBReader:
                 for service in services:
                     serviceDict = {}
                     serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    try:
+                        serviceDict['service_id'] = getText(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                    except IndexError:
+                        serviceDict['service_id'] = service.getAttribute('PRIMARY_KEY')
                     serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
                     serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
@@ -386,8 +397,10 @@ class TopoFilter(object):
         for attr in tags.keys():
             def getit(elem):
                 value = elem['tags'][attr.lower()]
-                if value == '1': value = 'Y'
-                elif value == '0': value = 'N'
+                if value == '1':
+                    value = 'Y'
+                elif value == '0':
+                    value = 'N'
                 if isinstance(tags[attr], list):
                     for a in tags[attr]:
                         if value.lower() == a.lower():
@@ -446,7 +459,8 @@ def main():
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
             global fetchtype, custname
-            fetchtype = confcust.get_gocdb_fetchtype(job)
+            fetchtype = confcust.get_fetchtype(job)
+            uidservtype = confcust.pass_uidserviceendpoints(job)
             custname = confcust.get_custname(cust)
 
             logger.customer = custname
@@ -460,9 +474,9 @@ def main():
                 continue
 
             if fetchtype == 'ServiceGroups':
-                group_endpoints = gocdb.getGroupOfServices()
+                group_endpoints = gocdb.getGroupOfServices(uidservtype)
             else:
-                group_endpoints = gocdb.getGroupOfEndpoints()
+                group_endpoints = gocdb.getGroupOfEndpoints(uidservtype)
             group_groups = gocdb.getGroupOfGroups()
 
             if fixed_date:
@@ -529,21 +543,21 @@ def main():
                     logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
 
-            logger.info('Customer:'+custname+' Job:'+job+' Fetched Endpoints:%d' % (numge) +' Groups(%s):%d' % (fetchtype, numgg))
+            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
             if getags or ggtags:
                 selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
                 selge, selgg = '', ''
                 if getags:
                     for key, value in getags.items():
                         if isinstance(value, list):
-                            value = '['+','.join(value)+']'
+                            value = '[' + ','.join(value) + ']'
                         selge += '%s:%s,' % (key, value)
                     selstr += 'Endpoints(%s):' % selge[:len(selge) - 1]
                     selstr += '%d ' % (len(group_endpoints))
                 if ggtags:
                     for key, value in ggtags.items():
                         if isinstance(value, list):
-                            value = '['+','.join(value)+']'
+                            value = '[' + ','.join(value) + ']'
                         selgg += '%s:%s,' % (key, value)
                     selstr += 'Groups(%s):' % selgg[:len(selgg) - 1]
                     selstr += '%d' % (len(group_groups))
