@@ -16,28 +16,29 @@ pipeline {
                 stage ('Test Centos 6') {
                     agent {
                         docker {
-                            image 'argo.registry:5000/epel-6-egi'
+                            image 'argo.registry:5000/epel-6-ams'
                         }
                     }
                     steps {
                         echo 'Building Rpm...'
                         sh '''
                             cd ${WORKSPACE}/$PROJECT_DIR
-                            ${WORKSPACE}/$PROJECT_DIR/tests/run-tests.sh
+                            scl enable python27 'pipenv install && pipenv run ./tests/run-tests.sh'
                         '''
                     }
                 }
                 stage ('Test Centos 7') {
                     agent {
                         docker {
-                            image 'argo.registry:5000/epel-7-egi'
+                            image 'argo.registry:5000/epel-7-ams'
                         }
                     }
                     steps {
                         echo 'Building Rpm...'
                         sh '''
                             cd ${WORKSPACE}/$PROJECT_DIR
-                            ${WORKSPACE}/$PROJECT_DIR/tests/run-tests.sh
+                            pipenv install
+                            pipenv run ./tests/run-tests.sh
                         '''
                     }
                 }
@@ -78,6 +79,11 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
