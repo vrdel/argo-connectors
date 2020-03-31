@@ -69,8 +69,12 @@ class WebAPI(object):
             for profile in target_profiles:
                 for service in profile['services']:
                     for metric in service['metrics']:
+                        if self.namespace:
+                            profile_name = '{0}.{1}'.format(self.namespace, profile['name'])
+                        else:
+                            profile_name = profile['name']
                         profile_list.append({
-                            'profile': '{0}.{1}'.format(self.namespace, profile['name']),
+                            'profile': profile_name,
                             'metric': metric,
                             'service': service['service']
                         })
@@ -79,7 +83,7 @@ class WebAPI(object):
             self.state = False
             logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer,
                                                                                                   self.host + API_PATH,
-                                                                                                  repr(e).replace('\'','').replace('\"', '')))
+                                                                                                  repr(e).replace('\'', '').replace('\"', '')))
             return []
         else:
             return self._format(profile_list)
@@ -93,7 +97,7 @@ class WebAPI(object):
                 raise input.ConnectorError()
 
             json_data = input.parse_json(logger, module_class_name(self),
-                                        globopts, res, self.host + API_PATH)
+                                         globopts, res, self.host + API_PATH)
 
             if not json_data or not json_data.get('data', False):
                 raise input.ConnectorError()

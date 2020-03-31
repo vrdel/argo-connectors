@@ -1,7 +1,7 @@
 [CUSTOMER_EGI]
 Name = EGI
 OutputDir = /var/lib/argo-connectors/EGI/
-Jobs = JOB_EGICritical, JOB_EGIFedcloud
+Jobs = JOB_EGICritical, JOB_EGIFedcloud, JOB_EOSCCritical
 
 [JOB_EGICritical]
 Dirname = EGI_Critical
@@ -20,3 +20,10 @@ TopoFetchType = Sites
 TopoSelectGroupOfEndpoints = Monitored:Y, Scope:EGI
 TopoSelectGroupOfGroups = Scope:EGI
 TopoFeedPaging = True
+
+[JOB_EOSCCritical]
+Dirname = Critical
+Profiles = EOSC_CRITICAL
+TopoFeed = https://marketplace.grid.cyfronet.pl/api/services
+TopoFetchType = ServiceGroups
+TopoUIDServiceEndpoints = True

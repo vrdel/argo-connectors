@@ -1,8 +1,12 @@
 import ConfigParser
-import os, re, errno
+import errno
+import os
+import re
+
 from log import Logger
 
-class Global:
+
+class Global(object):
     """
        Class represents parser for global.conf
     """
@@ -14,7 +18,7 @@ class Global:
                                     'HttpUser', 'HttpPass']}
     conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry']}
     conf_state = {'InputState': ['SaveDir', 'Days']}
-    conf_webapi= {'WebAPI': ['Token', 'Host']}
+    conf_webapi = {'WebAPI': ['Token', 'Host']}
 
     # options specific for every connector
     conf_topo_schemas = {'AvroSchemas': ['TopologyGroupOfEndpoints',
@@ -45,6 +49,10 @@ class Global:
                                                self.conf_state,
                                                self.conf_webapi)
         self.secopts = {'topology-gocdb-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_topo_schemas,
+                                         self.conf_topo_output),
+                        'topology-eosc-connector.py':
                         self._merge_dict(self.shared_secopts,
                                          self.conf_topo_schemas,
                                          self.conf_topo_output),
@@ -91,7 +99,7 @@ class Global:
         return newd
 
     def is_complete(self, opts, section):
-        all = set([section+o for o in self.optional[section]])
+        all = set([section + o for o in self.optional[section]])
         diff = all.symmetric_difference(opts.keys())
         if diff:
             return (False, diff)
@@ -102,7 +110,7 @@ class Global:
 
         for k in d.iterkeys():
             for v in d[k]:
-                opts.append(k+v)
+                opts.append(k + v)
 
         return opts
 
@@ -175,25 +183,30 @@ class Global:
 
         return options
 
-class CustomerConf:
+
+class CustomerConf(object):
     """
        Class with parser for customer.conf and additional helper methods
     """
     _custattrs = None
     _cust = {}
-    _defjobattrs = {'topology-gocdb-connector.py' : ['TopoFetchType',
-                                                     'TopoSelectGroupOfGroups',
-                                                     'TopoSelectGroupOfEndpoints',
-                                                     'TopoFeed',
-                                                     'TopoFeedPaging'],
+    _defjobattrs = {'topology-gocdb-connector.py': ['TopoFetchType',
+                                                    'TopoSelectGroupOfGroups',
+                                                    'TopoSelectGroupOfEndpoints',
+                                                    'TopoUIDServiceEndpoints',
+                                                    'TopoFeed',
+                                                    'TopoFeedPaging'],
+                    'topology-eosc-connector.py': ['TopoFeed', 'TopoFile', 'TopoFetchType',
+                                                   'TopoUIDServiceEndpoints'],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
-                    'downtimes-gocdb-connector.py': ['DowntimesFeed'],
+                    'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
                     'weights-vapor-connector.py': ['WeightsFeed']
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
                       'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
-                      'AuthenticationHttpUser', 'AuthenticationHttpPass', 'WebAPIToken']
+                      'AuthenticationHttpUser', 'AuthenticationHttpPass',
+                      'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -243,7 +256,7 @@ class CustomerConf:
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
                 if optopts:
-                    ams, auth, webapi = {}, {}, {}
+                    ams, auth, webapi, empty_data = {}, {}, {}, {}
                     for k, v in optopts.iteritems():
                         if k.startswith('ams'):
                             ams.update({k: v})
@@ -251,9 +264,12 @@ class CustomerConf:
                             auth.update({k: v})
                         if k.startswith('webapi'):
                             webapi.update({k: v})
+                        if k.endswith('empty'):
+                            empty_data.update({k: v})
                     self._cust[section].update(AmsOpts=ams)
                     self._cust[section].update(AuthOpts=auth)
                     self._cust[section].update(WebAPIOpts=webapi)
+                    self._cust[section].update(EmptyDataOpts=empty_data)
 
                 if self._custattrs:
                     for attr in self._custattrs:
@@ -372,7 +388,7 @@ class CustomerConf:
             profiles[i] = p.strip()
         return profiles
 
-    def get_gocdb_fetchtype(self, job):
+    def get_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']
 
     def _get_tags(self, job, option):
@@ -426,7 +442,6 @@ class CustomerConf:
             feeds[feedurl].append((job, cust))
 
     def get_feedscopes(self, feed, jobcust):
-        ggtags, getags = [], []
         distinct_scopes = set()
         for job, cust in jobcust:
             gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
@@ -450,12 +465,34 @@ class CustomerConf:
 
         return eval(str(paginated))
 
+    def pass_uidserviceendpoints(self, job):
+        if not isinstance(job, set):
+            do_pass = False
+            try:
+                do_pass = eval(self._jobs[job]['TopoUIDServiceEndpoints'])
+            except KeyError:
+                pass
+
+            return do_pass
+        else:
+            ret = list()
+
+            for jb in job:
+                try:
+                    do_pass = eval(self._jobs[jb]['TopoUIDServiceEndpoints'])
+                    ret.append(do_pass)
+                except KeyError:
+                    ret.append(False)
+            return ret
+
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}
         for c in self.get_customers():
             for job in self.get_jobs(c):
                 if 'topology' in caller:
-                    feedurl = self._get_feed(job, 'TopoFeed')
+                    feedurl = self._get_feed(job, 'TopoFile')
+                    if not feedurl:
+                        feedurl = self._get_feed(job, 'TopoFeed')
                     if feedurl:
                         self._update_feeds(feeds, feedurl, job, c)
                     else:
@@ -478,5 +515,20 @@ class CustomerConf:
 
         return feeds
 
+    def send_empty(self, caller, cust):
+        try:
+            if 'downtimes' in caller:
+                return eval(self._cust[cust]['EmptyDataOpts']['downtimesempty'])
+            elif 'weights' in caller:
+                return eval(self._cust[cust]['EmptyDataOpts']['weightsempty'])
+        except KeyError:
+            return False
+
     def get_namespace(self, job):
-        return self._jobs[job]['MetricProfileNamespace']
+        namespace = None
+        try:
+            namespace = self._jobs[job]['MetricProfileNamespace']
+        except KeyError:
+            pass
+
+        return namespace

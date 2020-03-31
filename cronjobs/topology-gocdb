@@ -1,1 +1,0 @@
-7 0 * * * root /usr/libexec/argo-egi-connectors/topology-gocdb-connector.py
