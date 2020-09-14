@@ -243,7 +243,7 @@ class CustomerConf(object):
                     for o in lower_custopt:
                         try:
                             code = "optopts.update(%s = config.get(section, '%s'))" % (o, o)
-                            exec code
+                            exec(code)
                         except ConfigParser.NoOptionError as e:
                             if e.option in lower_custopt:
                                 pass

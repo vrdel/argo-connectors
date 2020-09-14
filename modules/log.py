@@ -34,4 +34,4 @@ class Logger:
     for func in ['warn', 'error', 'critical', 'info']:
         code = """def %s(self, msg):
                     self.logger.%s(msg)""" % (func, func)
-        exec code
+        exec(code)

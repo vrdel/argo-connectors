@@ -1,18 +1,21 @@
-Name: argo-egi-connectors
+Name:    argo-egi-connectors
 Version: 1.7.4
 Release: 1%{?dist}
-Group: EGI/SA4
+Group:   EGI/SA4
 License: ASL 2.0
-Summary: Components generate input for ARGO Compute Engine
-Url: http://argoeu.github.io/guides/sync/
-Vendor: SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
+Summary: Components fetch and transform data that represents input for ARGO Compute Engine
+Url:     http://argoeu.github.io/guides/sync/
+Vendor:  SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
 
 Obsoletes: ar-sync
-Prefix: %{_prefix}
-Requires: argo-ams-library
-Requires: avro
-Requires: python-requests
-Requires: python2-ndg_httpsclient
+Prefix:    %{_prefix}
+
+Requires: python3-argo-ams-library
+Requires: python3-avro
+Requires: python3-requests
+
+BuildRequires: python3-devel python3-setuptools
+
 Source0: %{name}-%{version}.tar.gz
 
 BuildArch: noarch
@@ -23,13 +26,13 @@ Installs the components for syncing ARGO Compute Engine
 with GOCDB, VAPOR and POEM definitions per day.
 
 %prep
-%setup -n %{name}-%{version}
+%setup -q
 
 %build
-python setup.py build
+%{py3_build}
 
 %install
-python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+%{py3_install "--record=INSTALLED_FILES" }
 install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/
 install --directory %{buildroot}/%{_localstatedir}/log/argo-connectors/
 install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
@@ -49,9 +52,9 @@ rm -rf $RPM_BUILD_ROOT
 * Mon Mar 30 2020 Daniel Vrcic <dvrcic@srce.hr> - 1.7.4-1%{dist}
 - ARGO-2247 Pass URL from EOSC topology
 - ARGO-2225 Support for creating empty weights and downtimes data
-- ARGO-2221 Metric profile namespace optional 
+- ARGO-2221 Metric profile namespace optional
 - ARGO-2210 Introduce topology connector for EOSC-PORTAL
-- ARGO-2209 Pass PRIMARY_KEY of GOCDB service endpoint as a unique service endpoint identifier 
+- ARGO-2209 Pass PRIMARY_KEY of GOCDB service endpoint as a unique service endpoint identifier
 * Fri Nov 8 2019 Daniel Vrcic <dvrcic@srce.hr> - 1.7.3-1%{?dist}
 - ARGO-2017 - Token per tenants config option
 - ARGO-2013 - Metric profiles WEB-API connector
