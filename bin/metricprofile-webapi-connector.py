@@ -56,7 +56,7 @@ class WebAPI(object):
     def get_profiles(self):
         try:
             fetched_profiles = self._fetch()
-            target_profiles = filter(lambda profile: profile['name'] in self.profiles, fetched_profiles)
+            target_profiles = list(filter(lambda profile: profile['name'] in self.profiles, fetched_profiles))
             profile_list = list()
 
             if len(target_profiles) == 0:
