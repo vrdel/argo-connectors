@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import argparse
 from argo_egi_connectors.output import AmsPublish, load_schema
 from avro.datafile import DataFileReader
