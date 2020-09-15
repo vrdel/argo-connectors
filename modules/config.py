@@ -257,7 +257,7 @@ class CustomerConf(object):
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
                 if optopts:
                     ams, auth, webapi, empty_data = {}, {}, {}, {}
-                    for k, v in optopts.iteritems():
+                    for k, v in optopts.items():
                         if k.startswith('ams'):
                             ams.update({k: v})
                         if k.startswith('authentication'):
@@ -446,7 +446,7 @@ class CustomerConf(object):
         for job, cust in jobcust:
             gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
             ge = self._get_tags(job, 'TopoSelectGroupOfEndpoints')
-            for g in gg.items() + ge.items():
+            for g in list(gg.items()) + list(ge.items()):
                 if 'Scope'.lower() == g[0].lower():
                     if isinstance(g[1], list):
                         distinct_scopes.update(g[1])
