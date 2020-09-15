@@ -1,8 +1,10 @@
-import logging, logging.handlers
+import logging
+import logging.handlers
 import sys
 import socket
 
 logfile = "/var/log/argo-connectors/connectors.log"
+
 
 class Logger:
     def __init__(self, connector):

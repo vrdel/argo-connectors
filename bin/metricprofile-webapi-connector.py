@@ -28,7 +28,6 @@ import argparse
 import os
 import re
 import sys
-import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output

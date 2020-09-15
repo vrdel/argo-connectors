@@ -7,7 +7,7 @@ import xml.dom.minidom
 from argo_egi_connectors.helpers import retry
 
 from xml.parsers.expat import ExpatError
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 
 class ConnectorError(Exception):

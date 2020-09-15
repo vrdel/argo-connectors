@@ -5,7 +5,7 @@ import os
 import sys
 import json
 
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output

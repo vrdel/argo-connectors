@@ -1,9 +1,9 @@
-import ConfigParser
+import configparser
 import errno
 import os
 import re
 
-from log import Logger
+from .log import Logger
 
 
 class Global(object):
@@ -125,7 +125,7 @@ class Global(object):
             return False
 
     def parse(self):
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
 
         if not os.path.exists(self._filename):
             self.logger.error('Could not find %s' % self._filename)
@@ -140,7 +140,7 @@ class Global(object):
             for sect, opts in self.caller_secopts.items():
                 if (sect.lower() not in lower_section and
                     sect.lower() not in self.optional.keys()):
-                    raise ConfigParser.NoSectionError(sect.lower())
+                    raise configparser.NoSectionError(sect.lower())
 
                 for opt in opts:
                     for section in config.sections():
@@ -157,7 +157,7 @@ class Global(object):
 
                                 options.update({(sect+opt).lower(): optget})
 
-                            except ConfigParser.NoOptionError as e:
+                            except configparser.NoOptionError as e:
                                 s = e.section.lower()
                                 if (s in self.optional.keys() and
                                     e.option in self.optional[s]):
@@ -171,10 +171,10 @@ class Global(object):
                 self.logger.error('At least one of %s needs to be True' % (', '.join(self._concat_sectopt(self.conf_general))))
                 raise SystemExit(1)
 
-        except ConfigParser.NoOptionError as e:
+        except configparser.NoOptionError as e:
             self.logger.error(e.message)
             raise SystemExit(1)
-        except ConfigParser.NoSectionError as e:
+        except configparser.NoSectionError as e:
             self.logger.error("%s defined" % (e.args[0]))
             raise SystemExit(1)
         except OSError as e:
@@ -222,7 +222,7 @@ class CustomerConf(object):
                 self._custattrs = kwargs['custattrs']
 
     def parse(self):
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         if not os.path.exists(self._filename):
             self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
@@ -244,13 +244,13 @@ class CustomerConf(object):
                         try:
                             code = "optopts.update(%s = config.get(section, '%s'))" % (o, o)
                             exec(code)
-                        except ConfigParser.NoOptionError as e:
+                        except configparser.NoOptionError as e:
                             if e.option in lower_custopt:
                                 pass
                             else:
                                 raise e
 
-                except ConfigParser.NoOptionError as e:
+                except configparser.NoOptionError as e:
                     self.logger.error(e.message)
                     raise SystemExit(1)
 
@@ -283,7 +283,7 @@ class CustomerConf(object):
                     try:
                         profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
-                    except ConfigParser.NoOptionError as e:
+                    except configparser.NoOptionError as e:
                         self.logger.error(e.message)
                         raise SystemExit(1)
 

@@ -36,7 +36,7 @@ from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 logger = None
 
@@ -72,7 +72,7 @@ class GOCDBReader:
             code = "self.serviceList%s = dict(); " % rem_nonalpha(scope)
             code += "self.groupList%s = dict();" % rem_nonalpha(scope)
             code += "self.siteList%s = dict()" % rem_nonalpha(scope)
-            exec code
+            exec(code)
         self.fetched = False
         self.state = True
         self.paging = paging
@@ -87,7 +87,7 @@ class GOCDBReader:
 
         for scope in self.scopes:
             code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
-            exec code
+            exec(code)
 
         for d in gl:
             for service in d['services']:
@@ -119,7 +119,7 @@ class GOCDBReader:
         if fetchtype == "ServiceGroups":
             for scope in self.scopes:
                 code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
-                exec code
+                exec(code)
             for d in gl:
                 g = dict()
                 g['type'] = 'PROJECT'
@@ -133,7 +133,7 @@ class GOCDBReader:
             gg = []
             for scope in self.scopes:
                 code = "gg = gg + sorted([value for key, value in self.siteList%s.iteritems()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
-                exec code
+                exec(code)
 
             for gr in gg:
                 g = dict()
@@ -156,7 +156,7 @@ class GOCDBReader:
         groupofendpoints, ge = list(), list()
         for scope in self.scopes:
             code = "ge = ge + sorted([value for key, value in self.serviceList%s.iteritems()], key=lambda s: s['site'])" % rem_nonalpha(scope)
-            exec code
+            exec(code)
 
         for gr in ge:
             g = dict()
