@@ -32,7 +32,7 @@ class AvroWriter:
     def _load_datawriter(self):
         try:
             lschema = load_schema(self.schema)
-            self.avrofile = open(self.outfile, 'w+')
+            self.avrofile = open(self.outfile, 'w+b')
             self.datawrite = DataFileWriter(self.avrofile, DatumWriter(), lschema)
         except Exception:
             return False
