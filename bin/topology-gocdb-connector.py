@@ -164,7 +164,7 @@ class GOCDBReader:
 
         for scope in self.scopes:
             loc = locals()
-            code = "ge = ge + sorted([value for key, value in self.serviceList{}.items()], key=lambda s: s['site'])" % rem_nonalpha(scope)
+            code = "ge = ge + sorted([value for key, value in self.serviceList%s.items()], key=lambda s: s['site'])" % rem_nonalpha(scope)
             exec(code)
             ge = loc['ge']
 
@@ -373,17 +373,17 @@ class TopoFilter(object):
 
     def topofilter(self):
         if self.subgroupfilter:
-            self.gg = filter(lambda e: e['subgroup'].lower() in self.subgroupfilter, self.gg)
+            self.gg = list(filter(lambda e: e['subgroup'].lower() in self.subgroupfilter, self.gg))
 
         if self.groupfilter:
-            self.gg = filter(lambda e: e['group'].lower() in self.groupfilter, self.gg)
+            self.gg = list(filter(lambda e: e['group'].lower() in self.groupfilter, self.gg))
 
         if self.ggfilter:
             self.gg = self.filter_tags(self.ggfilter, self.gg)
 
         allsubgroups = set([e['subgroup'] for e in self.gg])
         if allsubgroups:
-            self.ge = filter(lambda e: e['group'] in allsubgroups, self.ge)
+            self.ge = list(filter(lambda e: e['group'] in allsubgroups, self.ge))
 
         if self.gefilter:
             self.ge = self.filter_tags(self.gefilter, self.ge)
@@ -419,7 +419,7 @@ class TopoFilter(object):
                     if value.lower() == tags[attr].lower():
                         return True
             try:
-                listofelem = filter(getit, listofelem)
+                listofelem = list(filter(getit, listofelem))
             except KeyError as e:
                 logger.error('Customer:%s Job:%s : Wrong tags specified: %s' % (logger.customer, logger.job, e))
         return listofelem
