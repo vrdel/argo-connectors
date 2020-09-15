@@ -110,8 +110,8 @@ def main():
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
 
             feeds = confcust.get_mapfeedjobs(sys.argv[0])
-            if is_feed(feeds.keys()[0]):
-                remote_topo = urlparse(feeds.keys()[0])
+            if is_feed(list(feeds.keys())[0]):
+                remote_topo = urlparse(list(feeds.keys())[0])
                 res = input.connection(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
                 if not res:
                     raise input.ConnectorError()
@@ -125,7 +125,7 @@ def main():
                 state = True
             else:
                 try:
-                    with open(feeds.keys()[0]) as fp:
+                    with open(list(feeds.keys())[0]) as fp:
                         js = json.load(fp)
                         eosc = EOSCReader(js, uidservtype, fetchtype)
                         group_groups = eosc.get_groupgroups()
@@ -178,6 +178,7 @@ def main():
                 else:
                     filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
                 avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+                import ipdb; ipdb.set_trace()
                 ret, excep = avro.write(group_groups)
                 if not ret:
                     logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))

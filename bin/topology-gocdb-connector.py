@@ -86,7 +86,7 @@ class GOCDBReader:
         groups, gl = list(), list()
 
         for scope in self.scopes:
-            code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
+            code = "gl = gl + [value for key, value in self.groupList%s.items()]" % rem_nonalpha(scope)
             exec(code)
 
         for d in gl:
@@ -118,7 +118,7 @@ class GOCDBReader:
 
         if fetchtype == "ServiceGroups":
             for scope in self.scopes:
-                code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
+                code = "gl = gl + [value for key, value in self.groupList%s.items()]" % rem_nonalpha(scope)
                 exec(code)
             for d in gl:
                 g = dict()
@@ -132,7 +132,7 @@ class GOCDBReader:
         else:
             gg = []
             for scope in self.scopes:
-                code = "gg = gg + sorted([value for key, value in self.siteList%s.iteritems()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
+                code = "gg = gg + sorted([value for key, value in self.siteList%s.items()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
                 exec(code)
 
             for gr in gg:
@@ -155,7 +155,7 @@ class GOCDBReader:
 
         groupofendpoints, ge = list(), list()
         for scope in self.scopes:
-            code = "ge = ge + sorted([value for key, value in self.serviceList%s.iteritems()], key=lambda s: s['site'])" % rem_nonalpha(scope)
+            code = "ge = ge + sorted([value for key, value in self.serviceList%s.items()], key=lambda s: s['site'])" % rem_nonalpha(scope)
             exec(code)
 
         for gr in ge:
@@ -380,8 +380,8 @@ class TopoFilter(object):
 
     def extract_filter(self, tag, ggtags):
         gg = None
-        if tag.lower() in [t.lower() for t in ggtags.iterkeys()]:
-            for k, v in ggtags.iteritems():
+        if tag.lower() in [t.lower() for t in ggtags.keys()]:
+            for k, v in ggtags.items():
                 if tag.lower() in k.lower():
                     gg = ggtags[k]
                     key = k
