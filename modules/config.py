@@ -83,7 +83,7 @@ class Global(object):
 
     def _lowercase_dict(self, d):
         newd = dict()
-        for k in d.iterkeys():
+        for k in d.keys():
             opts = [o.lower() for o in d[k]]
             newd[k.lower()] = opts
         return newd
@@ -108,7 +108,7 @@ class Global(object):
     def _concat_sectopt(self, d):
         opts = list()
 
-        for k in d.iterkeys():
+        for k in d.keys():
             for v in d[k]:
                 opts.append(k + v)
 
