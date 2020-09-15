@@ -101,12 +101,11 @@ class GOCDBReader:
                     g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
                     g['hostname'] = service['hostname']
-                g['group_monitored'] = d['monitored']
-                g['tags'] = {'scope' : d['scope'], \
-                            'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
-                                                 service['monitored'].lower() == 'True'.lower() else '0', \
-                            'production' : '1' if service['production'].lower() == 'Y'.lower() or \
-                                                  service['production'].lower() == 'True'.lower() else '0'}
+                g['tags'] = {'scope': d['scope'],
+                             'monitored': '1' if service['monitored'].lower() == 'Y'.lower() or
+                             service['monitored'].lower() == 'True'.lower() else '0',
+                             'production': '1' if service['production'].lower() == 'Y'.lower() or
+                             service['production'].lower() == 'True'.lower() else '0'}
                 groups.append(g)
 
         return groups
@@ -130,9 +129,8 @@ class GOCDBReader:
                 g['type'] = 'PROJECT'
                 g['group'] = custname
                 g['subgroup'] = d['name']
-                g['tags'] = {'monitored' : '1' if d['monitored'].lower() == 'Y'.lower() or \
-                                                  d['monitored'].lower() == 'True'.lower() else '0',
-                            'scope' : d['scope']}
+                g['tags'] = {'monitored': '1' if d['monitored'].lower() == 'Y'.lower() or
+                             d['monitored'].lower() == 'True'.lower() else '0', 'scope': d['scope']}
                 groupofgroups.append(g)
         else:
             gg = []
@@ -147,9 +145,9 @@ class GOCDBReader:
                 g['type'] = 'NGI'
                 g['group'] = gr['ngi']
                 g['subgroup'] = gr['site']
-                g['tags'] = {'certification' : gr['certification'], \
-                             'scope' : gr['scope'], \
-                             'infrastructure' : gr['infrastructure']}
+                g['tags'] = {'certification': gr['certification'],
+                             'scope': gr['scope'],
+                             'infrastructure': gr['infrastructure']}
 
                 groupofgroups.append(g)
 
@@ -177,11 +175,11 @@ class GOCDBReader:
                 g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
             else:
                 g['hostname'] = gr['hostname']
-            g['tags'] = {'scope': gr['scope'], \
-                         'monitored': '1' if gr['monitored'] == 'Y' or \
-                                             gr['monitored'] == 'True' else '0', \
-                         'production': '1' if gr['production'] == 'Y' or \
-                                              gr['production'] == 'True' else '0'}
+            g['tags'] = {'scope': gr['scope'],
+                         'monitored': '1' if gr['monitored'] == 'Y' or
+                         gr['monitored'] == 'True' else '0',
+                         'production': '1' if gr['production'] == 'Y' or
+                         gr['production'] == 'True' else '0'}
             groupofendpoints.append(g)
 
         return groupofendpoints
@@ -231,7 +229,7 @@ class GOCDBReader:
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
-                                                                                                      repr(e).replace('\'', '').replace('\"', '')))
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getServiceEndpoints(self, serviceList, scope):
@@ -330,7 +328,7 @@ class GOCDBReader:
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
-                                                                                                        repr(e).replace('\'','').replace('\"', '')))
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getServiceGroups(self, groupList, scope):
