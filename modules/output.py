@@ -16,6 +16,7 @@ from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
 
 daysback = 1
 
+
 class AvroWriteException(BaseException):
     pass
 
@@ -41,13 +42,11 @@ class AvroWriter:
 
     def write(self, data):
         try:
-            if (not self.datawrite or
-                not self.avrofile):
+            if (not self.datawrite or not self.avrofile):
                 raise AvroWriteException('AvroFileWriter not initalized')
 
             for elem in data:
                 self.datawrite.append(elem)
-
 
             self.datawrite.close()
             self.avrofile.close()
@@ -71,7 +70,7 @@ class AmsPublish(object):
         self.timeout = int(timeout)
         self.retry = int(retry)
         self.sleepretry = int(sleepretry)
-        self.logger = logger
+        self.logger = Logger
         self.packsingle = eval(packsingle)
 
     @staticmethod
