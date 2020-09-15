@@ -178,7 +178,6 @@ def main():
                 else:
                     filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
                 avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
-                import ipdb; ipdb.set_trace()
                 ret, excep = avro.write(group_groups)
                 if not ret:
                     logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))

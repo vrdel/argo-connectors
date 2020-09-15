@@ -86,8 +86,10 @@ class GOCDBReader:
         groups, gl = list(), list()
 
         for scope in self.scopes:
+            loc = locals()
             code = "gl = gl + [value for key, value in self.groupList%s.items()]" % rem_nonalpha(scope)
             exec(code)
+            gl = loc['gl']
 
         for d in gl:
             for service in d['services']:
@@ -118,8 +120,11 @@ class GOCDBReader:
 
         if fetchtype == "ServiceGroups":
             for scope in self.scopes:
+                loc = locals()
                 code = "gl = gl + [value for key, value in self.groupList%s.items()]" % rem_nonalpha(scope)
                 exec(code)
+                gl = loc['gl']
+
             for d in gl:
                 g = dict()
                 g['type'] = 'PROJECT'
@@ -132,8 +137,10 @@ class GOCDBReader:
         else:
             gg = []
             for scope in self.scopes:
+                loc = locals()
                 code = "gg = gg + sorted([value for key, value in self.siteList%s.items()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
                 exec(code)
+                gg = loc['gg']
 
             for gr in gg:
                 g = dict()
@@ -154,9 +161,12 @@ class GOCDBReader:
                 return []
 
         groupofendpoints, ge = list(), list()
+
         for scope in self.scopes:
-            code = "ge = ge + sorted([value for key, value in self.serviceList%s.items()], key=lambda s: s['site'])" % rem_nonalpha(scope)
+            loc = locals()
+            code = "ge = ge + sorted([value for key, value in self.serviceList{}.items()], key=lambda s: s['site'])" % rem_nonalpha(scope)
             exec(code)
+            ge = loc['ge']
 
         for gr in ge:
             g = dict()
