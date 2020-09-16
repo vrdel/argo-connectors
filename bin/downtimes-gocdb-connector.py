@@ -261,6 +261,7 @@ def main():
                 webapi = output.WebAPI(sys.argv[0],
                                        webapi_opts['webapihost'],
                                        webapi_opts['webapitoken'])
+                webapi.send(dts)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)

@@ -1,6 +1,7 @@
 import datetime
 import os
 import json
+import requests
 
 import avro.schema
 from avro.datafile import DataFileWriter
@@ -59,16 +60,21 @@ class AvroWriter(object):
 
 class WebAPI(object):
     methods = {
-        'downtimes-gocdb-connector.py': '/downtimes',
-        'topology-gocdb-connector.py': ['/topology/endpoints', '/topology/groups'],
-        'topology-eosc-connector.py': ['/topology/endpoints', '/topology/groups'],
-        'weights-vapor-connector.py': ['/weights']
+        'downtimes-gocdb-connector.py': 'downtimes',
+        'topology-gocdb-connector.py': ['topology/endpoints', 'topology/groups'],
+        'topology-eosc-connector.py': ['topology/endpoints', 'topology/groups'],
+        'weights-vapor-connector.py': ['weights']
     }
 
     def __init__(self, connector, host, token):
         self.webapi_method = self.methods[os.path.basename(connector)]
         self.host = host
         self.token = token
+        self.headers = {'x-api-key': self.token, 'Accept': 'application/json'}
+
+    def send(self, data):
+        api = '{}/api/v2/{}'.format(self.host, self.webapi_method)
+        ret = requests.post(api, data=data, headers=self.headers)
 
 
 class AmsPublish(object):
