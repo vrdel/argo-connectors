@@ -21,7 +21,7 @@ class AvroWriteException(BaseException):
     pass
 
 
-class AvroWriter:
+class AvroWriter(object):
     """ AvroWriter """
     def __init__(self, schema, outfile):
         self.schema = schema
@@ -55,6 +55,17 @@ class AvroWriter:
             return False, e
 
         return True, None
+
+
+class WebAPI(object):
+    methods = {
+        'downtimes-gocdb-connector.py': '/downtimes',
+        'topology-gocdb-connector.py': ['/topology/endpoints', '/topology/groups'],
+        'weights-gocdb-connector.py': ['/weights']
+    }
+
+    def __init__(self, connector, host, token):
+        self.webapi_method = self.methods[os.path.basename(connector)]
 
 
 class AmsPublish(object):

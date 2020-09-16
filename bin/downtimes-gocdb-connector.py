@@ -223,6 +223,13 @@ def main():
             logger.customer = confcust.get_custname(cust)
             logger.job = job
 
+            webapi_custopts = confcust.get_webapiopts(cust)
+            webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+            webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+            if not webapi_complete:
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
+                continue
+
             ams_custopts = confcust.get_amsopts(cust)
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
@@ -249,6 +256,11 @@ def main():
 
                 ams.send(globopts['AvroSchemasDowntimes'.lower()], 'downtimes',
                          timestamp.replace('_', '-'), dts)
+
+            if eval(globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = output.WebAPI(sys.argv[0],
+                                       webapi_opts['webapihost'],
+                                       webapi_opts['webapitoken'])
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)
