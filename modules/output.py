@@ -61,7 +61,8 @@ class WebAPI(object):
     methods = {
         'downtimes-gocdb-connector.py': '/downtimes',
         'topology-gocdb-connector.py': ['/topology/endpoints', '/topology/groups'],
-        'weights-gocdb-connector.py': ['/weights']
+        'topology-eosc-connector.py': ['/topology/endpoints', '/topology/groups'],
+        'weights-vapor-connector.py': ['/weights']
     }
 
     def __init__(self, connector, host, token):
