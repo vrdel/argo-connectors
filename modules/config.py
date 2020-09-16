@@ -12,7 +12,7 @@ class Global(object):
     """
     # options common for all connectors
     conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk', 'PackSingleMsg']}
-    conf_general = {'General': ['PublishAms', 'WriteAvro']}
+    conf_general = {'General': ['PublishAms', 'WriteAvro', 'PublishWebAPI']}
     conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                     'VerifyServerCert', 'UsePlainHttpAuth',
                                     'HttpUser', 'HttpPass']}
@@ -275,7 +275,6 @@ class CustomerConf(object):
                     for attr in self._custattrs:
                         if config.has_option(section, attr):
                             self._cust[section].update({attr: config.get(section, attr)})
-
 
         for cust in self._cust:
             for job in self._cust[cust]['Jobs']:

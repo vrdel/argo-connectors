@@ -4,6 +4,7 @@ SchemaDir = /etc/argo-egi-connectors/schemas/
 [General]
 PublishAms = True
 WriteAvro = True
+PublishWebAPI = True
 
 [AMS]
 Host = messaging-devel.argo.grnet.gr
@@ -24,7 +25,7 @@ HttpUser = xxxx
 HttpPass = xxxx
 
 [WebAPI]
-Token = xxxx 
+Token = xxxx
 Host = api.devel.argo.grnet.gr
 
 [Connection]
