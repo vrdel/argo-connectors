@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (c) 2013 GRNET S.A., SRCE, IN2P3 CNRS Computing Centre
 #
@@ -28,7 +28,6 @@ import argparse
 import os
 import re
 import sys
-import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output
@@ -57,7 +56,7 @@ class WebAPI(object):
     def get_profiles(self):
         try:
             fetched_profiles = self._fetch()
-            target_profiles = filter(lambda profile: profile['name'] in self.profiles, fetched_profiles)
+            target_profiles = list(filter(lambda profile: profile['name'] in self.profiles, fetched_profiles))
             profile_list = list()
 
             if len(target_profiles) == 0:

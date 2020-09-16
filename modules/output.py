@@ -17,6 +17,10 @@ from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
 daysback = 1
 
 
+class AvroWriteException(BaseException):
+    pass
+
+
 class AvroWriter:
     """ AvroWriter """
     def __init__(self, schema, outfile):
@@ -29,7 +33,7 @@ class AvroWriter:
     def _load_datawriter(self):
         try:
             lschema = load_schema(self.schema)
-            self.avrofile = open(self.outfile, 'w+')
+            self.avrofile = open(self.outfile, 'w+b')
             self.datawrite = DataFileWriter(self.avrofile, DatumWriter(), lschema)
         except Exception:
             return False
@@ -38,10 +42,8 @@ class AvroWriter:
 
     def write(self, data):
         try:
-
-            if (not self.datawrite or
-                not self.avrofile):
-                raise ('AvroFileWriter not initalized')
+            if (not self.datawrite or not self.avrofile):
+                raise AvroWriteException('AvroFileWriter not initalized')
 
             for elem in data:
                 self.datawrite.append(elem)
@@ -68,13 +70,14 @@ class AmsPublish(object):
         self.timeout = int(timeout)
         self.retry = int(retry)
         self.sleepretry = int(sleepretry)
-        self.logger = logger
+        self.logger = Logger
         self.packsingle = eval(packsingle)
 
     @staticmethod
     @retry
     def _send(logger, msgprefix, retryopts, msgs, bulk, obj):
         timeout = retryopts['ConnectionTimeout'.lower()]
+        msgs = list(msgs)
         try:
             if bulk > 1:
                 q, r = divmod(len(msgs), bulk)

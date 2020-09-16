@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/python3
 
 # Copyright (c) 2013 GRNET S.A., SRCE, IN2P3 CNRS Computing Centre
 #
@@ -34,7 +34,7 @@ from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 globopts = {}
 logger = None

@@ -1,8 +1,10 @@
-import logging, logging.handlers
+import logging
+import logging.handlers
 import sys
 import socket
 
 logfile = "/var/log/argo-connectors/connectors.log"
+
 
 class Logger:
     def __init__(self, connector):
@@ -34,4 +36,4 @@ class Logger:
     for func in ['warn', 'error', 'critical', 'info']:
         code = """def %s(self, msg):
                     self.logger.%s(msg)""" % (func, func)
-        exec code
+        exec(code)

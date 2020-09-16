@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (c) 2013 GRNET S.A., SRCE, IN2P3 CNRS Computing Centre
 #
@@ -36,7 +36,7 @@ from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 logger = None
 
@@ -72,7 +72,7 @@ class GOCDBReader:
             code = "self.serviceList%s = dict(); " % rem_nonalpha(scope)
             code += "self.groupList%s = dict();" % rem_nonalpha(scope)
             code += "self.siteList%s = dict()" % rem_nonalpha(scope)
-            exec code
+            exec(code)
         self.fetched = False
         self.state = True
         self.paging = paging
@@ -86,8 +86,10 @@ class GOCDBReader:
         groups, gl = list(), list()
 
         for scope in self.scopes:
-            code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
-            exec code
+            loc = locals()
+            code = "gl = gl + [value for key, value in self.groupList%s.items()]" % rem_nonalpha(scope)
+            exec(code)
+            gl = loc['gl']
 
         for d in gl:
             for service in d['services']:
@@ -99,12 +101,11 @@ class GOCDBReader:
                     g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
                     g['hostname'] = service['hostname']
-                g['group_monitored'] = d['monitored']
-                g['tags'] = {'scope' : d['scope'], \
-                            'monitored' : '1' if service['monitored'].lower() == 'Y'.lower() or \
-                                                 service['monitored'].lower() == 'True'.lower() else '0', \
-                            'production' : '1' if service['production'].lower() == 'Y'.lower() or \
-                                                  service['production'].lower() == 'True'.lower() else '0'}
+                g['tags'] = {'scope': d['scope'],
+                             'monitored': '1' if service['monitored'].lower() == 'Y'.lower() or
+                             service['monitored'].lower() == 'True'.lower() else '0',
+                             'production': '1' if service['production'].lower() == 'Y'.lower() or
+                             service['production'].lower() == 'True'.lower() else '0'}
                 groups.append(g)
 
         return groups
@@ -118,31 +119,35 @@ class GOCDBReader:
 
         if fetchtype == "ServiceGroups":
             for scope in self.scopes:
-                code = "gl = gl + [value for key, value in self.groupList%s.iteritems()]" % rem_nonalpha(scope)
-                exec code
+                loc = locals()
+                code = "gl = gl + [value for key, value in self.groupList%s.items()]" % rem_nonalpha(scope)
+                exec(code)
+                gl = loc['gl']
+
             for d in gl:
                 g = dict()
                 g['type'] = 'PROJECT'
                 g['group'] = custname
                 g['subgroup'] = d['name']
-                g['tags'] = {'monitored' : '1' if d['monitored'].lower() == 'Y'.lower() or \
-                                                  d['monitored'].lower() == 'True'.lower() else '0',
-                            'scope' : d['scope']}
+                g['tags'] = {'monitored': '1' if d['monitored'].lower() == 'Y'.lower() or
+                             d['monitored'].lower() == 'True'.lower() else '0', 'scope': d['scope']}
                 groupofgroups.append(g)
         else:
             gg = []
             for scope in self.scopes:
-                code = "gg = gg + sorted([value for key, value in self.siteList%s.iteritems()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
-                exec code
+                loc = locals()
+                code = "gg = gg + sorted([value for key, value in self.siteList%s.items()], key=lambda s: s['ngi'])" % rem_nonalpha(scope)
+                exec(code)
+                gg = loc['gg']
 
             for gr in gg:
                 g = dict()
                 g['type'] = 'NGI'
                 g['group'] = gr['ngi']
                 g['subgroup'] = gr['site']
-                g['tags'] = {'certification' : gr['certification'], \
-                             'scope' : gr['scope'], \
-                             'infrastructure' : gr['infrastructure']}
+                g['tags'] = {'certification': gr['certification'],
+                             'scope': gr['scope'],
+                             'infrastructure': gr['infrastructure']}
 
                 groupofgroups.append(g)
 
@@ -154,9 +159,12 @@ class GOCDBReader:
                 return []
 
         groupofendpoints, ge = list(), list()
+
         for scope in self.scopes:
-            code = "ge = ge + sorted([value for key, value in self.serviceList%s.iteritems()], key=lambda s: s['site'])" % rem_nonalpha(scope)
-            exec code
+            loc = locals()
+            code = "ge = ge + sorted([value for key, value in self.serviceList%s.items()], key=lambda s: s['site'])" % rem_nonalpha(scope)
+            exec(code)
+            ge = loc['ge']
 
         for gr in ge:
             g = dict()
@@ -167,11 +175,11 @@ class GOCDBReader:
                 g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
             else:
                 g['hostname'] = gr['hostname']
-            g['tags'] = {'scope': gr['scope'], \
-                         'monitored': '1' if gr['monitored'] == 'Y' or \
-                                             gr['monitored'] == 'True' else '0', \
-                         'production': '1' if gr['production'] == 'Y' or \
-                                              gr['production'] == 'True' else '0'}
+            g['tags'] = {'scope': gr['scope'],
+                         'monitored': '1' if gr['monitored'] == 'Y' or
+                         gr['monitored'] == 'True' else '0',
+                         'production': '1' if gr['production'] == 'Y' or
+                         gr['production'] == 'True' else '0'}
             groupofendpoints.append(g)
 
         return groupofendpoints
@@ -221,7 +229,7 @@ class GOCDBReader:
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
-                                                                                                      repr(e).replace('\'', '').replace('\"', '')))
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getServiceEndpoints(self, serviceList, scope):
@@ -320,7 +328,7 @@ class GOCDBReader:
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
-                                                                                                        repr(e).replace('\'','').replace('\"', '')))
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
     def getServiceGroups(self, groupList, scope):
@@ -363,25 +371,25 @@ class TopoFilter(object):
 
     def topofilter(self):
         if self.subgroupfilter:
-            self.gg = filter(lambda e: e['subgroup'].lower() in self.subgroupfilter, self.gg)
+            self.gg = list(filter(lambda e: e['subgroup'].lower() in self.subgroupfilter, self.gg))
 
         if self.groupfilter:
-            self.gg = filter(lambda e: e['group'].lower() in self.groupfilter, self.gg)
+            self.gg = list(filter(lambda e: e['group'].lower() in self.groupfilter, self.gg))
 
         if self.ggfilter:
             self.gg = self.filter_tags(self.ggfilter, self.gg)
 
         allsubgroups = set([e['subgroup'] for e in self.gg])
         if allsubgroups:
-            self.ge = filter(lambda e: e['group'] in allsubgroups, self.ge)
+            self.ge = list(filter(lambda e: e['group'] in allsubgroups, self.ge))
 
         if self.gefilter:
             self.ge = self.filter_tags(self.gefilter, self.ge)
 
     def extract_filter(self, tag, ggtags):
         gg = None
-        if tag.lower() in [t.lower() for t in ggtags.iterkeys()]:
-            for k, v in ggtags.iteritems():
+        if tag.lower() in [t.lower() for t in ggtags.keys()]:
+            for k, v in ggtags.items():
                 if tag.lower() in k.lower():
                     gg = ggtags[k]
                     key = k
@@ -409,7 +417,7 @@ class TopoFilter(object):
                     if value.lower() == tags[attr].lower():
                         return True
             try:
-                listofelem = filter(getit, listofelem)
+                listofelem = list(filter(getit, listofelem))
             except KeyError as e:
                 logger.error('Customer:%s Job:%s : Wrong tags specified: %s' % (logger.customer, logger.job, e))
         return listofelem

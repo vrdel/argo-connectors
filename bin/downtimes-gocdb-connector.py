@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (c) 2013 GRNET S.A., SRCE, IN2P3 CNRS Computing Centre
 #
@@ -28,7 +28,7 @@ import argparse
 import datetime
 import os
 import sys
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from argo_egi_connectors import input
 from argo_egi_connectors import output

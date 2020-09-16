@@ -7,7 +7,7 @@ import xml.dom.minidom
 from argo_egi_connectors.helpers import retry
 
 from xml.parsers.expat import ExpatError
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 
 class ConnectorError(Exception):
@@ -38,7 +38,6 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         else:
             response = requests.get('http://' + host + url, headers=headers,
                                     timeout=int(globopts['ConnectionTimeout'.lower()]))
-
 
         if response.status_code >= 300 and response.status_code < 400:
             headers = response.headers

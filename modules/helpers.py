@@ -6,6 +6,7 @@ strerr = ''
 num_excp_expand = 0
 daysback = 1
 
+
 class retry:
     def __init__(self, func):
         self.func = func
@@ -29,7 +30,7 @@ class retry:
         loops = self.numr + 1
         try:
             i = 1
-            while i <= range(loops):
+            while i <= loops:
                 try:
                     result = self.func(*args, **kwargs)
                 except Exception as e:
@@ -51,11 +52,13 @@ class retry:
             return False
         return result
 
+
 def date_check(arg):
     if re.search("[0-9]{4}-[0-9]{2}-[0-9]{2}", arg):
         return True
     else:
         return False
+
 
 def datestamp(daysback=None):
     if daysback:
@@ -65,11 +68,13 @@ def datestamp(daysback=None):
 
     return str(dateback.strftime('%Y_%m_%d'))
 
+
 def filename_date(logger, option, path, stamp=None):
     stamp = stamp if stamp else datestamp(daysback)
     filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % stamp, option)
 
     return filename
+
 
 def module_class_name(obj):
     name = repr(obj.__class__.__name__)
