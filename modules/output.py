@@ -77,6 +77,7 @@ class AmsPublish(object):
     @retry
     def _send(logger, msgprefix, retryopts, msgs, bulk, obj):
         timeout = retryopts['ConnectionTimeout'.lower()]
+        msgs = list(msgs)
         try:
             if bulk > 1:
                 q, r = divmod(len(msgs), bulk)
