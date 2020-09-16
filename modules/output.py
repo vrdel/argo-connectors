@@ -67,6 +67,8 @@ class WebAPI(object):
 
     def __init__(self, connector, host, token):
         self.webapi_method = self.methods[os.path.basename(connector)]
+        self.host = host
+        self.token = token
 
 
 class AmsPublish(object):
