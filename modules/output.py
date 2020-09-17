@@ -66,7 +66,7 @@ class WebAPI(object):
     }
 
     def __init__(self, connector, host, token, report, logger, retry,
-                 timeout=180, sleepretry=60, endpoints_group=None):
+                 timeout=180, sleepretry=60, endpoints_group=None, date=None):
         self.connector = os.path.basename(connector)
         self.webapi_method = self.methods[self.connector]
         self.host = host
@@ -86,6 +86,7 @@ class WebAPI(object):
             'ConnectionSleepRetry'.lower(): sleepretry
         }
         self.endpoints_group = endpoints_group
+        self.date = date
 
     def _format_downtimes(self, data):
         formatted = dict()
@@ -120,7 +121,13 @@ class WebAPI(object):
                                                               ret.content))
 
     def send(self, data):
-        api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
+        if self.date:
+            api = 'https://{}/api/v2/{}?date={}'.format(self.host,
+                                                        self.webapi_method,
+                                                        self.date)
+        else:
+            api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
+
         data_send = dict()
 
         if self.connector.startswith('downtimes'):

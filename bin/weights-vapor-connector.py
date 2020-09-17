@@ -199,7 +199,8 @@ def main():
                                        int(globopts['ConnectionRetry'.lower()]),
                                        int(globopts['ConnectionTimeout'.lower()]),
                                        int(globopts['ConnectionSleepRetry'.lower()]),
-                                       confcust.get_fetchtype(job))
+                                       confcust.get_fetchtype(job),
+                                       fixed_date)
                 webapi.send(datawr)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
