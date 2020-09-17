@@ -67,17 +67,28 @@ class WebAPI(object):
     }
 
     def __init__(self, connector, host, token, report):
-        self.webapi_method = self.methods[os.path.basename(connector)]
+        self.connector = os.path.basename(connector)
+        self.webapi_method = self.methods[self.connector]
         self.host = host
         self.token = token
         self.headers = {'x-api-key': self.token, 'Accept': 'application/json'}
         self.report = report
 
     def _format_downtimes(self, data):
-        pass
+        json = dict()
+
+        json['endpoints'] = data
+        json['name'] = self.report
+
+        return json
 
     def send(self, data):
         api = '{}/api/v2/{}'.format(self.host, self.webapi_method)
+        data_send = dict()
+
+        if self.connector.startswith('downtimes'):
+            data_send = self._format_downtimes(data)
+
         ret = requests.post(api, data=data, headers=self.headers)
 
 
