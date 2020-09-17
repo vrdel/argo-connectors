@@ -62,7 +62,7 @@ class WebAPI(object):
         'downtimes-gocdb-connector.py': 'downtimes',
         'topology-gocdb-connector.py': ['topology/endpoints', 'topology/groups'],
         'topology-eosc-connector.py': ['topology/endpoints', 'topology/groups'],
-        'weights-vapor-connector.py': ['weights']
+        'weights-vapor-connector.py': 'weights'
     }
 
     def __init__(self, connector, host, token, report, logger, retry,
@@ -87,18 +87,35 @@ class WebAPI(object):
         }
 
     def _format_downtimes(self, data):
-        json = dict()
+        formatted = dict()
 
-        json['endpoints'] = data
-        json['name'] = self.report
+        formatted['endpoints'] = data
+        formatted['name'] = self.report
 
-        return json
+        return json.dumps(formatted)
+
+    def _format_weights(self, data):
+        formatted = dict()
+
+        formatted['type'] = data[0]['type']
+        formatted['name'] = self.report
+        groups = map(lambda s: {'name': s['site'], 'value': s['weight']}, data)
+        formatted['groups'] = list(groups)
+        formatted['name'] = self.report
+
+        return json.dumps(formatted)
 
     @staticmethod
     @retry
     def _send(logger, msgprefix, retryopts, api, data_send, headers):
-        requests.post(api, data=json.dumps(data_send), headers=headers,
-                      timeout=retryopts['ConnectionTimeout'.lower()])
+        ret = requests.post(api, data=data_send, headers=headers,
+                            timeout=retryopts['ConnectionTimeout'.lower()])
+        if ret.status_code != 401:
+            logger.error('%s %s() Customer:%s Job:%s - %s' % (msgprefix,
+                                                              '_send',
+                                                              logger.customer,
+                                                              logger.job,
+                                                              ret.content))
 
     def send(self, data):
         api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
@@ -106,6 +123,9 @@ class WebAPI(object):
 
         if self.connector.startswith('downtimes'):
             data_send = self._format_downtimes(data)
+
+        if self.connector.startswith('weights'):
+            data_send = self._format_weights(data)
 
         self._send(self.logger, module_class_name(self), self.retry_options,
                    api, data_send, self.headers)

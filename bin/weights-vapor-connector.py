@@ -152,6 +152,13 @@ def main():
                 logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
                 continue
 
+            webapi_custopts = confcust.get_webapiopts(cust)
+            webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+            webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+            if not webapi_complete:
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
+                continue
+
             if fixed_date:
                 output.write_state(sys.argv[0], jobstatedir, weights.state,
                                    globopts['InputStateDays'.lower()],
@@ -184,6 +191,15 @@ def main():
 
                 ams.send(globopts['AvroSchemasWeights'.lower()], 'weights',
                          partdate, datawr)
+
+            if eval(globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                                       webapi_opts['webapitoken'],
+                                       confcust.get_jobdir(job), logger,
+                                       int(globopts['ConnectionRetry'.lower()]),
+                                       int(globopts['ConnectionTimeout'.lower()]),
+                                       int(globopts['ConnectionSleepRetry'.lower()]))
+                webapi.send(datawr)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
