@@ -83,13 +83,13 @@ class WebAPI(object):
         return json
 
     def send(self, data):
-        api = '{}/api/v2/{}'.format(self.host, self.webapi_method)
+        api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
         data_send = dict()
 
         if self.connector.startswith('downtimes'):
             data_send = self._format_downtimes(data)
 
-        ret = requests.post(api, data=data, headers=self.headers)
+        ret = requests.post(api, data=json.dumps(data_send), headers=self.headers)
 
 
 class AmsPublish(object):
