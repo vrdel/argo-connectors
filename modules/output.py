@@ -66,7 +66,7 @@ class WebAPI(object):
     }
 
     def __init__(self, connector, host, token, report, logger, retry,
-                 timeout=180, sleepretry=60):
+                 timeout=180, sleepretry=60, endpoints_group=None):
         self.connector = os.path.basename(connector)
         self.webapi_method = self.methods[self.connector]
         self.host = host
@@ -85,6 +85,7 @@ class WebAPI(object):
             'ConnectionTimeout'.lower(): timeout,
             'ConnectionSleepRetry'.lower(): sleepretry
         }
+        self.endpoints_group = endpoints_group
 
     def _format_downtimes(self, data):
         formatted = dict()
@@ -97,11 +98,12 @@ class WebAPI(object):
     def _format_weights(self, data):
         formatted = dict()
 
-        formatted['type'] = data[0]['type']
+        formatted['weight_type'] = data[0]['type']
         formatted['name'] = self.report
-        groups = map(lambda s: {'name': s['site'], 'value': s['weight']}, data)
+        groups = map(lambda s: {'name': s['site'], 'value': float(s['weight'])}, data)
         formatted['groups'] = list(groups)
         formatted['name'] = self.report
+        formatted['group_type'] = self.endpoints_group
 
         return json.dumps(formatted)
 
@@ -110,7 +112,7 @@ class WebAPI(object):
     def _send(logger, msgprefix, retryopts, api, data_send, headers):
         ret = requests.post(api, data=data_send, headers=headers,
                             timeout=retryopts['ConnectionTimeout'.lower()])
-        if ret.status_code != 401:
+        if ret.status_code != 201:
             logger.error('%s %s() Customer:%s Job:%s - %s' % (msgprefix,
                                                               '_send',
                                                               logger.customer,

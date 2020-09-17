@@ -198,7 +198,8 @@ def main():
                                        confcust.get_jobdir(job), logger,
                                        int(globopts['ConnectionRetry'.lower()]),
                                        int(globopts['ConnectionTimeout'.lower()]),
-                                       int(globopts['ConnectionSleepRetry'.lower()]))
+                                       int(globopts['ConnectionSleepRetry'.lower()]),
+                                       confcust.get_fetchtype(job))
                 webapi.send(datawr)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):

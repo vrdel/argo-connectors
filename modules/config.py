@@ -200,7 +200,7 @@ class CustomerConf(object):
                                                    'TopoUIDServiceEndpoints'],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
-                    'weights-vapor-connector.py': ['WeightsFeed']
+                    'weights-vapor-connector.py': ['WeightsFeed', 'TopoFetchType']
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
