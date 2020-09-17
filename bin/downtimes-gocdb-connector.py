@@ -261,7 +261,10 @@ def main():
                 webapi = output.WebAPI(sys.argv[0],
                                        webapi_opts['webapihost'],
                                        webapi_opts['webapitoken'],
-                                       confcust.get_jobdir(job))
+                                       confcust.get_jobdir(job),
+                                       logger,
+                                       int(globopts['ConnectionRetry'.lower()]),
+                                       int(globopts['ConnectionTimeout'.lower()]))
                 webapi.send(dts)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):

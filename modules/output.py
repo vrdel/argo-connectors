@@ -10,7 +10,6 @@ from avro.io import DatumWriter, BinaryEncoder
 from io import BytesIO
 
 from argo_egi_connectors.helpers import datestamp, retry, module_class_name
-from argo_egi_connectors.log import Logger
 
 from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
 
@@ -66,13 +65,26 @@ class WebAPI(object):
         'weights-vapor-connector.py': ['weights']
     }
 
-    def __init__(self, connector, host, token, report):
+    def __init__(self, connector, host, token, report, logger, retry,
+                 timeout=180, sleepretry=60):
         self.connector = os.path.basename(connector)
         self.webapi_method = self.methods[self.connector]
         self.host = host
         self.token = token
-        self.headers = {'x-api-key': self.token, 'Accept': 'application/json'}
+        self.headers = {
+            'x-api-key': self.token,
+            'Accept': 'application/json'
+        }
         self.report = report
+        self.logger = logger
+        self.retry = retry
+        self.timeout = timeout
+        self.sleepretry = sleepretry
+        self.retry_options = {
+            'ConnectionRetry'.lower(): retry,
+            'ConnectionTimeout'.lower(): timeout,
+            'ConnectionSleepRetry'.lower(): sleepretry
+        }
 
     def _format_downtimes(self, data):
         json = dict()
@@ -82,6 +94,12 @@ class WebAPI(object):
 
         return json
 
+    @staticmethod
+    @retry
+    def _send(logger, msgprefix, retryopts, api, data_send, headers):
+        requests.post(api, data=json.dumps(data_send), headers=headers,
+                      timeout=retryopts['ConnectionTimeout'.lower()])
+
     def send(self, data):
         api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
         data_send = dict()
@@ -89,7 +107,8 @@ class WebAPI(object):
         if self.connector.startswith('downtimes'):
             data_send = self._format_downtimes(data)
 
-        ret = requests.post(api, data=json.dumps(data_send), headers=self.headers)
+        self._send(self.logger, module_class_name(self), self.retry_options,
+                   api, data_send, self.headers)
 
 
 class AmsPublish(object):
@@ -105,7 +124,7 @@ class AmsPublish(object):
         self.timeout = int(timeout)
         self.retry = int(retry)
         self.sleepretry = int(sleepretry)
-        self.logger = Logger
+        self.logger = logger
         self.packsingle = eval(packsingle)
 
     @staticmethod
