@@ -260,7 +260,8 @@ def main():
             if eval(globopts['GeneralPublishWebAPI'.lower()]):
                 webapi = output.WebAPI(sys.argv[0],
                                        webapi_opts['webapihost'],
-                                       webapi_opts['webapitoken'])
+                                       webapi_opts['webapitoken'],
+                                       confcust.get_jobdir(job))
                 webapi.send(dts)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):

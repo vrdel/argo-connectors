@@ -66,11 +66,15 @@ class WebAPI(object):
         'weights-vapor-connector.py': ['weights']
     }
 
-    def __init__(self, connector, host, token):
+    def __init__(self, connector, host, token, report):
         self.webapi_method = self.methods[os.path.basename(connector)]
         self.host = host
         self.token = token
         self.headers = {'x-api-key': self.token, 'Accept': 'application/json'}
+        self.report = report
+
+    def _format_downtimes(self, data):
+        pass
 
     def send(self, data):
         api = '{}/api/v2/{}'.format(self.host, self.webapi_method)
