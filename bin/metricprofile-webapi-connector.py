@@ -202,7 +202,8 @@ def main():
                                         ams_opts['amspacksinglemsg'],
                                         logger,
                                         int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]))
+                                        int(globopts['ConnectionTimeout'.lower()]),
+                                        int(globopts['ConnectionSleepRetry'.lower()]))
 
                 ams.send(globopts['AvroSchemasMetricProfile'.lower()], 'metric_profile',
                          partdate, fetched_profiles)

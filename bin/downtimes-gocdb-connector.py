@@ -252,7 +252,9 @@ def main():
                                         ams_opts['amspacksinglemsg'],
                                         logger,
                                         int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]))
+                                        int(globopts['ConnectionTimeout'.lower()]),
+                                        int(globopts['ConnectionSleepRetry'.lower()])
+                                        )
 
                 ams.send(globopts['AvroSchemasDowntimes'.lower()], 'downtimes',
                          timestamp.replace('_', '-'), dts)
@@ -264,7 +266,8 @@ def main():
                                        confcust.get_jobdir(job),
                                        logger,
                                        int(globopts['ConnectionRetry'.lower()]),
-                                       int(globopts['ConnectionTimeout'.lower()]))
+                                       int(globopts['ConnectionTimeout'.lower()]),
+                                       int(globopts['ConnectionSleepRetry'.lower()]))
                 webapi.send(dts)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):

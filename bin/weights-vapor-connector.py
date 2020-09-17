@@ -179,7 +179,8 @@ def main():
                                         ams_opts['amspacksinglemsg'],
                                         logger,
                                         int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]))
+                                        int(globopts['ConnectionTimeout'.lower()]),
+                                        int(globopts['ConnectionSleepRetry'.lower()]))
 
                 ams.send(globopts['AvroSchemasWeights'.lower()], 'weights',
                          partdate, datawr)
