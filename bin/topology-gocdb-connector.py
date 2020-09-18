@@ -93,6 +93,7 @@ class GOCDBReader:
 
         for d in gl:
             for service in d['services']:
+                import ipdb; ipdb.set_trace()
                 g = dict()
                 g['type'] = fetchtype.upper()
                 g['group'] = d['name']
@@ -311,11 +312,16 @@ class GOCDBReader:
                     groupList[groupId] = {}
                 groupList[groupId]['name'] = getText(group.getElementsByTagName('NAME')[0].childNodes)
                 groupList[groupId]['monitored'] = getText(group.getElementsByTagName('MONITORED')[0].childNodes)
-                groupList[groupId]['scope'] = scope.split('=')[1]
+
                 groupList[groupId]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
                 for service in services:
-                    serviceDict = {}
+                    scopes = list()
+                    serviceDict = dict()
+
+                    for sc in service.getElementsByTagName('SCOPES'):
+                        scopes.append(getText(sc.getElementsByTagName('SCOPE')[0].childNodes))
+
                     serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                     try:
                         serviceDict['service_id'] = getText(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
@@ -324,6 +330,7 @@ class GOCDBReader:
                     serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
                     serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                    serviceDict['scope'] = scopes
                     groupList[groupId]['services'].append(serviceDict)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -474,6 +481,13 @@ def main():
             logger.customer = custname
             logger.job = job
 
+            webapi_custopts = confcust.get_webapiopts(cust)
+            webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+            webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+            if not webapi_complete:
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
+                continue
+
             ams_custopts = confcust.get_amsopts(cust)
             ams_opts = cglob.merge_opts(ams_custopts, 'ams')
             ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
@@ -530,6 +544,18 @@ def main():
 
                 ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
                          'group_endpoints', partdate, group_endpoints)
+
+            if eval(globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = output.WebAPI(sys.argv[0],
+                                       webapi_opts['webapihost'],
+                                       webapi_opts['webapitoken'],
+                                       confcust.get_jobdir(job),
+                                       logger,
+                                       int(globopts['ConnectionRetry'.lower()]),
+                                       int(globopts['ConnectionTimeout'.lower()]),
+                                       int(globopts['ConnectionSleepRetry'.lower()]))
+                webapi.send(group_groups)
+
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:

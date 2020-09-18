@@ -94,7 +94,7 @@ class WebAPI(object):
         formatted['endpoints'] = data
         formatted['name'] = self.report
 
-        return json.dumps(formatted)
+        return formatted
 
     def _format_weights(self, data):
         formatted = dict()
@@ -106,12 +106,12 @@ class WebAPI(object):
         formatted['name'] = self.report
         formatted['group_type'] = self.endpoints_group
 
-        return json.dumps(formatted)
+        return formatted
 
     @staticmethod
     @retry
     def _send(logger, msgprefix, retryopts, api, data_send, headers):
-        ret = requests.post(api, data=data_send, headers=headers,
+        ret = requests.post(api, data=json.dumps(data_send), headers=headers,
                             timeout=retryopts['ConnectionTimeout'.lower()])
         if ret.status_code != 201:
             logger.error('%s %s() Customer:%s Job:%s - %s' % (msgprefix,
