@@ -93,7 +93,6 @@ class GOCDBReader:
 
         for d in gl:
             for service in d['services']:
-                import ipdb; ipdb.set_trace()
                 g = dict()
                 g['type'] = fetchtype.upper()
                 g['group'] = d['name']
@@ -313,14 +312,19 @@ class GOCDBReader:
                 groupList[groupId]['name'] = getText(group.getElementsByTagName('NAME')[0].childNodes)
                 groupList[groupId]['monitored'] = getText(group.getElementsByTagName('MONITORED')[0].childNodes)
 
+                scopes = set()
+                for sc in group.getElementsByTagName('SCOPES'):
+                    scopes.update([getText(sc.getElementsByTagName('SCOPE')[0].childNodes)])
+                groupList[groupId]['scope'] = ', '.join(list(scopes))
+
                 groupList[groupId]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
                 for service in services:
-                    scopes = list()
+                    scopes = set()
                     serviceDict = dict()
 
                     for sc in service.getElementsByTagName('SCOPES'):
-                        scopes.append(getText(sc.getElementsByTagName('SCOPE')[0].childNodes))
+                        scopes.update([getText(sc.getElementsByTagName('SCOPE')[0].childNodes)])
 
                     serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                     try:
@@ -330,7 +334,7 @@ class GOCDBReader:
                     serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
                     serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                    serviceDict['scope'] = scopes
+                    serviceDict['scope'] = ', '.join(list(scopes))
                     groupList[groupId]['services'].append(serviceDict)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
