@@ -64,7 +64,7 @@ class GOCDBReader:
         self.paging = paging
         self.custauth = auth
 
-    def _getText(nodelist):
+    def _get_text(self, nodelist):
         rc = []
         for node in nodelist:
             if node.nodeType == node.TEXT_NODE:
@@ -192,12 +192,12 @@ class GOCDBReader:
                     serviceId = str(service.attributes['PRIMARY_KEY'].value)
                 if serviceId not in serviceList:
                     serviceList[serviceId] = {}
-                serviceList[serviceId]['hostname'] = self._getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
-                serviceList[serviceId]['type'] = self._getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                serviceList[serviceId]['monitored'] = self._getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                serviceList[serviceId]['production'] = self._getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                serviceList[serviceId]['site'] = self._getText(service.getElementsByTagName('SITENAME')[0].childNodes)
-                serviceList[serviceId]['roc'] = self._getText(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                serviceList[serviceId]['hostname'] = self._get_text(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                serviceList[serviceId]['type'] = self._get_text(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                serviceList[serviceId]['monitored'] = self._get_text(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                serviceList[serviceId]['production'] = self._get_text(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                serviceList[serviceId]['site'] = self._get_text(service.getElementsByTagName('SITENAME')[0].childNodes)
+                serviceList[serviceId]['roc'] = self._get_text(service.getElementsByTagName('ROC_NAME')[0].childNodes)
                 serviceList[serviceId]['service_id'] = serviceId
                 serviceList[serviceId]['scope'] = ''
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
@@ -240,9 +240,9 @@ class GOCDBReader:
                 siteName = site.getAttribute('NAME')
                 if siteName not in siteList:
                     siteList[siteName] = {'site': siteName}
-                siteList[siteName]['infrastructure'] = self._getText(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
-                siteList[siteName]['certification'] = self._getText(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
-                siteList[siteName]['ngi'] = self._getText(site.getElementsByTagName('ROC')[0].childNodes)
+                siteList[siteName]['infrastructure'] = self._get_text(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
+                siteList[siteName]['certification'] = self._get_text(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
+                siteList[siteName]['ngi'] = self._get_text(site.getElementsByTagName('ROC')[0].childNodes)
                 siteList[siteName]['scope'] = ''
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -276,6 +276,17 @@ class GOCDBReader:
         except Exception as e:
             raise e
 
+    def _get_scopes(self, xml_node):
+        scopes = list()
+
+        for elem in xml_node.childNodes:
+            if elem.nodeName == 'SCOPES':
+                for subelem in elem.childNodes:
+                    if subelem.nodeName == 'SCOPE':
+                        scopes.append(subelem.childNodes[0].nodeValue)
+
+        return scopes
+
     def _get_service_groups(self, groupList, doc):
         try:
             doc = self._get_xmldata(SERVGROUPPI)
@@ -284,31 +295,24 @@ class GOCDBReader:
                 groupId = group.getAttribute('PRIMARY_KEY')
                 if groupId not in groupList:
                     groupList[groupId] = {}
-                groupList[groupId]['name'] = self._getText(group.getElementsByTagName('NAME')[0].childNodes)
-                groupList[groupId]['monitored'] = self._getText(group.getElementsByTagName('MONITORED')[0].childNodes)
+                groupList[groupId]['name'] = self._get_text(group.getElementsByTagName('NAME')[0].childNodes)
+                groupList[groupId]['monitored'] = self._get_text(group.getElementsByTagName('MONITORED')[0].childNodes)
 
                 groupList[groupId]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
 
                 for service in services:
-                    scopes = list()
                     serviceDict = dict()
 
-                    for elem in service.childNodes:
-                        if elem.nodeName == 'SCOPES':
-                            for subelem in elem.childNodes:
-                                if subelem.nodeName == 'SCOPE':
-                                    scopes.append(subelem.childNodes[0].nodeValue)
-
-                    serviceDict['hostname'] = self._getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    serviceDict['hostname'] = self._get_text(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                     try:
-                        serviceDict['service_id'] = self._getText(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                        serviceDict['service_id'] = self._get_text(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
                     except IndexError:
                         serviceDict['service_id'] = service.getAttribute('PRIMARY_KEY')
-                    serviceDict['type'] = self._getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                    serviceDict['monitored'] = self._getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                    serviceDict['production'] = self._getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                    serviceDict['scope'] = ', '.join(scopes)
+                    serviceDict['type'] = self._get_text(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    serviceDict['monitored'] = self._get_text(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                    serviceDict['production'] = self._get_text(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                    serviceDict['scope'] = ', '.join(self._get_scopes(service))
                     groupList[groupId]['services'].append(serviceDict)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
