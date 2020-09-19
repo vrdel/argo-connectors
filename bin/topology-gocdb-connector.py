@@ -53,10 +53,6 @@ custname = ''
 isok = True
 
 
-def rem_nonalpha(string):
-    return re.sub(r'\W*', '', string)
-
-
 def getText(nodelist):
     rc = []
     for node in nodelist:
