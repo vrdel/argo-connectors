@@ -344,71 +344,6 @@ class GOCDBReader:
             raise e
 
 
-class TopoFilter(object):
-    def __init__(self, gg, ge, ggfilter, gefilter):
-        self.gg = gg
-        self.ge = ge
-        self.ggfilter = copy.copy(ggfilter)
-        self.gefilter = copy.copy(gefilter)
-        self.subgroupfilter = self.extract_filter('site', self.ggfilter) or \
-            self.extract_filter('servicegroup', self.ggfilter)
-        self.groupfilter = self.extract_filter('ngi', self.ggfilter)
-        self.topofilter()
-
-    def topofilter(self):
-        if self.subgroupfilter:
-            self.gg = list(filter(lambda e: e['subgroup'].lower() in self.subgroupfilter, self.gg))
-
-        if self.groupfilter:
-            self.gg = list(filter(lambda e: e['group'].lower() in self.groupfilter, self.gg))
-
-        if self.ggfilter:
-            self.gg = self.filter_tags(self.ggfilter, self.gg)
-
-        allsubgroups = set([e['subgroup'] for e in self.gg])
-        if allsubgroups:
-            self.ge = list(filter(lambda e: e['group'] in allsubgroups, self.ge))
-
-        if self.gefilter:
-            self.ge = self.filter_tags(self.gefilter, self.ge)
-
-    def extract_filter(self, tag, ggtags):
-        gg = None
-        if tag.lower() in [t.lower() for t in ggtags.keys()]:
-            for k, v in ggtags.items():
-                if tag.lower() in k.lower():
-                    gg = ggtags[k]
-                    key = k
-            ggtags.pop(key)
-            if isinstance(gg, list):
-                gg = [t.lower() for t in gg]
-            else:
-                gg = gg.lower()
-
-        return gg
-
-    def filter_tags(self, tags, listofelem):
-        for attr in tags.keys():
-            def getit(elem):
-                value = elem['tags'][attr.lower()]
-                if value == '1':
-                    value = 'Y'
-                elif value == '0':
-                    value = 'N'
-                if isinstance(tags[attr], list):
-                    for a in tags[attr]:
-                        if value.lower() == a.lower():
-                            return True
-                else:
-                    if value.lower() == tags[attr].lower():
-                        return True
-            try:
-                listofelem = list(filter(getit, listofelem))
-            except KeyError as e:
-                logger.error('Customer:%s Job:%s : Wrong tags specified: %s' % (logger.customer, logger.job, e))
-        return listofelem
-
-
 def main():
     global logger, globopts, confcust
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
@@ -437,7 +372,6 @@ def main():
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
 
     for feed, jobcust in feeds.items():
-        scopes = confcust.get_feedscopes(feed, jobcust)
         paging = confcust.is_paginated(feed, jobcust)
         auth_custopts = confcust.get_authopts(feed, jobcust)
         auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -494,12 +428,6 @@ def main():
             numge = len(group_endpoints)
             numgg = len(group_groups)
 
-            ggtags = confcust.get_gocdb_ggtags(job)
-            getags = confcust.get_gocdb_getags(job)
-            tf = TopoFilter(group_groups, group_endpoints, ggtags, getags)
-            group_groups = tf.gg
-            group_endpoints = tf.ge
-
             if eval(globopts['GeneralPublishAms'.lower()]):
                 if fixed_date:
                     partdate = fixed_date
@@ -535,7 +463,6 @@ def main():
                                        int(globopts['ConnectionSleepRetry'.lower()]))
                 webapi.send(group_groups)
 
-
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
                     filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir, fixed_date.replace('-', '_'))
@@ -558,25 +485,6 @@ def main():
                     raise SystemExit(1)
 
             logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
-            if getags or ggtags:
-                selstr = 'Customer:%s Job:%s Selected ' % (custname, job)
-                selge, selgg = '', ''
-                if getags:
-                    for key, value in getags.items():
-                        if isinstance(value, list):
-                            value = '[' + ','.join(value) + ']'
-                        selge += '%s:%s,' % (key, value)
-                    selstr += 'Endpoints(%s):' % selge[:len(selge) - 1]
-                    selstr += '%d ' % (len(group_endpoints))
-                if ggtags:
-                    for key, value in ggtags.items():
-                        if isinstance(value, list):
-                            value = '[' + ','.join(value) + ']'
-                        selgg += '%s:%s,' % (key, value)
-                    selstr += 'Groups(%s):' % selgg[:len(selgg) - 1]
-                    selstr += '%d' % (len(group_groups))
-
-                logger.info(selstr)
 
 
 if __name__ == '__main__':
