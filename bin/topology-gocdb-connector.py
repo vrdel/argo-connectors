@@ -53,14 +53,6 @@ custname = ''
 isok = True
 
 
-def getText(nodelist):
-    rc = []
-    for node in nodelist:
-        if node.nodeType == node.TEXT_NODE:
-            rc.append(node.data)
-    return ''.join(rc)
-
-
 class GOCDBReader:
     def __init__(self, feed, paging=False, auth=None):
         self._o = urlparse(feed)
@@ -71,6 +63,13 @@ class GOCDBReader:
         self.state = True
         self.paging = paging
         self.custauth = auth
+
+    def _getText(nodelist):
+        rc = []
+        for node in nodelist:
+            if node.nodeType == node.TEXT_NODE:
+                rc.append(node.data)
+        return ''.join(rc)
 
     def getGroupOfServices(self, uidservtype=False):
         if not self.fetched:
@@ -193,12 +192,12 @@ class GOCDBReader:
                     serviceId = str(service.attributes['PRIMARY_KEY'].value)
                 if serviceId not in serviceList:
                     serviceList[serviceId] = {}
-                serviceList[serviceId]['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
-                serviceList[serviceId]['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                serviceList[serviceId]['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                serviceList[serviceId]['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                serviceList[serviceId]['site'] = getText(service.getElementsByTagName('SITENAME')[0].childNodes)
-                serviceList[serviceId]['roc'] = getText(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                serviceList[serviceId]['hostname'] = self._getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                serviceList[serviceId]['type'] = self._getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                serviceList[serviceId]['monitored'] = self._getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                serviceList[serviceId]['production'] = self._getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                serviceList[serviceId]['site'] = self._getText(service.getElementsByTagName('SITENAME')[0].childNodes)
+                serviceList[serviceId]['roc'] = self._getText(service.getElementsByTagName('ROC_NAME')[0].childNodes)
                 serviceList[serviceId]['service_id'] = serviceId
                 serviceList[serviceId]['scope'] = ''
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
@@ -241,9 +240,9 @@ class GOCDBReader:
                 siteName = site.getAttribute('NAME')
                 if siteName not in siteList:
                     siteList[siteName] = {'site': siteName}
-                siteList[siteName]['infrastructure'] = getText(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
-                siteList[siteName]['certification'] = getText(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
-                siteList[siteName]['ngi'] = getText(site.getElementsByTagName('ROC')[0].childNodes)
+                siteList[siteName]['infrastructure'] = self._getText(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
+                siteList[siteName]['certification'] = self._getText(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
+                siteList[siteName]['ngi'] = self._getText(site.getElementsByTagName('ROC')[0].childNodes)
                 siteList[siteName]['scope'] = ''
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -285,8 +284,8 @@ class GOCDBReader:
                 groupId = group.getAttribute('PRIMARY_KEY')
                 if groupId not in groupList:
                     groupList[groupId] = {}
-                groupList[groupId]['name'] = getText(group.getElementsByTagName('NAME')[0].childNodes)
-                groupList[groupId]['monitored'] = getText(group.getElementsByTagName('MONITORED')[0].childNodes)
+                groupList[groupId]['name'] = self._getText(group.getElementsByTagName('NAME')[0].childNodes)
+                groupList[groupId]['monitored'] = self._getText(group.getElementsByTagName('MONITORED')[0].childNodes)
 
                 groupList[groupId]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
@@ -301,14 +300,14 @@ class GOCDBReader:
                                 if subelem.nodeName == 'SCOPE':
                                     scopes.append(subelem.childNodes[0].nodeValue)
 
-                    serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    serviceDict['hostname'] = self._getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                     try:
-                        serviceDict['service_id'] = getText(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                        serviceDict['service_id'] = self._getText(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
                     except IndexError:
                         serviceDict['service_id'] = service.getAttribute('PRIMARY_KEY')
-                    serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                    serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                    serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                    serviceDict['type'] = self._getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    serviceDict['monitored'] = self._getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                    serviceDict['production'] = self._getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                     serviceDict['scope'] = ', '.join(scopes)
                     groupList[groupId]['services'].append(serviceDict)
 
