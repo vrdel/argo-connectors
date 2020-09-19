@@ -294,12 +294,16 @@ class GOCDBReader:
 
                 groupList[groupId]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
+
                 for service in services:
-                    scopes = set()
+                    scopes = list()
                     serviceDict = dict()
 
-                    for sc in service.getElementsByTagName('SCOPES'):
-                        scopes.update([getText(sc.getElementsByTagName('SCOPE')[0].childNodes)])
+                    for elem in service.childNodes:
+                        if elem.nodeName == 'SCOPES':
+                            for subelem in elem.childNodes:
+                                if subelem.nodeName == 'SCOPE':
+                                    scopes.append(subelem.childNodes[0].nodeValue)
 
                     serviceDict['hostname'] = getText(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                     try:
@@ -309,7 +313,7 @@ class GOCDBReader:
                     serviceDict['type'] = getText(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
                     serviceDict['monitored'] = getText(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     serviceDict['production'] = getText(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                    serviceDict['scope'] = ', '.join(list(scopes))
+                    serviceDict['scope'] = ', '.join(scopes)
                     groupList[groupId]['services'].append(serviceDict)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
