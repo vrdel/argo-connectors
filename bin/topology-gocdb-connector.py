@@ -40,9 +40,10 @@ from urllib.parse import urlparse
 
 logger = None
 
-SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint'
-SITESPI = '/gocdbpi/private/?method=get_site'
-SERVGROUPPI = '/gocdbpi/private/?method=get_service_group'
+# GOCDB explicitly says &scope='' for all scopes
+SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint&scope='
+SITESPI = '/gocdbpi/private/?method=get_site&scope='
+SERVGROUPPI = '/gocdbpi/private/?method=get_service_group&scope='
 
 fetchtype = ''
 
@@ -183,9 +184,8 @@ class GOCDBReader:
         if not res:
             raise input.ConnectorError()
 
-        # GOCDB explicitly says &scope='' for all scopes
         doc = input.parse_xml(logger, module_class_name(self), globopts, res,
-                              self._o.scheme + '://' + self._o.netloc + pi + '&scope=')
+                              self._o.scheme + '://' + self._o.netloc + pi)
         return doc
 
     def _get_service_endpoints(self, serviceList, doc):
