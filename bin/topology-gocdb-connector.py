@@ -90,7 +90,7 @@ class GOCDBReader:
                     g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
                     g['hostname'] = service['hostname']
-                g['tags'] = {'scope': service['scope'],
+                g['tags'] = {'scope': service.get('scope', ''),
                              'monitored': '1' if service['monitored'].lower() == 'Y'.lower() or
                              service['monitored'].lower() == 'True'.lower() else '0',
                              'production': '1' if service['production'].lower() == 'Y'.lower() or
@@ -115,7 +115,7 @@ class GOCDBReader:
                 g['group'] = custname
                 g['subgroup'] = d['name']
                 g['tags'] = {'monitored': '1' if d['monitored'].lower() == 'Y'.lower() or
-                             d['monitored'].lower() == 'True'.lower() else '0', 'scope': ''}
+                             d['monitored'].lower() == 'True'.lower() else '0', 'scope': d.get('scope', '')}
                 groupofgroups.append(g)
         else:
             gg = []
@@ -127,7 +127,7 @@ class GOCDBReader:
                 g['group'] = gr['ngi']
                 g['subgroup'] = gr['site']
                 g['tags'] = {'certification': gr['certification'],
-                             'scope': gr['scope'],
+                             'scope': gr.get('scope', ''),
                              'infrastructure': gr['infrastructure']}
 
                 groupofgroups.append(g)
@@ -152,7 +152,7 @@ class GOCDBReader:
                 g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
             else:
                 g['hostname'] = gr['hostname']
-            g['tags'] = {'scope': gr['scope'],
+            g['tags'] = {'scope': gr.get('scope', ''),
                          'monitored': '1' if gr['monitored'] == 'Y' or
                          gr['monitored'] == 'True' else '0',
                          'production': '1' if gr['production'] == 'Y' or
@@ -199,7 +199,7 @@ class GOCDBReader:
                 serviceList[serviceId]['site'] = self._get_text(service.getElementsByTagName('SITENAME')[0].childNodes)
                 serviceList[serviceId]['roc'] = self._get_text(service.getElementsByTagName('ROC_NAME')[0].childNodes)
                 serviceList[serviceId]['service_id'] = serviceId
-                serviceList[serviceId]['scope'] = ''
+                serviceList[serviceId]['scope'] = self._get_scopes(service)
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -300,6 +300,7 @@ class GOCDBReader:
 
                 groupList[groupId]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
+                groupList[groupId]['scope'] = ', '.join(self._get_scopes(group))
 
                 for service in services:
                     serviceDict = dict()
