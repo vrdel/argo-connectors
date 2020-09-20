@@ -199,7 +199,7 @@ class GOCDBReader:
                 serviceList[serviceId]['site'] = self._get_text(service.getElementsByTagName('SITENAME')[0].childNodes)
                 serviceList[serviceId]['roc'] = self._get_text(service.getElementsByTagName('ROC_NAME')[0].childNodes)
                 serviceList[serviceId]['service_id'] = serviceId
-                serviceList[serviceId]['scope'] = self._get_scopes(service)
+                serviceList[serviceId]['scope'] = ', '.join(self._get_scopes(service))
                 serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
@@ -243,7 +243,7 @@ class GOCDBReader:
                 siteList[siteName]['infrastructure'] = self._get_text(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
                 siteList[siteName]['certification'] = self._get_text(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
                 siteList[siteName]['ngi'] = self._get_text(site.getElementsByTagName('ROC')[0].childNodes)
-                siteList[siteName]['scope'] = ''
+                siteList[siteName]['scope'] = ', '.join(self._get_scopes(site))
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SITESPI,
