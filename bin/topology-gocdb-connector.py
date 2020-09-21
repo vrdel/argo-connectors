@@ -434,7 +434,8 @@ def main():
                                        int(globopts['ConnectionRetry'.lower()]),
                                        int(globopts['ConnectionTimeout'.lower()]),
                                        int(globopts['ConnectionSleepRetry'.lower()]))
-                webapi.send(group_groups)
+                webapi.send(group_groups, 'groups')
+                webapi.send(group_endpoints, 'endpoints')
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:

@@ -60,8 +60,8 @@ class AvroWriter(object):
 class WebAPI(object):
     methods = {
         'downtimes-gocdb-connector.py': 'downtimes',
-        'topology-gocdb-connector.py': ['topology/endpoints', 'topology/groups'],
-        'topology-eosc-connector.py': ['topology/endpoints', 'topology/groups'],
+        'topology-gocdb-connector.py': 'topology',
+        'topology-eosc-connector.py': 'topology',
         'weights-vapor-connector.py': 'weights'
     }
 
@@ -120,15 +120,24 @@ class WebAPI(object):
                                                               logger.job,
                                                               ret.content))
 
-    def send(self, data):
+    def send(self, data, topo_component=None):
+        if topo_component:
+            # /topology/groups, /topology/endpoints
+            webapi_url = '{}/{}'.format(self.webapi_method, topo_component)
+        else:
+            webapi_url = self.webapi_method
+
         if self.date:
             api = 'https://{}/api/v2/{}?date={}'.format(self.host,
-                                                        self.webapi_method,
+                                                        webapi_url,
                                                         self.date)
         else:
-            api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
+            api = 'https://{}/api/v2/{}'.format(self.host, webapi_url)
 
-        data_send = dict()
+        if topo_component:
+            data_send = data
+        else:
+            data_send = dict()
 
         if self.connector.startswith('downtimes'):
             data_send = self._format_downtimes(data)
