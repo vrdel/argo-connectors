@@ -405,13 +405,6 @@ def main():
                 logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
                 continue
 
-            ams_custopts = confcust.get_amsopts(cust)
-            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
-            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
-            if not ams_complete:
-                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (custname, logger.job, 'ams', ' '.join(missopt)))
-                continue
-
             if fetchtype == 'ServiceGroups':
                 group_endpoints = gocdb.getGroupOfServices(uidservtype)
             else:
@@ -431,30 +424,6 @@ def main():
 
             numge = len(group_endpoints)
             numgg = len(group_groups)
-
-            if eval(globopts['GeneralPublishAms'.lower()]):
-                if fixed_date:
-                    partdate = fixed_date
-                else:
-                    partdate = datestamp(1).replace('_', '-')
-
-                ams = output.AmsPublish(ams_opts['amshost'],
-                                        ams_opts['amsproject'],
-                                        ams_opts['amstoken'],
-                                        ams_opts['amstopic'],
-                                        confcust.get_jobdir(job),
-                                        ams_opts['amsbulk'],
-                                        ams_opts['amspacksinglemsg'],
-                                        logger,
-                                        int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]),
-                                        int(globopts['ConnectionSleepRetry'.lower()]))
-
-                ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
-                         'group_groups', partdate, group_groups)
-
-                ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
-                         'group_endpoints', partdate, group_endpoints)
 
             if eval(globopts['GeneralPublishWebAPI'.lower()]):
                 webapi = output.WebAPI(sys.argv[0],
