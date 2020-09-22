@@ -56,9 +56,14 @@ isok = True
 class GOCDBReader:
     def __init__(self, feed, paging=False, auth=None):
         self._o = urlparse(feed)
-        self.serviceList = dict()
-        self.groupList = dict()
-        self.siteList = dict()
+
+        # group groups and groups components for Sites topology
+        self._sites_service_endpoints = dict()
+        self._sites = dict()
+
+        # group_groups and group_endpoints components for ServiceGroup topology
+        self._service_groups = dict()
+
         self.fetched = False
         self.state = True
         self.paging = paging
@@ -78,7 +83,7 @@ class GOCDBReader:
 
         groups, gl = list(), list()
 
-        gl = gl + [value for key, value in self.groupList.items()]
+        gl = gl + [value for key, value in self._service_groups.items()]
 
         for d in gl:
             for service in d['services']:
@@ -107,7 +112,7 @@ class GOCDBReader:
         groupofgroups, gl = list(), list()
 
         if fetchtype == "ServiceGroups":
-            gl = gl + [value for key, value in self.groupList.items()]
+            gl = gl + [value for key, value in self._service_groups.items()]
 
             for d in gl:
                 g = dict()
@@ -119,7 +124,7 @@ class GOCDBReader:
                 groupofgroups.append(g)
         else:
             gg = []
-            gg = gg + sorted([value for key, value in self.siteList.items()], key=lambda s: s['ngi'])
+            gg = gg + sorted([value for key, value in self._sites.items()], key=lambda s: s['ngi'])
 
             for gr in gg:
                 g = dict()
@@ -141,7 +146,7 @@ class GOCDBReader:
 
         groupofendpoints, ge = list(), list()
 
-        ge = ge + sorted([value for key, value in self.serviceList.items()], key=lambda s: s['site'])
+        ge = ge + sorted([value for key, value in self._sites_service_endpoints.items()], key=lambda s: s['site'])
 
         for gr in ge:
             g = dict()
@@ -163,9 +168,9 @@ class GOCDBReader:
 
     def loadDataIfNeeded(self):
         try:
-            self.getServiceEndpoints(self.serviceList)
-            self.getServiceGroups(self.groupList)
-            self.getSitesInternal(self.siteList)
+            self.getServiceEndpoints(self._sites_service_endpoints)
+            self.getServiceGroups(self._service_groups)
+            self.getSitesInternal(self._sites)
             self.fetched = True
         except Exception:
             self.state = False

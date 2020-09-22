@@ -267,7 +267,8 @@ def main():
                                        logger,
                                        int(globopts['ConnectionRetry'.lower()]),
                                        int(globopts['ConnectionTimeout'.lower()]),
-                                       int(globopts['ConnectionSleepRetry'.lower()]))
+                                       int(globopts['ConnectionSleepRetry'.lower()]),
+                                       date=args.date[0])
                 webapi.send(dts)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
