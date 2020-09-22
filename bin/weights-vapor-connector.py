@@ -195,12 +195,13 @@ def main():
             if eval(globopts['GeneralPublishWebAPI'.lower()]):
                 webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
                                        webapi_opts['webapitoken'],
-                                       confcust.get_jobdir(job), logger,
+                                       logger,
                                        int(globopts['ConnectionRetry'.lower()]),
                                        int(globopts['ConnectionTimeout'.lower()]),
                                        int(globopts['ConnectionSleepRetry'.lower()]),
                                        confcust.get_fetchtype(job),
-                                       fixed_date)
+                                       fixed_date,
+                                       report=confcust.get_jobdir(job))
                 webapi.send(datawr)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
