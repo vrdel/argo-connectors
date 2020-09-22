@@ -490,16 +490,7 @@ class CustomerConf(object):
         feeds = {}
         for c in self.get_customers():
             for job in self.get_jobs(c):
-                if 'topology' in caller:
-                    feedurl = self._get_feed(job, 'TopoFile')
-                    if not feedurl:
-                        feedurl = self._get_feed(job, 'TopoFeed')
-                    if feedurl:
-                        self._update_feeds(feeds, feedurl, job, c)
-                    else:
-                        feedurl = deffeed
-                        self._update_feeds(feeds, feedurl, job, c)
-                elif 'downtimes' in caller:
+                if 'downtimes' in caller:
                     feedurl = self._get_feed(job, 'DowntimesFeed')
                     if feedurl:
                         self._update_feeds(feeds, feedurl, job, c)
