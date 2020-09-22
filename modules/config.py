@@ -190,14 +190,7 @@ class CustomerConf(object):
     """
     _custattrs = None
     _cust = {}
-    _defjobattrs = {'topology-gocdb-connector.py': ['TopoFetchType',
-                                                    'TopoSelectGroupOfGroups',
-                                                    'TopoSelectGroupOfEndpoints',
-                                                    'TopoUIDServiceEndpoints',
-                                                    'TopoFeed',
-                                                    'TopoFeedPaging'],
-                    'topology-eosc-connector.py': ['TopoFeed', 'TopoFile', 'TopoFetchType',
-                                                   'TopoUIDServiceEndpoints'],
+    _defjobattrs = {'topology-gocdb-connector.py': [''],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
                     'weights-vapor-connector.py': ['WeightsFeed', 'TopoFetchType']
@@ -239,6 +232,10 @@ class CustomerConf(object):
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                     custname = config.get(section, 'Name')
+                    topofetchtype = config.get(section, 'TopoFetchType')
+                    topofeed = config.get(section, 'TopoFeed')
+                    topotype = config.get(section, 'TopoType')
+                    topofeedpaging = config.get(section, 'TopoFeedPaging')
 
                     for o in lower_custopt:
                         try:
@@ -254,7 +251,12 @@ class CustomerConf(object):
                     self.logger.error(e.message)
                     raise SystemExit(1)
 
-                self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
+                self._cust.update({section: {'Jobs': custjobs, 'OutputDir':
+                                             custdir, 'Name': custname,
+                                             'TopoFetchType': topofetchtype,
+                                             'TopoFeedPaging': topofeedpaging,
+                                             'TopoFeed': topofeed,
+                                             'TopoType': topotype}})
                 if optopts:
                     ams, auth, webapi, empty_data = {}, {}, {}, {}
                     for k, v in optopts.items():

@@ -65,8 +65,8 @@ class WebAPI(object):
         'weights-vapor-connector.py': 'weights'
     }
 
-    def __init__(self, connector, host, token, report, logger, retry,
-                 timeout=180, sleepretry=60, endpoints_group=None, date=None):
+    def __init__(self, connector, host, token, logger, retry,
+                 timeout=180, sleepretry=60, report=None, endpoints_group=None, date=None):
         self.connector = os.path.basename(connector)
         self.webapi_method = self.methods[self.connector]
         self.host = host
