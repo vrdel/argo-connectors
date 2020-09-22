@@ -442,20 +442,6 @@ class CustomerConf(object):
             feeds[feedurl] = []
             feeds[feedurl].append((job, cust))
 
-    def get_feedscopes(self, feed, jobcust):
-        distinct_scopes = set()
-        for job, cust in jobcust:
-            gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
-            ge = self._get_tags(job, 'TopoSelectGroupOfEndpoints')
-            for g in list(gg.items()) + list(ge.items()):
-                if 'Scope'.lower() == g[0].lower():
-                    if isinstance(g[1], list):
-                        distinct_scopes.update(g[1])
-                    else:
-                        distinct_scopes.update([g[1]])
-
-        return distinct_scopes
-
     def is_paginated(self, feed, jobcust):
         paginated = False
 
