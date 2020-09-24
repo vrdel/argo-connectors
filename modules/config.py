@@ -346,8 +346,11 @@ class CustomerConf(object):
     def get_fullstatedir(self, root, cust, job):
         return root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job)
 
-    def get_custdir(self, cust):
-        return self._dir_from_sect(cust, self._cust)
+    def get_custdir(self, cust=None):
+        if cust:
+            return self._dir_from_sect(cust, self._cust)
+        else:
+            return self._get_cust_options('OutputDir')
 
     def get_custname(self, cust):
         return self._cust[cust]['Name']

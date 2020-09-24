@@ -378,7 +378,6 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     topofeed = confcust.get_topofeed()
     topofeedpaging = confcust.get_topofeedpaging()
-    topofetchtype = confcust.get_topofetchtype()
     uidservtype = confcust.get_uidserviceendpoints()
 
     auth_custopts = confcust.get_authopts()
@@ -418,11 +417,12 @@ def main():
         webapi.send(group_groups, 'groups')
         webapi.send(group_endpoints, 'endpoints')
 
+    custdir = confcust.get_custdir()
     if eval(globopts['GeneralWriteAvro'.lower()]):
         if fixed_date:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir, fixed_date.replace('-', '_'))
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
         else:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
         avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
         ret, excep = avro.write(group_groups)
         if not ret:
@@ -430,13 +430,13 @@ def main():
             raise SystemExit(1)
 
         if fixed_date:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir, fixed_date.replace('-', '_'))
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
         else:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
         avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
         ret, excep = avro.write(group_endpoints)
         if not ret:
-            logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
+            logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
             raise SystemExit(1)
 
     logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
