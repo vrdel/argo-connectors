@@ -381,6 +381,7 @@ def main():
     topofeed = confcust.get_topofeed()
     topofeedpaging = confcust.get_topofeedpaging()
     topofetchtype = confcust.get_topofetchtype()
+    uidservtype = confcut.get_uidserviceendpoints()
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -390,24 +391,14 @@ def main():
     else:
         logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
         raise SystemExit(1)
-    import ipdb; ipdb.set_trace()
-
-    jobdir = confcust.get_fulldir(cust, job)
-    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
-
-    global fetchtype, custname
-    fetchtype = confcust.get_fetchtype(job)
-    uidservtype = confcust.pass_uidserviceendpoints(job)
-    custname = confcust.get_custname(cust)
 
     logger.customer = custname
-    logger.job = job
 
     webapi_custopts = confcust.get_webapiopts(cust)
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
     webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
     if not webapi_complete:
-        logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
+        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
 
     if fetchtype == 'ServiceGroups':
@@ -415,14 +406,6 @@ def main():
     else:
         group_endpoints = gocdb.getGroupOfEndpoints(uidservtype)
     group_groups = gocdb.getGroupOfGroups()
-
-    if fixed_date:
-        output.write_state(sys.argv[0], jobstatedir, gocdb.state,
-                           globopts['InputStateDays'.lower()],
-                           fixed_date.replace('-', '_'))
-    else:
-        output.write_state(sys.argv[0], jobstatedir, gocdb.state,
-                           globopts['InputStateDays'.lower()])
 
     if not gocdb.state:
         raise SystemExit(1)
@@ -461,7 +444,7 @@ def main():
             logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
             raise SystemExit(1)
 
-    logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
+    logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
 
 
 if __name__ == '__main__':
