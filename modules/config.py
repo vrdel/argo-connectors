@@ -352,11 +352,14 @@ class CustomerConf(object):
     def get_custname(self, cust):
         return self._cust[cust]['Name']
 
-    def get_webapiopts(self, cust):
-        if 'WebAPIOpts' in self._cust[cust]:
-            return self._cust[cust]['WebAPIOpts']
+    def get_webapiopts(self, cust=None):
+        if cust:
+            if 'WebAPIOpts' in self._cust[cust]:
+                return self._cust[cust]['WebAPIOpts']
+            else:
+                return dict()
         else:
-            return dict()
+            return self._get_cust_options('WebAPIOpts')
 
     def make_dirstruct(self, root=None):
         dirs = []
@@ -448,7 +451,11 @@ class CustomerConf(object):
         return self._get_cust_options('TopoFetchType')
 
     def get_uidserviceendpoints(self):
-        return eval(self._get_cust_options('TopoUIDServiceEnpoints'))
+        uidservend = self._get_cust_options('TopoUIDServiceEnpoints')
+        if uidservend is str:
+            return eval(uidservend)
+        else:
+            return False
 
     def _is_paginated(self, job):
         paging = False

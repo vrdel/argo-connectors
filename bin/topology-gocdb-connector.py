@@ -381,7 +381,7 @@ def main():
     topofeed = confcust.get_topofeed()
     topofeedpaging = confcust.get_topofeedpaging()
     topofetchtype = confcust.get_topofetchtype()
-    uidservtype = confcut.get_uidserviceendpoints()
+    uidservtype = confcust.get_uidserviceendpoints()
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -394,7 +394,7 @@ def main():
 
     logger.customer = custname
 
-    webapi_custopts = confcust.get_webapiopts(cust)
+    webapi_custopts = confcust.get_webapiopts()
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
     webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
     if not webapi_complete:
