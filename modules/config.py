@@ -425,6 +425,15 @@ class CustomerConf(object):
             feed = ''
         return feed
 
+    def get_topofeed(self):
+        # safely assume here only one customer definition in the config file
+        topofeed = None
+        for options in self._cust.values():
+            for option in options:
+                if option.lower() == 'TopoFeed'.lower():
+                    topofeed = options[option]
+        return topofeed
+
     def _is_paginated(self, job):
         paging = False
 

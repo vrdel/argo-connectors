@@ -379,6 +379,7 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     feeds = confcust.get_mapfeedjobs(sys.argv[0], 'GOCDB', deffeed='https://goc.egi.eu/gocdbpi/')
+    topofeed = confcust.get_topofeed()
 
     for feed, jobcust in feeds.items():
         paging = confcust.is_paginated(feed, jobcust)
