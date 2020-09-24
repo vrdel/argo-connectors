@@ -425,14 +425,27 @@ class CustomerConf(object):
             feed = ''
         return feed
 
-    def get_topofeed(self):
+    def _get_topo_options(self, opt):
+        target_option = None
+
         # safely assume here only one customer definition in the config file
-        topofeed = None
         for options in self._cust.values():
             for option in options:
-                if option.lower() == 'TopoFeed'.lower():
-                    topofeed = options[option]
-        return topofeed
+                if option.lower() == opt.lower():
+                    target_option = options[option]
+        return target_option
+
+    def get_topofeed(self):
+        return self._get_topo_options('TopoFeed')
+
+    def get_topofeedpaging(self):
+        return eval(self._get_topo_options('TopoFeedPaging'))
+
+    def get_topofetchtype(self):
+        return self._get_topo_options('TopoFetchType')
+
+    def get_uidserviceendpoints(self):
+        return eval(self._get_topo_options('TopoUIDServiceEnpoints'))
 
     def _is_paginated(self, job):
         paging = False
