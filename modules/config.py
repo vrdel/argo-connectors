@@ -330,12 +330,15 @@ class CustomerConf(object):
         else:
             return dict()
 
-    def get_authopts(self, feed, jobcust):
-        for job, cust in jobcust:
-            if 'AuthOpts' in self._cust[cust]:
-                return self._cust[cust]['AuthOpts']
-            else:
-                return dict()
+    def get_authopts(self, feed=None, jobcust=None):
+        if jobcust:
+            for job, cust in jobcust:
+                if 'AuthOpts' in self._cust[cust]:
+                    return self._cust[cust]['AuthOpts']
+                else:
+                    return dict()
+        else:
+            return self._get_cust_options('AuthOpts')
 
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
@@ -425,7 +428,7 @@ class CustomerConf(object):
             feed = ''
         return feed
 
-    def _get_topo_options(self, opt):
+    def _get_cust_options(self, opt):
         target_option = None
 
         # safely assume here only one customer definition in the config file
@@ -436,16 +439,16 @@ class CustomerConf(object):
         return target_option
 
     def get_topofeed(self):
-        return self._get_topo_options('TopoFeed')
+        return self._get_cust_options('TopoFeed')
 
     def get_topofeedpaging(self):
-        return eval(self._get_topo_options('TopoFeedPaging'))
+        return eval(self._get_cust_options('TopoFeedPaging'))
 
     def get_topofetchtype(self):
-        return self._get_topo_options('TopoFetchType')
+        return self._get_cust_options('TopoFetchType')
 
     def get_uidserviceendpoints(self):
-        return eval(self._get_topo_options('TopoUIDServiceEnpoints'))
+        return eval(self._get_cust_options('TopoUIDServiceEnpoints'))
 
     def _is_paginated(self, job):
         paging = False
