@@ -111,31 +111,29 @@ class GOCDBReader:
 
         groupofgroups, gl = list(), list()
 
-        if fetchtype == "ServiceGroups":
-            gl = gl + [value for key, value in self._service_groups.items()]
+        gl = gl + [value for key, value in self._service_groups.items()]
 
-            for d in gl:
-                g = dict()
-                g['type'] = 'PROJECT'
-                g['group'] = custname
-                g['subgroup'] = d['name']
-                g['tags'] = {'monitored': '1' if d['monitored'].lower() == 'Y'.lower() or
-                             d['monitored'].lower() == 'True'.lower() else '0', 'scope': d.get('scope', '')}
-                groupofgroups.append(g)
-        else:
-            gg = []
-            gg = gg + sorted([value for key, value in self._sites.items()], key=lambda s: s['ngi'])
+        for d in gl:
+            g = dict()
+            g['type'] = 'PROJECT'
+            g['group'] = custname
+            g['subgroup'] = d['name']
+            g['tags'] = {'monitored': '1' if d['monitored'].lower() == 'Y'.lower() or
+                         d['monitored'].lower() == 'True'.lower() else '0', 'scope': d.get('scope', '')}
+            groupofgroups.append(g)
+        gg = []
+        gg = gg + sorted([value for key, value in self._sites.items()], key=lambda s: s['ngi'])
 
-            for gr in gg:
-                g = dict()
-                g['type'] = 'NGI'
-                g['group'] = gr['ngi']
-                g['subgroup'] = gr['site']
-                g['tags'] = {'certification': gr['certification'],
-                             'scope': gr.get('scope', ''),
-                             'infrastructure': gr['infrastructure']}
+        for gr in gg:
+            g = dict()
+            g['type'] = 'NGI'
+            g['group'] = gr['ngi']
+            g['subgroup'] = gr['site']
+            g['tags'] = {'certification': gr['certification'],
+                         'scope': gr.get('scope', ''),
+                         'infrastructure': gr['infrastructure']}
 
-                groupofgroups.append(g)
+            groupofgroups.append(g)
 
         return groupofgroups
 
@@ -401,10 +399,8 @@ def main():
         logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
 
-    if fetchtype == 'ServiceGroups':
-        group_endpoints = gocdb.getGroupOfServices(uidservtype)
-    else:
-        group_endpoints = gocdb.getGroupOfEndpoints(uidservtype)
+    group_endpoints = gocdb.getGroupOfServices(uidservtype)
+    group_endpoints.append(gocdb.getGroupOfEndpoints(uidservtype))
     group_groups = gocdb.getGroupOfGroups()
 
     if not gocdb.state:
@@ -415,8 +411,7 @@ def main():
 
     if eval(globopts['GeneralPublishWebAPI'.lower()]):
         webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                               webapi_opts['webapitoken'],
-                               confcust.get_jobdir(job), logger,
+                               webapi_opts['webapitoken'], logger,
                                int(globopts['ConnectionRetry'.lower()]),
                                int(globopts['ConnectionTimeout'.lower()]),
                                int(globopts['ConnectionSleepRetry'.lower()]))
