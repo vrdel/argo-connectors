@@ -53,7 +53,7 @@ custname = ''
 isok = True
 
 
-class GOCDBReader:
+class GOCDBReader(object):
     def __init__(self, feed, paging=False, fetchtype=None, auth=None):
         self._o = urlparse(feed)
 
@@ -72,36 +72,24 @@ class GOCDBReader:
 
         self._fetch_data()
 
-    def _get_text(self, nodelist):
+    def _fetch_data(self):
+        try:
+            self._construct_service_endpoints(self._sites_service_endpoints)
+            self._construct_service_groups(self._service_groups)
+            self._construct_sites(self._sites)
+            self.fetched = True
+        except Exception:
+            self.state = False
+            return False
+
+        return True
+
+    def _parse_xmltext(self, nodelist):
         rc = []
         for node in nodelist:
             if node.nodeType == node.TEXT_NODE:
                 rc.append(node.data)
         return ''.join(rc)
-
-    def _get_service_endpoints(self, serviceList, doc):
-        try:
-            services = doc.getElementsByTagName('SERVICE_ENDPOINT')
-            for service in services:
-                serviceId = ''
-                if service.getAttributeNode('PRIMARY_KEY'):
-                    serviceId = str(service.attributes['PRIMARY_KEY'].value)
-                if serviceId not in serviceList:
-                    serviceList[serviceId] = {}
-                serviceList[serviceId]['hostname'] = self._get_text(service.getElementsByTagName('HOSTNAME')[0].childNodes)
-                serviceList[serviceId]['type'] = self._get_text(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                serviceList[serviceId]['monitored'] = self._get_text(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                serviceList[serviceId]['production'] = self._get_text(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                serviceList[serviceId]['site'] = self._get_text(service.getElementsByTagName('SITENAME')[0].childNodes)
-                serviceList[serviceId]['roc'] = self._get_text(service.getElementsByTagName('ROC_NAME')[0].childNodes)
-                serviceList[serviceId]['service_id'] = serviceId
-                serviceList[serviceId]['scope'] = ', '.join(self._get_scopes(service))
-                serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
-                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
-            raise e
 
     def _fetch_and_parse_xml(self, pi):
         res = input.connection(logger, module_class_name(self), globopts,
@@ -113,24 +101,160 @@ class GOCDBReader:
                               self._o.scheme + '://' + self._o.netloc + pi)
         return doc
 
-    def _get_sites_internal(self, siteList, doc):
+    def _service_groups(self, groupList, doc):
+        try:
+            doc = self._fetch_and_parse_xml(SERVGROUPPI)
+            groups = doc.getElementsByTagName('SERVICE_GROUP')
+            for group in groups:
+                groupId = group.getAttribute('PRIMARY_KEY')
+                if groupId not in groupList:
+                    groupList[groupId] = {}
+                groupList[groupId]['name'] = self._parse_xmltext(group.getElementsByTagName('NAME')[0].childNodes)
+                groupList[groupId]['monitored'] = self._parse_xmltext(group.getElementsByTagName('MONITORED')[0].childNodes)
+
+                groupList[groupId]['services'] = []
+                services = group.getElementsByTagName('SERVICE_ENDPOINT')
+                groupList[groupId]['scope'] = ', '.join(self._parse_scopes(group))
+
+                for service in services:
+                    serviceDict = dict()
+
+                    serviceDict['hostname'] = self._parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    try:
+                        serviceDict['service_id'] = self._parse_xmltext(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                    except IndexError:
+                        serviceDict['service_id'] = service.getAttribute('PRIMARY_KEY')
+                    serviceDict['type'] = self._parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    serviceDict['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                    serviceDict['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                    serviceDict['scope'] = ', '.join(self._parse_scopes(service))
+                    groupList[groupId]['services'].append(serviceDict)
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
+            raise e
+
+    def _service_endpoints(self, serviceList, doc):
+        try:
+            services = doc.getElementsByTagName('SERVICE_ENDPOINT')
+            for service in services:
+                serviceId = ''
+                if service.getAttributeNode('PRIMARY_KEY'):
+                    serviceId = str(service.attributes['PRIMARY_KEY'].value)
+                if serviceId not in serviceList:
+                    serviceList[serviceId] = {}
+                serviceList[serviceId]['hostname'] = self._parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                serviceList[serviceId]['type'] = self._parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                serviceList[serviceId]['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                serviceList[serviceId]['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                serviceList[serviceId]['site'] = self._parse_xmltext(service.getElementsByTagName('SITENAME')[0].childNodes)
+                serviceList[serviceId]['roc'] = self._parse_xmltext(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                serviceList[serviceId]['service_id'] = serviceId
+                serviceList[serviceId]['scope'] = ', '.join(self._parse_scopes(service))
+                serviceList[serviceId]['sortId'] = serviceList[serviceId]['hostname'] + '-' + serviceList[serviceId]['type'] + '-' + serviceList[serviceId]['site']
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
+            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVENDPI,
+                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
+            raise e
+
+    def _sites(self, siteList, doc):
         try:
             sites = doc.getElementsByTagName('SITE')
             for site in sites:
                 siteName = site.getAttribute('NAME')
                 if siteName not in siteList:
                     siteList[siteName] = {'site': siteName}
-                siteList[siteName]['infrastructure'] = self._get_text(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
-                siteList[siteName]['certification'] = self._get_text(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
-                siteList[siteName]['ngi'] = self._get_text(site.getElementsByTagName('ROC')[0].childNodes)
-                siteList[siteName]['scope'] = ', '.join(self._get_scopes(site))
+                siteList[siteName]['infrastructure'] = self._parse_xmltext(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
+                siteList[siteName]['certification'] = self._parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
+                siteList[siteName]['ngi'] = self._parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
+                siteList[siteName]['scope'] = ', '.join(self._parse_scopes(site))
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
             logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SITESPI,
                                                                                                         repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
-    def _get_scopes(self, xml_node):
+    def _construct_service_endpoints(self, serviceList):
+        try:
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._fetch_and_parse_xml(SERVENDPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._service_endpoints(serviceList, doc)
+
+            else:
+                doc = self._fetch_and_parse_xml(SERVENDPI)
+                self._service_endpoints(serviceList, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
+    def _construct_sites(self, siteList):
+        try:
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._fetch_and_parse_xml(SITESPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._sites(siteList, doc)
+
+            else:
+                doc = self._fetch_and_parse_xml(SITESPI)
+                self._sites(siteList, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
+    def _construct_service_groups(self, groupList):
+        try:
+            if self.paging:
+                count, cursor = 1, 0
+                while count != 0:
+                    doc = self._fetch_and_parse_xml(SERVGROUPPI + '&next_cursor=' + str(cursor))
+                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+                    links = doc.getElementsByTagName('link')
+                    for le in links:
+                        if le.getAttribute('rel') == 'next':
+                            href = le.getAttribute('href')
+                            for e in href.split('&'):
+                                if 'next_cursor' in e:
+                                    cursor = e.split('=')[1]
+                    self._service_groups(groupList, doc)
+
+            else:
+                doc = self._fetch_and_parse_xml(SERVGROUPPI)
+                self._service_groups(groupList, doc)
+
+        except input.ConnectorError as e:
+            raise e
+
+        except Exception as e:
+            raise e
+
+    def _parse_scopes(self, xml_node):
         scopes = list()
 
         for elem in xml_node.childNodes:
@@ -141,41 +265,7 @@ class GOCDBReader:
 
         return scopes
 
-    def _get_service_groups(self, groupList, doc):
-        try:
-            doc = self._fetch_and_parse_xml(SERVGROUPPI)
-            groups = doc.getElementsByTagName('SERVICE_GROUP')
-            for group in groups:
-                groupId = group.getAttribute('PRIMARY_KEY')
-                if groupId not in groupList:
-                    groupList[groupId] = {}
-                groupList[groupId]['name'] = self._get_text(group.getElementsByTagName('NAME')[0].childNodes)
-                groupList[groupId]['monitored'] = self._get_text(group.getElementsByTagName('MONITORED')[0].childNodes)
-
-                groupList[groupId]['services'] = []
-                services = group.getElementsByTagName('SERVICE_ENDPOINT')
-                groupList[groupId]['scope'] = ', '.join(self._get_scopes(group))
-
-                for service in services:
-                    serviceDict = dict()
-
-                    serviceDict['hostname'] = self._get_text(service.getElementsByTagName('HOSTNAME')[0].childNodes)
-                    try:
-                        serviceDict['service_id'] = self._get_text(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
-                    except IndexError:
-                        serviceDict['service_id'] = service.getAttribute('PRIMARY_KEY')
-                    serviceDict['type'] = self._get_text(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                    serviceDict['monitored'] = self._get_text(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                    serviceDict['production'] = self._get_text(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                    serviceDict['scope'] = ', '.join(self._get_scopes(service))
-                    groupList[groupId]['services'].append(serviceDict)
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as e:
-            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job, self._o.scheme + '://' + self._o.netloc + SERVGROUPPI,
-                                                                                                        repr(e).replace('\'', '').replace('\"', '')))
-            raise e
-
-    def get_group_services(self, uidservtype=False):
+    def _get_group_endpoints_servicegroups(self, uidservtype=False):
         groups, gl = list(), list()
 
         gl = gl + [value for key, value in self._service_groups.items()]
@@ -199,8 +289,7 @@ class GOCDBReader:
 
         return groups
 
-
-    def _get_groups_groups_servicegroups(self, groupofgroups):
+    def _get_group_groups_servicegroups(self, groupofgroups):
         gl = list()
         gl = gl + [value for key, value in self._service_groups.items()]
 
@@ -213,7 +302,7 @@ class GOCDBReader:
                          d['monitored'].lower() == 'True'.lower() else '0', 'scope': d.get('scope', '')}
             groupofgroups.append(g)
 
-    def _get_group_endpoints_servicegroups(self, groupofgroups):
+    def _get_group_groups_sites(self, groupofgroups):
         gg = []
         gg = gg + sorted([value for key, value in self._sites.items()], key=lambda s: s['ngi'])
 
@@ -228,21 +317,8 @@ class GOCDBReader:
 
             groupofgroups.append(g)
 
-    def get_group_groups(self):
-        groupofgroups = list()
-        import ipdb; ipdb.set_trace()
-
-        if 'servicegroups' in self.fetchtype:
-            self._get_groups_groups_servicegroups(groupofgroups)
-
-        if 'sites' in self.fetchtype:
-            self._get_group_endpoints_servicegroups(groupofgroups)
-
-        return groupofgroups
-
-    def get_group_endpoints(self, uidservtype=False):
-        groupofendpoints, ge = list(), list()
-
+    def _get_group_endpoints_sites(self, groupofendpoints):
+        ge = list()
         ge = ge + sorted([value for key, value in self._sites_service_endpoints.items()], key=lambda s: s['site'])
 
         for gr in ge:
@@ -261,97 +337,27 @@ class GOCDBReader:
                          gr['production'] == 'True' else '0'}
             groupofendpoints.append(g)
 
+    def get_group_groups(self):
+        groupofgroups = list()
+
+        if 'servicegroups' in self.fetchtype:
+            self._get_group_groups_servicegroups(groupofgroups)
+
+        if 'sites' in self.fetchtype:
+            self._get_group_groups_sites(groupofgroups)
+
+        return groupofgroups
+
+    def get_group_endpoints(self, uidservtype=False):
+        groupofendpoints = list()
+
+        if 'sites' in self.fetchtype:
+            self._get_group_endpoints_sites(groupofendpoints)
+
+        if 'servicegroups' in self.fetchtype:
+            self._get_group_endpoints_servicegroups(groupofendpoints)
+
         return groupofendpoints
-
-    def _fetch_data(self):
-        try:
-            self.get_service_endpoints(self._sites_service_endpoints)
-            self.get_service_groups(self._service_groups)
-            self.get_sites(self._sites)
-            self.fetched = True
-        except Exception:
-            self.state = False
-            return False
-
-        return True
-
-    def get_service_endpoints(self, serviceList):
-        try:
-            if self.paging:
-                count, cursor = 1, 0
-                while count != 0:
-                    doc = self._fetch_and_parse_xml(SERVENDPI + '&next_cursor=' + str(cursor))
-                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-                    links = doc.getElementsByTagName('link')
-                    for le in links:
-                        if le.getAttribute('rel') == 'next':
-                            href = le.getAttribute('href')
-                            for e in href.split('&'):
-                                if 'next_cursor' in e:
-                                    cursor = e.split('=')[1]
-                    self._get_service_endpoints(serviceList, doc)
-
-            else:
-                doc = self._fetch_and_parse_xml(SERVENDPI)
-                self._get_service_endpoints(serviceList, doc)
-
-        except input.ConnectorError as e:
-            raise e
-
-        except Exception as e:
-            raise e
-
-    def get_sites(self, siteList):
-        try:
-            if self.paging:
-                count, cursor = 1, 0
-                while count != 0:
-                    doc = self._fetch_and_parse_xml(SITESPI + '&next_cursor=' + str(cursor))
-                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-                    links = doc.getElementsByTagName('link')
-                    for le in links:
-                        if le.getAttribute('rel') == 'next':
-                            href = le.getAttribute('href')
-                            for e in href.split('&'):
-                                if 'next_cursor' in e:
-                                    cursor = e.split('=')[1]
-                    self._get_sites_internal(siteList, doc)
-
-            else:
-                doc = self._fetch_and_parse_xml(SITESPI)
-                self._get_sites_internal(siteList, doc)
-
-        except input.ConnectorError as e:
-            raise e
-
-        except Exception as e:
-            raise e
-
-    def get_service_groups(self, groupList):
-        try:
-            if self.paging:
-                count, cursor = 1, 0
-                while count != 0:
-                    doc = self._fetch_and_parse_xml(SERVGROUPPI + '&next_cursor=' + str(cursor))
-                    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-                    links = doc.getElementsByTagName('link')
-                    for le in links:
-                        if le.getAttribute('rel') == 'next':
-                            href = le.getAttribute('href')
-                            for e in href.split('&'):
-                                if 'next_cursor' in e:
-                                    cursor = e.split('=')[1]
-                    self._get_service_groups(groupList, doc)
-
-            else:
-                doc = self._fetch_and_parse_xml(SERVGROUPPI)
-                self._get_service_groups(groupList, doc)
-
-        except input.ConnectorError as e:
-            raise e
-
-        except Exception as e:
-            raise e
 
 
 def main():
@@ -402,8 +408,7 @@ def main():
         logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
 
-    # group_endpoints = gocdb.get_group_services(uidservtype)
-    # group_endpoints = group_endpoints + gocdb.get_group_endpoints(uidservtype)
+    group_endpoints = gocdb.get_group_endpoints(uidservtype)
     group_groups = gocdb.get_group_groups()
 
     if not gocdb.state:
