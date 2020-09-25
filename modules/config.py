@@ -451,7 +451,10 @@ class CustomerConf(object):
         return eval(self._get_cust_options('TopoFeedPaging'))
 
     def get_topofetchtype(self):
-        return self._get_cust_options('TopoFetchType')
+        fetchtype = self._get_cust_options('TopoFetchType')
+        if ',' in fetchtype:
+            fetchtype = [type.strip() for type in fetchtype.split(',')]
+        return fetchtype
 
     def get_uidserviceendpoints(self):
         uidservend = self._get_cust_options('TopoUIDServiceEnpoints')
