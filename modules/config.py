@@ -453,7 +453,7 @@ class CustomerConf(object):
     def get_topofetchtype(self):
         fetchtype = self._get_cust_options('TopoFetchType')
         if ',' in fetchtype:
-            fetchtype = [type.strip() for type in fetchtype.split(',')]
+            fetchtype = [type.strip().lower() for type in fetchtype.split(',')]
         return fetchtype
 
     def get_uidserviceendpoints(self):

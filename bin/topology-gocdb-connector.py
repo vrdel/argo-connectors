@@ -54,7 +54,8 @@ isok = True
 
 
 class GOCDBReader(object):
-    def __init__(self, feed, paging=False, fetchtype=None, auth=None):
+    def __init__(self, feed, paging=False, fetchtype=None, uidservtype,
+                 auth=None):
         self._o = urlparse(feed)
 
         # group groups and groups components for Sites topology
@@ -69,6 +70,7 @@ class GOCDBReader(object):
         self.paging = paging
         self.custauth = auth
         self.fetchtype = fetchtype
+        self.uidservtype = uidservtype
 
         self._fetch_data()
 
@@ -265,7 +267,7 @@ class GOCDBReader(object):
 
         return scopes
 
-    def _get_group_endpoints_servicegroups(self, uidservtype=False):
+    def _get_group_endpoints_servicegroups(self):
         groups, gl = list(), list()
 
         gl = gl + [value for key, value in self._service_groups.items()]
@@ -276,7 +278,7 @@ class GOCDBReader(object):
                 g['type'] = fetchtype.upper()
                 g['group'] = d['name']
                 g['service'] = service['type']
-                if uidservtype:
+                if self.uidservtype:
                     g['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
                     g['hostname'] = service['hostname']
@@ -326,7 +328,7 @@ class GOCDBReader(object):
             g['type'] = fetchtype.upper()
             g['group'] = gr['site']
             g['service'] = gr['type']
-            if uidservtype:
+            if self.uidservtype:
                 g['hostname'] = '{1}_{0}'.format(gr['service_id'], gr['hostname'])
             else:
                 g['hostname'] = gr['hostname']
@@ -348,7 +350,7 @@ class GOCDBReader(object):
 
         return groupofgroups
 
-    def get_group_endpoints(self, uidservtype=False):
+    def get_group_endpoints(self):
         groupofendpoints = list()
 
         if 'sites' in self.fetchtype:
@@ -394,7 +396,7 @@ def main():
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if auth_complete:
-        gocdb = GOCDBReader(topofeed, topofeedpaging, topofetchtype, auth=auth_opts)
+        gocdb = GOCDBReader(topofeed, topofeedpaging, topofetchtype, uidservtype, auth=auth_opts)
     else:
         logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
         raise SystemExit(1)
@@ -408,7 +410,7 @@ def main():
         logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
 
-    group_endpoints = gocdb.get_group_endpoints(uidservtype)
+    group_endpoints = gocdb.get_group_endpoints()
     group_groups = gocdb.get_group_groups()
 
     if not gocdb.state:
