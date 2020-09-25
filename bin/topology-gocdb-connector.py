@@ -399,7 +399,7 @@ def main():
         raise SystemExit(1)
 
     group_endpoints = gocdb.getGroupOfServices(uidservtype)
-    group_endpoints.append(gocdb.getGroupOfEndpoints(uidservtype))
+    group_endpoints = group_endpoints + gocdb.getGroupOfEndpoints(uidservtype)
     group_groups = gocdb.getGroupOfGroups()
 
     if not gocdb.state:
