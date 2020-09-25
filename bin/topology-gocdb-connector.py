@@ -69,6 +69,8 @@ class GOCDBReader:
         self.paging = paging
         self.custauth = auth
 
+        self._fetch_data()
+
     def _get_text(self, nodelist):
         rc = []
         for node in nodelist:
@@ -100,7 +102,7 @@ class GOCDBReader:
                                                                                                         repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
-    def _parse_xml(self, pi):
+    def _fetch_and_parse_xml(self, pi):
         res = input.connection(logger, module_class_name(self), globopts,
                                self._o.scheme, self._o.netloc, pi, custauth=self.custauth)
         if not res:
@@ -140,7 +142,7 @@ class GOCDBReader:
 
     def _get_service_groups(self, groupList, doc):
         try:
-            doc = self._parse_xml(SERVGROUPPI)
+            doc = self._fetch_and_parse_xml(SERVGROUPPI)
             groups = doc.getElementsByTagName('SERVICE_GROUP')
             for group in groups:
                 groupId = group.getAttribute('PRIMARY_KEY')
@@ -173,10 +175,6 @@ class GOCDBReader:
             raise e
 
     def get_group_services(self, uidservtype=False):
-        if not self.fetched:
-            if not self.state or not self.loadDataIfNeeded():
-                return []
-
         groups, gl = list(), list()
 
         gl = gl + [value for key, value in self._service_groups.items()]
@@ -201,10 +199,6 @@ class GOCDBReader:
         return groups
 
     def get_group_groups(self):
-        if not self.fetched:
-            if not self.state or not self.loadDataIfNeeded():
-                return []
-
         groupofgroups, gl = list(), list()
 
         gl = gl + [value for key, value in self._service_groups.items()]
@@ -234,10 +228,6 @@ class GOCDBReader:
         return groupofgroups
 
     def get_group_endpoints(self, uidservtype=False):
-        if not self.fetched:
-            if not self.state or not self.loadDataIfNeeded():
-                return []
-
         groupofendpoints, ge = list(), list()
 
         ge = ge + sorted([value for key, value in self._sites_service_endpoints.items()], key=lambda s: s['site'])
@@ -260,7 +250,7 @@ class GOCDBReader:
 
         return groupofendpoints
 
-    def loadDataIfNeeded(self):
+    def _fetch_data(self):
         try:
             self.get_service_endpoints(self._sites_service_endpoints)
             self.get_service_groups(self._service_groups)
@@ -277,7 +267,7 @@ class GOCDBReader:
             if self.paging:
                 count, cursor = 1, 0
                 while count != 0:
-                    doc = self._parse_xml(SERVENDPI + '&next_cursor=' + str(cursor))
+                    doc = self._fetch_and_parse_xml(SERVENDPI + '&next_cursor=' + str(cursor))
                     count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
                     links = doc.getElementsByTagName('link')
                     for le in links:
@@ -289,7 +279,7 @@ class GOCDBReader:
                     self._get_service_endpoints(serviceList, doc)
 
             else:
-                doc = self._parse_xml(SERVENDPI)
+                doc = self._fetch_and_parse_xml(SERVENDPI)
                 self._get_service_endpoints(serviceList, doc)
 
         except input.ConnectorError as e:
@@ -303,7 +293,7 @@ class GOCDBReader:
             if self.paging:
                 count, cursor = 1, 0
                 while count != 0:
-                    doc = self._parse_xml(SITESPI + '&next_cursor=' + str(cursor))
+                    doc = self._fetch_and_parse_xml(SITESPI + '&next_cursor=' + str(cursor))
                     count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
                     links = doc.getElementsByTagName('link')
                     for le in links:
@@ -315,7 +305,7 @@ class GOCDBReader:
                     self._get_sites_internal(siteList, doc)
 
             else:
-                doc = self._parse_xml(SITESPI)
+                doc = self._fetch_and_parse_xml(SITESPI)
                 self._get_sites_internal(siteList, doc)
 
         except input.ConnectorError as e:
@@ -329,7 +319,7 @@ class GOCDBReader:
             if self.paging:
                 count, cursor = 1, 0
                 while count != 0:
-                    doc = self._parse_xml(SERVGROUPPI + '&next_cursor=' + str(cursor))
+                    doc = self._fetch_and_parse_xml(SERVGROUPPI + '&next_cursor=' + str(cursor))
                     count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
                     links = doc.getElementsByTagName('link')
                     for le in links:
@@ -341,7 +331,7 @@ class GOCDBReader:
                     self._get_service_groups(groupList, doc)
 
             else:
-                doc = self._parse_xml(SERVGROUPPI)
+                doc = self._fetch_and_parse_xml(SERVGROUPPI)
                 self._get_service_groups(groupList, doc)
 
         except input.ConnectorError as e:
