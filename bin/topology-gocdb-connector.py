@@ -54,7 +54,7 @@ isok = True
 
 
 class GOCDBReader:
-    def __init__(self, feed, paging=False, auth=None):
+    def __init__(self, feed, paging=False, fetchtype=None, auth=None):
         self._o = urlparse(feed)
 
         # group groups and groups components for Sites topology
@@ -68,6 +68,7 @@ class GOCDBReader:
         self.state = True
         self.paging = paging
         self.custauth = auth
+        self.fetchtype = fetchtype
 
         self._fetch_data()
 
@@ -198,9 +199,9 @@ class GOCDBReader:
 
         return groups
 
-    def get_group_groups(self):
-        groupofgroups, gl = list(), list()
 
+    def _get_groups_groups_servicegroups(self, groupofgroups):
+        gl = list()
         gl = gl + [value for key, value in self._service_groups.items()]
 
         for d in gl:
@@ -211,6 +212,8 @@ class GOCDBReader:
             g['tags'] = {'monitored': '1' if d['monitored'].lower() == 'Y'.lower() or
                          d['monitored'].lower() == 'True'.lower() else '0', 'scope': d.get('scope', '')}
             groupofgroups.append(g)
+
+    def _get_group_endpoints_servicegroups(self, groupofgroups):
         gg = []
         gg = gg + sorted([value for key, value in self._sites.items()], key=lambda s: s['ngi'])
 
@@ -224,6 +227,16 @@ class GOCDBReader:
                          'infrastructure': gr['infrastructure']}
 
             groupofgroups.append(g)
+
+    def get_group_groups(self):
+        groupofgroups = list()
+        import ipdb; ipdb.set_trace()
+
+        if 'servicegroups' in self.fetchtype:
+            self._get_groups_groups_servicegroups(groupofgroups)
+
+        if 'sites' in self.fetchtype:
+            self._get_group_endpoints_servicegroups(groupofgroups)
 
         return groupofgroups
 
@@ -375,7 +388,7 @@ def main():
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if auth_complete:
-        gocdb = GOCDBReader(topofeed, topofeedpaging, auth=auth_opts)
+        gocdb = GOCDBReader(topofeed, topofeedpaging, topofetchtype, auth=auth_opts)
     else:
         logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
         raise SystemExit(1)
@@ -389,8 +402,8 @@ def main():
         logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
 
-    group_endpoints = gocdb.get_group_services(uidservtype)
-    group_endpoints = group_endpoints + gocdb.get_group_endpoints(uidservtype)
+    # group_endpoints = gocdb.get_group_services(uidservtype)
+    # group_endpoints = group_endpoints + gocdb.get_group_endpoints(uidservtype)
     group_groups = gocdb.get_group_groups()
 
     if not gocdb.state:
