@@ -54,8 +54,8 @@ isok = True
 
 
 class GOCDBReader(object):
-    def __init__(self, feed, paging=False, fetchtype=None, uidservtype,
-                 auth=None):
+    def __init__(self, feed, uidservtype, custname, paging=False,
+                 fetchtype=None, auth=None):
         self._o = urlparse(feed)
 
         # group groups and groups components for Sites topology
@@ -71,6 +71,7 @@ class GOCDBReader(object):
         self.custauth = auth
         self.fetchtype = fetchtype
         self.uidservtype = uidservtype
+        self.custname = custname
 
         self._fetch_data()
 
@@ -103,7 +104,7 @@ class GOCDBReader(object):
                               self._o.scheme + '://' + self._o.netloc + pi)
         return doc
 
-    def _service_groups(self, groupList, doc):
+    def _service_groups_build(self, groupList, doc):
         try:
             doc = self._fetch_and_parse_xml(SERVGROUPPI)
             groups = doc.getElementsByTagName('SERVICE_GROUP')
@@ -137,7 +138,7 @@ class GOCDBReader(object):
                                                                                                         repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
-    def _service_endpoints(self, serviceList, doc):
+    def _service_endpoints_build(self, serviceList, doc):
         try:
             services = doc.getElementsByTagName('SERVICE_ENDPOINT')
             for service in services:
@@ -161,7 +162,7 @@ class GOCDBReader(object):
                                                                                                         repr(e).replace('\'', '').replace('\"', '')))
             raise e
 
-    def _sites(self, siteList, doc):
+    def _sites_build(self, siteList, doc):
         try:
             sites = doc.getElementsByTagName('SITE')
             for site in sites:
@@ -192,11 +193,11 @@ class GOCDBReader(object):
                             for e in href.split('&'):
                                 if 'next_cursor' in e:
                                     cursor = e.split('=')[1]
-                    self._service_endpoints(serviceList, doc)
+                    self._service_endpoints_build(serviceList, doc)
 
             else:
                 doc = self._fetch_and_parse_xml(SERVENDPI)
-                self._service_endpoints(serviceList, doc)
+                self._service_endpoints_build(serviceList, doc)
 
         except input.ConnectorError as e:
             raise e
@@ -218,11 +219,11 @@ class GOCDBReader(object):
                             for e in href.split('&'):
                                 if 'next_cursor' in e:
                                     cursor = e.split('=')[1]
-                    self._sites(siteList, doc)
+                    self._sites_build(siteList, doc)
 
             else:
                 doc = self._fetch_and_parse_xml(SITESPI)
-                self._sites(siteList, doc)
+                self._sites_build(siteList, doc)
 
         except input.ConnectorError as e:
             raise e
@@ -244,11 +245,11 @@ class GOCDBReader(object):
                             for e in href.split('&'):
                                 if 'next_cursor' in e:
                                     cursor = e.split('=')[1]
-                    self._service_groups(groupList, doc)
+                    self._service_groups_build(groupList, doc)
 
             else:
                 doc = self._fetch_and_parse_xml(SERVGROUPPI)
-                self._service_groups(groupList, doc)
+                self._service_groups_build(groupList, doc)
 
         except input.ConnectorError as e:
             raise e
@@ -267,8 +268,8 @@ class GOCDBReader(object):
 
         return scopes
 
-    def _get_group_endpoints_servicegroups(self):
-        groups, gl = list(), list()
+    def _get_group_endpoints_servicegroups(self, groupofendpoints):
+        gl = list()
 
         gl = gl + [value for key, value in self._service_groups.items()]
 
@@ -287,9 +288,7 @@ class GOCDBReader(object):
                              service['monitored'].lower() == 'True'.lower() else '0',
                              'production': '1' if service['production'].lower() == 'Y'.lower() or
                              service['production'].lower() == 'True'.lower() else '0'}
-                groups.append(g)
-
-        return groups
+                groupofendpoints.append(g)
 
     def _get_group_groups_servicegroups(self, groupofgroups):
         gl = list()
@@ -298,7 +297,7 @@ class GOCDBReader(object):
         for d in gl:
             g = dict()
             g['type'] = 'PROJECT'
-            g['group'] = custname
+            g['group'] = self.custname
             g['subgroup'] = d['name']
             g['tags'] = {'monitored': '1' if d['monitored'].lower() == 'Y'.lower() or
                          d['monitored'].lower() == 'True'.lower() else '0', 'scope': d.get('scope', '')}
@@ -391,12 +390,14 @@ def main():
     topofeedpaging = confcust.get_topofeedpaging()
     uidservtype = confcust.get_uidserviceendpoints()
     topofetchtype = confcust.get_topofetchtype()
+    custname = confcust.get_custname()
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if auth_complete:
-        gocdb = GOCDBReader(topofeed, topofeedpaging, topofetchtype, uidservtype, auth=auth_opts)
+        gocdb = GOCDBReader(topofeed, uidservtype, custname, topofeedpaging,
+                            topofetchtype, auth=auth_opts)
     else:
         logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
         raise SystemExit(1)
@@ -450,7 +451,7 @@ def main():
             logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
             raise SystemExit(1)
 
-    logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
+    logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
 
 if __name__ == '__main__':
