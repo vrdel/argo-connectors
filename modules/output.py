@@ -84,7 +84,12 @@ class WebAPI(object):
             'ConnectionSleepRetry'.lower(): sleepretry
         }
         self.endpoints_group = endpoints_group
-        self.date = date
+        self.date = date or self._construct_datenow()
+
+    def _construct_datenow(self):
+        d = datetime.datetime.now()
+
+        return d.strftime('%Y-%m-%d')
 
     def _format_downtimes(self, data):
         formatted = dict()
@@ -126,10 +131,20 @@ class WebAPI(object):
 
     @staticmethod
     @retry
-    def _get(logger, msgprefix, retryopts, api, data_send, headers, connector):
-        ret = requests.get(api, data=json.dumps(data_send), headers=headers,
+    def _get(logger, msgprefix, retryopts, api, headers):
+        ret = requests.get(api, headers=headers,
                            timeout=retryopts['ConnectionTimeout'.lower()])
-        return json.loads(ret)
+        return json.loads(ret.content)
+
+    @staticmethod
+    @retry
+    def _delete(logger, msgprefix, retryopts, api, id, headers):
+        from urllib.parse import urlparse
+        loc = urlparse(api)
+        loc = '{}://{}{}/{}'.format(loc.scheme, loc.hostname, loc.path, id)
+        ret = requests.delete(loc, headers=headers,
+                              timeout=retryopts['ConnectionTimeout'.lower()])
+        return ret
 
     def send(self, data, topo_component=None):
         if topo_component:
@@ -159,10 +174,19 @@ class WebAPI(object):
         ret = self._send(self.logger, module_class_name(self),
                          self.retry_options, api, data_send, self.headers,
                          self.connector)
+
+        # delete resource on WEB-API and resend
         if ret == 409:
             data = self._get(self.logger, module_class_name(self),
-                             self.retry_options, api, data_send, self.headers,
-                             self.connector)
+                             self.retry_options, api, self.headers)
+            id = data['data'][0]['id']
+            ret = self._delete(self.logger, module_class_name(self),
+                               self.retry_options, api, id, self.headers)
+            if ret.status_code == 200:
+                self._send(self.logger, module_class_name(self),
+                           self.retry_options, api, data_send, self.headers,
+                           self.connector)
+                self.logger.info('Succesfully deleted and created new resource')
 
 
 def load_schema(schema):
@@ -195,7 +219,7 @@ def write_state(caller, statedir, state, savedays, date=None):
 
     datestart = db - datetime.timedelta(days=int(savedays))
     i = 0
-    while i < int(savedays)*2:
+    while i < int(savedays) * 2:
         d = datestart - datetime.timedelta(days=i)
         filenameold = filenamebase + '_' + d.strftime('%Y_%m_%d')
         if os.path.exists(statedir + '/' + filenameold):
