@@ -352,8 +352,11 @@ class CustomerConf(object):
         else:
             return self._get_cust_options('OutputDir')
 
-    def get_custname(self, cust):
-        return self._cust[cust]['Name']
+    def get_custname(self, cust=None):
+        if cust:
+            return self._cust[cust]['Name']
+        else:
+            return self._get_cust_options('Name')
 
     def get_webapiopts(self, cust=None):
         if cust:
@@ -454,6 +457,8 @@ class CustomerConf(object):
         fetchtype = self._get_cust_options('TopoFetchType')
         if ',' in fetchtype:
             fetchtype = [type.strip().lower() for type in fetchtype.split(',')]
+        else:
+            fetchtype = [fetchtype.lower()]
         return fetchtype
 
     def get_uidserviceendpoints(self):

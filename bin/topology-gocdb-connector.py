@@ -45,8 +45,6 @@ SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITESPI = '/gocdbpi/private/?method=get_site&scope='
 SERVGROUPPI = '/gocdbpi/private/?method=get_service_group&scope='
 
-fetchtype = ''
-
 globopts = {}
 custname = ''
 
@@ -276,7 +274,7 @@ class GOCDBReader(object):
         for d in gl:
             for service in d['services']:
                 g = dict()
-                g['type'] = fetchtype.upper()
+                g['type'] = 'SERVICEGROUPS'
                 g['group'] = d['name']
                 g['service'] = service['type']
                 if self.uidservtype:
@@ -324,7 +322,7 @@ class GOCDBReader(object):
 
         for gr in ge:
             g = dict()
-            g['type'] = fetchtype.upper()
+            g['type'] = 'SITES'
             g['group'] = gr['site']
             g['service'] = gr['type']
             if self.uidservtype:
