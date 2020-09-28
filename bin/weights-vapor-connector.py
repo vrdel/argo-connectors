@@ -74,14 +74,14 @@ class Vapor:
                         if 'ComputationPower' in site:
                             val = site['ComputationPower']
                         else:
-                            logger.warn(module_class_name(self) + ': No ComputationPower value for NGI:%s Site:%s' % (ngi['ngi'] ,site['id']))
+                            logger.warn(module_class_name(self) + ': No ComputationPower value for NGI:%s Site:%s' % (ngi['ngi'], site['id']))
                             val = '0'
                         weights[key] = val
                 return weights
             except (KeyError, IndexError) as e:
                 self.state = False
                 logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + self._o.path,
-                                                                                         repr(e).replace('\'','')))
+                                                                                         repr(e).replace('\'', '')))
 
 
 def data_out(data):
