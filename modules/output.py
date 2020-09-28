@@ -124,6 +124,14 @@ class WebAPI(object):
                                                                   logger.customer,
                                                                   logger.job,
                                                                   ret.content))
+        return ret.status_code
+
+    @staticmethod
+    @retry
+    def _get(logger, msgprefix, retryopts, api, data_send, headers, connector):
+        ret = requests.get(api, data=json.dumps(data_send), headers=headers,
+                           timeout=retryopts['ConnectionTimeout'.lower()])
+        return json.loads(ret)
 
     def send(self, data, topo_component=None):
         if topo_component:
@@ -150,8 +158,13 @@ class WebAPI(object):
         if self.connector.startswith('weights'):
             data_send = self._format_weights(data)
 
-        self._send(self.logger, module_class_name(self), self.retry_options,
-                   api, data_send, self.headers, self.connector)
+        ret = self._send(self.logger, module_class_name(self),
+                         self.retry_options, api, data_send, self.headers,
+                         self.connector)
+        if ret == 409:
+            data = self._get(self.logger, module_class_name(self),
+                             self.retry_options, api, data_send, self.headers,
+                             self.connector)
 
 
 class AmsPublish(object):
