@@ -11,8 +11,6 @@ from io import BytesIO
 
 from argo_egi_connectors.helpers import datestamp, retry, module_class_name
 
-from argo_ams_library import AmsMessage, ArgoMessagingService, AmsException
-
 
 daysback = 1
 
@@ -165,87 +163,6 @@ class WebAPI(object):
             data = self._get(self.logger, module_class_name(self),
                              self.retry_options, api, data_send, self.headers,
                              self.connector)
-
-
-class AmsPublish(object):
-    """
-       Class represents interaction with AMS service
-    """
-    def __init__(self, host, project, token, topic, report, bulk, packsingle,
-                 logger, retry, timeout=180, sleepretry=60):
-        self.ams = ArgoMessagingService(host, token, project)
-        self.topic = topic
-        self.bulk = int(bulk)
-        self.report = report
-        self.timeout = int(timeout)
-        self.retry = int(retry)
-        self.sleepretry = int(sleepretry)
-        self.logger = logger
-        self.packsingle = eval(packsingle)
-
-    @staticmethod
-    @retry
-    def _send(logger, msgprefix, retryopts, msgs, bulk, obj):
-        timeout = retryopts['ConnectionTimeout'.lower()]
-        msgs = list(msgs)
-        try:
-            if bulk > 1:
-                q, r = divmod(len(msgs), bulk)
-
-                if q:
-                    s = 0
-                    e = bulk - 1
-
-                    for i in range(q):
-                        obj.ams.publish(obj.topic, msgs[s:e], timeout=timeout)
-                        s += bulk
-                        e += bulk
-                    obj.ams.publish(obj.topic, msgs[s:], timeout=timeout)
-
-                else:
-                    obj.ams.publish(obj.topic, msgs, timeout=timeout)
-
-            else:
-                obj.ams.publish(obj.topic, msgs, timeout=timeout)
-
-        except AmsException as e:
-            raise e
-
-        return True
-
-    def send(self, schema, msgtype, date, msglist):
-        def _avro_serialize(msg):
-            opened_schema = load_schema(schema)
-            avro_writer = DatumWriter(opened_schema)
-            bytesio = BytesIO()
-            encoder = BinaryEncoder(bytesio)
-            if isinstance(msg, list):
-                for m in msg:
-                    avro_writer.write(m, encoder)
-            else:
-                avro_writer.write(msg, encoder)
-
-            return bytesio.getvalue()
-
-        if self.packsingle:
-            self.bulk = 1
-            msg = AmsMessage(attributes={'partition_date': date,
-                                         'report': self.report,
-                                         'type': msgtype},
-                             data=_avro_serialize(msglist))
-            msgs = [msg]
-
-        else:
-            msgs = map(lambda m: AmsMessage(attributes={'partition_date': date,
-                                                        'report': self.report,
-                                                        'type': msgtype},
-                                            data=_avro_serialize(m)), msglist)
-
-        if self._send(self.logger, module_class_name(self),
-                      {'ConnectionRetry'.lower(): self.retry,
-                       'ConnectionTimeout'.lower(): self.timeout,
-                       'ConnectionSleepRetry'.lower(): self.sleepretry}, msgs, self.bulk, self):
-            return True
 
 
 def load_schema(schema):
