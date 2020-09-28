@@ -145,14 +145,6 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            custname = confcust.get_custname(cust)
-            ams_custopts = confcust.get_amsopts(cust)
-            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
-            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
-            if not ams_complete:
-                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
-                continue
-
             webapi_custopts = confcust.get_webapiopts(cust)
             webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
             webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
@@ -172,26 +164,6 @@ def main():
                 continue
 
             datawr = data_out(w)
-            if eval(globopts['GeneralPublishAms'.lower()]):
-                if fixed_date:
-                    partdate = fixed_date
-                else:
-                    partdate = datestamp(1).replace('_', '-')
-
-                ams = output.AmsPublish(ams_opts['amshost'],
-                                        ams_opts['amsproject'],
-                                        ams_opts['amstoken'],
-                                        ams_opts['amstopic'],
-                                        confcust.get_jobdir(job),
-                                        ams_opts['amsbulk'],
-                                        ams_opts['amspacksinglemsg'],
-                                        logger,
-                                        int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]),
-                                        int(globopts['ConnectionSleepRetry'.lower()]))
-
-                ams.send(globopts['AvroSchemasWeights'.lower()], 'weights',
-                         partdate, datawr)
 
             if eval(globopts['GeneralPublishWebAPI'.lower()]):
                 webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
