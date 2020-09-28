@@ -167,13 +167,6 @@ def main():
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
 
-            ams_custopts = confcust.get_amsopts(cust)
-            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
-            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
-            if not ams_complete:
-                logger.error('Customer:%s %s options incomplete, missing %s' % (custname, 'ams', ' '.join(missopt)))
-                continue
-
             if fixed_date:
                 output.write_state(sys.argv[0], jobstatedir,
                                    webapi.state,
@@ -186,27 +179,6 @@ def main():
 
             if not webapi.state:
                 continue
-
-            if eval(globopts['GeneralPublishAms'.lower()]):
-                if fixed_date:
-                    partdate = fixed_date
-                else:
-                    partdate = datestamp(1).replace('_', '-')
-
-                ams = output.AmsPublish(ams_opts['amshost'],
-                                        ams_opts['amsproject'],
-                                        ams_opts['amstoken'],
-                                        ams_opts['amstopic'],
-                                        confcust.get_jobdir(job),
-                                        ams_opts['amsbulk'],
-                                        ams_opts['amspacksinglemsg'],
-                                        logger,
-                                        int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]),
-                                        int(globopts['ConnectionSleepRetry'.lower()]))
-
-                ams.send(globopts['AvroSchemasMetricProfile'.lower()], 'metric_profile',
-                         partdate, fetched_profiles)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
