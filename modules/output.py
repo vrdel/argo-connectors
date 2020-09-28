@@ -110,15 +110,20 @@ class WebAPI(object):
 
     @staticmethod
     @retry
-    def _send(logger, msgprefix, retryopts, api, data_send, headers):
+    def _send(logger, msgprefix, retryopts, api, data_send, headers, connector):
         ret = requests.post(api, data=json.dumps(data_send), headers=headers,
                             timeout=retryopts['ConnectionTimeout'.lower()])
         if ret.status_code != 201:
-            logger.error('%s %s() Customer:%s Job:%s - %s' % (msgprefix,
-                                                              '_send',
-                                                              logger.customer,
-                                                              logger.job,
-                                                              ret.content))
+            if connector.startswith('topology'):
+                logger.error('%s %s() Customer:%s - %s' % (msgprefix, '_send',
+                                                           logger.customer,
+                                                           ret.content))
+            else:
+                logger.error('%s %s() Customer:%s Job:%s - %s' % (msgprefix,
+                                                                  '_send',
+                                                                  logger.customer,
+                                                                  logger.job,
+                                                                  ret.content))
 
     def send(self, data, topo_component=None):
         if topo_component:
@@ -146,7 +151,7 @@ class WebAPI(object):
             data_send = self._format_weights(data)
 
         self._send(self.logger, module_class_name(self), self.retry_options,
-                   api, data_send, self.headers)
+                   api, data_send, self.headers, self.connector)
 
 
 class AmsPublish(object):

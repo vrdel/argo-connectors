@@ -41,6 +41,7 @@ logger = None
 
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
 
+
 class Vapor:
     def __init__(self, feed):
         self._o = urlparse(feed)
@@ -199,9 +200,8 @@ def main():
                                        int(globopts['ConnectionRetry'.lower()]),
                                        int(globopts['ConnectionTimeout'.lower()]),
                                        int(globopts['ConnectionSleepRetry'.lower()]),
-                                       confcust.get_fetchtype(job),
-                                       fixed_date,
-                                       report=confcust.get_jobdir(job))
+                                       report=confcust.get_jobdir(job),
+                                       date=fixed_date)
                 webapi.send(datawr)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
