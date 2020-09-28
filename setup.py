@@ -1,7 +1,8 @@
 from distutils.core import setup
 import glob
 
-NAME='argo-egi-connectors'
+NAME = 'argo-egi-connectors'
+
 
 def get_ver():
     try:
