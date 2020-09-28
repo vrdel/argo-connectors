@@ -54,7 +54,7 @@ class EOSCReader(object):
             tmp_dict = dict()
 
             tmp_dict['type'] = self.fetchtype.upper()
-            tmp_dict['group'] = entity['SITENAME-SERVICEGROUP']
+
             tmp_dict['service'] = entity['SERVICE_TYPE']
             info_url = entity['URL']
             if self.uidservtype:
@@ -105,9 +105,6 @@ def main():
             logger.customer = custname
 
             uidservtype = confcust.pass_uidserviceendpoints(job)
-            ams_custopts = confcust.get_amsopts(cust)
-            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
-            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
 
             feeds = confcust.get_mapfeedjobs(sys.argv[0])
             if is_feed(list(feeds.keys())[0]):
@@ -148,30 +145,6 @@ def main():
 
             numge = len(group_endpoints)
             numgg = len(group_groups)
-
-            if eval(globopts['GeneralPublishAms'.lower()]):
-                if fixed_date:
-                    partdate = fixed_date
-                else:
-                    partdate = datestamp(1).replace('_', '-')
-
-                ams = output.AmsPublish(ams_opts['amshost'],
-                                        ams_opts['amsproject'],
-                                        ams_opts['amstoken'],
-                                        ams_opts['amstopic'],
-                                        confcust.get_jobdir(job),
-                                        ams_opts['amsbulk'],
-                                        ams_opts['amspacksinglemsg'],
-                                        logger,
-                                        int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]),
-                                        int(globopts['ConnectionSleepRetry'.lower()]))
-
-                ams.send(globopts['AvroSchemasTopologyGroupOfGroups'.lower()],
-                         'group_groups', partdate, group_groups)
-
-                ams.send(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()],
-                         'group_endpoints', partdate, group_endpoints)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
