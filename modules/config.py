@@ -11,8 +11,7 @@ class Global(object):
        Class represents parser for global.conf
     """
     # options common for all connectors
-    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk', 'PackSingleMsg']}
-    conf_general = {'General': ['PublishAms', 'WriteAvro', 'PublishWebAPI']}
+    conf_general = {'General': ['WriteAvro', 'PublishWebAPI']}
     conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                     'VerifyServerCert', 'UsePlainHttpAuth',
                                     'HttpUser', 'HttpPass']}
@@ -39,12 +38,10 @@ class Global(object):
         self._filename = '/etc/argo-egi-connectors/global.conf' if not confpath else confpath
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
 
-        self.optional.update(self._lowercase_dict(self.conf_ams))
         self.optional.update(self._lowercase_dict(self.conf_auth))
         self.optional.update(self._lowercase_dict(self.conf_webapi))
 
-        self.shared_secopts = self._merge_dict(self.conf_ams,
-                                               self.conf_general,
+        self.shared_secopts = self._merge_dict(self.conf_general,
                                                self.conf_auth, self.conf_conn,
                                                self.conf_state,
                                                self.conf_webapi)
@@ -196,8 +193,7 @@ class CustomerConf(object):
                     'weights-vapor-connector.py': ['WeightsFeed', 'TopoFetchType']
                     }
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
-                      'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
+    _cust_optional = ['AuthenticationUsePlainHttpAuth',
                       'AuthenticationHttpUser', 'AuthenticationHttpPass',
                       'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
@@ -258,17 +254,14 @@ class CustomerConf(object):
                                              'TopoFeed': topofeed,
                                              'TopoType': topotype}})
                 if optopts:
-                    ams, auth, webapi, empty_data = {}, {}, {}, {}
+                    auth, webapi, empty_data = {}, {}, {}
                     for k, v in optopts.items():
-                        if k.startswith('ams'):
-                            ams.update({k: v})
                         if k.startswith('authentication'):
                             auth.update({k: v})
                         if k.startswith('webapi'):
                             webapi.update({k: v})
                         if k.endswith('empty'):
                             empty_data.update({k: v})
-                    self._cust[section].update(AmsOpts=ams)
                     self._cust[section].update(AuthOpts=auth)
                     self._cust[section].update(WebAPIOpts=webapi)
                     self._cust[section].update(EmptyDataOpts=empty_data)
@@ -323,12 +316,6 @@ class CustomerConf(object):
 
     def get_jobdir(self, job):
         return self._dir_from_sect(job, self._jobs)
-
-    def get_amsopts(self, cust):
-        if 'AmsOpts' in self._cust[cust]:
-            return self._cust[cust]['AmsOpts']
-        else:
-            return dict()
 
     def get_authopts(self, feed=None, jobcust=None):
         if jobcust:
