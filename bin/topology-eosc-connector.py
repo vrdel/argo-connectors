@@ -90,84 +90,80 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
+    custname = confcust.get_custname()
 
-    for cust in confcust.get_customers():
-        custname = confcust.get_custname(cust)
+    jobdir = confcust.get_fulldir(cust, job)
+    logger.customer = confcust.get_custname(cust)
+    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+    fetchtype = confcust.get_fetchtype(job)
 
-        for job in confcust.get_jobs(cust):
-            jobdir = confcust.get_fulldir(cust, job)
-            logger.customer = confcust.get_custname(cust)
-            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
-            fetchtype = confcust.get_fetchtype(job)
+    state = None
+    logger.customer = custname
 
-            state = None
-            logger.job = job
-            logger.customer = custname
+    uidservtype = confcust.pass_uidserviceendpoints(job)
 
-            uidservtype = confcust.pass_uidserviceendpoints(job)
+    feeds = confcust.get_mapfeedjobs(sys.argv[0])
+    if is_feed(list(feeds.keys())[0]):
+        remote_topo = urlparse(list(feeds.keys())[0])
+        res = input.connection(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
+        if not res:
+            raise input.ConnectorError()
 
-            feeds = confcust.get_mapfeedjobs(sys.argv[0])
-            if is_feed(list(feeds.keys())[0]):
-                remote_topo = urlparse(list(feeds.keys())[0])
-                res = input.connection(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
-                if not res:
-                    raise input.ConnectorError()
-
-                doc = input.parse_json(logger, 'EOSC', globopts, res,
-                                       remote_topo.scheme + '://' +
-                                       remote_topo.netloc + remote_topo.path)
-                eosc = EOSCReader(doc, uidservtype, fetchtype)
+        doc = input.parse_json(logger, 'EOSC', globopts, res,
+                               remote_topo.scheme + '://' + remote_topo.netloc
+                               + remote_topo.path)
+        eosc = EOSCReader(doc, uidservtype, fetchtype)
+        group_groups = eosc.get_groupgroups()
+        group_endpoints = eosc.get_groupendpoints()
+        state = True
+    else:
+        try:
+            with open(list(feeds.keys())[0]) as fp:
+                js = json.load(fp)
+                eosc = EOSCReader(js, uidservtype, fetchtype)
                 group_groups = eosc.get_groupgroups()
                 group_endpoints = eosc.get_groupendpoints()
                 state = True
-            else:
-                try:
-                    with open(list(feeds.keys())[0]) as fp:
-                        js = json.load(fp)
-                        eosc = EOSCReader(js, uidservtype, fetchtype)
-                        group_groups = eosc.get_groupgroups()
-                        group_endpoints = eosc.get_groupendpoints()
-                        state = True
-                except IOError as exc:
-                    logger.error('Customer:%s Job:%s : Problem opening %s - %s' % (logger.customer, logger.job, feeds.keys()[0], repr(exc)))
-                    state = False
+        except IOError as exc:
+            logger.error('Customer:%s Job:%s : Problem opening %s - %s' % (logger.customer, logger.job, feeds.keys()[0], repr(exc)))
+            state = False
 
-            if fixed_date:
-                output.write_state(sys.argv[0], jobstatedir, state,
-                                   globopts['InputStateDays'.lower()],
-                                   fixed_date.replace('-', '_'))
-            else:
-                output.write_state(sys.argv[0], jobstatedir, state,
-                                   globopts['InputStateDays'.lower()])
+    if fixed_date:
+        output.write_state(sys.argv[0], jobstatedir, state,
+                           globopts['InputStateDays'.lower()],
+                           fixed_date.replace('-', '_'))
+    else:
+        output.write_state(sys.argv[0], jobstatedir, state,
+                           globopts['InputStateDays'.lower()])
 
-            if not state:
-                continue
+    if not state:
+        raise SystemExit(1)
 
-            numge = len(group_endpoints)
-            numgg = len(group_groups)
+    numge = len(group_endpoints)
+    numgg = len(group_groups)
 
-            if eval(globopts['GeneralWriteAvro'.lower()]):
-                if fixed_date:
-                    filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir, fixed_date.replace('-', '_'))
-                else:
-                    filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
-                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
-                ret, excep = avro.write(group_groups)
-                if not ret:
-                    logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
-                    raise SystemExit(1)
+    if eval(globopts['GeneralWriteAvro'.lower()]):
+        if fixed_date:
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir, fixed_date.replace('-', '_'))
+        else:
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+        avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+        ret, excep = avro.write(group_groups)
+        if not ret:
+            logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
+            raise SystemExit(1)
 
-                if fixed_date:
-                    filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir, fixed_date.replace('-', '_'))
-                else:
-                    filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
-                avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
-                ret, excep = avro.write(group_endpoints)
-                if not ret:
-                    logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
-                    raise SystemExit(1)
+        if fixed_date:
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir, fixed_date.replace('-', '_'))
+        else:
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+        avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+        ret, excep = avro.write(group_endpoints)
+        if not ret:
+            logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
+            raise SystemExit(1)
 
-            logger.info('Customer:' + custname + ' Job:' + job + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
+    logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
 
 
 if __name__ == '__main__':
