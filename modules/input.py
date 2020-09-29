@@ -126,11 +126,19 @@ def parse_xml(logger, objname, globopts, buf, method):
         doc = xml.dom.minidom.parseString(buf)
 
     except ExpatError as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error parsing XML feed %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job'):
+            msg = '{} Customer:{} Job:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
+        else:
+            msg = '{} Customer:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, method, repr(e))
+        logger.error(msg)
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job'):
+            msg = '{} Customer:{} Job:{} : Error {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
+        else:
+            msg = '{} Customer:{} : Error {} - {}'.format(objname, logger.customer, method, repr(e))
+        logger.error(msg)
         raise e
 
     else:
