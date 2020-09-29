@@ -400,6 +400,20 @@ def main():
         logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
         raise SystemExit(1)
 
+    # safely assume here one customer defined in customer file
+    cust = list(confcust.get_customers())[0]
+    statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+    if fixed_date:
+        output.write_state(sys.argv[0], statedir, gocdb.state,
+                           globopts['InputStateDays'.lower()],
+                           fixed_date.replace('-', '_'))
+    else:
+        output.write_state(sys.argv[0], statedir, gocdb.state,
+                           globopts['InputStateDays'.lower()])
+
+    if not gocdb.state:
+        raise SystemExit(1)
+
     logger.customer = custname
 
     webapi_custopts = confcust.get_webapiopts()
@@ -411,9 +425,6 @@ def main():
 
     group_endpoints = gocdb.get_group_endpoints()
     group_groups = gocdb.get_group_groups()
-
-    if not gocdb.state:
-        raise SystemExit(1)
 
     numge = len(group_endpoints)
     numgg = len(group_groups)

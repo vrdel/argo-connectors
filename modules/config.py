@@ -330,8 +330,11 @@ class CustomerConf(object):
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
 
-    def get_fullstatedir(self, root, cust, job):
-        return root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job)
+    def get_fullstatedir(self, root, cust, job=None):
+        if job:
+            return root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job)
+        else:
+            return root + '/' + self.get_custname(cust) + '/'
 
     def get_custdir(self, cust=None):
         if cust:
