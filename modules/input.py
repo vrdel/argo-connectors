@@ -64,7 +64,7 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
             type(e.args[0]) == str and 'timed out' in e.args[0]):
             raise e
         else:
-            if getattr(logger, 'job'):
+            if getattr(logger, 'job', False):
                 msg = '{}Customer:{} Job:{} SSL Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
                                                                       logger.customer, logger.job,
                                                                       scheme + '://' + host + url,
@@ -79,21 +79,21 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         return False
 
     except(socket.error, socket.timeout) as e:
-        if getattr(logger, 'job'):
-            msg = '{}Customer:{} Connection error {} - {}' % (msgprefix + ' ' if msgprefix else '',
-                                                              logger.customer,
-                                                              scheme + '://' + host + url,
-                                                              repr(e))
+        if getattr(logger, 'job', False):
+            msg = '{}Customer:{} Job:{} Connection error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                                         logger.customer, logger.job,
+                                                                         scheme + '://' + host + url,
+                                                                         repr(e))
         else:
-            msg = '{}Customer:{} Job:{} Connection error {} - {}' % (msgprefix + ' ' if msgprefix else '',
-                                                                     logger.customer, logger.job,
-                                                                     scheme + '://' + host + url,
-                                                                     repr(e))
+            msg = '{}Customer:{} Connection error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                                  logger.customer,
+                                                                  scheme + '://' + host + url,
+                                                                  repr(e))
         logger.warn(msg)
         raise e
 
     except requests.exceptions.RequestException as e:
-        if getattr(logger, 'job'):
+        if getattr(logger, 'job', False):
             msg = '{}Customer:{} Job:{} HTTP error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
                                                                    logger.customer, logger.job,
                                                                    scheme + '://' + host + url,
@@ -107,7 +107,7 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         raise e
 
     except Exception as e:
-        if getattr(logger, 'job'):
+        if getattr(logger, 'job', False):
             msg = '{}Customer:{} Job:{} Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
                                                               logger.customer, logger.job,
                                                               scheme + '://' + host + url,
@@ -126,7 +126,7 @@ def parse_xml(logger, objname, globopts, buf, method):
         doc = xml.dom.minidom.parseString(buf)
 
     except ExpatError as e:
-        if getattr(logger, 'job'):
+        if getattr(logger, 'job', False):
             msg = '{} Customer:{} Job:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
         else:
             msg = '{} Customer:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, method, repr(e))
@@ -134,7 +134,7 @@ def parse_xml(logger, objname, globopts, buf, method):
         raise ConnectorError()
 
     except Exception as e:
-        if getattr(logger, 'job'):
+        if getattr(logger, 'job', False):
             msg = '{} Customer:{} Job:{} : Error {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
         else:
             msg = '{} Customer:{} : Error {} - {}'.format(objname, logger.customer, method, repr(e))
