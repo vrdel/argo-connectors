@@ -187,7 +187,7 @@ class CustomerConf(object):
     """
     _custattrs = None
     _cust = {}
-    _defjobattrs = {'topology-gocdb-connector.py': [''],
+    _defjobattrs = {'topology-gocdb-connector.py': [''], 'topology-eosc-connector.py': [''],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
                     'weights-vapor-connector.py': ['WeightsFeed', 'TopoFetchType']

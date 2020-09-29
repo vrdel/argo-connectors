@@ -92,19 +92,19 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     custname = confcust.get_custname()
 
-    jobdir = confcust.get_fulldir(cust, job)
-    logger.customer = confcust.get_custname(cust)
-    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
-    fetchtype = confcust.get_fetchtype(job)
+    # safely assume here one customer defined in customer file
+    cust = list(confcust.get_customers())[0]
+    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+    fetchtype = confcust.get_topofetchtype()
 
     state = None
     logger.customer = custname
 
-    uidservtype = confcust.pass_uidserviceendpoints(job)
+    uidservtype = confcust.get_uidserviceendpoints()
 
-    feeds = confcust.get_mapfeedjobs(sys.argv[0])
-    if is_feed(list(feeds.keys())[0]):
-        remote_topo = urlparse(list(feeds.keys())[0])
+    topofeed = confcust.get_topofeed()
+    if is_feed(topofeed):
+        remote_topo = urlparse(topofeed)
         res = input.connection(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
         if not res:
             raise input.ConnectorError()
@@ -118,7 +118,7 @@ def main():
         state = True
     else:
         try:
-            with open(list(feeds.keys())[0]) as fp:
+            with open(topofeed) as fp:
                 js = json.load(fp)
                 eosc = EOSCReader(js, uidservtype, fetchtype)
                 group_groups = eosc.get_groupgroups()
@@ -142,11 +142,12 @@ def main():
     numge = len(group_endpoints)
     numgg = len(group_groups)
 
+    custdir = confcust.get_custdir()
     if eval(globopts['GeneralWriteAvro'.lower()]):
         if fixed_date:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir, fixed_date.replace('-', '_'))
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
         else:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
         avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
         ret, excep = avro.write(group_groups)
         if not ret:
@@ -154,9 +155,9 @@ def main():
             raise SystemExit(1)
 
         if fixed_date:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir, fixed_date.replace('-', '_'))
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
         else:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], jobdir)
+            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
         avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
         ret, excep = avro.write(group_endpoints)
         if not ret:
