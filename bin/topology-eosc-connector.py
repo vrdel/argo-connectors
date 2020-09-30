@@ -107,7 +107,7 @@ def main():
         remote_topo = urlparse(topofeed)
         res = input.connection(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
         if not res:
-            raise input.ConnectorError()
+            state = False
 
         doc = input.parse_json(logger, 'EOSC', globopts, res,
                                remote_topo.scheme + '://' + remote_topo.netloc
@@ -125,7 +125,7 @@ def main():
                 group_endpoints = eosc.get_groupendpoints()
                 state = True
         except IOError as exc:
-            logger.error('Customer:%s Job:%s : Problem opening %s - %s' % (logger.customer, logger.job, feeds.keys()[0], repr(exc)))
+            logger.error('Customer:%s : Problem opening %s - %s' % (logger.customer, topofeed, repr(exc)))
             state = False
 
     if fixed_date:
@@ -151,7 +151,7 @@ def main():
         avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
         ret, excep = avro.write(group_groups)
         if not ret:
-            logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
+            logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
             raise SystemExit(1)
 
         if fixed_date:
