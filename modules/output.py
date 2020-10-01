@@ -138,10 +138,13 @@ class WebAPI(object):
 
     @staticmethod
     @retry
-    def _delete(logger, msgprefix, retryopts, api, id, headers):
+    def _delete(logger, msgprefix, retryopts, api, headers, id=None):
         from urllib.parse import urlparse
         loc = urlparse(api)
-        loc = '{}://{}{}/{}'.format(loc.scheme, loc.hostname, loc.path, id)
+        if id is not None:
+            loc = '{}://{}{}/{}'.format(loc.scheme, loc.hostname, loc.path, id)
+        else:
+            loc = '{}://{}{}'.format(loc.scheme, loc.hostname, loc.path)
         ret = requests.delete(loc, headers=headers,
                               timeout=retryopts['ConnectionTimeout'.lower()])
         return ret
@@ -177,11 +180,13 @@ class WebAPI(object):
 
         # delete resource on WEB-API and resend
         if ret == 409:
+            id = None
             data = self._get(self.logger, module_class_name(self),
                              self.retry_options, api, self.headers)
-            id = data['data'][0]['id']
+            if not topo_component:
+                id = data['data'][0]['id']
             ret = self._delete(self.logger, module_class_name(self),
-                               self.retry_options, api, id, self.headers)
+                               self.retry_options, api, self.headers, id)
             if ret.status_code == 200:
                 self._send(self.logger, module_class_name(self),
                            self.retry_options, api, data_send, self.headers,
