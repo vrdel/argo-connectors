@@ -147,14 +147,21 @@ def parse_xml(logger, objname, globopts, buf, method):
 
 def parse_json(logger, objname, globopts, buf, method):
     try:
+        import ipdb; ipdb.set_trace()
         doc = json.loads(buf)
 
     except ValueError as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error parsing JSON feed %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job', False):
+            logger.error('{} Customer:{} Job:{} : Error parsing JSON feed {} - {}'.format(objname, logger.customer, logger.job, method, repr(e)))
+        else:
+            logger.error('{} Customer:{} : Error parsing JSON feed {} - {}'.format(objname, logger.customer, method, repr(e)))
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job', False):
+            logger.error('{} Customer:{} Job:{} : Error {} - {}'.format(objname, logger.customer, logger.job, method, repr(e)))
+        else:
+            logger.error('{} Customer:{} : Error {} - {}'.format(objname, logger.customer, method, repr(e)))
         raise e
 
     else:
