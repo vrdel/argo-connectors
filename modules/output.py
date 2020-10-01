@@ -149,6 +149,20 @@ class WebAPI(object):
                               timeout=retryopts['ConnectionTimeout'.lower()])
         return ret
 
+    def _delete_and_resend(self, api, data_send, topo_component):
+        id = None
+        data = self._get(self.logger, module_class_name(self),
+                         self.retry_options, api, self.headers)
+        if not topo_component:
+            id = data['data'][0]['id']
+        ret = self._delete(self.logger, module_class_name(self),
+                           self.retry_options, api, self.headers, id)
+        if ret.status_code == 200:
+            self._send(self.logger, module_class_name(self),
+                       self.retry_options, api, data_send, self.headers,
+                       self.connector)
+            self.logger.info('Succesfully deleted and created new resource')
+
     def send(self, data, topo_component=None):
         if topo_component:
             # /topology/groups, /topology/endpoints
@@ -180,18 +194,7 @@ class WebAPI(object):
 
         # delete resource on WEB-API and resend
         if ret == 409:
-            id = None
-            data = self._get(self.logger, module_class_name(self),
-                             self.retry_options, api, self.headers)
-            if not topo_component:
-                id = data['data'][0]['id']
-            ret = self._delete(self.logger, module_class_name(self),
-                               self.retry_options, api, self.headers, id)
-            if ret.status_code == 200:
-                self._send(self.logger, module_class_name(self),
-                           self.retry_options, api, data_send, self.headers,
-                           self.connector)
-                self.logger.info('Succesfully deleted and created new resource')
+            self._delete_and_resend(api, data_send, topo_component)
 
 
 def load_schema(schema):
