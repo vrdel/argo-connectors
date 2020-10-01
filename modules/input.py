@@ -147,7 +147,6 @@ def parse_xml(logger, objname, globopts, buf, method):
 
 def parse_json(logger, objname, globopts, buf, method):
     try:
-        import ipdb; ipdb.set_trace()
         doc = json.loads(buf)
 
     except ValueError as e:

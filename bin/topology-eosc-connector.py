@@ -108,14 +108,14 @@ def main():
         res = input.connection(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
         if not res:
             state = False
-
-        doc = input.parse_json(logger, 'EOSC', globopts, res,
-                               remote_topo.scheme + '://' + remote_topo.netloc
-                               + remote_topo.path)
-        eosc = EOSCReader(doc, uidservtype, fetchtype)
-        group_groups = eosc.get_groupgroups()
-        group_endpoints = eosc.get_groupendpoints()
-        state = True
+        else:
+            doc = input.parse_json(logger, 'EOSC', globopts, res,
+                                   remote_topo.scheme + '://' +
+                                   remote_topo.netloc + remote_topo.path)
+            eosc = EOSCReader(doc, uidservtype, fetchtype)
+            group_groups = eosc.get_groupgroups()
+            group_endpoints = eosc.get_groupendpoints()
+            state = True
     else:
         try:
             with open(topofeed) as fp:
