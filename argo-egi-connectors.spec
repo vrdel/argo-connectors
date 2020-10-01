@@ -10,7 +10,6 @@ Vendor:  SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
 Obsoletes: ar-sync
 Prefix:    %{_prefix}
 
-Requires: python3-argo-ams-library
 Requires: python3-avro
 Requires: python3-requests
 

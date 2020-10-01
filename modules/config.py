@@ -11,8 +11,7 @@ class Global(object):
        Class represents parser for global.conf
     """
     # options common for all connectors
-    conf_ams = {'AMS': ['Host', 'Token', 'Project', 'Topic', 'Bulk', 'PackSingleMsg']}
-    conf_general = {'General': ['PublishAms', 'WriteAvro']}
+    conf_general = {'General': ['WriteAvro', 'PublishWebAPI']}
     conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                     'VerifyServerCert', 'UsePlainHttpAuth',
                                     'HttpUser', 'HttpPass']}
@@ -39,12 +38,10 @@ class Global(object):
         self._filename = '/etc/argo-egi-connectors/global.conf' if not confpath else confpath
         self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys() else False
 
-        self.optional.update(self._lowercase_dict(self.conf_ams))
         self.optional.update(self._lowercase_dict(self.conf_auth))
         self.optional.update(self._lowercase_dict(self.conf_webapi))
 
-        self.shared_secopts = self._merge_dict(self.conf_ams,
-                                               self.conf_general,
+        self.shared_secopts = self._merge_dict(self.conf_general,
                                                self.conf_auth, self.conf_conn,
                                                self.conf_state,
                                                self.conf_webapi)
@@ -190,21 +187,13 @@ class CustomerConf(object):
     """
     _custattrs = None
     _cust = {}
-    _defjobattrs = {'topology-gocdb-connector.py': ['TopoFetchType',
-                                                    'TopoSelectGroupOfGroups',
-                                                    'TopoSelectGroupOfEndpoints',
-                                                    'TopoUIDServiceEndpoints',
-                                                    'TopoFeed',
-                                                    'TopoFeedPaging'],
-                    'topology-eosc-connector.py': ['TopoFeed', 'TopoFile', 'TopoFetchType',
-                                                   'TopoUIDServiceEndpoints'],
+    _defjobattrs = {'topology-gocdb-connector.py': [''], 'topology-eosc-connector.py': [''],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
-                    'weights-vapor-connector.py': ['WeightsFeed']
+                    'weights-vapor-connector.py': ['WeightsFeed', 'TopoFetchType']
                     }
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AmsHost', 'AmsProject', 'AmsToken', 'AmsTopic',
-                      'AmsPackSingleMsg', 'AuthenticationUsePlainHttpAuth',
+    _cust_optional = ['AuthenticationUsePlainHttpAuth',
                       'AuthenticationHttpUser', 'AuthenticationHttpPass',
                       'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
@@ -239,6 +228,10 @@ class CustomerConf(object):
                     custjobs = [job.strip() for job in custjobs]
                     custdir = config.get(section, 'OutputDir')
                     custname = config.get(section, 'Name')
+                    topofetchtype = config.get(section, 'TopoFetchType')
+                    topofeed = config.get(section, 'TopoFeed')
+                    topotype = config.get(section, 'TopoType')
+                    topofeedpaging = config.get(section, 'TopoFeedPaging')
 
                     for o in lower_custopt:
                         try:
@@ -254,19 +247,21 @@ class CustomerConf(object):
                     self.logger.error(e.message)
                     raise SystemExit(1)
 
-                self._cust.update({section: {'Jobs': custjobs, 'OutputDir': custdir, 'Name': custname}})
+                self._cust.update({section: {'Jobs': custjobs, 'OutputDir':
+                                             custdir, 'Name': custname,
+                                             'TopoFetchType': topofetchtype,
+                                             'TopoFeedPaging': topofeedpaging,
+                                             'TopoFeed': topofeed,
+                                             'TopoType': topotype}})
                 if optopts:
-                    ams, auth, webapi, empty_data = {}, {}, {}, {}
+                    auth, webapi, empty_data = {}, {}, {}
                     for k, v in optopts.items():
-                        if k.startswith('ams'):
-                            ams.update({k: v})
                         if k.startswith('authentication'):
                             auth.update({k: v})
                         if k.startswith('webapi'):
                             webapi.update({k: v})
                         if k.endswith('empty'):
                             empty_data.update({k: v})
-                    self._cust[section].update(AmsOpts=ams)
                     self._cust[section].update(AuthOpts=auth)
                     self._cust[section].update(WebAPIOpts=webapi)
                     self._cust[section].update(EmptyDataOpts=empty_data)
@@ -275,7 +270,6 @@ class CustomerConf(object):
                     for attr in self._custattrs:
                         if config.has_option(section, attr):
                             self._cust[section].update({attr: config.get(section, attr)})
-
 
         for cust in self._cust:
             for job in self._cust[cust]['Jobs']:
@@ -323,36 +317,45 @@ class CustomerConf(object):
     def get_jobdir(self, job):
         return self._dir_from_sect(job, self._jobs)
 
-    def get_amsopts(self, cust):
-        if 'AmsOpts' in self._cust[cust]:
-            return self._cust[cust]['AmsOpts']
+    def get_authopts(self, feed=None, jobcust=None):
+        if jobcust:
+            for job, cust in jobcust:
+                if 'AuthOpts' in self._cust[cust]:
+                    return self._cust[cust]['AuthOpts']
+                else:
+                    return dict()
         else:
-            return dict()
-
-    def get_authopts(self, feed, jobcust):
-        for job, cust in jobcust:
-            if 'AuthOpts' in self._cust[cust]:
-                return self._cust[cust]['AuthOpts']
-            else:
-                return dict()
+            return self._get_cust_options('AuthOpts')
 
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
 
-    def get_fullstatedir(self, root, cust, job):
-        return root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job)
-
-    def get_custdir(self, cust):
-        return self._dir_from_sect(cust, self._cust)
-
-    def get_custname(self, cust):
-        return self._cust[cust]['Name']
-
-    def get_webapiopts(self, cust):
-        if 'WebAPIOpts' in self._cust[cust]:
-            return self._cust[cust]['WebAPIOpts']
+    def get_fullstatedir(self, root, cust, job=None):
+        if job:
+            return root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job)
         else:
-            return dict()
+            return root + '/' + self.get_custname(cust) + '/'
+
+    def get_custdir(self, cust=None):
+        if cust:
+            return self._dir_from_sect(cust, self._cust)
+        else:
+            return self._get_cust_options('OutputDir')
+
+    def get_custname(self, cust=None):
+        if cust:
+            return self._cust[cust]['Name']
+        else:
+            return self._get_cust_options('Name')
+
+    def get_webapiopts(self, cust=None):
+        if cust:
+            if 'WebAPIOpts' in self._cust[cust]:
+                return self._cust[cust]['WebAPIOpts']
+            else:
+                return dict()
+        else:
+            return self._get_cust_options('WebAPIOpts')
 
     def make_dirstruct(self, root=None):
         dirs = []
@@ -424,6 +427,37 @@ class CustomerConf(object):
             feed = ''
         return feed
 
+    def _get_cust_options(self, opt):
+        target_option = None
+
+        # safely assume here only one customer definition in the config file
+        for options in self._cust.values():
+            for option in options:
+                if option.lower() == opt.lower():
+                    target_option = options[option]
+        return target_option
+
+    def get_topofeed(self):
+        return self._get_cust_options('TopoFeed')
+
+    def get_topofeedpaging(self):
+        return eval(self._get_cust_options('TopoFeedPaging'))
+
+    def get_topofetchtype(self):
+        fetchtype = self._get_cust_options('TopoFetchType')
+        if ',' in fetchtype:
+            fetchtype = [type.strip().lower() for type in fetchtype.split(',')]
+        else:
+            fetchtype = [fetchtype.lower()]
+        return fetchtype
+
+    def get_uidserviceendpoints(self):
+        uidservend = self._get_cust_options('TopoUIDServiceEnpoints')
+        if uidservend is str:
+            return eval(uidservend)
+        else:
+            return False
+
     def _is_paginated(self, job):
         paging = False
 
@@ -440,20 +474,6 @@ class CustomerConf(object):
         elif feedurl:
             feeds[feedurl] = []
             feeds[feedurl].append((job, cust))
-
-    def get_feedscopes(self, feed, jobcust):
-        distinct_scopes = set()
-        for job, cust in jobcust:
-            gg = self._get_tags(job, 'TopoSelectGroupOfGroups')
-            ge = self._get_tags(job, 'TopoSelectGroupOfEndpoints')
-            for g in list(gg.items()) + list(ge.items()):
-                if 'Scope'.lower() == g[0].lower():
-                    if isinstance(g[1], list):
-                        distinct_scopes.update(g[1])
-                    else:
-                        distinct_scopes.update([g[1]])
-
-        return distinct_scopes
 
     def is_paginated(self, feed, jobcust):
         paginated = False
@@ -489,16 +509,7 @@ class CustomerConf(object):
         feeds = {}
         for c in self.get_customers():
             for job in self.get_jobs(c):
-                if 'topology' in caller:
-                    feedurl = self._get_feed(job, 'TopoFile')
-                    if not feedurl:
-                        feedurl = self._get_feed(job, 'TopoFeed')
-                    if feedurl:
-                        self._update_feeds(feeds, feedurl, job, c)
-                    else:
-                        feedurl = deffeed
-                        self._update_feeds(feeds, feedurl, job, c)
-                elif 'downtimes' in caller:
+                if 'downtimes' in caller:
                     feedurl = self._get_feed(job, 'DowntimesFeed')
                     if feedurl:
                         self._update_feeds(feeds, feedurl, job, c)

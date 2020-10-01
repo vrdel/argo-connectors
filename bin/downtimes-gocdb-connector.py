@@ -132,7 +132,7 @@ class GOCDBReader(object):
                 self.state = False
                 logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job,
                                                                                                             self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                                                                                                            repr(e).replace('\'','')))
+                                                                                                            repr(e).replace('\'', '')))
                 return []
             else:
                 return filteredDowntimes
@@ -223,11 +223,11 @@ def main():
             logger.customer = confcust.get_custname(cust)
             logger.job = job
 
-            ams_custopts = confcust.get_amsopts(cust)
-            ams_opts = cglob.merge_opts(ams_custopts, 'ams')
-            ams_complete, missopt = cglob.is_complete(ams_opts, 'ams')
-            if not ams_complete:
-                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'ams', ' '.join(missopt)))
+            webapi_custopts = confcust.get_webapiopts(cust)
+            webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+            webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+            if not webapi_complete:
+                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
                 continue
 
             output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
@@ -235,20 +235,17 @@ def main():
             if not gocdb.state:
                 continue
 
-            if eval(globopts['GeneralPublishAms'.lower()]):
-                ams = output.AmsPublish(ams_opts['amshost'],
-                                        ams_opts['amsproject'],
-                                        ams_opts['amstoken'],
-                                        ams_opts['amstopic'],
-                                        confcust.get_jobdir(job),
-                                        ams_opts['amsbulk'],
-                                        ams_opts['amspacksinglemsg'],
-                                        logger,
-                                        int(globopts['ConnectionRetry'.lower()]),
-                                        int(globopts['ConnectionTimeout'.lower()]))
-
-                ams.send(globopts['AvroSchemasDowntimes'.lower()], 'downtimes',
-                         timestamp.replace('_', '-'), dts)
+            if eval(globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = output.WebAPI(sys.argv[0],
+                                       webapi_opts['webapihost'],
+                                       webapi_opts['webapitoken'],
+                                       logger,
+                                       int(globopts['ConnectionRetry'.lower()]),
+                                       int(globopts['ConnectionTimeout'.lower()]),
+                                       int(globopts['ConnectionSleepRetry'.lower()]),
+                                       date=args.date[0],
+                                       report=confcust.get_jobdir(job))
+                webapi.send(dts)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)

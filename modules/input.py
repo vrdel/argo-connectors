@@ -60,36 +60,64 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         return buf
 
     except requests.exceptions.SSLError as e:
-        if (getattr(e, 'args', False) and type(e.args) == tuple
-            and type(e.args[0]) == str
-            and 'timed out' in e.args[0]):
+        if (getattr(e, 'args', False) and type(e.args) == tuple and
+            type(e.args[0]) == str and 'timed out' in e.args[0]):
             raise e
         else:
-            logger.critical('%sCustomer:%s Job:%s SSL Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                                        logger.customer, logger.job,
-                                                                        scheme + '://' + host + url,
-                                                                        repr(e)))
+            if getattr(logger, 'job', False):
+                msg = '{}Customer:{} Job:{} SSL Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                                      logger.customer, logger.job,
+                                                                      scheme + '://' + host + url,
+                                                                      repr(e))
+            else:
+                msg = '{}Customer:{} SSL Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                               logger.customer,
+                                                               scheme + '://' + host + url,
+                                                               repr(e))
+
+            logger.critical(msg)
         return False
 
     except(socket.error, socket.timeout) as e:
-        logger.warn('%sCustomer:%s Job:%s Connection error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                                       logger.customer, logger.job,
-                                                                       scheme + '://' + host + url,
-                                                                       repr(e)))
+        if getattr(logger, 'job', False):
+            msg = '{}Customer:{} Job:{} Connection error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                                         logger.customer, logger.job,
+                                                                         scheme + '://' + host + url,
+                                                                         repr(e))
+        else:
+            msg = '{}Customer:{} Connection error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                                  logger.customer,
+                                                                  scheme + '://' + host + url,
+                                                                  repr(e))
+        logger.warn(msg)
         raise e
 
     except requests.exceptions.RequestException as e:
-        logger.warn('%sCustomer:%s Job:%s HTTP error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                                 logger.customer, logger.job,
-                                                                 scheme + '://' + host + url,
-                                                                 repr(e)))
+        if getattr(logger, 'job', False):
+            msg = '{}Customer:{} Job:{} HTTP error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                                   logger.customer, logger.job,
+                                                                   scheme + '://' + host + url,
+                                                                   repr(e))
+        else:
+            msg = '{}Customer:{} HTTP error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                            logger.customer,
+                                                            scheme + '://' + host + url,
+                                                            repr(e))
+        logger.warn(msg)
         raise e
 
     except Exception as e:
-        logger.critical('%sCustomer:%s Job:%s Error %s - %s' % (msgprefix + ' ' if msgprefix else '',
-                                                                logger.customer, logger.job,
-                                                                scheme + '://' + host + url,
-                                                                repr(e)))
+        if getattr(logger, 'job', False):
+            msg = '{}Customer:{} Job:{} Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                              logger.customer, logger.job,
+                                                              scheme + '://' + host + url,
+                                                              repr(e))
+        else:
+            msg = '{}Customer:{} Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
+                                                       logger.customer,
+                                                       scheme + '://' + host + url,
+                                                       repr(e))
+        logger.warn(msg)
         return False
 
 
@@ -98,11 +126,19 @@ def parse_xml(logger, objname, globopts, buf, method):
         doc = xml.dom.minidom.parseString(buf)
 
     except ExpatError as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error parsing XML feed %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job', False):
+            msg = '{} Customer:{} Job:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
+        else:
+            msg = '{} Customer:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, method, repr(e))
+        logger.error(msg)
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job', False):
+            msg = '{} Customer:{} Job:{} : Error {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
+        else:
+            msg = '{} Customer:{} : Error {} - {}'.format(objname, logger.customer, method, repr(e))
+        logger.error(msg)
         raise e
 
     else:
@@ -114,11 +150,17 @@ def parse_json(logger, objname, globopts, buf, method):
         doc = json.loads(buf)
 
     except ValueError as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error parsing JSON feed %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job', False):
+            logger.error('{} Customer:{} Job:{} : Error parsing JSON feed {} - {}'.format(objname, logger.customer, logger.job, method, repr(e)))
+        else:
+            logger.error('{} Customer:{} : Error parsing JSON feed {} - {}'.format(objname, logger.customer, method, repr(e)))
         raise ConnectorError()
 
     except Exception as e:
-        logger.error(objname + ' Customer:%s Job:%s : Error %s - %s' % (logger.customer, logger.job, method, repr(e)))
+        if getattr(logger, 'job', False):
+            logger.error('{} Customer:{} Job:{} : Error {} - {}'.format(objname, logger.customer, logger.job, method, repr(e)))
+        else:
+            logger.error('{} Customer:{} : Error {} - {}'.format(objname, logger.customer, method, repr(e)))
         raise e
 
     else:

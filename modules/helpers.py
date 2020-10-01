@@ -37,19 +37,32 @@ class retry:
                     if i == loops:
                         raise e
                     else:
-                        logger.warn('%s %s() Customer:%s Job:%s Retry:%d Sleeping:%d - %s' %
-                                    (objname, self.func.__name__,
-                                     logger.customer, logger.job,
-                                     i, self.sleepretry, repr(e)))
+                        if getattr(logger, 'job', False):
+                            msg = '{} {}() Customer:{} Job:{} Retry:{} Sleeping:{} - {}'.format(objname,
+                                                                                                self.func.__name__,
+                                                                                                logger.customer, logger.job, i,
+                                                                                                self.sleepretry, repr(e))
+
+                        else:
+                            msg = '{} {}() Customer:{} Retry:{} Sleeping:{} - {}'.format(objname,
+                                                                                         self.func.__name__,
+                                                                                         logger.customer, i,
+                                                                                         self.sleepretry, repr(e))
+                        logger.warn(msg)
                         time.sleep(self.sleepretry)
                         pass
                 else:
                     break
                 i += 1
         except Exception as e:
-            logger.error('%s %s() Customer:%s Job:%s Giving up - %s' % (objname, self.func.__name__, logger.customer,
-                                                                        logger.job, repr(e)))
+            if getattr(logger, 'job', False):
+                msg = '{} {}() Customer:{} Job:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, logger.job, repr(e))
+            else:
+                msg = '{} {}() Customer:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, repr(e))
+
+            logger.error(msg)
             return False
+
         return result
 
 
@@ -79,4 +92,4 @@ def filename_date(logger, option, path, stamp=None):
 def module_class_name(obj):
     name = repr(obj.__class__.__name__)
 
-    return name.replace("'",'')
+    return name.replace("'", '')
