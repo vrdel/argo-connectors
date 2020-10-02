@@ -135,8 +135,8 @@ class Global(object):
 
         try:
             for sect, opts in self.caller_secopts.items():
-                if (sect.lower() not in lower_section and
-                    sect.lower() not in self.optional.keys()):
+                if (sect.lower() not in lower_section and sect.lower() not in
+                    self.optional.keys()):
                     raise configparser.NoSectionError(sect.lower())
 
                 for opt in opts:
@@ -147,12 +147,12 @@ class Global(object):
                                 if self._checkpath and os.path.isfile(optget) is False:
                                     raise OSError(errno.ENOENT, optget)
 
-                                if ('output' in section.lower() and
-                                    'DATE' not in optget):
-                                        logger.error('No DATE placeholder in %s' % option)
-                                        raise SystemExit(1)
+                                if ('output' in section.lower() and 'DATE' not
+                                    in optget):
+                                    self.logger.error('No DATE placeholder in %s' % opt)
+                                    raise SystemExit(1)
 
-                                options.update({(sect+opt).lower(): optget})
+                                options.update({(sect + opt).lower(): optget})
 
                             except configparser.NoOptionError as e:
                                 s = e.section.lower()
@@ -232,6 +232,9 @@ class CustomerConf(object):
                     topofeed = config.get(section, 'TopoFeed')
                     topotype = config.get(section, 'TopoType')
                     topofeedpaging = config.get(section, 'TopoFeedPaging')
+
+                    if not custdir.endswith('/'):
+                        custdir = '{}/'.format(custdir)
 
                     for o in lower_custopt:
                         try:
