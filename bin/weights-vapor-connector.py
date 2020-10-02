@@ -173,6 +173,7 @@ def main():
                                        int(globopts['ConnectionTimeout'.lower()]),
                                        int(globopts['ConnectionSleepRetry'.lower()]),
                                        report=confcust.get_jobdir(job),
+                                       endpoints_group='SITES',
                                        date=fixed_date)
                 webapi.send(datawr)
 
