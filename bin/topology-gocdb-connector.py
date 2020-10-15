@@ -389,6 +389,7 @@ def main():
     uidservtype = confcust.get_uidserviceendpoints()
     topofetchtype = confcust.get_topofetchtype()
     custname = confcust.get_custname()
+    logger.customer = custname
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -413,8 +414,6 @@ def main():
 
     if not gocdb.state:
         raise SystemExit(1)
-
-    logger.customer = custname
 
     webapi_custopts = confcust.get_webapiopts()
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')

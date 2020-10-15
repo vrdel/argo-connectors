@@ -24,9 +24,9 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
             headers = {'x-api-key': custauth['WebApiToken'.lower()],
                        'Accept': 'application/json'}
         elif msgprefix != 'PoemReader' and custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
-            userpass = base64.b64encode(custauth['AuthenticationHttpUser'.lower()] + ':'
-                                        + custauth['AuthenticationHttpPass'.lower()])
-            headers = {'Authorization': 'Basic ' + userpass}
+            userpass = '{}:{}'.format(custauth['AuthenticationHttpUser'.lower()], custauth['AuthenticationHttpPass'.lower()])
+            b64userpass = base64.b64encode(userpass.encode())
+            headers = {'Authorization': 'Basic ' + b64userpass.decode()}
 
         if scheme.startswith('https'):
             response = requests.get('https://' + host + url, headers=headers,
