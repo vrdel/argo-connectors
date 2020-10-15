@@ -173,7 +173,7 @@ def main():
         logger.error(e)
         raise SystemExit(1)
 
-    uidjob = confcust.pass_uidserviceendpoints(sjobs)
+    uidservtype = confcust.pass_uidserviceendpoints()
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -188,29 +188,21 @@ def main():
     # customer file so we can safely assume one tenant/customer
     write_empty = confcust.send_empty(sys.argv[0], cust)
 
-    gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
+    gocdb = GOCDBReader(feed, auth_opts, uidservtype)
     if not write_empty:
         dts = gocdb.getDowntimes(start, end)
     else:
         dts = []
         gocdb.state = True
 
-    # fetch for every job because of different TopoUIDServiceEndpoints
-    # setting for each job
-    if not all_same(uidjob):
-        gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
-        if not write_empty:
-            dts = gocdb.getDowntimes(start, end)
-        else:
-            dts = []
-            gocdb.state = True
+    gocdb = GOCDBReader(feed, auth_opts, uidservtype)
+    if not write_empty:
+        dts = gocdb.getDowntimes(start, end)
+    else:
+        dts = []
+        gocdb.state = True
 
-    jobdir = confcust.get_fulldir(cust, job)
-    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
-
-    logger.customer = confcust.get_custname(cust)
-
-    webapi_custopts = confcust.get_webapiopts(cust)
+    webapi_custopts = confcust.get_webapiopts()
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
     webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
     if not webapi_complete:
