@@ -200,10 +200,13 @@ def main():
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
     webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
     if not webapi_complete:
-        logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
+        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
 
-    output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+    # safely assume here one customer defined in customer file
+    cust = list(confcust.get_customers())[0]
+    statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+    output.write_state(sys.argv[0], statedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
 
     if not gocdb.state:
         raise SystemExit(1)
