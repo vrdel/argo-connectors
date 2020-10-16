@@ -219,27 +219,21 @@ def main():
                                int(globopts['ConnectionRetry'.lower()]),
                                int(globopts['ConnectionTimeout'.lower()]),
                                int(globopts['ConnectionSleepRetry'.lower()]),
-                               date=args.date[0],
-                               report=confcust.get_jobdir(job))
+                               date=args.date[0])
         webapi.send(dts)
 
+    custdir = confcust.get_custdir()
     if eval(globopts['GeneralWriteAvro'.lower()]):
-        filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)
+        filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
         avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
         ret, excep = avro.write(dts)
         if not ret:
-            logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
+            logger.error('Customer:%s %s' % (logger.customer, repr(excep)))
             raise SystemExit(1)
 
-    j += 1
-
     if gocdb.state:
-        custs = set([cust for job, cust in jobcust])
-        for cust in custs:
-            jobs = [job for job, lcust in jobcust if cust == lcust]
-            logger.info('Customer:%s Jobs:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
-                                                                                jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
-                                                                                args.date[0], len(dts)))
+        logger.info('Customer:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
+                                                                  args.date[0], len(dts)))
 
 
 if __name__ == '__main__':
