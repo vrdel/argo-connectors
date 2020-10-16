@@ -174,7 +174,7 @@ def main():
         logger.error(e)
         raise SystemExit(1)
 
-    uidservtype = confcust.pass_uidserviceendpoints()
+    uidservtype = confcust.get_uidserviceendpoints()
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -187,16 +187,9 @@ def main():
 
     # we don't have multiple tenant definitions in one
     # customer file so we can safely assume one tenant/customer
-    write_empty = confcust.send_empty(sys.argv[0], cust)
+    write_empty = confcust.send_empty(sys.argv[0])
 
     gocdb = GOCDBReader(topofeed, auth_opts, uidservtype)
-    if not write_empty:
-        dts = gocdb.getDowntimes(start, end)
-    else:
-        dts = []
-        gocdb.state = True
-
-    gocdb = GOCDBReader(feed, auth_opts, uidservtype)
     if not write_empty:
         dts = gocdb.getDowntimes(start, end)
     else:
