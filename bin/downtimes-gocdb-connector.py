@@ -220,7 +220,7 @@ def main():
                                int(globopts['ConnectionTimeout'.lower()]),
                                int(globopts['ConnectionSleepRetry'.lower()]),
                                date=args.date[0])
-        webapi.send(dts)
+        webapi.send(dts, downtimes_component=True)
 
     custdir = confcust.get_custdir()
     if eval(globopts['GeneralWriteAvro'.lower()]):
