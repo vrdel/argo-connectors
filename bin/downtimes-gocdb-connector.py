@@ -156,6 +156,7 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
+    topofeed = confcust.get_topofeed()
     logger.customer = confcust.get_custname()
 
     if len(args.date) == 0:
@@ -188,7 +189,7 @@ def main():
     # customer file so we can safely assume one tenant/customer
     write_empty = confcust.send_empty(sys.argv[0], cust)
 
-    gocdb = GOCDBReader(feed, auth_opts, uidservtype)
+    gocdb = GOCDBReader(topofeed, auth_opts, uidservtype)
     if not write_empty:
         dts = gocdb.getDowntimes(start, end)
     else:
