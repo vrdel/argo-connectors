@@ -95,7 +95,6 @@ class WebAPI(object):
         formatted = dict()
 
         formatted['endpoints'] = data
-        formatted['name'] = self.report
 
         return formatted
 
@@ -117,7 +116,7 @@ class WebAPI(object):
         ret = requests.post(api, data=json.dumps(data_send), headers=headers,
                             timeout=retryopts['ConnectionTimeout'.lower()])
         if ret.status_code != 201:
-            if connector.startswith('topology'):
+            if connector.startswith('topology') or connector.startswith('downtimes'):
                 logger.error('%s %s() Customer:%s - %s' % (msgprefix, '_send',
                                                            logger.customer,
                                                            ret.content))
@@ -149,11 +148,11 @@ class WebAPI(object):
                               timeout=retryopts['ConnectionTimeout'.lower()])
         return ret
 
-    def _delete_and_resend(self, api, data_send, topo_component):
+    def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
         id = None
         data = self._get(self.logger, module_class_name(self),
                          self.retry_options, api, self.headers)
-        if not topo_component:
+        if not topo_component and not downtimes_component:
             id = data['data'][0]['id']
         ret = self._delete(self.logger, module_class_name(self),
                            self.retry_options, api, self.headers, id)
@@ -163,7 +162,7 @@ class WebAPI(object):
                        self.connector)
             self.logger.info('Succesfully deleted and created new resource')
 
-    def send(self, data, topo_component=None):
+    def send(self, data, topo_component=None, downtimes_component=None):
         if topo_component:
             # /topology/groups, /topology/endpoints
             webapi_url = '{}/{}'.format(self.webapi_method, topo_component)
@@ -194,7 +193,7 @@ class WebAPI(object):
 
         # delete resource on WEB-API and resend
         if ret == 409:
-            self._delete_and_resend(api, data_send, topo_component)
+            self._delete_and_resend(api, data_send, topo_component, downtimes_component)
 
 
 def load_schema(schema):

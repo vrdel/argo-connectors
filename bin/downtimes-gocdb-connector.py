@@ -156,7 +156,8 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed='https://goc.egi.eu/gocdbpi/')
+    topofeed = confcust.get_topofeed()
+    logger.customer = confcust.get_custname()
 
     if len(args.date) == 0:
         print(parser.print_help())
@@ -173,97 +174,66 @@ def main():
         logger.error(e)
         raise SystemExit(1)
 
-    j = 0
-    for feed, jobcust in feeds.items():
-        customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
-        customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
-        sjobs = set(map(lambda jc: jc[0], jobcust))
-        jobs = list(sjobs)[0] if len(sjobs) == 1 else '({0})'.format(','.join(sjobs))
-        logger.job = jobs
-        logger.customer = customers
-        uidjob = confcust.pass_uidserviceendpoints(sjobs)
+    uidservtype = confcust.get_uidserviceendpoints()
 
-        auth_custopts = confcust.get_authopts(feed, jobcust)
-        auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
-        auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
-        if not auth_complete:
-            logger.error('Customer:%s Jobs:%s %s options incomplete, missing %s'
-                        % (logger.customer, logger.job, 'authentication',
-                            ''.join(missing)))
-            continue
+    auth_custopts = confcust.get_authopts()
+    auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
+    auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
+    if not auth_complete:
+        logger.error('Customer:%s %s options incomplete, missing %s'
+                    % (logger.customer, 'authentication',
+                        ''.join(missing)))
+        raise SystemExit(1)
 
-        # we don't have multiple tenant definitions in one
-        # customer file so we can safely assume one tenant/customer
-        cust = jobcust[0][1]
-        write_empty = confcust.send_empty(sys.argv[0], cust)
+    # we don't have multiple tenant definitions in one
+    # customer file so we can safely assume one tenant/customer
+    write_empty = confcust.send_empty(sys.argv[0])
 
-        # do fetch only once
-        if all_same(uidjob):
-            gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
-            if not write_empty:
-                dts = gocdb.getDowntimes(start, end)
-            else:
-                dts = []
-                gocdb.state = True
+    gocdb = GOCDBReader(topofeed, auth_opts, uidservtype)
+    if not write_empty:
+        dts = gocdb.getDowntimes(start, end)
+    else:
+        dts = []
+        gocdb.state = True
 
-        for job, cust in jobcust:
-            # fetch for every job because of different TopoUIDServiceEndpoints
-            # setting for each job
-            if not all_same(uidjob):
-                gocdb = GOCDBReader(feed, auth_opts, uidjob[j])
-                if not write_empty:
-                    dts = gocdb.getDowntimes(start, end)
-                else:
-                    dts = []
-                    gocdb.state = True
+    webapi_custopts = confcust.get_webapiopts()
+    webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+    webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+    if not webapi_complete:
+        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
+        raise SystemExit(1)
 
-            jobdir = confcust.get_fulldir(cust, job)
-            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+    # safely assume here one customer defined in customer file
+    cust = list(confcust.get_customers())[0]
+    statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+    output.write_state(sys.argv[0], statedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
 
-            logger.customer = confcust.get_custname(cust)
-            logger.job = job
+    if not gocdb.state:
+        raise SystemExit(1)
 
-            webapi_custopts = confcust.get_webapiopts(cust)
-            webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
-            webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
-            if not webapi_complete:
-                logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
-                continue
+    if eval(globopts['GeneralPublishWebAPI'.lower()]):
+        webapi = output.WebAPI(sys.argv[0],
+                               webapi_opts['webapihost'],
+                               webapi_opts['webapitoken'],
+                               logger,
+                               int(globopts['ConnectionRetry'.lower()]),
+                               int(globopts['ConnectionTimeout'.lower()]),
+                               int(globopts['ConnectionSleepRetry'.lower()]),
+                               date=args.date[0])
+        webapi.send(dts, downtimes_component=True)
 
-            output.write_state(sys.argv[0], jobstatedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+    custdir = confcust.get_custdir()
+    if eval(globopts['GeneralWriteAvro'.lower()]):
+        filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
+        avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+        ret, excep = avro.write(dts)
+        if not ret:
+            logger.error('Customer:%s %s' % (logger.customer, repr(excep)))
+            raise SystemExit(1)
 
-            if not gocdb.state:
-                continue
-
-            if eval(globopts['GeneralPublishWebAPI'.lower()]):
-                webapi = output.WebAPI(sys.argv[0],
-                                       webapi_opts['webapihost'],
-                                       webapi_opts['webapitoken'],
-                                       logger,
-                                       int(globopts['ConnectionRetry'.lower()]),
-                                       int(globopts['ConnectionTimeout'.lower()]),
-                                       int(globopts['ConnectionSleepRetry'.lower()]),
-                                       date=args.date[0],
-                                       report=confcust.get_jobdir(job))
-                webapi.send(dts)
-
-            if eval(globopts['GeneralWriteAvro'.lower()]):
-                filename = filename_date(logger, globopts['OutputDowntimes'.lower()], jobdir, stamp=timestamp)
-                avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
-                ret, excep = avro.write(dts)
-                if not ret:
-                    logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
-                    raise SystemExit(1)
-
-            j += 1
-
-        if gocdb.state:
-            custs = set([cust for job, cust in jobcust])
-            for cust in custs:
-                jobs = [job for job, lcust in jobcust if cust == lcust]
-                logger.info('Customer:%s Jobs:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
-                                                                                  jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
-                                                                                  args.date[0], len(dts)))
+    if gocdb.state:
+        logger.info('Customer:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
+                                                                  args.date[0], len(dts)))
 
 
 if __name__ == '__main__':

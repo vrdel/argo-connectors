@@ -11,25 +11,6 @@ pipeline {
 
     }
     stages {
-        stage ('Test'){
-            parallel {
-                stage ('Test Centos 7') {
-                    agent {
-                        docker {
-                            image 'argo.registry:5000/epel-7-ams'
-                        }
-                    }
-                    steps {
-                        echo 'Building Rpm...'
-                        sh '''
-                            cd ${WORKSPACE}/$PROJECT_DIR
-                            pipenv install
-                            pipenv run ./tests/run-tests.sh
-                        '''
-                    }
-                }
-            }
-        }
         stage ('Build'){
             parallel {
                 stage ('Build Centos 7') {

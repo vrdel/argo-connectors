@@ -529,12 +529,18 @@ class CustomerConf(object):
 
         return feeds
 
-    def send_empty(self, caller, cust):
+    def send_empty(self, caller, cust=None):
         try:
-            if 'downtimes' in caller:
-                return eval(self._cust[cust]['EmptyDataOpts']['downtimesempty'])
-            elif 'weights' in caller:
-                return eval(self._cust[cust]['EmptyDataOpts']['weightsempty'])
+            if cust:
+                if 'downtimes' in caller:
+                    return eval(self._cust[cust]['EmptyDataOpts']['downtimesempty'])
+                elif 'weights' in caller:
+                    return eval(self._cust[cust]['EmptyDataOpts']['weightsempty'])
+            else:
+                if 'downtimes' in caller:
+                    return eval(self._get_cust_options('EmptyDataOpts')['downtimesempty'])
+                elif 'weights' in caller:
+                    return eval(self._get_cust_options('EmptyDataOpts')['weightsempty'])
         except KeyError:
             return False
 
