@@ -95,7 +95,6 @@ class WebAPI(object):
         formatted = dict()
 
         formatted['endpoints'] = data
-        formatted['name'] = self.report
 
         return formatted
 
@@ -117,7 +116,7 @@ class WebAPI(object):
         ret = requests.post(api, data=json.dumps(data_send), headers=headers,
                             timeout=retryopts['ConnectionTimeout'.lower()])
         if ret.status_code != 201:
-            if connector.startswith('topology'):
+            if connector.startswith('topology') or connector.startswith('downtimes'):
                 logger.error('%s %s() Customer:%s - %s' % (msgprefix, '_send',
                                                            logger.customer,
                                                            ret.content))
