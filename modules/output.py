@@ -101,9 +101,13 @@ class WebAPI(object):
     def _format_weights(self, data):
         formatted = dict()
 
-        formatted['weight_type'] = data[0]['type']
+        if data:
+            formatted['weight_type'] = data[0]['type']
+            groups = map(lambda s: {'name': s['site'], 'value': float(s['weight'])}, data)
+        else:
+            formatted['weight_type'] = ''
+            groups = []
         formatted['name'] = self.report
-        groups = map(lambda s: {'name': s['site'], 'value': float(s['weight'])}, data)
         formatted['groups'] = list(groups)
         formatted['name'] = self.report
         formatted['group_type'] = self.endpoints_group
