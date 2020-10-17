@@ -152,6 +152,30 @@ class WebAPI(object):
                               timeout=retryopts['ConnectionTimeout'.lower()])
         return ret
 
+    @staticmethod
+    @retry
+    def _put(logger, msgprefix, retryopts, api, data_send, id, headers):
+        from urllib.parse import urlparse
+        loc = urlparse(api)
+        loc = '{}://{}{}/{}?{}'.format(loc.scheme, loc.hostname, loc.path, id, loc.query)
+        ret = requests.put(loc, data=json.dumps(data_send), headers=headers,
+                           timeout=retryopts['ConnectionTimeout'.lower()])
+        return ret
+
+    def _update(self, api, data_send):
+        ret = self._get(self.logger, module_class_name(self),
+                        self.retry_options, api, self.headers)
+        id = ret['data'][0]['id']
+        ret = self._put(self.logger, module_class_name(self),
+                        self.retry_options, api, data_send, id, self.headers)
+        if ret.status_code == 200:
+            self.logger.info('Succesfully updated resource')
+        else:
+            self.logger.error('%s %s() Customer:%s Job:%s - %s' %
+                              (module_class_name(self), '_update',
+                               self.logger.customer, self.logger.job,
+                               ret.content))
+
     def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
         id = None
         data = self._get(self.logger, module_class_name(self),
@@ -196,8 +220,10 @@ class WebAPI(object):
                          self.connector)
 
         # delete resource on WEB-API and resend
-        if ret == 409:
+        if ret == 409 and topo_component or downtimes_component:
             self._delete_and_resend(api, data_send, topo_component, downtimes_component)
+        elif ret == 409:
+            self._update(api, data_send)
 
 
 def load_schema(schema):
