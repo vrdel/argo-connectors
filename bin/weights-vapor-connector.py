@@ -174,7 +174,8 @@ def main():
                                        int(globopts['ConnectionSleepRetry'.lower()]),
                                        report=confcust.get_jobdir(job),
                                        endpoints_group='SITES',
-                                       date=fixed_date)
+                                       date=fixed_date,
+                                       verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
                 webapi.send(datawr)
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
