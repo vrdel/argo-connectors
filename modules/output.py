@@ -194,7 +194,7 @@ class WebAPI(object):
         if ret.status_code == 200:
             self._send(self.logger, module_class_name(self),
                        self.retry_options, api, data_send, self.headers,
-                       self.connector)
+                       self.connector, self.verifycert)
             self.logger.info('Succesfully deleted and created new resource')
 
     def send(self, data, topo_component=None, downtimes_component=None):

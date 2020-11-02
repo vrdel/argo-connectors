@@ -219,7 +219,8 @@ def main():
                                int(globopts['ConnectionRetry'.lower()]),
                                int(globopts['ConnectionTimeout'.lower()]),
                                int(globopts['ConnectionSleepRetry'.lower()]),
-                               date=args.date[0])
+                               date=args.date[0],
+                               verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
         webapi.send(dts, downtimes_component=True)
 
     custdir = confcust.get_custdir()
