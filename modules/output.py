@@ -169,18 +169,24 @@ class WebAPI(object):
     def _update(self, api, data_send):
         ret = self._get(self.logger, module_class_name(self),
                         self.retry_options, api, self.headers, self.verifycert)
-        target_report = filter(lambda w: w['name'] == data_send['name'], ret['data'])
-        id = list(target_report)[0]['id']
-        ret = self._put(self.logger, module_class_name(self),
-                        self.retry_options, api, data_send, id, self.headers,
-                        self.verifycert)
-        if ret.status_code == 200:
-            self.logger.info('Succesfully updated (HTTP PUT) resource')
-        else:
+        target_report = list(filter(lambda w: w['name'] == data_send['name'], ret['data']))
+        if len(target_report) > 1:
             self.logger.error('%s %s() Customer:%s Job:%s - HTTP PUT %s' %
                               (module_class_name(self), '_update',
                                self.logger.customer, self.logger.job,
-                               ret.content))
+                               'Name of resource not unique on WEB-API, cannot proceed with update'))
+        else:
+            id = target_report[0]['id']
+            ret = self._put(self.logger, module_class_name(self),
+                            self.retry_options, api, data_send, id, self.headers,
+                            self.verifycert)
+            if ret.status_code == 200:
+                self.logger.info('Succesfully updated (HTTP PUT) resource')
+            else:
+                self.logger.error('%s %s() Customer:%s Job:%s - HTTP PUT %s' %
+                                  (module_class_name(self), '_update',
+                                   self.logger.customer, self.logger.job,
+                                   ret.content))
 
     def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
         id = None
