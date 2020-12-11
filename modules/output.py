@@ -169,14 +169,14 @@ class WebAPI(object):
     def _update(self, api, data_send):
         ret = self._get(self.logger, module_class_name(self),
                         self.retry_options, api, self.headers, self.verifycert)
-        target_report = list(filter(lambda w: w['name'] == data_send['name'], ret['data']))
-        if len(target_report) > 1:
+        target = list(filter(lambda w: w['name'] == data_send['name'], ret['data']))
+        if len(target) > 1:
             self.logger.error('%s %s() Customer:%s Job:%s - HTTP PUT %s' %
                               (module_class_name(self), '_update',
                                self.logger.customer, self.logger.job,
                                'Name of resource not unique on WEB-API, cannot proceed with update'))
         else:
-            id = target_report[0]['id']
+            id = target[0]['id']
             ret = self._put(self.logger, module_class_name(self),
                             self.retry_options, api, data_send, id, self.headers,
                             self.verifycert)
