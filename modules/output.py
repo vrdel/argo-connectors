@@ -169,7 +169,8 @@ class WebAPI(object):
     def _update(self, api, data_send):
         ret = self._get(self.logger, module_class_name(self),
                         self.retry_options, api, self.headers, self.verifycert)
-        id = ret['data'][0]['id']
+        target_report = filter(lambda w: w['name'] == data_send['name'], ret['data'])
+        id = list(target_report)[0]['id']
         ret = self._put(self.logger, module_class_name(self),
                         self.retry_options, api, data_send, id, self.headers,
                         self.verifycert)
