@@ -395,7 +395,6 @@ def main():
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if auth_complete:
-        import ipdb; ipdb.set_trace()
         gocdb = GOCDBReader(topofeed, uidservtype, custname, topofeedpaging,
                             topofetchtype, auth=auth_opts)
     else:
