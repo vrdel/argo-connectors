@@ -43,14 +43,6 @@ logger = None
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
 
 
-def data_out(data):
-    datawr = []
-    for key in data:
-        w = data[key]
-        datawr.append({'type': 'computationpower', 'site': key, 'weight': w})
-    return datawr
-
-
 def main():
     global logger, globopts
     parser = argparse.ArgumentParser(description="""Fetch weights information from Gstat provider
@@ -100,7 +92,6 @@ def main():
                 raise input.ConnectorError()
 
             weights = VaporParse(logger, json_data).get_data()
-            datawr = None
 
             for job, cust in jobcust:
                 logger.customer = confcust.get_custname(cust)
@@ -108,10 +99,8 @@ def main():
 
                 write_empty = confcust.send_empty(sys.argv[0], cust)
 
-                if not write_empty:
-                    w = weights
-                else:
-                    w = []
+                if write_empty:
+                    weights = []
 
                 jobdir = confcust.get_fulldir(cust, job)
                 jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -131,8 +120,6 @@ def main():
                     output.write_state(sys.argv[0], jobstatedir, True,
                                        globopts['InputStateDays'.lower()])
 
-                datawr = data_out(w)
-
                 if eval(globopts['GeneralPublishWebAPI'.lower()]):
                     webapi = output.WebAPI(sys.argv[0],
                                            webapi_opts['webapihost'],
@@ -144,7 +131,7 @@ def main():
                                            endpoints_group='SITES',
                                            date=fixed_date,
                                            verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
-                    webapi.send(datawr)
+                    webapi.send(weights)
 
                 if eval(globopts['GeneralWriteAvro'.lower()]):
                     if fixed_date:
@@ -152,18 +139,18 @@ def main():
                     else:
                         filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
                     avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
-                    ret, excep = avro.write(datawr)
+                    ret, excep = avro.write(weights)
                     if not ret:
                         logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                         raise SystemExit(1)
 
-                if datawr or write_empty:
+                if weights or write_empty:
                     custs = set([cust for job, cust in jobcust])
                     for cust in custs:
                         jobs = [job for job, lcust in jobcust if cust == lcust]
                         logger.info('Customer:%s Jobs:%s Sites:%d' % (confcust.get_custname(cust),
                                                                       jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
-                                                                      len(datawr)))
+                                                                      len(weights)))
 
         except input.ConnectorError:
             for job, cust in jobcust:

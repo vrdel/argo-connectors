@@ -6,6 +6,13 @@ class VaporParse(object):
         self.data = data
         self.logger = logger
 
+    def _reformat(self, data):
+        datawr = []
+        for key in data:
+            w = data[key]
+            datawr.append({'type': 'computationpower', 'site': key, 'weight': w})
+        return datawr
+
     def get_data(self):
         try:
             weights = dict()
@@ -19,7 +26,7 @@ class VaporParse(object):
                         val = '0'
                     weights[key] = val
 
-            return weights
+            return self._reformat(weights)
 
         except (KeyError, IndexError) as e:
             self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(e).replace('\'', '')))
