@@ -31,6 +31,7 @@ import sys
 from argo_egi_connectors import input
 from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
+from argo_egi_connectors.parse.vapor import VaporParse
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
@@ -40,48 +41,6 @@ globopts = {}
 logger = None
 
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
-
-
-class Vapor:
-    def __init__(self, feed):
-        self._o = urlparse(feed)
-        self.state = True
-
-    def getWeights(self):
-        try:
-            res = input.connection(logger, module_class_name(self), globopts,
-                                   self._o.scheme, self._o.netloc,
-                                   self._o.path)
-            if not res:
-                raise input.ConnectorError()
-
-            json_data = input.parse_json(logger, module_class_name(self), globopts, res,
-                                         self._o.scheme + '://' + self._o.netloc + self._o.path)
-
-            if not json_data:
-                raise input.ConnectorError()
-
-        except input.ConnectorError:
-            self.state = False
-            return []
-
-        else:
-            try:
-                weights = dict()
-                for ngi in json_data:
-                    for site in ngi['site']:
-                        key = site['id']
-                        if 'ComputationPower' in site:
-                            val = site['ComputationPower']
-                        else:
-                            logger.warn(module_class_name(self) + ': No ComputationPower value for NGI:%s Site:%s' % (ngi['ngi'], site['id']))
-                            val = '0'
-                        weights[key] = val
-                return weights
-            except (KeyError, IndexError) as e:
-                self.state = False
-                logger.error(module_class_name(self) + ': Error parsing feed %s - %s' % (self._o.scheme + '://' + self._o.netloc + self._o.path,
-                                                                                         repr(e).replace('\'', '')))
 
 
 def data_out(data):
@@ -118,9 +77,27 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed=VAPORPI)
 
-    j = 0
     for feed, jobcust in feeds.items():
-        weights = Vapor(feed)
+        state = False
+
+        try:
+            feed_parts = urlparse(feed)
+            res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
+                                   feed_parts.scheme, feed_parts.netloc,
+                                   feed_parts.path)
+            if not res:
+                raise input.ConnectorError()
+
+            json_data = input.parse_json(logger, os.path.basename(sys.argv[0]), globopts, res,
+                                         feed_parts.scheme + '://' + feed_parts.netloc + feed_parts.path)
+
+            if not json_data:
+                raise input.ConnectorError()
+
+        except input.ConnectorError:
+            res = []
+
+        weights = VaporParse(logger, json_data).get_data()
         datawr = None
 
         customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
@@ -137,10 +114,11 @@ def main():
             write_empty = confcust.send_empty(sys.argv[0], cust)
 
             if not write_empty:
-                w = weights.getWeights()
+                w = weights
+                state = True
             else:
                 w = []
-                weights.state = True
+                state = True
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -153,14 +131,14 @@ def main():
                 continue
 
             if fixed_date:
-                output.write_state(sys.argv[0], jobstatedir, weights.state,
+                output.write_state(sys.argv[0], jobstatedir, state,
                                    globopts['InputStateDays'.lower()],
                                    fixed_date.replace('-', '_'))
             else:
-                output.write_state(sys.argv[0], jobstatedir, weights.state,
+                output.write_state(sys.argv[0], jobstatedir, state,
                                    globopts['InputStateDays'.lower()])
 
-            if not weights.state:
+            if not state:
                 continue
 
             datawr = data_out(w)
@@ -188,8 +166,6 @@ def main():
                 if not ret:
                     logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
                     raise SystemExit(1)
-
-            j += 1
 
         if datawr or write_empty:
             custs = set([cust for job, cust in jobcust])
