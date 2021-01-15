@@ -1,5 +1,9 @@
 from argo_egi_connectors.helpers import module_class_name
 from argo_egi_connectors.log import Logger
+from argo_egi_connectors.input import parse_json
+
+import json
+
 
 class VaporParse(object):
     def __init__(self, logger, data):
@@ -13,10 +17,13 @@ class VaporParse(object):
             datawr.append({'type': 'computationpower', 'site': key, 'weight': w})
         return datawr
 
+    def _parse_json(self, buf):
+        return json.loads(buf)
+
     def get_data(self):
         try:
             weights = dict()
-            for ngi in self.data:
+            for ngi in self._parse_json(self.data):
                 for site in ngi['site']:
                     key = site['id']
                     if 'ComputationPower' in site:
@@ -28,6 +35,13 @@ class VaporParse(object):
 
             return self._reformat(weights)
 
-        except (KeyError, IndexError) as e:
-            self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(e).replace('\'', '')))
+        except (KeyError, IndexError, ValueError) as exc:
+            self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(exc).replace('\'', '')))
             return False
+
+        except Exception as exc:
+            if getattr(self.logger, 'job', False):
+                self.logger.error('{} Customer:{} Job:{} : Error - {}'.format(module_class_name(self), self.logger.customer, self.logger.job, repr(exc)))
+            else:
+                self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
+            raise exc

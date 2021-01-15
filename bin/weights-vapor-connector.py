@@ -34,7 +34,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.vapor import VaporParse
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
+from argo_egi_connectors.helpers import filename_date, module_class_name, date_check
 from urllib.parse import urlparse
 
 globopts = {}
@@ -85,13 +85,7 @@ def main():
             if not res:
                 raise input.ConnectorError()
 
-            json_data = input.parse_json(logger, os.path.basename(sys.argv[0]), globopts, res,
-                                         feed_parts.scheme + '://' + feed_parts.netloc + feed_parts.path)
-
-            if not json_data:
-                raise input.ConnectorError()
-
-            weights = VaporParse(logger, json_data).get_data()
+            weights = VaporParse(logger, res).get_data()
 
             for job, cust in jobcust:
                 logger.customer = confcust.get_custname(cust)
