@@ -80,6 +80,13 @@ def main():
     for feed, jobcust in feeds.items():
         state = False
 
+        customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
+        customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
+        sjobs = set(map(lambda jc: jc[0], jobcust))
+        jobs = list(sjobs)[0] if len(sjobs) == 1 else '({0})'.format(','.join(sjobs))
+        logger.job = jobs
+        logger.customer = customers
+
         try:
             feed_parts = urlparse(feed)
             res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
@@ -100,12 +107,6 @@ def main():
         weights = VaporParse(logger, json_data).get_data()
         datawr = None
 
-        customers = set(map(lambda jc: confcust.get_custname(jc[1]), jobcust))
-        customers = customers.pop() if len(customers) == 1 else '({0})'.format(','.join(customers))
-        sjobs = set(map(lambda jc: jc[0], jobcust))
-        jobs = list(sjobs)[0] if len(sjobs) == 1 else '({0})'.format(','.join(sjobs))
-        logger.job = jobs
-        logger.customer = customers
 
         for job, cust in jobcust:
             logger.customer = confcust.get_custname(cust)
