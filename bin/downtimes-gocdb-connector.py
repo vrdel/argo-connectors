@@ -104,13 +104,7 @@ def main():
         if not res:
             raise input.ConnectorError()
 
-        doc = input.parse_xml(logger, module_class_name(self), globopts,
-                              res, feed_parts.scheme + '://' + feed_parts.netloc + DOWNTIMEPI)
-
-        if not doc:
-            raise input.ConnectorError()
-
-        gocdb = GOCDBParse(logger, data, start, end, uidservtype)
+        gocdb = GOCDBParse(logger, res, start, end, uidservtype)
         if not write_empty:
             dts = gocdb.get_data()
         else:
