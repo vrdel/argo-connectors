@@ -36,106 +36,13 @@ from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name
+from argo_egi_connectors.parse.gocdb_downtimes import GOCDBParse
 
 logger = None
 
-DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
-
 globopts = {}
 
-
-def getText(nodelist):
-    rc = []
-    for node in nodelist:
-        if node.nodeType == node.TEXT_NODE:
-            rc.append(node.data)
-    return ''.join(rc)
-
-
-def all_same(elemlist):
-    prev = None
-
-    for el in elemlist:
-        if prev is None:
-            prev = el
-        else:
-            if el != prev:
-                return False
-            else:
-                return True
-
-
-class GOCDBReader(object):
-    def __init__(self, feed, auth=None, uid=False):
-        self._o = urlparse(feed)
-        self.argDateFormat = "%Y-%m-%d"
-        self.WSDateFormat = "%Y-%m-%d %H:%M"
-        self.state = True
-        self.custauth = auth
-        self.uid = uid
-
-    def getDowntimes(self, start, end):
-        filteredDowntimes = list()
-
-        try:
-            res = input.connection(logger, module_class_name(self), globopts, self._o.scheme, self._o.netloc,
-                                   DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime(self.argDateFormat),
-                                                                                  end.strftime(self.argDateFormat)),
-                                   custauth=self.custauth)
-            if not res:
-                raise input.ConnectorError()
-
-            doc = input.parse_xml(logger, module_class_name(self), globopts,
-                                  res, self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI)
-
-            if not doc:
-                raise input.ConnectorError()
-
-        except input.ConnectorError:
-            self.state = False
-            return []
-
-        else:
-            downtimes = doc.getElementsByTagName('DOWNTIME')
-            try:
-                for downtime in downtimes:
-                    classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-                    hostname = getText(downtime.getElementsByTagName('HOSTNAME')[0].childNodes)
-                    serviceType = getText(downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                    startStr = getText(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
-                    endStr = getText(downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes)
-                    severity = getText(downtime.getElementsByTagName('SEVERITY')[0].childNodes)
-                    try:
-                        serviceId = getText(downtime.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
-                    except IndexError:
-                        serviceId = downtime.getAttribute('PRIMARY_KEY')
-                    startTime = datetime.datetime.strptime(startStr, self.WSDateFormat)
-                    endTime = datetime.datetime.strptime(endStr, self.WSDateFormat)
-
-                    if (startTime < start):
-                        startTime = start
-                    if (endTime > end):
-                        endTime = end
-
-                    if classification == 'SCHEDULED' and severity == 'OUTAGE':
-                        dt = dict()
-                        if self.uid:
-                            dt['hostname'] = '{0}_{1}'.format(hostname, serviceId)
-                        else:
-                            dt['hostname'] = hostname
-                        dt['service'] = serviceType
-                        dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                        dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                        filteredDowntimes.append(dt)
-
-            except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as e:
-                self.state = False
-                logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (logger.customer, logger.job,
-                                                                                                            self._o.scheme + '://' + self._o.netloc + DOWNTIMEPI,
-                                                                                                            repr(e).replace('\'', '')))
-                return []
-            else:
-                return filteredDowntimes
+DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
 
 
 def main():
@@ -181,60 +88,73 @@ def main():
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if not auth_complete:
         logger.error('Customer:%s %s options incomplete, missing %s'
-                    % (logger.customer, 'authentication',
-                        ''.join(missing)))
+                    % (logger.customer, 'authentication', ''.join(missing)))
         raise SystemExit(1)
 
     # we don't have multiple tenant definitions in one
     # customer file so we can safely assume one tenant/customer
     write_empty = confcust.send_empty(sys.argv[0])
 
-    gocdb = GOCDBReader(topofeed, auth_opts, uidservtype)
-    if not write_empty:
-        dts = gocdb.getDowntimes(start, end)
-    else:
-        dts = []
-        gocdb.state = True
+    feed_parts = urlparse(topofeed)
+    try:
+        res = input.connection(logger, os.path.basename(sys.argv[0]), globopts, feed_parts.scheme, feed_parts.netloc,
+                               DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime("%Y-%m-%d"),
+                                                                                end.strftime("%Y-%m-%d")),
+                               custauth=auth_opts)
+        if not res:
+            raise input.ConnectorError()
 
-    webapi_custopts = confcust.get_webapiopts()
-    webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
-    webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
-    if not webapi_complete:
-        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
-        raise SystemExit(1)
+        doc = input.parse_xml(logger, module_class_name(self), globopts,
+                              res, feed_parts.scheme + '://' + feed_parts.netloc + DOWNTIMEPI)
 
-    # safely assume here one customer defined in customer file
-    cust = list(confcust.get_customers())[0]
-    statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-    output.write_state(sys.argv[0], statedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+        if not doc:
+            raise input.ConnectorError()
 
-    if not gocdb.state:
-        raise SystemExit(1)
+        gocdb = GOCDBParse(logger, data, start, end, uidservtype)
+        if not write_empty:
+            dts = gocdb.get_data()
+        else:
+            dts = []
+            gocdb.state = True
 
-    if eval(globopts['GeneralPublishWebAPI'.lower()]):
-        webapi = output.WebAPI(sys.argv[0],
-                               webapi_opts['webapihost'],
-                               webapi_opts['webapitoken'],
-                               logger,
-                               int(globopts['ConnectionRetry'.lower()]),
-                               int(globopts['ConnectionTimeout'.lower()]),
-                               int(globopts['ConnectionSleepRetry'.lower()]),
-                               date=args.date[0],
-                               verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
-        webapi.send(dts, downtimes_component=True)
-
-    custdir = confcust.get_custdir()
-    if eval(globopts['GeneralWriteAvro'.lower()]):
-        filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
-        avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
-        ret, excep = avro.write(dts)
-        if not ret:
-            logger.error('Customer:%s %s' % (logger.customer, repr(excep)))
+        webapi_custopts = confcust.get_webapiopts()
+        webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+        webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+        if not webapi_complete:
+            logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
             raise SystemExit(1)
 
-    if gocdb.state:
-        logger.info('Customer:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
-                                                                  args.date[0], len(dts)))
+        # safely assume here one customer defined in customer file
+        cust = list(confcust.get_customers())[0]
+        statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+        output.write_state(sys.argv[0], statedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+
+        if eval(globopts['GeneralPublishWebAPI'.lower()]):
+            webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                                   webapi_opts['webapitoken'], logger,
+                                   int(globopts['ConnectionRetry'.lower()]),
+                                   int(globopts['ConnectionTimeout'.lower()]),
+                                   int(globopts['ConnectionSleepRetry'.lower()]),
+                                   date=args.date[0],
+                                   verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
+            webapi.send(dts, downtimes_component=True)
+
+        custdir = confcust.get_custdir()
+        if eval(globopts['GeneralWriteAvro'.lower()]):
+            filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
+            avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+            ret, excep = avro.write(dts)
+            if not ret:
+                logger.error('Customer:%s %s' % (logger.customer, repr(excep)))
+                raise SystemExit(1)
+
+        if gocdb.state:
+            logger.info('Customer:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
+                                                                    args.date[0], len(dts)))
+
+    except input.ConnectorError:
+        self.state = False
+        return []
 
 
 if __name__ == '__main__':
