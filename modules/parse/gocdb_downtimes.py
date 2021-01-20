@@ -3,6 +3,7 @@ import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
 from argo_egi_connectors.helpers import module_class_name
+from argo_egi_connectors.input import ConnectorError
 
 
 class GOCDBParse(object):
@@ -10,8 +11,8 @@ class GOCDBParse(object):
         self.uid = uid
         self.start = start
         self.end = end
-        self.data = self._parse_xml(data)
         self.logger = logger
+        self.data = self._parse_xml(data)
 
     def _get_text(self, nodelist):
         node_collect = []

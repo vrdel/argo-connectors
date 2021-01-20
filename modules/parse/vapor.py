@@ -1,6 +1,6 @@
 from argo_egi_connectors.helpers import module_class_name
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.input import parse_json
+from argo_egi_connectors.input import ConnectorError
 
 import json
 
@@ -37,7 +37,7 @@ class VaporParse(object):
 
         except (KeyError, IndexError, ValueError) as exc:
             self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(exc).replace('\'', '')))
-            return False
+            raise ConnectorError()
 
         except Exception as exc:
             if getattr(self.logger, 'job', False):

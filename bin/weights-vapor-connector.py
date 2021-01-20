@@ -82,9 +82,6 @@ def main():
             res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
                                    feed_parts.scheme, feed_parts.netloc,
                                    feed_parts.path)
-            if not res:
-                raise input.ConnectorError()
-
             weights = VaporParse(logger, res).get_data()
 
             for job, cust in jobcust:

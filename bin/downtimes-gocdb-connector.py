@@ -77,8 +77,8 @@ def main():
         timestamp = start.strftime('%Y_%m_%d')
         start = start.replace(hour=0, minute=0, second=0)
         end = end.replace(hour=23, minute=59, second=59)
-    except ValueError as e:
-        logger.error(e)
+    except ValueError as exc:
+        logger.error(exc)
         raise SystemExit(1)
 
     uidservtype = confcust.get_uidserviceendpoints()
@@ -87,8 +87,8 @@ def main():
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if not auth_complete:
-        logger.error('Customer:%s %s options incomplete, missing %s'
-                    % (logger.customer, 'authentication', ''.join(missing)))
+        missing_err = ''.join(missing)
+        logger.error(f'Customer:{logger.customer} authentication options incomplete, missing {missing_err}')
         raise SystemExit(1)
 
     # we don't have multiple tenant definitions in one
@@ -97,19 +97,17 @@ def main():
 
     feed_parts = urlparse(topofeed)
     try:
+        start_fmt = start.strftime("%Y-%m-%d")
+        end_fmt = end.strftime("%Y-%m-%d")
         res = input.connection(logger, os.path.basename(sys.argv[0]), globopts, feed_parts.scheme, feed_parts.netloc,
-                               DOWNTIMEPI + '&windowstart=%s&windowend=%s' % (start.strftime("%Y-%m-%d"),
-                                                                                end.strftime("%Y-%m-%d")),
+                               DOWNTIMEPI + f'&windowstart={start_fmt}&windowend={end_fmt}',
                                custauth=auth_opts)
-        if not res:
-            raise input.ConnectorError()
 
         gocdb = GOCDBParse(logger, res, start, end, uidservtype)
         if not write_empty:
             dts = gocdb.get_data()
         else:
             dts = []
-            gocdb.state = True
 
         webapi_custopts = confcust.get_webapiopts()
         webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
@@ -121,7 +119,7 @@ def main():
         # safely assume here one customer defined in customer file
         cust = list(confcust.get_customers())[0]
         statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-        output.write_state(sys.argv[0], statedir, gocdb.state, globopts['InputStateDays'.lower()], timestamp)
+        output.write_state(sys.argv[0], statedir, True, globopts['InputStateDays'.lower()], timestamp)
 
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
             webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
@@ -139,17 +137,17 @@ def main():
             avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
             ret, excep = avro.write(dts)
             if not ret:
-                logger.error('Customer:%s %s' % (logger.customer, repr(excep)))
+                logger.error(f'Customer:{logger.customer} {repr(excep)}')
                 raise SystemExit(1)
 
-        if gocdb.state:
-            logger.info('Customer:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
-                                                                    args.date[0], len(dts)))
+        logger.info('Customer:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
+                                                                args.date[0], len(dts)))
 
     except input.ConnectorError:
-        self.state = False
-        return []
-
+        # safely assume here one customer defined in customer file
+        cust = list(confcust.get_customers())[0]
+        statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+        output.write_state(sys.argv[0], statedir, False, globopts['InputStateDays'.lower()], timestamp)
 
 if __name__ == '__main__':
     main()
