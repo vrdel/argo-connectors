@@ -1,12 +1,8 @@
-import argparse
 import datetime
-import os
-import sys
-
-from argo_egi_connectors.helpers import filename_date, module_class_name
-
 import xml.dom.minidom
+
 from xml.parsers.expat import ExpatError
+from argo_egi_connectors.helpers import module_class_name
 
 
 class GOCDBParse(object):
@@ -17,71 +13,64 @@ class GOCDBParse(object):
         self.data = self._parse_xml(data)
         self.logger = logger
 
-    def _get_text(nodelist):
-        rc = []
+    def _get_text(self, nodelist):
+        node_collect = []
         for node in nodelist:
             if node.nodeType == node.TEXT_NODE:
-                rc.append(node.data)
-        return ''.join(rc)
+                node_collect.append(node.data)
+        return ''.join(node_collect)
 
     def _parse_xml(self, data):
         try:
             return xml.dom.minidom.parseString(data)
 
-        except ExpatError as e:
-            if getattr(self.logger, 'job', False):
-                msg = '{} Customer:{} Job:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, self.logger.job, repr(e))
-            else:
-                msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(e))
+        except ExpatError as exc:
+            msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
             self.logger.error(msg)
             raise ConnectorError()
 
-        except Exception as e:
-            if getattr(self.logger, 'job', False):
-                msg = '{} Customer:{} Job:{} : Error - {}'.format(module_class_name(self), self.logger.customer, self.logger.job, repr(e))
-            else:
-                msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(e))
+        except Exception as exc:
+            msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
             self.logger.error(msg)
-            raise e
+            raise exc
 
     def get_data(self):
-        filteredDowntimes = list()
+        filtered_downtimes = list()
 
         downtimes = self.data.getElementsByTagName('DOWNTIME')
         try:
             for downtime in downtimes:
                 classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
                 hostname = self._get_text(downtime.getElementsByTagName('HOSTNAME')[0].childNodes)
-                serviceType = self._get_text(downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                startStr = self._get_text(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
+                service_type = self._get_text(downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                start_str = self._get_text(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
                 end_str = self._get_text(downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes)
                 severity = self._get_text(downtime.getElementsByTagName('SEVERITY')[0].childNodes)
                 try:
-                    serviceId = self._get_text(downtime.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                    service_id = self._get_text(downtime.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
                 except IndexError:
-                    serviceId = downtime.getAttribute('PRIMARY_KEY')
-                startTime = datetime.datetime.strptime(startStr, "%Y-%m-%d %H:%M")
-                endTime = datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+                    service_id = downtime.getAttribute('PRIMARY_KEY')
+                start_time = datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
+                end_time = datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
 
-                if (startTime < self.start):
-                    startTime = self.start
-                if (endTime > self.end):
-                    endTime = self.end
+                if start_time < self.start:
+                    start_time = self.start
+                if end_time > self.end:
+                    end_time = self.end
 
                 if classification == 'SCHEDULED' and severity == 'OUTAGE':
-                    dt = dict()
+                    downtime = dict()
                     if self.uid:
-                        dt['hostname'] = '{0}_{1}'.format(hostname, serviceId)
+                        downtime['hostname'] = '{0}_{1}'.format(hostname, service_id)
                     else:
-                        dt['hostname'] = hostname
-                    dt['service'] = serviceType
-                    dt['start_time'] = startTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                    dt['end_time'] = endTime.strftime('%Y-%m-%d %H:%M').replace(' ', 'T', 1).replace(' ', ':') + ':00Z'
-                    filteredDowntimes.append(dt)
+                        downtime['hostname'] = hostname
+                    downtime['service'] = service_type
+                    downtime['start_time'] = start_time.strftime('%Y-%m-%dT%H:%M:00Z')
+                    downtime['end_time'] = end_time.strftime('%Y-%m-%dT%H:%M:00Z')
+                    filtered_downtimes.append(downtime)
 
-        except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as e:
-            self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed %s - %s' % (self.logger.customer, self.logger.job,
-                                                                                                        repr(e).replace('\'', '')))
+            return filtered_downtimes
+
+        except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '')))
             return []
-        else:
-            return self._parse_xml(filteredDowntimes)
