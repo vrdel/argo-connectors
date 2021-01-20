@@ -43,6 +43,64 @@ logger = None
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
 
 
+def fetch_data(feed):
+    feed_parts = urlparse(feed)
+    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
+                           feed_parts.scheme, feed_parts.netloc,
+                           feed_parts.path)
+    return res
+
+
+def parse_source(res):
+    weights = VaporParse(logger, res).get_data()
+    return weights
+
+
+def get_webapi_opts(cust, job, cglob, confcust):
+    webapi_custopts = confcust.get_webapiopts(cust)
+    webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+    webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+    if not webapi_complete:
+        logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
+    return webapi_opts
+
+
+def send_webapi(job, confcust, webapi_opts, fixed_date, weights):
+    webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                           webapi_opts['webapitoken'], logger,
+                           int(globopts['ConnectionRetry'.lower()]),
+                           int(globopts['ConnectionTimeout'.lower()]),
+                           int(globopts['ConnectionSleepRetry'.lower()]),
+                           report=confcust.get_jobdir(job),
+                           endpoints_group='SITES', date=fixed_date,
+                           verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
+    webapi.send(weights)
+
+
+def write_state(cust, job, confcust, fixed_date, state):
+    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+    if fixed_date:
+        output.write_state(sys.argv[0], jobstatedir, state,
+                           globopts['InputStateDays'.lower()],
+                           fixed_date.replace('-', '_'))
+    else:
+        output.write_state(sys.argv[0], jobstatedir, state,
+                           globopts['InputStateDays'.lower()])
+
+
+def write_avro(cust, job, confcust, fixed_date, weights):
+    jobdir = confcust.get_fulldir(cust, job)
+    if fixed_date:
+        filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
+    else:
+        filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
+    avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
+    ret, excep = avro.write(weights)
+    if not ret:
+        logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
+        raise SystemExit(1)
+
+
 def main():
     global logger, globopts
     parser = argparse.ArgumentParser(description="""Fetch weights information from Gstat provider
@@ -78,11 +136,8 @@ def main():
         logger.customer = customers
 
         try:
-            feed_parts = urlparse(feed)
-            res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
-                                   feed_parts.scheme, feed_parts.netloc,
-                                   feed_parts.path)
-            weights = VaporParse(logger, res).get_data()
+            res = fetch_data(feed)
+            weights = parse_source(res)
 
             for job, cust in jobcust:
                 logger.customer = confcust.get_custname(cust)
@@ -93,47 +148,15 @@ def main():
                 if write_empty:
                     weights = []
 
-                jobdir = confcust.get_fulldir(cust, job)
-                jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
-
-                webapi_custopts = confcust.get_webapiopts(cust)
-                webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
-                webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
-                if not webapi_complete:
-                    logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
-                    continue
-
-                if fixed_date:
-                    output.write_state(sys.argv[0], jobstatedir, True,
-                                       globopts['InputStateDays'.lower()],
-                                       fixed_date.replace('-', '_'))
-                else:
-                    output.write_state(sys.argv[0], jobstatedir, True,
-                                       globopts['InputStateDays'.lower()])
+                webapi_opts = get_webapi_opts(cust, job, cglob, confcust)
 
                 if eval(globopts['GeneralPublishWebAPI'.lower()]):
-                    webapi = output.WebAPI(sys.argv[0],
-                                           webapi_opts['webapihost'],
-                                           webapi_opts['webapitoken'], logger,
-                                           int(globopts['ConnectionRetry'.lower()]),
-                                           int(globopts['ConnectionTimeout'.lower()]),
-                                           int(globopts['ConnectionSleepRetry'.lower()]),
-                                           report=confcust.get_jobdir(job),
-                                           endpoints_group='SITES',
-                                           date=fixed_date,
-                                           verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
-                    webapi.send(weights)
+                    send_webapi(job, confcust, webapi_opts, fixed_date, weights)
 
                 if eval(globopts['GeneralWriteAvro'.lower()]):
-                    if fixed_date:
-                        filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
-                    else:
-                        filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
-                    avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
-                    ret, excep = avro.write(weights)
-                    if not ret:
-                        logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
-                        raise SystemExit(1)
+                    write_avro(cust, job, confcust, fixed_date, weights)
+
+                write_state(cust, job, confcust, fixed_date, True)
 
                 if weights or write_empty:
                     custs = set([cust for job, cust in jobcust])
@@ -145,15 +168,7 @@ def main():
 
         except input.ConnectorError:
             for job, cust in jobcust:
-                jobdir = confcust.get_fulldir(cust, job)
-                jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
-                if fixed_date:
-                    output.write_state(sys.argv[0], jobstatedir, False,
-                                       globopts['InputStateDays'.lower()],
-                                       fixed_date.replace('-', '_'))
-                else:
-                    output.write_state(sys.argv[0], jobstatedir, False,
-                                       globopts['InputStateDays'.lower()])
+                write_state(cust, job, confcust, fixed_date, False)
 
 
 if __name__ == '__main__':
