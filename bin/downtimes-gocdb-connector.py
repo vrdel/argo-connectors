@@ -39,10 +39,68 @@ from argo_egi_connectors.helpers import filename_date, module_class_name
 from argo_egi_connectors.parse.gocdb_downtimes import GOCDBParse
 
 logger = None
-
 globopts = {}
 
 DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
+
+
+def fetch_data(feed, auth_opts, start, end):
+    feed_parts = urlparse(feed)
+    start_fmt = start.strftime("%Y-%m-%d")
+    end_fmt = end.strftime("%Y-%m-%d")
+    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
+                           feed_parts.scheme, feed_parts.netloc,
+                           f'{DOWNTIMEPI}&windowstart={start_fmt}&windowend={end_fmt}',
+                           custauth=auth_opts)
+    return res
+
+
+def parse_source(res, start, end, uidservtype):
+    gocdb = GOCDBParse(logger, res, start, end, uidservtype)
+    return gocdb.get_data()
+    if not write_empty:
+        dts = gocdb.get_data()
+    else:
+        dts = []
+
+
+def get_webapi_opts(cglob, confcust):
+    webapi_custopts = confcust.get_webapiopts()
+    webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+    webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+    if not webapi_complete:
+        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
+        raise SystemExit(1)
+    return webapi_opts
+
+
+def send_webapi(webapi_opts, date, dts):
+    webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                            webapi_opts['webapitoken'], logger,
+                            int(globopts['ConnectionRetry'.lower()]),
+                            int(globopts['ConnectionTimeout'.lower()]),
+                            int(globopts['ConnectionSleepRetry'.lower()]),
+                            date=date,
+                            verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
+    webapi.send(dts, downtimes_component=True)
+
+
+def write_state(confcust, timestamp, state):
+    # safely assume here one customer defined in customer file
+    cust = list(confcust.get_customers())[0]
+    statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+    output.write_state(sys.argv[0], statedir, state,
+                       globopts['InputStateDays'.lower()], timestamp)
+
+
+def write_avro(confcust, dts, timestamp):
+    custdir = confcust.get_custdir()
+    filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
+    avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+    ret, excep = avro.write(dts)
+    if not ret:
+        logger.error(f'Customer:{logger.customer} {repr(excep)}')
+        raise SystemExit(1)
 
 
 def main():
@@ -63,7 +121,7 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    topofeed = confcust.get_topofeed()
+    feed = confcust.get_topofeed()
     logger.customer = confcust.get_custname()
 
     if len(args.date) == 0:
@@ -91,63 +149,33 @@ def main():
         logger.error(f'Customer:{logger.customer} authentication options incomplete, missing {missing_err}')
         raise SystemExit(1)
 
-    # we don't have multiple tenant definitions in one
-    # customer file so we can safely assume one tenant/customer
-    write_empty = confcust.send_empty(sys.argv[0])
-
-    feed_parts = urlparse(topofeed)
     try:
-        start_fmt = start.strftime("%Y-%m-%d")
-        end_fmt = end.strftime("%Y-%m-%d")
-        res = input.connection(logger, os.path.basename(sys.argv[0]), globopts, feed_parts.scheme, feed_parts.netloc,
-                               DOWNTIMEPI + f'&windowstart={start_fmt}&windowend={end_fmt}',
-                               custauth=auth_opts)
-
-        gocdb = GOCDBParse(logger, res, start, end, uidservtype)
+        # we don't have multiple tenant definitions in one
+        # customer file so we can safely assume one tenant/customer
+        write_empty = confcust.send_empty(sys.argv[0])
         if not write_empty:
-            dts = gocdb.get_data()
+            res = fetch_data(feed, auth_opts, start, end)
+            dts = parse_source(res, start, end, uidservtype)
         else:
             dts = []
 
-        webapi_custopts = confcust.get_webapiopts()
-        webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
-        webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
-        if not webapi_complete:
-            logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
-            raise SystemExit(1)
+        write_state(confcust, timestamp, True)
 
-        # safely assume here one customer defined in customer file
-        cust = list(confcust.get_customers())[0]
-        statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-        output.write_state(sys.argv[0], statedir, True, globopts['InputStateDays'.lower()], timestamp)
+        webapi_opts = get_webapi_opts(cglob, confcust)
 
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
-            webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                                   webapi_opts['webapitoken'], logger,
-                                   int(globopts['ConnectionRetry'.lower()]),
-                                   int(globopts['ConnectionTimeout'.lower()]),
-                                   int(globopts['ConnectionSleepRetry'.lower()]),
-                                   date=args.date[0],
-                                   verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
-            webapi.send(dts, downtimes_component=True)
+            send_webapi(webapi_opts, args.date[0], dts)
 
-        custdir = confcust.get_custdir()
+        if dts or write_empty:
+            cust = list(confcust.get_customers())[0]
+            logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
+                        (confcust.get_custname(cust), args.date[0], len(dts)))
+
         if eval(globopts['GeneralWriteAvro'.lower()]):
-            filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
-            avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
-            ret, excep = avro.write(dts)
-            if not ret:
-                logger.error(f'Customer:{logger.customer} {repr(excep)}')
-                raise SystemExit(1)
-
-        logger.info('Customer:%s Fetched Date:%s Endpoints:%d' % (confcust.get_custname(cust),
-                                                                args.date[0], len(dts)))
+            write_avro(confcust, dts, timestamp)
 
     except input.ConnectorError:
-        # safely assume here one customer defined in customer file
-        cust = list(confcust.get_customers())[0]
-        statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-        output.write_state(sys.argv[0], statedir, False, globopts['InputStateDays'.lower()], timestamp)
+        write_state(confcust, timestamp, False)
 
 if __name__ == '__main__':
     main()
