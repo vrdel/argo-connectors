@@ -4,26 +4,9 @@ from argo_egi_connectors.helpers import filename_date, module_class_name
 from argo_egi_connectors.input import ConnectorError
 
 
-class GOCDBParseSites(object):
-    def __init__(self, logger, data):
+class GOCDBHelpers(object):
+    def __init__(self, logger, *args, **kwargs):
         self.logger = logger
-        self.data = data
-
-
-class GOCDBParseServiceEndpoints(object):
-    def __init__(self, logger, data):
-        self.logger = logger
-        self.data = data
-
-
-class GOCDBParseServiceGroups(object):
-    def __init__(self, logger, data, custname, uid=False):
-        self.data = data
-        self.uidservtype = uid
-        self.logger = logger
-        self.custname = custname
-        # group_groups and group_endpoints components for ServiceGroup topology
-        self._service_groups = dict()
 
     def _parse_xmltext(self, nodelist):
         rc = []
@@ -57,7 +40,31 @@ class GOCDBParseServiceGroups(object):
             self.logger.error(msg)
             raise exc
 
-    def _service_groups_build(self):
+
+class GOCDBParseSites(GOCDBHelpers):
+    def __init__(self, logger, data):
+        self.logger = logger
+        self.data = data
+
+
+class GOCDBParseServiceEndpoints(GOCDBHelpers):
+    def __init__(self, logger, data):
+        self.logger = logger
+        self.data = data
+
+
+class GOCDBParseServiceGroups(GOCDBHelpers):
+    def __init__(self, logger, data, custname, uid=False):
+        super().__init__(logger)
+        self.data = data
+        self.uidservtype = uid
+        self.logger = logger
+        self.custname = custname
+        # group_groups and group_endpoints components for ServiceGroup topology
+        self._service_groups = dict()
+        self._parse_data()
+
+    def _parse_data(self):
         try:
             xml_data = self._parse_xml(self.data)
             groups = xml_data.getElementsByTagName('SERVICE_GROUP')
@@ -90,9 +97,8 @@ class GOCDBParseServiceGroups(object):
             self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
-    def _get_group_endpoints_servicegroups(self, groupofendpoints):
-        group_list = list()
-
+    def _get_group_endpoints_servicegroups(self):
+        group_list, groupofendpoints = list(), list()
         group_list = group_list + [value for key, value in self._service_groups.items()]
 
         for group in group_list:
@@ -112,9 +118,11 @@ class GOCDBParseServiceGroups(object):
                                 service['production'].lower() == 'True'.lower() else '0'}
                 groupofendpoints.append(tmpg)
 
-    def _get_group_groups_servicegroups(self, groupofgroups):
-        group_list = list()
-        group_list = group_list + [value for key, value in self._service_groups.items()]
+        return groupofendpoints
+
+    def _get_group_groups_servicegroups(self):
+        group_list, groupofgroups = list(), list()
+        group_list = group_list + [value for _, value in self._service_groups.items()]
 
         for group in group_list:
             tmpg = dict()
@@ -122,22 +130,10 @@ class GOCDBParseServiceGroups(object):
             tmpg['group'] = self.custname
             tmpg['subgroup'] = group['name']
             tmpg['tags'] = {'monitored': '1' if group['monitored'].lower() == 'Y'.lower() or
-                         group['monitored'].lower() == 'True'.lower() else '0', 'scope': group.get('scope', '')}
+                            group['monitored'].lower() == 'True'.lower() else '0', 'scope': group.get('scope', '')}
             groupofgroups.append(tmpg)
-
-    def _get_group_groups(self):
-        groupofgroups = list()
-        self._get_group_groups_servicegroups(groupofgroups)
 
         return groupofgroups
 
-    def _get_group_endpoints(self):
-        groupofendpoints = list()
-        self._get_group_endpoints_servicegroups(groupofendpoints)
-
-        return groupofendpoints
-
     def get_data(self):
-        self._service_groups_build()
-        # TODO: split in two
-        return self._get_group_groups() + self._get_group_endpoints()
+        return self._get_group_groups_servicegroups() + self._get_group_endpoints_servicegroups()
