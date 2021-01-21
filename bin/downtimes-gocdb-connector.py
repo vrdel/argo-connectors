@@ -36,7 +36,7 @@ from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name
-from argo_egi_connectors.parse.gocdb_downtimes import GOCDBParse
+from argo_egi_connectors.parse.gocdb_downtimes import ParseDowntimes
 
 logger = None
 globopts = {}
@@ -56,7 +56,7 @@ def fetch_data(feed, auth_opts, start, end):
 
 
 def parse_source(res, start, end, uidservtype):
-    gocdb = GOCDBParse(logger, res, start, end, uidservtype)
+    gocdb = ParseDowntimes(logger, res, start, end, uidservtype)
     return gocdb.get_data()
     if not write_empty:
         dts = gocdb.get_data()

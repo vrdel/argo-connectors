@@ -6,7 +6,7 @@ from argo_egi_connectors.helpers import module_class_name
 from argo_egi_connectors.input import ConnectorError
 
 
-class GOCDBParse(object):
+class ParseDowntimes(object):
     def __init__(self, logger, data, start, end, uid=False):
         self.uid = uid
         self.start = start

@@ -4,7 +4,7 @@ from argo_egi_connectors.helpers import filename_date, module_class_name
 from argo_egi_connectors.input import ConnectorError
 
 
-class GOCDBHelpers(object):
+class Helpers(object):
     def __init__(self, logger, *args, **kwargs):
         self.logger = logger
 
@@ -41,7 +41,7 @@ class GOCDBHelpers(object):
             raise exc
 
 
-class GOCDBParseSites(GOCDBHelpers):
+class ParseSites(Helpers):
     def __init__(self, logger, data, custname, uid=False):
         super().__init__(logger)
         self.data = data
@@ -85,7 +85,7 @@ class GOCDBParseSites(GOCDBHelpers):
         return groupofgroups
 
 
-class GOCDBParseServiceEndpoints(GOCDBHelpers):
+class ParseServiceEndpoints(Helpers):
     def __init__(self, logger, data, custname, uid=False):
         super().__init__(logger)
         self.data = data
@@ -141,7 +141,7 @@ class GOCDBParseServiceEndpoints(GOCDBHelpers):
         return groupofendpoints
 
 
-class GOCDBParseServiceGroups(GOCDBHelpers):
+class ParseServiceGroups(Helpers):
     def __init__(self, logger, data, custname, uid=False):
         super().__init__(logger)
         self.data = data

@@ -34,7 +34,7 @@ import xml.dom.minidom
 from argo_egi_connectors import input
 from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_topology import GOCDBParseServiceGroups, GOCDBParseServiceEndpoints, GOCDBParseSites
+from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
@@ -43,6 +43,7 @@ from urllib.parse import urlparse
 logger = None
 
 # GOCDB explicitly says &scope='' for all scopes
+# TODO: same methods can be served on different paths
 SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITESPI = '/gocdbpi/private/?method=get_site&scope='
 SERVGROUPPI = '/gocdbpi/private/?method=get_service_group&scope='
@@ -54,20 +55,20 @@ isok = True
 
 
 def parse_source_servicegroups(res, custname, uidservtype):
-    group_groups = GOCDBParseServiceGroups(logger, res, custname, uidservtype).get_group_groups()
-    group_endpoints = GOCDBParseServiceGroups(logger, res, custname, uidservtype).get_group_endpoints()
+    group_groups = ParseServiceGroups(logger, res, custname, uidservtype).get_group_groups()
+    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype).get_group_endpoints()
 
     return group_groups, group_endpoints
 
 
 def parse_source_endpoints(res, custname, uidservtype):
-    group_endpoints = GOCDBParseServiceEndpoints(logger, res, custname, uidservtype).get_group_endpoints()
+    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype).get_group_endpoints()
 
     return group_endpoints
 
 
 def parse_source_sites(res, custname, uidservtype):
-    group_endpoints = GOCDBParseSites(logger, res, custname, uidservtype).get_group_groups()
+    group_endpoints = ParseSites(logger, res, custname, uidservtype).get_group_groups()
 
     return group_endpoints
 

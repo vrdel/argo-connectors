@@ -5,7 +5,7 @@ from argo_egi_connectors.input import ConnectorError
 import json
 
 
-class VaporParse(object):
+class ParseWeights(object):
     def __init__(self, logger, data):
         self.data = data
         self.logger = logger

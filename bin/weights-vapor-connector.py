@@ -31,7 +31,7 @@ import sys
 from argo_egi_connectors import input
 from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.vapor import VaporParse
+from argo_egi_connectors.parse.vapor import ParseWeights
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, date_check
@@ -52,7 +52,7 @@ def fetch_data(feed):
 
 
 def parse_source(res):
-    weights = VaporParse(logger, res).get_data()
+    weights = ParseWeights(logger, res).get_data()
     return weights
 
 
