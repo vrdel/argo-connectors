@@ -53,33 +53,33 @@ custname = ''
 isok = True
 
 
-def fetch_data(feed, api, auth_opts, paginated):
+def parse_source_servicegroups(res, custname, uidservtype):
+    servicegroups = GOCDBParseServiceGroups(logger, res, custname, uidservtype).get_data()
+    return servicegroups
+
+def find_paging_cursor_count(res):
+    cursor, count = 1, 0
+
+    doc = xml.dom.minidom.parseString(res)
+    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+    links = doc.getElementsByTagName('link')
+    for le in links:
+        if le.getAttribute('rel') == 'next':
+            href = le.getAttribute('href')
+            for e in href.split('&'):
+                if 'next_cursor' in e:
+                    cursor = e.split('=')[1]
+
+    return count, cursor
+
+
+def fetch_data(feed, api, auth_opts):
     feed_parts = urlparse(feed)
     res = None
 
-    if paginated:
-        count, cursor = 1, 0
-        while count != 0:
-            res = input.connection(logger, os.path.basename(sys.argv[0]),
-                                   globopts, feed_parts.scheme,
-                                   feed_parts.netloc,
-                                   f'{api}&next_cursor={str(cursor)}',
-                                   custauth=auth_opts)
-            doc = xml.dom.minidom.parseString(res)
-            count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-            links = doc.getElementsByTagName('link')
-            import ipdb; ipdb.set_trace()
-            for le in links:
-                if le.getAttribute('rel') == 'next':
-                    href = le.getAttribute('href')
-                    for e in href.split('&'):
-                        if 'next_cursor' in e:
-                            cursor = e.split('=')[1]
-
-    else:
-        res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
-                               feed_parts.scheme, feed_parts.netloc, api,
-                               custauth=auth_opts)
+    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
+                            feed_parts.scheme, feed_parts.netloc, api,
+                            custauth=auth_opts)
 
     return res
 
@@ -124,7 +124,13 @@ def main():
         raise SystemExit(1)
 
     try:
-        res = fetch_data(topofeed, SERVGROUPPI, auth_opts, paginated=True)
+        servicegroups = list()
+        if topofeedpaging:
+            count, cursor = 1, 0
+            while count != 0:
+                res = fetch_data(topofeed, f'{SERVGROUPPI}&next_cursor={str(cursor)}', auth_opts)
+                count, cursor = find_paging_cursor_count(res)
+                servicegroups.append(parse_source_servicegroups(res, custname, uidservtype))
 
         # safely assume here one customer defined in customer file
         cust = list(confcust.get_customers())[0]
