@@ -42,9 +42,47 @@ class GOCDBHelpers(object):
 
 
 class GOCDBParseSites(GOCDBHelpers):
-    def __init__(self, logger, data):
-        self.logger = logger
+    def __init__(self, logger, data, custname, uid=False):
+        super().__init__(logger)
         self.data = data
+        self.uidservtype = uid
+        self.custname = custname
+        self._sites = dict()
+        self._parse_data()
+
+    def _parse_data(self):
+        try:
+            xml_data = self._parse_xml(self.data)
+            sites = xml_data.getElementsByTagName('SITE')
+            for site in sites:
+                site_name = site.getAttribute('NAME')
+                if site_name not in self._sites:
+                    self._sites[site_name] = {'site': site_name}
+                self._sites[site_name]['infrastructure'] = self._parse_xmltext(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
+                self._sites[site_name]['certification'] = self._parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
+                self._sites[site_name]['ngi'] = self._parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
+                self._sites[site_name]['scope'] = ', '.join(self._parse_scopes(site))
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing - %s' % (logger.customer, logger.job, repr(exc).replace('\'', '').replace('\"', '')))
+            raise exc
+
+    def get_group_groups(self):
+        group_list, groupofgroups = list(), list()
+        group_list = group_list + sorted([value for _, value in self._sites.items()], key=lambda s: s['ngi'])
+
+        for group in group_list:
+            tmpg = dict()
+            tmpg['type'] = 'NGI'
+            tmpg['group'] = group['ngi']
+            tmpg['subgroup'] = group['site']
+            tmpg['tags'] = {'certification': group['certification'],
+                            'scope': group.get('scope', ''),
+                            'infrastructure': group['infrastructure']}
+
+            groupofgroups.append(tmpg)
+
+        return groupofgroups
 
 
 class GOCDBParseServiceEndpoints(GOCDBHelpers):
