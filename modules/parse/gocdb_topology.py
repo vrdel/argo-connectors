@@ -48,9 +48,59 @@ class GOCDBParseSites(GOCDBHelpers):
 
 
 class GOCDBParseServiceEndpoints(GOCDBHelpers):
-    def __init__(self, logger, data):
-        self.logger = logger
+    def __init__(self, logger, data, custname, uid=False):
+        super().__init__(logger)
         self.data = data
+        self.uidservtype = uid
+        self.custname = custname
+        self._service_endpoints = dict()
+        self._parse_data()
+
+    def _parse_data(self):
+        try:
+            xml_data = self._parse_xml(self.data)
+            services = xml_data.getElementsByTagName('SERVICE_ENDPOINT')
+            for service in services:
+                service_id = ''
+                if service.getAttributeNode('PRIMARY_KEY'):
+                    service_id = str(service.attributes['PRIMARY_KEY'].value)
+                if service_id not in self._service_endpoints:
+                    self._service_endpoints[service_id] = {}
+                self._service_endpoints[service_id]['hostname'] = self._parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                self._service_endpoints[service_id]['type'] = self._parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                self._service_endpoints[service_id]['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                self._service_endpoints[service_id]['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                self._service_endpoints[service_id]['site'] = self._parse_xmltext(service.getElementsByTagName('SITENAME')[0].childNodes)
+                self._service_endpoints[service_id]['roc'] = self._parse_xmltext(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                self._service_endpoints[service_id]['service_id'] = service_id
+                self._service_endpoints[service_id]['scope'] = ', '.join(self._parse_scopes(service))
+                self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + '-' + self._service_endpoints[service_id]['type'] + '-' + self._service_endpoints[service_id]['site']
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
+            raise exc
+
+    def get_group_endpoints(self):
+        group_list, groupofendpoints = list(), list()
+        group_list = group_list + sorted([value for _, value in self._service_endpoints.items()], key=lambda s: s['site'])
+
+        for group in group_list:
+            tmpg = dict()
+            tmpg['type'] = 'SITES'
+            tmpg['group'] = group['site']
+            tmpg['service'] = group['type']
+            if self.uidservtype:
+                tmpg['hostname'] = '{1}_{0}'.format(group['service_id'], group['hostname'])
+            else:
+                tmpg['hostname'] = group['hostname']
+            tmpg['tags'] = {'scope': group.get('scope', ''),
+                            'monitored': '1' if group['monitored'] == 'Y' or
+                            group['monitored'] == 'True' else '0',
+                            'production': '1' if group['production'] == 'Y' or
+                            group['production'] == 'True' else '0'}
+            groupofendpoints.append(tmpg)
+
+        return groupofendpoints
 
 
 class GOCDBParseServiceGroups(GOCDBHelpers):
@@ -58,7 +108,6 @@ class GOCDBParseServiceGroups(GOCDBHelpers):
         super().__init__(logger)
         self.data = data
         self.uidservtype = uid
-        self.logger = logger
         self.custname = custname
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()
@@ -69,29 +118,29 @@ class GOCDBParseServiceGroups(GOCDBHelpers):
             xml_data = self._parse_xml(self.data)
             groups = xml_data.getElementsByTagName('SERVICE_GROUP')
             for group in groups:
-                groupId = group.getAttribute('PRIMARY_KEY')
-                if groupId not in self._service_groups:
-                    self._service_groups[groupId] = {}
-                self._service_groups[groupId]['name'] = self._parse_xmltext(group.getElementsByTagName('NAME')[0].childNodes)
-                self._service_groups[groupId]['monitored'] = self._parse_xmltext(group.getElementsByTagName('MONITORED')[0].childNodes)
+                group_id = group.getAttribute('PRIMARY_KEY')
+                if group_id not in self._service_groups:
+                    self._service_groups[group_id] = {}
+                self._service_groups[group_id]['name'] = self._parse_xmltext(group.getElementsByTagName('NAME')[0].childNodes)
+                self._service_groups[group_id]['monitored'] = self._parse_xmltext(group.getElementsByTagName('MONITORED')[0].childNodes)
 
-                self._service_groups[groupId]['services'] = []
+                self._service_groups[group_id]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
-                self._service_groups[groupId]['scope'] = ', '.join(self._parse_scopes(group))
+                self._service_groups[group_id]['scope'] = ', '.join(self._parse_scopes(group))
 
                 for service in services:
-                    serviceDict = dict()
+                    tmps = dict()
 
-                    serviceDict['hostname'] = self._parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    tmps['hostname'] = self._parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                     try:
-                        serviceDict['service_id'] = self._parse_xmltext(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                        tmps['service_id'] = self._parse_xmltext(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
                     except IndexError:
-                        serviceDict['service_id'] = service.getAttribute('PRIMARY_KEY')
-                    serviceDict['type'] = self._parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                    serviceDict['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                    serviceDict['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                    serviceDict['scope'] = ', '.join(self._parse_scopes(service))
-                    self._service_groups[groupId]['services'].append(serviceDict)
+                        tmps['service_id'] = service.getAttribute('PRIMARY_KEY')
+                    tmps['type'] = self._parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    tmps['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                    tmps['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                    tmps['scope'] = ', '.join(self._parse_scopes(service))
+                    self._service_groups[group_id]['services'].append(tmps)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))

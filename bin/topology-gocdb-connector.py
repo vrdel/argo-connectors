@@ -34,7 +34,7 @@ import xml.dom.minidom
 from argo_egi_connectors import input
 from argo_egi_connectors import output
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_topology import GOCDBParseServiceGroups
+from argo_egi_connectors.parse.gocdb_topology import GOCDBParseServiceGroups, GOCDBParseServiceEndpoints
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
@@ -58,6 +58,13 @@ def parse_source_servicegroups(res, custname, uidservtype):
     group_endpoints = GOCDBParseServiceGroups(logger, res, custname, uidservtype).get_group_endpoints()
 
     return group_groups, group_endpoints
+
+
+def parse_source_endpoints(res, custname, uidservtype):
+    group_endpoints = GOCDBParseServiceEndpoints(logger, res, custname, uidservtype).get_group_endpoints()
+
+    return group_endpoints
+
 
 def find_paging_cursor_count(res):
     cursor, count = 1, 0
@@ -139,6 +146,17 @@ def main():
         else:
             res = fetch_data(topofeed, SERVGROUPPI, auth_opts)
             group_groups, group_endpoints = parse_source_servicegroups(res, custname, uidservtype)
+
+        if topofeedpaging:
+            count, cursor = 1, 0
+            while count != 0:
+                res = fetch_data(topofeed, f'{SERVENDPI}&next_cursor={str(cursor)}', auth_opts)
+                count, cursor = find_paging_cursor_count(res)
+                tmp_ge = parse_source_endpoints(res, custname, uidservtype)
+                group_endpoints += tmp_ge
+        else:
+            res = fetch_data(topofeed, SERVGROUPPI, auth_opts)
+            group_endpoints += parse_source_endpoints(res, custname, uidservtype)
 
         # safely assume here one customer defined in customer file
         cust = list(confcust.get_customers())[0]
