@@ -97,9 +97,9 @@ class GOCDBParseServiceGroups(GOCDBHelpers):
             self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
-    def _get_group_endpoints_servicegroups(self):
+    def get_group_endpoints(self):
         group_list, groupofendpoints = list(), list()
-        group_list = group_list + [value for key, value in self._service_groups.items()]
+        group_list = group_list + [value for _, value in self._service_groups.items()]
 
         for group in group_list:
             for service in group['services']:
@@ -120,7 +120,7 @@ class GOCDBParseServiceGroups(GOCDBHelpers):
 
         return groupofendpoints
 
-    def _get_group_groups_servicegroups(self):
+    def get_group_groups(self):
         group_list, groupofgroups = list(), list()
         group_list = group_list + [value for _, value in self._service_groups.items()]
 
@@ -134,6 +134,3 @@ class GOCDBParseServiceGroups(GOCDBHelpers):
             groupofgroups.append(tmpg)
 
         return groupofgroups
-
-    def get_data(self):
-        return self._get_group_groups_servicegroups() + self._get_group_endpoints_servicegroups()

@@ -54,8 +54,10 @@ isok = True
 
 
 def parse_source_servicegroups(res, custname, uidservtype):
-    servicegroups = GOCDBParseServiceGroups(logger, res, custname, uidservtype).get_data()
-    return servicegroups
+    group_groups = GOCDBParseServiceGroups(logger, res, custname, uidservtype).get_group_groups()
+    group_endpoints = GOCDBParseServiceGroups(logger, res, custname, uidservtype).get_group_endpoints()
+
+    return group_groups, group_endpoints
 
 def find_paging_cursor_count(res):
     cursor, count = 1, 0
@@ -124,24 +126,30 @@ def main():
         raise SystemExit(1)
 
     try:
-        servicegroups = list()
+        group_endpoints, group_groups = list(), list()
+
         if topofeedpaging:
             count, cursor = 1, 0
             while count != 0:
                 res = fetch_data(topofeed, f'{SERVGROUPPI}&next_cursor={str(cursor)}', auth_opts)
                 count, cursor = find_paging_cursor_count(res)
-                servicegroups.append(parse_source_servicegroups(res, custname, uidservtype))
+                tmp_gg, tmp_ge = parse_source_servicegroups(res, custname, uidservtype)
+                group_endpoints += tmp_ge
+                group_groups += tmp_gg
+        else:
+            res = fetch_data(topofeed, SERVGROUPPI, auth_opts)
+            group_groups, group_endpoints = parse_source_servicegroups(res, custname, uidservtype)
 
         # safely assume here one customer defined in customer file
         cust = list(confcust.get_customers())[0]
         statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
         if fixed_date:
             output.write_state(sys.argv[0], statedir, gocdb.state,
-                            globopts['InputStateDays'.lower()],
-                            fixed_date.replace('-', '_'))
+                               globopts['InputStateDays'.lower()],
+                               fixed_date.replace('-', '_'))
         else:
             output.write_state(sys.argv[0], statedir, gocdb.state,
-                            globopts['InputStateDays'.lower()])
+                               globopts['InputStateDays'.lower()])
 
         if not gocdb.state:
             raise SystemExit(1)
