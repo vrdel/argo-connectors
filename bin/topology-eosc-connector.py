@@ -38,6 +38,42 @@ def parse_source(res, uidservtype, fetchtype):
     return group_groups, group_endpoints
 
 
+def write_state(confcust, fixed_date, state):
+    cust = list(confcust.get_customers())[0]
+    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
+    fetchtype = confcust.get_topofetchtype()
+    if fixed_date:
+        output.write_state(sys.argv[0], jobstatedir, state,
+                           globopts['InputStateDays'.lower()],
+                           fixed_date.replace('-', '_'))
+    else:
+        output.write_state(sys.argv[0], jobstatedir, state,
+                           globopts['InputStateDays'.lower()])
+
+
+def write_avro(confcust, group_groups, group_endpoints, fixed_date):
+    custdir = confcust.get_custdir()
+    if fixed_date:
+        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
+    else:
+        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
+    avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+    ret, excep = avro.write(group_groups)
+    if not ret:
+        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
+        raise SystemExit(1)
+
+    if fixed_date:
+        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
+    else:
+        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
+    avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+    ret, excep = avro.write(group_endpoints)
+    if not ret:
+        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
+        raise SystemExit(1)
+
+
 def main():
     global logger, globopts, confcust
 
@@ -67,60 +103,37 @@ def main():
     # safely assume here one customer defined in customer file
     cust = list(confcust.get_customers())[0]
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-    fetchtype = confcust.get_topofetchtype()
+    fetchtype = confcust.get_topofetchtype()[0]
 
     state = None
     logger.customer = custname
-
     uidservtype = confcust.get_uidserviceendpoints()
-
     topofeed = confcust.get_topofeed()
-    if is_feed(topofeed):
-        res = fetch_data(topofeed)
-        group_groups, group_endpoints = parse_source(res, uidservtype, fetchtype[0])
-    else:
-        try:
-            with open(topofeed) as fp:
-                js = json.load(fp)
-                group_groups, group_endpoints = parse_source(js, uidservtype, fetchtype[0])
-        except IOError as exc:
-            logger.error('Customer:%s : Problem opening %s - %s' % (logger.customer, topofeed, repr(exc)))
 
-
-    if fixed_date:
-        output.write_state(sys.argv[0], jobstatedir, state,
-                           globopts['InputStateDays'.lower()],
-                           fixed_date.replace('-', '_'))
-    else:
-        output.write_state(sys.argv[0], jobstatedir, state,
-                           globopts['InputStateDays'.lower()])
-
-    numge = len(group_endpoints)
-    numgg = len(group_groups)
-
-    custdir = confcust.get_custdir()
-    if eval(globopts['GeneralWriteAvro'.lower()]):
-        if fixed_date:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
+    try:
+        if is_feed(topofeed):
+            res = fetch_data(topofeed)
+            group_groups, group_endpoints = parse_source(res, uidservtype, fetchtype)
         else:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
-        avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
-        ret, excep = avro.write(group_groups)
-        if not ret:
-            logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
-            raise SystemExit(1)
+            try:
+                with open(topofeed) as fp:
+                    js = json.load(fp)
+                    group_groups, group_endpoints = parse_source(js, uidservtype, fetchtype)
+            except IOError as exc:
+                logger.error('Customer:%s : Problem opening %s - %s' % (logger.customer, topofeed, repr(exc)))
 
-        if fixed_date:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
-        else:
-            filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
-        avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
-        ret, excep = avro.write(group_endpoints)
-        if not ret:
-            logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
-            raise SystemExit(1)
+        write_state(confcust, fixed_date, True)
 
-    logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
+        numge = len(group_endpoints)
+        numgg = len(group_groups)
+
+        if eval(globopts['GeneralWriteAvro'.lower()]):
+            write_avro(confcust, group_groups, group_endpoints, fixed_date)
+
+        logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
+
+    except input.ConnectorError:
+        write_state(confcust, fixed_date, False)
 
 
 if __name__ == '__main__':
