@@ -58,10 +58,6 @@ def fetch_data(feed, auth_opts, start, end):
 def parse_source(res, start, end, uidservtype):
     gocdb = ParseDowntimes(logger, res, start, end, uidservtype)
     return gocdb.get_data()
-    if not write_empty:
-        dts = gocdb.get_data()
-    else:
-        dts = []
 
 
 def get_webapi_opts(cglob, confcust):
