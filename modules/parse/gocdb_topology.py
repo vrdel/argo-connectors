@@ -1,7 +1,7 @@
 import xml.dom.minidom
 from xml.parsers.expat import ExpatError
 from argo_egi_connectors.helpers import filename_date, module_class_name
-from argo_egi_connectors.input import ConnectorError
+from argo_egi_connectors.io.connection import ConnectorError
 
 
 class Helpers(object):

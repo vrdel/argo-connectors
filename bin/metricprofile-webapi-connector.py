@@ -29,7 +29,7 @@ import os
 import re
 import sys
 
-from argo_egi_connectors import input
+from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
@@ -46,9 +46,9 @@ API_PATH = '/api/v2/metric_profiles'
 
 
 def fetch_data(host, token):
-    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
-                           'https', host, API_PATH,
-                           custauth={'WebAPIToken'.lower(): token})
+    res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
+                              'https', host, API_PATH,
+                               custauth={'WebAPIToken'.lower(): token})
     return res
 
 
@@ -135,7 +135,7 @@ def main():
 
                 logger.info('Customer:' + custname + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))
 
-            except input.ConnectorError:
+            except ConnectorError:
                 write_state(cust, job, confcust, fixed_date, False)
 
 if __name__ == '__main__':

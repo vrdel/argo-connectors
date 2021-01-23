@@ -28,7 +28,7 @@ import argparse
 import os
 import sys
 
-from argo_egi_connectors import input
+from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -47,9 +47,9 @@ VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/
 
 def fetch_data(feed):
     feed_parts = urlparse(feed)
-    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
-                           feed_parts.scheme, feed_parts.netloc,
-                           feed_parts.path)
+    res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
+                              feed_parts.scheme, feed_parts.netloc,
+                              feed_parts.path)
     return res
 
 
@@ -168,7 +168,7 @@ def main():
                                                                       jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
                                                                       len(weights)))
 
-        except input.ConnectorError:
+        except ConnectorError:
             for job, cust in jobcust:
                 write_state(cust, job, confcust, fixed_date, False)
 

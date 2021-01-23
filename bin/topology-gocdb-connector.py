@@ -31,7 +31,7 @@ import sys
 import re
 import xml.dom.minidom
 
-from argo_egi_connectors import input
+from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -118,9 +118,9 @@ def fetch_data(feed, api, auth_opts):
     feed_parts = urlparse(feed)
     res = None
 
-    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
-                            feed_parts.scheme, feed_parts.netloc, api,
-                            custauth=auth_opts)
+    res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
+                              feed_parts.scheme, feed_parts.netloc, api,
+                              custauth=auth_opts)
 
     return res
 
@@ -248,7 +248,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except input.ConnectorError:
+    except ConnectorError:
         write_state(confcust, fixed_date, False)
 
 

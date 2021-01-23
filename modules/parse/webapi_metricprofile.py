@@ -1,6 +1,6 @@
 import json
 from argo_egi_connectors.helpers import module_class_name
-from argo_egi_connectors.input import ConnectorError
+from argo_egi_connectors.io.connection import ConnectorError
 
 
 class ParseMetricProfiles(object):

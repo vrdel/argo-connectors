@@ -51,9 +51,9 @@ def fetch_data(feed, auth_opts, start, end):
     start_fmt = start.strftime("%Y-%m-%d")
     end_fmt = end.strftime("%Y-%m-%d")
     res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
-                           feed_parts.scheme, feed_parts.netloc,
-                           f'{DOWNTIMEPI}&windowstart={start_fmt}&windowend={end_fmt}',
-                           custauth=auth_opts)
+                              feed_parts.scheme, feed_parts.netloc,
+                              f'{DOWNTIMEPI}&windowstart={start_fmt}&windowend={end_fmt}',
+                              custauth=auth_opts)
     return res
 
 

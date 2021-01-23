@@ -5,7 +5,7 @@ import os
 import sys
 import json
 
-from argo_egi_connectors import input
+from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -31,7 +31,7 @@ def is_feed(feed):
 
 def fetch_data(feed):
     remote_topo = urlparse(feed)
-    res = input.connection(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
+    res = ConnectionWithRetry(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
     return res
 
 
@@ -134,7 +134,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
 
-    except input.ConnectorError:
+    except ConnectorError:
         write_state(confcust, fixed_date, False)
 
 
