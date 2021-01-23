@@ -6,7 +6,9 @@ import sys
 import json
 
 from argo_egi_connectors import input
-from argo_egi_connectors import output
+from argo_egi_connectors.io.webapi import WebAPI
+from argo_egi_connectors.io.avrowrite import AvroWriter
+from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.helpers import filename_date, datestamp, date_check
@@ -43,12 +45,12 @@ def write_state(confcust, fixed_date, state):
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
     fetchtype = confcust.get_topofetchtype()
     if fixed_date:
-        output.write_state(sys.argv[0], jobstatedir, state,
-                           globopts['InputStateDays'.lower()],
-                           fixed_date.replace('-', '_'))
+        state_write(sys.argv[0], jobstatedir, state,
+                    globopts['InputStateDays'.lower()],
+                    fixed_date.replace('-', '_'))
     else:
-        output.write_state(sys.argv[0], jobstatedir, state,
-                           globopts['InputStateDays'.lower()])
+        state_write(sys.argv[0], jobstatedir, state,
+                    globopts['InputStateDays'.lower()])
 
 
 def write_avro(confcust, group_groups, group_endpoints, fixed_date):
@@ -57,7 +59,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
-    avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
     ret, excep = avro.write(group_groups)
     if not ret:
         logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
@@ -67,7 +69,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
-    avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
     ret, excep = avro.write(group_endpoints)
     if not ret:
         logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))

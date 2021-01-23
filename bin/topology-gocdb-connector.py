@@ -32,7 +32,9 @@ import re
 import xml.dom.minidom
 
 from argo_egi_connectors import input
-from argo_egi_connectors import output
+from argo_egi_connectors.io.webapi import WebAPI
+from argo_egi_connectors.io.avrowrite import AvroWriter
+from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 
@@ -104,12 +106,12 @@ def write_state(confcust, fixed_date, state):
     cust = list(confcust.get_customers())[0]
     statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
     if fixed_date:
-        output.write_state(sys.argv[0], statedir, state,
-                           globopts['InputStateDays'.lower()],
-                           fixed_date.replace('-', '_'))
+        state_write(sys.argv[0], statedir, state,
+                    globopts['InputStateDays'.lower()],
+                    fixed_date.replace('-', '_'))
     else:
-        output.write_state(sys.argv[0], statedir, state,
-                           globopts['InputStateDays'.lower()])
+        state_write(sys.argv[0], statedir, state,
+                    globopts['InputStateDays'.lower()])
 
 
 def fetch_data(feed, api, auth_opts):
@@ -124,12 +126,12 @@ def fetch_data(feed, api, auth_opts):
 
 
 def send_webapi(webapi_opts, group_groups, group_endpoints):
-    webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                           webapi_opts['webapitoken'], logger,
-                           int(globopts['ConnectionRetry'.lower()]),
-                           int(globopts['ConnectionTimeout'.lower()]),
-                           int(globopts['ConnectionSleepRetry'.lower()]),
-                           verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
+    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                    webapi_opts['webapitoken'], logger,
+                    int(globopts['ConnectionRetry'.lower()]),
+                    int(globopts['ConnectionTimeout'.lower()]),
+                    int(globopts['ConnectionSleepRetry'.lower()]),
+                    verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
     webapi.send(group_groups, 'groups')
     webapi.send(group_endpoints, 'endpoints')
 
@@ -140,7 +142,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
-    avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
+    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
     ret, excep = avro.write(group_groups)
     if not ret:
         logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
@@ -150,7 +152,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
-    avro = output.AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
+    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
     ret, excep = avro.write(group_endpoints)
     if not ret:
         logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))

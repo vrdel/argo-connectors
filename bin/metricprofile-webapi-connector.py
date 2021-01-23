@@ -30,7 +30,8 @@ import re
 import sys
 
 from argo_egi_connectors import input
-from argo_egi_connectors import output
+from argo_egi_connectors.io.avrowrite import AvroWriter
+from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, Global
@@ -59,14 +60,14 @@ def parse_source(res, profiles, namespace):
 def write_state(cust, job, confcust, fixed_date, state):
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
     if fixed_date:
-        output.write_state(sys.argv[0], jobstatedir,
-                           state,
-                           globopts['InputStateDays'.lower()],
-                           fixed_date.replace('-', '_'))
+        state_write(sys.argv[0], jobstatedir,
+                    state,
+                    globopts['InputStateDays'.lower()],
+                    fixed_date.replace('-', '_'))
     else:
-        output.write_state(sys.argv[0], jobstatedir,
-                           state,
-                           globopts['InputStateDays'.lower()])
+        state_write(sys.argv[0], jobstatedir,
+                    state,
+                    globopts['InputStateDays'.lower()])
 
 
 def write_avro(cust, job, confcust, fixed_date, fetched_profiles):
@@ -75,7 +76,7 @@ def write_avro(cust, job, confcust, fixed_date, fetched_profiles):
         filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir)
-    avro = output.AvroWriter(globopts['AvroSchemasMetricProfile'.lower()], filename)
+    avro = AvroWriter(globopts['AvroSchemasMetricProfile'.lower()], filename)
     ret, excep = avro.write(fetched_profiles)
     if not ret:
         logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
