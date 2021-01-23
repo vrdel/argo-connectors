@@ -20,7 +20,7 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
         buf = None
 
         headers = {}
-        if custauth and msgprefix == 'WebAPI':
+        if custauth and msgprefix == 'metricprofile-webapi-connector.py':
             headers = {'x-api-key': custauth['WebApiToken'.lower()],
                        'Accept': 'application/json'}
         elif msgprefix != 'PoemReader' and custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):

@@ -35,6 +35,7 @@ from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, Global
 from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
+from argo_egi_connectors.parse.webapi_metricprofile import ParseMetricProfiles
 
 logger = None
 
@@ -43,80 +44,16 @@ custname = ''
 API_PATH = '/api/v2/metric_profiles'
 
 
-class WebAPI(object):
-    def __init__(self, customer, job, profiles, namespace, host, token):
-        self.state = True
-        self.customer = customer
-        self.job = job
-        self.host = host
-        self.token = token
-        self.profiles = profiles
-        self.namespace = namespace
+def fetch_data(host, token):
+    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
+                           'https', host, API_PATH,
+                           custauth={'WebAPIToken'.lower(): token})
+    return res
 
-    def get_profiles(self):
-        try:
-            fetched_profiles = self._fetch()
-            target_profiles = list(filter(lambda profile: profile['name'] in self.profiles, fetched_profiles))
-            profile_list = list()
 
-            if len(target_profiles) == 0:
-                self.state = False
-                logger.error('Customer:' + self.customer + ' Job:' + self.job + ': No profiles {0} were found!'.format(', '.join(self.profiles)))
-
-                raise SystemExit(1)
-
-            for profile in target_profiles:
-                for service in profile['services']:
-                    for metric in service['metrics']:
-                        if self.namespace:
-                            profile_name = '{0}.{1}'.format(self.namespace, profile['name'])
-                        else:
-                            profile_name = profile['name']
-                        profile_list.append({
-                            'profile': profile_name,
-                            'metric': metric,
-                            'service': service['service']
-                        })
-
-        except (KeyError, IndexError, AttributeError, TypeError) as e:
-            self.state = False
-            logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed %s - %s' % (logger.customer,
-                                                                                                  self.host + API_PATH,
-                                                                                                  repr(e).replace('\'', '').replace('\"', '')))
-            return []
-        else:
-            return self._format(profile_list)
-
-    def _fetch(self):
-        try:
-            res = input.connection(logger, module_class_name(self), globopts,
-                                   'https', self.host, API_PATH,
-                                   custauth={'WebAPIToken'.lower(): self.token})
-            if not res:
-                raise input.ConnectorError()
-
-            json_data = input.parse_json(logger, module_class_name(self),
-                                         globopts, res, self.host + API_PATH)
-
-            if not json_data or not json_data.get('data', False):
-                raise input.ConnectorError()
-
-            return json_data['data']
-
-        except input.ConnectorError:
-            self.state = False
-
-    def _format(self, profile_list):
-        profiles = []
-
-        for p in profile_list:
-            pt = dict()
-            pt['metric'] = p['metric']
-            pt['profile'] = p['profile']
-            pt['service'] = p['service']
-            profiles.append(pt)
-
-        return profiles
+def parse_source(res, profiles, namespace):
+    metric_profiles = ParseMetricProfiles(logger, res, profiles, namespace).get_data()
+    return metric_profiles
 
 
 def main():
@@ -159,10 +96,8 @@ def main():
                 logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (custname, logger.job, 'webapi', ' '.join(missopt)))
                 continue
 
-            webapi = WebAPI(custname, job, profiles, confcust.get_namespace(job),
-                            webapi_opts['webapihost'],
-                            webapi_opts['webapitoken'])
-            fetched_profiles = webapi.get_profiles()
+            res = fetch_data(webapi_opts['webapihost'], webapi_opts['webapitoken'])
+            fetched_profiles = parse_source(res, profiles, confcust.get_namespace(job))
 
             jobdir = confcust.get_fulldir(cust, job)
             jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -176,9 +111,6 @@ def main():
                 output.write_state(sys.argv[0], jobstatedir,
                                    webapi.state,
                                    globopts['InputStateDays'.lower()])
-
-            if not webapi.state:
-                continue
 
             if eval(globopts['GeneralWriteAvro'.lower()]):
                 if fixed_date:
