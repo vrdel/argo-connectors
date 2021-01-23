@@ -30,7 +30,7 @@ import os
 import sys
 from urllib.parse import urlparse
 
-from argo_egi_connectors import input
+from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -50,7 +50,7 @@ def fetch_data(feed, auth_opts, start, end):
     feed_parts = urlparse(feed)
     start_fmt = start.strftime("%Y-%m-%d")
     end_fmt = end.strftime("%Y-%m-%d")
-    res = input.connection(logger, os.path.basename(sys.argv[0]), globopts,
+    res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
                            feed_parts.scheme, feed_parts.netloc,
                            f'{DOWNTIMEPI}&windowstart={start_fmt}&windowend={end_fmt}',
                            custauth=auth_opts)
@@ -171,7 +171,7 @@ def main():
         if eval(globopts['GeneralWriteAvro'.lower()]):
             write_avro(confcust, dts, timestamp)
 
-    except input.ConnectorError:
+    except ConnectorError:
         write_state(confcust, timestamp, False)
 
 if __name__ == '__main__':

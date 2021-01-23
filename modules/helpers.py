@@ -1,69 +1,9 @@
 import datetime
 import re
-import time
 
 strerr = ''
 num_excp_expand = 0
 daysback = 1
-
-
-class retry:
-    def __init__(self, func):
-        self.func = func
-
-    def __call__(self, *args, **kwargs):
-        """
-        Decorator that will repeat function calls in case of errors.
-
-        First three arguments of decorated function should be:
-            - logger object
-            - prefix of each log msg that is usually name of object
-              constructing msg
-            - dictionary holding num of retries, timeout and sleepretry
-              parameters
-        """
-        result = None
-        logger = args[0]
-        objname = args[1]
-        self.numr = int(args[2]['ConnectionRetry'.lower()])
-        self.sleepretry = int(args[2]['ConnectionSleepRetry'.lower()])
-        loops = self.numr + 1
-        try:
-            i = 1
-            while i <= loops:
-                try:
-                    result = self.func(*args, **kwargs)
-                except Exception as e:
-                    if i == loops:
-                        raise e
-                    else:
-                        if getattr(logger, 'job', False):
-                            msg = '{} {}() Customer:{} Job:{} Retry:{} Sleeping:{} - {}'.format(objname,
-                                                                                                self.func.__name__,
-                                                                                                logger.customer, logger.job, i,
-                                                                                                self.sleepretry, repr(e))
-
-                        else:
-                            msg = '{} {}() Customer:{} Retry:{} Sleeping:{} - {}'.format(objname,
-                                                                                         self.func.__name__,
-                                                                                         logger.customer, i,
-                                                                                         self.sleepretry, repr(e))
-                        logger.warn(msg)
-                        time.sleep(self.sleepretry)
-                        pass
-                else:
-                    break
-                i += 1
-        except Exception as e:
-            if getattr(logger, 'job', False):
-                msg = '{} {}() Customer:{} Job:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, logger.job, repr(e))
-            else:
-                msg = '{} {}() Customer:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, repr(e))
-
-            logger.error(msg)
-            return False
-
-        return result
 
 
 def date_check(arg):

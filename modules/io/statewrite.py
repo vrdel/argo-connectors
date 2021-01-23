@@ -1,9 +1,7 @@
 import datetime
 import os
-import json
-import requests
 
-from argo_egi_connectors.helpers import datestamp, retry, module_class_name
+from argo_egi_connectors.helpers import datestamp
 
 
 daysback = 1

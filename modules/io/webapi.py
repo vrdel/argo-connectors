@@ -3,7 +3,8 @@ import os
 import requests
 import json
 
-from argo_egi_connectors.helpers import datestamp, retry, module_class_name
+from argo_egi_connectors.io.connection import Retry
+from argo_egi_connectors.helpers import module_class_name
 
 
 class WebAPI(object):
@@ -68,7 +69,7 @@ class WebAPI(object):
         return formatted
 
     @staticmethod
-    @retry
+    @Retry
     def _send(logger, msgprefix, retryopts, api, data_send, headers, connector,
               verifycert=False):
         ret = requests.post(api, data=json.dumps(data_send), headers=headers,
@@ -87,14 +88,14 @@ class WebAPI(object):
         return ret.status_code
 
     @staticmethod
-    @retry
+    @Retry
     def _get(logger, msgprefix, retryopts, api, headers, verifycert=False):
         ret = requests.get(api, headers=headers,
                            timeout=retryopts['ConnectionTimeout'.lower()], verify=verifycert)
         return json.loads(ret.content)
 
     @staticmethod
-    @retry
+    @Retry
     def _delete(logger, msgprefix, retryopts, api, headers, id=None, verifycert=False):
         from urllib.parse import urlparse
         loc = urlparse(api)
@@ -107,7 +108,7 @@ class WebAPI(object):
         return ret
 
     @staticmethod
-    @retry
+    @Retry
     def _put(logger, msgprefix, retryopts, api, data_send, id, headers, verifycert=False):
         from urllib.parse import urlparse
         loc = urlparse(api)
