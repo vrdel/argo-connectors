@@ -1,5 +1,6 @@
 import json
 from argo_egi_connectors.helpers import module_class_name
+from argo_egi_connectors.input import ConnectorError
 
 
 class ParseMetricProfiles(object):
@@ -36,12 +37,16 @@ class ParseMetricProfiles(object):
                             'service': service['service']
                         })
 
-        except (KeyError, IndexError, AttributeError, TypeError) as exc:
-            import ipdb; ipdb.set_trace()
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            return []
-        else:
-            return self._format(profile_list)
+        except (KeyError, IndexError, ValueError) as exc:
+            self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(exc).replace('\'', '')))
+            raise ConnectorError()
+
+        except Exception as exc:
+            if getattr(self.logger, 'job', False):
+                self.logger.error('{} Customer:{} Job:{} : Error - {}'.format(module_class_name(self), self.logger.customer, self.logger.job, repr(exc)))
+            else:
+                self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
+            raise exc
 
     def _format(self, profile_list):
         profiles = []
