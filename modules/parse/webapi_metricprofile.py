@@ -20,8 +20,7 @@ class ParseMetricProfiles(object):
             profile_list = list()
 
             if len(target_profiles) == 0:
-                self.logger.error('Customer:' + self.logger.customer + ' Job:' + self.logger.job + ': No profiles {0} were found!'.format(', '.join(self.profiles)))
-
+                self.logger.error('Customer:' + self.logger.customer + ' Job:' + self.logger.job + ': No profiles {0} were found!'.format(', '.join(self.target_profiles)))
                 raise SystemExit(1)
 
             for profile in target_profiles:
