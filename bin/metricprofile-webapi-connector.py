@@ -56,6 +56,32 @@ def parse_source(res, profiles, namespace):
     return metric_profiles
 
 
+def write_state(cust, job, confcust, fixed_date, state):
+    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+    if fixed_date:
+        output.write_state(sys.argv[0], jobstatedir,
+                           state,
+                           globopts['InputStateDays'.lower()],
+                           fixed_date.replace('-', '_'))
+    else:
+        output.write_state(sys.argv[0], jobstatedir,
+                           state,
+                           globopts['InputStateDays'.lower()])
+
+
+def write_avro(cust, job, confcust, fixed_date, fetched_profiles):
+    jobdir = confcust.get_fulldir(cust, job)
+    if fixed_date:
+        filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir, fixed_date.replace('-', '_'))
+    else:
+        filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir)
+    avro = output.AvroWriter(globopts['AvroSchemasMetricProfile'.lower()], filename)
+    ret, excep = avro.write(fetched_profiles)
+    if not ret:
+        logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
+        raise SystemExit(1)
+
+
 def main():
     global logger, globopts
     parser = argparse.ArgumentParser(description='Fetch metric profile for every job of the customer')
@@ -96,35 +122,20 @@ def main():
                 logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (custname, logger.job, 'webapi', ' '.join(missopt)))
                 continue
 
-            res = fetch_data(webapi_opts['webapihost'], webapi_opts['webapitoken'])
-            fetched_profiles = parse_source(res, profiles, confcust.get_namespace(job))
+            try:
+                res = fetch_data(webapi_opts['webapihost'], webapi_opts['webapitoken'])
+                fetched_profiles = parse_source(res, profiles, confcust.get_namespace(job))
 
-            jobdir = confcust.get_fulldir(cust, job)
-            jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
+                jobdir = confcust.get_fulldir(cust, job)
+                write_state(cust, job, confcust, fixed_date, True)
 
-            if fixed_date:
-                output.write_state(sys.argv[0], jobstatedir,
-                                   webapi.state,
-                                   globopts['InputStateDays'.lower()],
-                                   fixed_date.replace('-', '_'))
-            else:
-                output.write_state(sys.argv[0], jobstatedir,
-                                   webapi.state,
-                                   globopts['InputStateDays'.lower()])
+                if eval(globopts['GeneralWriteAvro'.lower()]):
+                    write_avro(cust, job, confcust, fixed_date, fetched_profiles)
 
-            if eval(globopts['GeneralWriteAvro'.lower()]):
-                if fixed_date:
-                    filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir, fixed_date.replace('-', '_'))
-                else:
-                    filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir)
-                avro = output.AvroWriter(globopts['AvroSchemasMetricProfile'.lower()], filename)
-                ret, excep = avro.write(fetched_profiles)
-                if not ret:
-                    logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
-                    raise SystemExit(1)
+                logger.info('Customer:' + custname + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))
 
-            logger.info('Customer:' + custname + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))
-
+            except input.ConnectorError:
+                write_state(cust, job, confcust, fixed_date, False)
 
 if __name__ == '__main__':
     main()
