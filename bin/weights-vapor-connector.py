@@ -29,7 +29,9 @@ import os
 import sys
 
 from argo_egi_connectors import input
-from argo_egi_connectors import output
+from argo_egi_connectors.io.webapi import WebAPI
+from argo_egi_connectors.io.avrowrite import AvroWriter
+from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.vapor import ParseWeights
 
@@ -66,26 +68,26 @@ def get_webapi_opts(cust, job, cglob, confcust):
 
 
 def send_webapi(job, confcust, webapi_opts, fixed_date, weights):
-    webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                           webapi_opts['webapitoken'], logger,
-                           int(globopts['ConnectionRetry'.lower()]),
-                           int(globopts['ConnectionTimeout'.lower()]),
-                           int(globopts['ConnectionSleepRetry'.lower()]),
-                           report=confcust.get_jobdir(job),
-                           endpoints_group='SITES', date=fixed_date,
-                           verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
+    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                    webapi_opts['webapitoken'], logger,
+                    int(globopts['ConnectionRetry'.lower()]),
+                    int(globopts['ConnectionTimeout'.lower()]),
+                    int(globopts['ConnectionSleepRetry'.lower()]),
+                    report=confcust.get_jobdir(job), endpoints_group='SITES',
+                    date=fixed_date,
+                    verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
     webapi.send(weights)
 
 
 def write_state(cust, job, confcust, fixed_date, state):
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
     if fixed_date:
-        output.write_state(sys.argv[0], jobstatedir, state,
-                           globopts['InputStateDays'.lower()],
-                           fixed_date.replace('-', '_'))
+        state_write(sys.argv[0], jobstatedir, state,
+                    globopts['InputStateDays'.lower()],
+                    fixed_date.replace('-', '_'))
     else:
-        output.write_state(sys.argv[0], jobstatedir, state,
-                           globopts['InputStateDays'.lower()])
+        state_write(sys.argv[0], jobstatedir, state,
+                    globopts['InputStateDays'.lower()])
 
 
 def write_avro(cust, job, confcust, fixed_date, weights):
@@ -94,7 +96,7 @@ def write_avro(cust, job, confcust, fixed_date, weights):
         filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
-    avro = output.AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
+    avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
     ret, excep = avro.write(weights)
     if not ret:
         logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))

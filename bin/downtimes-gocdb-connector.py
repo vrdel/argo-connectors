@@ -31,7 +31,9 @@ import sys
 from urllib.parse import urlparse
 
 from argo_egi_connectors import input
-from argo_egi_connectors import output
+from argo_egi_connectors.io.webapi import WebAPI
+from argo_egi_connectors.io.avrowrite import AvroWriter
+from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
@@ -71,13 +73,12 @@ def get_webapi_opts(cglob, confcust):
 
 
 def send_webapi(webapi_opts, date, dts):
-    webapi = output.WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                            webapi_opts['webapitoken'], logger,
-                            int(globopts['ConnectionRetry'.lower()]),
-                            int(globopts['ConnectionTimeout'.lower()]),
-                            int(globopts['ConnectionSleepRetry'.lower()]),
-                            date=date,
-                            verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
+    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                    webapi_opts['webapitoken'], logger,
+                    int(globopts['ConnectionRetry'.lower()]),
+                    int(globopts['ConnectionTimeout'.lower()]),
+                    int(globopts['ConnectionSleepRetry'.lower()]), date=date,
+                    verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
     webapi.send(dts, downtimes_component=True)
 
 
@@ -85,14 +86,14 @@ def write_state(confcust, timestamp, state):
     # safely assume here one customer defined in customer file
     cust = list(confcust.get_customers())[0]
     statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-    output.write_state(sys.argv[0], statedir, state,
-                       globopts['InputStateDays'.lower()], timestamp)
+    state_write(sys.argv[0], statedir, state,
+                globopts['InputStateDays'.lower()], timestamp)
 
 
 def write_avro(confcust, dts, timestamp):
     custdir = confcust.get_custdir()
     filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
-    avro = output.AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+    avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
     ret, excep = avro.write(dts)
     if not ret:
         logger.error(f'Customer:{logger.customer} {repr(excep)}')
