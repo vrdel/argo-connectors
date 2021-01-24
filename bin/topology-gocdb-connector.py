@@ -204,7 +204,7 @@ def main():
         if topofeedpaging:
             count, cursor = 1, 0
             while count != 0:
-                res = fetch_data(topofeed, f'{SERVGROUPPI}&next_cursor={str(cursor)}', auth_opts)
+                res = fetch_data(topofeed, "{}&next_cursor={}".format(SERVGROUPPI, str(cursor)), auth_opts)
                 count, cursor = find_paging_cursor_count(res)
                 tmp_gg, tmp_ge = parse_source_servicegroups(res, custname, uidservtype)
                 group_endpoints += tmp_ge
@@ -212,14 +212,14 @@ def main():
 
             count, cursor = 1, 0
             while count != 0:
-                res = fetch_data(topofeed, f'{SERVENDPI}&next_cursor={str(cursor)}', auth_opts)
+                res = fetch_data(topofeed, '{}&next_cursor={}'.format(SERVENDPI, str(cursor)), auth_opts)
                 count, cursor = find_paging_cursor_count(res)
                 tmp_ge = parse_source_endpoints(res, custname, uidservtype)
                 group_endpoints += tmp_ge
 
             count, cursor = 1, 0
             while count != 0:
-                res = fetch_data(topofeed, f'{SITESPI}&next_cursor={str(cursor)}', auth_opts)
+                res = fetch_data(topofeed, '{}&next_cursor={}'.format(SITESPI, str(cursor)), auth_opts)
                 count, cursor = find_paging_cursor_count(res)
                 tmp_gg = parse_source_sites(res, custname, uidservtype)
                 group_groups += tmp_gg

@@ -52,7 +52,7 @@ def fetch_data(feed, auth_opts, start, end):
     end_fmt = end.strftime("%Y-%m-%d")
     res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
                               feed_parts.scheme, feed_parts.netloc,
-                              f'{DOWNTIMEPI}&windowstart={start_fmt}&windowend={end_fmt}',
+                              '{}&windowstart={}&windowend={}'.format(DOWNTIMEPI, start_fmt, end_fmt),
                               custauth=auth_opts)
     return res
 
@@ -96,7 +96,7 @@ def write_avro(confcust, dts, timestamp):
     avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
     ret, excep = avro.write(dts)
     if not ret:
-        logger.error(f'Customer:{logger.customer} {repr(excep)}')
+        logger.error('Customer:{} {}'.format(logger.customer, repr(excep)))
         raise SystemExit(1)
 
 
@@ -143,7 +143,7 @@ def main():
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if not auth_complete:
         missing_err = ''.join(missing)
-        logger.error(f'Customer:{logger.customer} authentication options incomplete, missing {missing_err}')
+        logger.error('Customer:{} authentication options incomplete, missing {}'.format(logger.customer, missing_err))
         raise SystemExit(1)
 
     try:
