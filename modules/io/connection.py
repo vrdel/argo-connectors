@@ -104,7 +104,7 @@ def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url, custauth
             else:
                 raise requests.exceptions.RequestException('No Location header set for redirect')
 
-            return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path + '?' + redir.query, custauth=custauth)
+            return ConnectionWithRetry(logger, msgprefix, globopts, scheme, redir.netloc, redir.path + '?' + redir.query, custauth=custauth)
 
         elif response.status_code == 200:
             buf = response.content
