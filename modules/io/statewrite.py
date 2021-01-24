@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from argo_egi_connectors.helpers import datestamp
+from argo_egi_connectors.tools import datestamp
 
 
 daysback = 1

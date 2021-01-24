@@ -1,4 +1,4 @@
-from argo_egi_connectors.helpers import module_class_name
+from argo_egi_connectors.tools import module_class_name
 from argo_egi_connectors.io.connection import ConnectorError
 
 from urllib.parse import urlparse

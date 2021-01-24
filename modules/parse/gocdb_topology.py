@@ -1,10 +1,10 @@
 import xml.dom.minidom
 from xml.parsers.expat import ExpatError
-from argo_egi_connectors.helpers import filename_date, module_class_name
+from argo_egi_connectors.tools import filename_date, module_class_name
 from argo_egi_connectors.io.connection import ConnectorError
 
 
-class Helpers(object):
+class tools(object):
     def __init__(self, logger, *args, **kwargs):
         self.logger = logger
 
@@ -41,7 +41,7 @@ class Helpers(object):
             raise exc
 
 
-class ParseSites(Helpers):
+class ParseSites(tools):
     def __init__(self, logger, data, custname, uid=False):
         super().__init__(logger)
         self.data = data
@@ -85,7 +85,7 @@ class ParseSites(Helpers):
         return groupofgroups
 
 
-class ParseServiceEndpoints(Helpers):
+class ParseServiceEndpoints(tools):
     def __init__(self, logger, data, custname, uid=False):
         super().__init__(logger)
         self.data = data
@@ -141,7 +141,7 @@ class ParseServiceEndpoints(Helpers):
         return groupofendpoints
 
 
-class ParseServiceGroups(Helpers):
+class ParseServiceGroups(tools):
     def __init__(self, logger, data, custname, uid=False):
         super().__init__(logger)
         self.data = data

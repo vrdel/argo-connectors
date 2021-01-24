@@ -35,7 +35,7 @@ from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, Global
-from argo_egi_connectors.helpers import filename_date, module_class_name, datestamp, date_check
+from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from argo_egi_connectors.parse.webapi_metricprofile import ParseMetricProfiles
 
 logger = None

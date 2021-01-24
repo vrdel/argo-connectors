@@ -4,8 +4,10 @@ from avro.io import DatumWriter, BinaryEncoder
 
 from io import BytesIO
 
+
 class AvroWriteException(BaseException):
     pass
+
 
 def load_schema(schema):
     try:
@@ -14,6 +16,7 @@ def load_schema(schema):
         return schema
     except Exception as e:
         raise e
+
 
 class AvroWriter(object):
     """ AvroWriter """
