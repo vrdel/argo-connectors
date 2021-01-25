@@ -33,6 +33,8 @@ import xml.dom.minidom
 
 import uvloop
 import asyncio
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 
 from argo_egi_connectors.io.async_connection import ConnectionWithRetry, ConnectorError
 from argo_egi_connectors.io.webapi import WebAPI
@@ -49,9 +51,9 @@ logger = None
 
 # GOCDB explicitly says &scope='' for all scopes
 # TODO: same methods can be served on different paths
-SERVENDPI = '/gocdbpi/private/?method=get_service_endpoint&scope='
-SITESPI = '/gocdbpi/private/?method=get_site&scope='
-SERVGROUPPI = '/gocdbpi/private/?method=get_service_group&scope='
+SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
+SITES_PI = '/gocdbpi/private/?method=get_site&scope='
+SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
 
 globopts = {}
 custname = ''
@@ -185,24 +187,37 @@ def main():
         logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
         raise SystemExit(1)
 
+    loop = uvloop.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     try:
         group_endpoints, group_groups = list(), list()
 
-        loop = uvloop.new_event_loop()
-        asyncio.set_event_loop(loop)
         fetched_topology = loop.run_until_complete(asyncio.gather(
-            fetch_data(topofeed, SERVENDPI, auth_opts, topofeedpaging),
-            fetch_data(topofeed, SERVGROUPPI, auth_opts, topofeedpaging),
-            fetch_data(topofeed, SITESPI, auth_opts, topofeedpaging)
+            fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
+            fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
+            fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)
         ))
-        print(fetched_topology)
-        raise SystemExit(1)
 
-        group_groups, group_endpoints = parse_source_servicegroups(res, custname, uidservtype)
-
-        group_endpoints += parse_source_endpoints(res, custname, uidservtype)
-
-        group_groups += parse_source_sites(res, custname, uidservtype)
+        executor = ProcessPoolExecutor(max_workers=3)
+        parse_workers = [
+            loop.run_in_executor(executor,
+                                 partial(parse_source_servicegroups,
+                                         fetched_topology[1], custname,
+                                         uidservtype)),
+            loop.run_in_executor(executor,
+                                 partial(parse_source_endpoints,
+                                         fetched_topology[0], custname,
+                                         uidservtype)),
+            loop.run_in_executor(executor,
+                                 partial(parse_source_sites,
+                                         fetched_topology[2], custname,
+                                         uidservtype))
+        ]
+        parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
+        group_groups, group_endpoints = parsed_topology[0]
+        group_endpoints += parsed_topology[1]
+        group_groups += parsed_topology[2]
 
         write_state(confcust, fixed_date, True)
         webapi_opts = get_webapi_opts(cglob, confcust)
@@ -220,6 +235,9 @@ def main():
 
     except ConnectorError:
         write_state(confcust, fixed_date, False)
+
+    finally:
+        loop.close()
 
 
 if __name__ == '__main__':
