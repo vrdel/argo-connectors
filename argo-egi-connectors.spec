@@ -12,6 +12,8 @@ Prefix:    %{_prefix}
 
 Requires: python3-avro
 Requires: python3-requests
+Requires: python3-aiohttp
+Requires: python3-aiohttp-retry
 
 BuildRequires: python3-devel python3-setuptools
 
