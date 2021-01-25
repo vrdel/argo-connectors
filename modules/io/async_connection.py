@@ -18,8 +18,6 @@ def build_ssl_settings(globopts):
 
 
 def find_paging_cursor_count(res):
-    cursor, count = 1, 0
-
     doc = xml.dom.minidom.parseString(res)
     count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
     links = doc.getElementsByTagName('link')
@@ -47,7 +45,8 @@ async def http_get(logger, session, url, sslcontext=None):
             content = await response.text()
             return content
     except Exception as exc:
-        logger.error(exc)
+        logger.error('from http_get() {}'.format(repr(exc)))
+        raise exc
 
 
 class ConnectorError(Exception):
@@ -66,8 +65,8 @@ async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url,
 
     try:
         async with RetryClient(retry_options=http_retry_options, timeout=client_timeout) as session:
-            n = 0
-            while n < n_try:
+            n = 1
+            while n <= n_try:
                 if paginated:
                     count, cursor = 1, 0
                     while count != 0:
@@ -78,7 +77,7 @@ async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url,
                             count, cursor = find_paging_cursor_count(content)
                             return content
                         except asyncio.TimeoutError as e:
-                            print('connection try - ', n_try)
+                            logger.error(f'connection try - {n}')
                 else:
                     try:
                         content = await http_get(logger, session,
@@ -86,10 +85,10 @@ async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url,
                                                  ssl_context)
                         return content
                     except asyncio.TimeoutError as exc:
-                        print('connection try - ', n)
+                        logger.error(f'Connection try - {n}')
                 n += 1
             else:
-                print('connection exhausted')
+                logger.error('Connection retry exhausted')
 
     except Exception as e:
         print(type(e))
