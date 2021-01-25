@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import aiohttp
 import aiohttp.client_exceptions
 import asyncio
@@ -7,55 +9,86 @@ import xml.dom.minidom
 from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
 
 
-async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url, custauth=None, paginated=False):
-    sslcontext = ssl.create_default_context(capath='/etc/grid-security/certificates/')
-    sslcontext.load_cert_chain('hostcert.pem', 'hostkey.pem')
+def build_ssl_settings(globopts):
+    sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()])
+    sslcontext.load_cert_chain('/etc/grid-security/hostcert.pem', '/etc/grid-security/hostkey.pem')
 
-    suffix = url.split('method=')[1]
+    return sslcontext
 
-    # http_retry_options = ListRetry(timeouts=[10.0, 20.0, 30.0, 40.0])
-    # http_retry_options = ExponentialRetry(attempts=2, statuses=[400])
-    http_retry_options = ExponentialRetry(attempts=2)
-    client_timeout = aiohttp.ClientTimeout(total=1*160, connect=None,
+
+def find_paging_cursor_count(res):
+    cursor, count = 1, 0
+
+    doc = xml.dom.minidom.parseString(res)
+    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+    links = doc.getElementsByTagName('link')
+    for le in links:
+        if le.getAttribute('rel') == 'next':
+            href = le.getAttribute('href')
+            for e in href.split('&'):
+                if 'next_cursor' in e:
+                    cursor = e.split('=')[1]
+
+    return count, cursor
+
+
+def build_connection_retry_settings(globopts):
+    retry = int(globopts['ConnectionRetry'.lower()])
+    sleep_retry = int(globopts['ConnectionSleepRetry'.lower()])
+    timeout = int(globopts['ConnectionTimeout'.lower()])
+    list_retry = [(i + 1) * sleep_retry for i in range(retry)]
+    return (retry, list_retry, timeout)
+
+
+async def http_get(logger, session, url, sslcontext=None):
+    try:
+        async with session.get(url, ssl=sslcontext) as response:
+            content = await response.text()
+            return content
+    except Exception as exc:
+        logger.error(exc)
+
+
+class ConnectorError(Exception):
+    pass
+
+
+async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url,
+                              custauth=None, paginated=False):
+
+    ssl_context = build_ssl_settings(globopts)
+    n_try, list_retry, client_timeout = build_connection_retry_settings(globopts)
+
+    http_retry_options = ListRetry(timeouts=list_retry)
+    client_timeout = aiohttp.ClientTimeout(total=client_timeout, connect=None,
                                            sock_connect=None, sock_read=None)
-    conn_try, connection_attempts = 1, 3
 
-    print('aiohttp_get - started', f' - {time.ctime()}')
     try:
         async with RetryClient(retry_options=http_retry_options, timeout=client_timeout) as session:
-            if paginated:
-                count, cursor = 1, 0
-                while count != 0:
-                    while conn_try <= connection_attempts:
+            n = 0
+            while n < n_try:
+                if paginated:
+                    count, cursor = 1, 0
+                    while count != 0:
                         try:
-                            async with session.get(url + f'&scope=&next_cursor={cursor}',
-                                                   ssl=sslcontext) as resp:
-                                print(resp.status)
-                                content = await resp.text()
-                                parsed = xml.dom.minidom.parseString(content)
-                                write_file(suffix, content)
-                                count = int(parsed.getElementsByTagName('count')[0].childNodes[0].data)
-                                links = parsed.getElementsByTagName('link')
-                                for le in links:
-                                    if le.getAttribute('rel') == 'next':
-                                        href = le.getAttribute('href')
-                                        for e in href.split('&'):
-                                            if 'next_cursor' in e:
-                                                cursor = e.split('=')[1]
-                                break
+                            content = await http_get(logger, session,
+                                                     '{}://{}{}&next_cursor={}'.format(scheme, host, url, cursor),
+                                                     ssl_context)
+                            count, cursor = find_paging_cursor_count(content)
+                            return content
                         except asyncio.TimeoutError as e:
-                            print('connection try - ', conn_try)
-                        conn_try += 1
-                    else:
-                        print('connection exhausted')
-                        break
-                print(f'file-{suffix} written', f' - {time.ctime()}')
+                            print('connection try - ', n_try)
+                else:
+                    try:
+                        content = await http_get(logger, session,
+                                                 '{}://{}{}'.format(scheme, host, url),
+                                                 ssl_context)
+                        return content
+                    except asyncio.TimeoutError as exc:
+                        print('connection try - ', n)
+                n += 1
             else:
-                async with session.get(url, ssl=sslcontext) as resp:
-                    print(f'HTTP {suffix} ', resp.status, f' - {time.ctime()}')
-                    content = await resp.text()
-                    write_file(suffix, content)
-                    print(f'file-{suffix} written', f' - {time.ctime()}')
+                print('connection exhausted')
 
     except Exception as e:
         print(type(e))

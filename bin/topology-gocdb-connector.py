@@ -78,22 +78,6 @@ def parse_source_sites(res, custname, uidservtype):
     return group_endpoints
 
 
-def find_paging_cursor_count(res):
-    cursor, count = 1, 0
-
-    doc = xml.dom.minidom.parseString(res)
-    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-    links = doc.getElementsByTagName('link')
-    for le in links:
-        if le.getAttribute('rel') == 'next':
-            href = le.getAttribute('href')
-            for e in href.split('&'):
-                if 'next_cursor' in e:
-                    cursor = e.split('=')[1]
-
-    return count, cursor
-
-
 def get_webapi_opts(cglob, confcust):
     webapi_custopts = confcust.get_webapiopts()
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
@@ -117,13 +101,13 @@ def write_state(confcust, fixed_date, state):
                     globopts['InputStateDays'.lower()])
 
 
-async def fetch_data(feed, api, auth_opts):
+async def fetch_data(feed, api, auth_opts, paginated):
     feed_parts = urlparse(feed)
     res = None
 
     res = await ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
                                     feed_parts.scheme, feed_parts.netloc, api,
-                                    custauth=auth_opts)
+                                    custauth=auth_opts, paginated=paginated)
 
     return res
 
@@ -204,45 +188,21 @@ def main():
     try:
         group_endpoints, group_groups = list(), list()
 
-        if topofeedpaging:
-            count, cursor = 1, 0
-            while count != 0:
-                res = fetch_data(topofeed, "{}&next_cursor={}".format(SERVGROUPPI, str(cursor)), auth_opts)
-                count, cursor = find_paging_cursor_count(res)
-                tmp_gg, tmp_ge = parse_source_servicegroups(res, custname, uidservtype)
-                group_endpoints += tmp_ge
-                group_groups += tmp_gg
+        loop = uvloop.new_event_loop()
+        asyncio.set_event_loop(loop)
+        fetched_topology = loop.run_until_complete(asyncio.gather(
+            fetch_data(topofeed, SERVENDPI, auth_opts, topofeedpaging),
+            fetch_data(topofeed, SERVGROUPPI, auth_opts, topofeedpaging),
+            fetch_data(topofeed, SITESPI, auth_opts, topofeedpaging)
+        ))
+        print(fetched_topology)
+        raise SystemExit(1)
 
-            count, cursor = 1, 0
-            while count != 0:
-                res = fetch_data(topofeed, '{}&next_cursor={}'.format(SERVENDPI, str(cursor)), auth_opts)
-                count, cursor = find_paging_cursor_count(res)
-                tmp_ge = parse_source_endpoints(res, custname, uidservtype)
-                group_endpoints += tmp_ge
+        group_groups, group_endpoints = parse_source_servicegroups(res, custname, uidservtype)
 
-            count, cursor = 1, 0
-            while count != 0:
-                res = fetch_data(topofeed, '{}&next_cursor={}'.format(SITESPI, str(cursor)), auth_opts)
-                count, cursor = find_paging_cursor_count(res)
-                tmp_gg = parse_source_sites(res, custname, uidservtype)
-                group_groups += tmp_gg
+        group_endpoints += parse_source_endpoints(res, custname, uidservtype)
 
-        else:
-            loop = uvloop.new_event_loop()
-            asyncio.set_event_loop(loop)
-            fetched_topology = loop.run_until_complete(asyncio.gather(
-                fetch_data(topofeed, SERVENDPI, auth_opts),
-                fetch_data(topofeed, SERVGROUPPI, auth_opts),
-                fetch_data(topofeed, SITESPI, auth_opts)
-            ))
-            print(fetched_topology)
-            raise SystemExit(1)
-
-            group_groups, group_endpoints = parse_source_servicegroups(res, custname, uidservtype)
-
-            group_endpoints += parse_source_endpoints(res, custname, uidservtype)
-
-            group_groups += parse_source_sites(res, custname, uidservtype)
+        group_groups += parse_source_sites(res, custname, uidservtype)
 
         write_state(confcust, fixed_date, True)
         webapi_opts = get_webapi_opts(cglob, confcust)
