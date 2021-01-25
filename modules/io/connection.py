@@ -4,23 +4,80 @@ import requests
 import socket
 import xml.dom.minidom
 
-from argo_egi_connectors.helpers import retry
-
 from xml.parsers.expat import ExpatError
 from urllib.parse import urlparse
+
+
+class Retry:
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        """
+        Decorator that will repeat function calls in case of errors.
+
+        First three arguments of decorated function should be:
+            - logger object
+            - prefix of each log msg that is usually name of object
+              constructing msg
+            - dictionary holding num of retries, timeout and sleepretry
+              parameters
+        """
+        result = None
+        logger = args[0]
+        objname = args[1]
+        self.numr = int(args[2]['ConnectionRetry'.lower()])
+        self.sleepretry = int(args[2]['ConnectionSleepRetry'.lower()])
+        loops = self.numr + 1
+        try:
+            i = 1
+            while i <= loops:
+                try:
+                    result = self.func(*args, **kwargs)
+                except Exception as e:
+                    if i == loops:
+                        raise e
+                    else:
+                        if getattr(logger, 'job', False):
+                            msg = '{} {}() Customer:{} Job:{} Retry:{} Sleeping:{} - {}'.format(objname,
+                                                                                                self.func.__name__,
+                                                                                                logger.customer, logger.job, i,
+                                                                                                self.sleepretry, repr(e))
+
+                        else:
+                            msg = '{} {}() Customer:{} Retry:{} Sleeping:{} - {}'.format(objname,
+                                                                                         self.func.__name__,
+                                                                                         logger.customer, i,
+                                                                                         self.sleepretry, repr(e))
+                        logger.warn(msg)
+                        time.sleep(self.sleepretry)
+                        pass
+                else:
+                    break
+                i += 1
+        except Exception as e:
+            if getattr(logger, 'job', False):
+                msg = '{} {}() Customer:{} Job:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, logger.job, repr(e))
+            else:
+                msg = '{} {}() Customer:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, repr(e))
+
+            logger.error(msg)
+            return False
+
+        return result
 
 
 class ConnectorError(Exception):
     pass
 
 
-@retry
-def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
+@Retry
+def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url, custauth=None):
     try:
         buf = None
 
         headers = {}
-        if custauth and msgprefix == 'WebAPI':
+        if custauth and msgprefix == 'metricprofile-webapi-connector.py':
             headers = {'x-api-key': custauth['WebApiToken'.lower()],
                        'Accept': 'application/json'}
         elif msgprefix != 'PoemReader' and custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
@@ -47,7 +104,7 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
             else:
                 raise requests.exceptions.RequestException('No Location header set for redirect')
 
-            return connection(logger, msgprefix, globopts, scheme, redir.netloc, redir.path + '?' + redir.query, custauth=custauth)
+            return ConnectionWithRetry(logger, msgprefix, globopts, scheme, redir.netloc, redir.path + '?' + redir.query, custauth=custauth)
 
         elif response.status_code == 200:
             buf = response.content
@@ -119,49 +176,3 @@ def connection(logger, msgprefix, globopts, scheme, host, url, custauth=None):
                                                        repr(e))
         logger.warn(msg)
         return False
-
-
-def parse_xml(logger, objname, globopts, buf, method):
-    try:
-        doc = xml.dom.minidom.parseString(buf)
-
-    except ExpatError as e:
-        if getattr(logger, 'job', False):
-            msg = '{} Customer:{} Job:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
-        else:
-            msg = '{} Customer:{} : Error parsing XML feed {} - {}'.format(objname, logger.customer, method, repr(e))
-        logger.error(msg)
-        raise ConnectorError()
-
-    except Exception as e:
-        if getattr(logger, 'job', False):
-            msg = '{} Customer:{} Job:{} : Error {} - {}'.format(objname, logger.customer, logger.job, method, repr(e))
-        else:
-            msg = '{} Customer:{} : Error {} - {}'.format(objname, logger.customer, method, repr(e))
-        logger.error(msg)
-        raise e
-
-    else:
-        return doc
-
-
-def parse_json(logger, objname, globopts, buf, method):
-    try:
-        doc = json.loads(buf)
-
-    except ValueError as e:
-        if getattr(logger, 'job', False):
-            logger.error('{} Customer:{} Job:{} : Error parsing JSON feed {} - {}'.format(objname, logger.customer, logger.job, method, repr(e)))
-        else:
-            logger.error('{} Customer:{} : Error parsing JSON feed {} - {}'.format(objname, logger.customer, method, repr(e)))
-        raise ConnectorError()
-
-    except Exception as e:
-        if getattr(logger, 'job', False):
-            logger.error('{} Customer:{} Job:{} : Error {} - {}'.format(objname, logger.customer, logger.job, method, repr(e)))
-        else:
-            logger.error('{} Customer:{} : Error {} - {}'.format(objname, logger.customer, method, repr(e)))
-        raise e
-
-    else:
-        return doc

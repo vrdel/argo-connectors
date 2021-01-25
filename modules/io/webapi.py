@@ -1,58 +1,10 @@
 import datetime
 import os
-import json
 import requests
+import json
 
-import avro.schema
-from avro.datafile import DataFileWriter
-from avro.io import DatumWriter, BinaryEncoder
-
-from io import BytesIO
-
-from argo_egi_connectors.helpers import datestamp, retry, module_class_name
-
-
-daysback = 1
-
-
-class AvroWriteException(BaseException):
-    pass
-
-
-class AvroWriter(object):
-    """ AvroWriter """
-    def __init__(self, schema, outfile):
-        self.schema = schema
-        self.outfile = outfile
-        self.datawrite = None
-        self.avrofile = None
-        self._load_datawriter()
-
-    def _load_datawriter(self):
-        try:
-            lschema = load_schema(self.schema)
-            self.avrofile = open(self.outfile, 'w+b')
-            self.datawrite = DataFileWriter(self.avrofile, DatumWriter(), lschema)
-        except Exception:
-            return False
-
-        return True
-
-    def write(self, data):
-        try:
-            if (not self.datawrite or not self.avrofile):
-                raise AvroWriteException('AvroFileWriter not initalized')
-
-            for elem in data:
-                self.datawrite.append(elem)
-
-            self.datawrite.close()
-            self.avrofile.close()
-
-        except Exception as e:
-            return False, e
-
-        return True, None
+from argo_egi_connectors.io.connection import Retry
+from argo_egi_connectors.tools import module_class_name
 
 
 class WebAPI(object):
@@ -117,7 +69,7 @@ class WebAPI(object):
         return formatted
 
     @staticmethod
-    @retry
+    @Retry
     def _send(logger, msgprefix, retryopts, api, data_send, headers, connector,
               verifycert=False):
         ret = requests.post(api, data=json.dumps(data_send), headers=headers,
@@ -136,14 +88,14 @@ class WebAPI(object):
         return ret.status_code
 
     @staticmethod
-    @retry
+    @Retry
     def _get(logger, msgprefix, retryopts, api, headers, verifycert=False):
         ret = requests.get(api, headers=headers,
                            timeout=retryopts['ConnectionTimeout'.lower()], verify=verifycert)
         return json.loads(ret.content)
 
     @staticmethod
-    @retry
+    @Retry
     def _delete(logger, msgprefix, retryopts, api, headers, id=None, verifycert=False):
         from urllib.parse import urlparse
         loc = urlparse(api)
@@ -156,7 +108,7 @@ class WebAPI(object):
         return ret
 
     @staticmethod
-    @retry
+    @Retry
     def _put(logger, msgprefix, retryopts, api, data_send, id, headers, verifycert=False):
         from urllib.parse import urlparse
         loc = urlparse(api)
@@ -239,43 +191,3 @@ class WebAPI(object):
         elif ret == 409:
             self._update(api, data_send)
 
-
-def load_schema(schema):
-    try:
-        f = open(schema)
-        schema = avro.schema.parse(f.read())
-        return schema
-    except Exception as e:
-        raise e
-
-
-def write_state(caller, statedir, state, savedays, date=None):
-    filenamenew = ''
-    if 'topology' in caller:
-        filenamebase = 'topology-ok'
-    elif 'metricprofile' in caller:
-        filenamebase = 'metricprofile-ok'
-    elif 'weights' in caller:
-        filenamebase = 'weights-ok'
-    elif 'downtimes' in caller:
-        filenamebase = 'downtimes-ok'
-
-    if date:
-        datebackstamp = date
-    else:
-        datebackstamp = datestamp(daysback)
-
-    filenamenew = filenamebase + '_' + datebackstamp
-    db = datetime.datetime.strptime(datebackstamp, '%Y_%m_%d')
-
-    datestart = db - datetime.timedelta(days=int(savedays))
-    i = 0
-    while i < int(savedays) * 2:
-        d = datestart - datetime.timedelta(days=i)
-        filenameold = filenamebase + '_' + d.strftime('%Y_%m_%d')
-        if os.path.exists(statedir + '/' + filenameold):
-            os.remove(statedir + '/' + filenameold)
-        i += 1
-
-    with open(statedir + '/' + filenamenew, 'w') as fp:
-        fp.write(str(state))
