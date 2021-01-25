@@ -31,7 +31,10 @@ import sys
 import re
 import xml.dom.minidom
 
-from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
+import uvloop
+import asyncio
+
+from argo_egi_connectors.io.async_connection import ConnectionWithRetry, ConnectorError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -114,13 +117,13 @@ def write_state(confcust, fixed_date, state):
                     globopts['InputStateDays'.lower()])
 
 
-def fetch_data(feed, api, auth_opts):
+async def fetch_data(feed, api, auth_opts):
     feed_parts = urlparse(feed)
     res = None
 
-    res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
-                              feed_parts.scheme, feed_parts.netloc, api,
-                              custauth=auth_opts)
+    res = await ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
+                                    feed_parts.scheme, feed_parts.netloc, api,
+                                    custauth=auth_opts)
 
     return res
 
@@ -225,13 +228,20 @@ def main():
                 group_groups += tmp_gg
 
         else:
-            res = fetch_data(topofeed, SERVGROUPPI, auth_opts)
+            loop = uvloop.new_event_loop()
+            asyncio.set_event_loop(loop)
+            fetched_topology = loop.run_until_complete(asyncio.gather(
+                fetch_data(topofeed, SERVENDPI, auth_opts),
+                fetch_data(topofeed, SERVGROUPPI, auth_opts),
+                fetch_data(topofeed, SITESPI, auth_opts)
+            ))
+            print(fetched_topology)
+            raise SystemExit(1)
+
             group_groups, group_endpoints = parse_source_servicegroups(res, custname, uidservtype)
 
-            res = fetch_data(topofeed, SERVGROUPPI, auth_opts)
             group_endpoints += parse_source_endpoints(res, custname, uidservtype)
 
-            res = fetch_data(topofeed, SITESPI, auth_opts)
             group_groups += parse_source_sites(res, custname, uidservtype)
 
         write_state(confcust, fixed_date, True)
