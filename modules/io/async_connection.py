@@ -11,7 +11,7 @@ from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
 
 def build_ssl_settings(globopts):
     sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()])
-    sslcontext.load_cert_chain('/etc/grid-security/hostcert.pem', '/etc/grid-security/hostkey.pem')
+    sslcontext.load_cert_chain(globopts['HostCert'.lower()], globopts['HostKey'.lower()])
 
     return sslcontext
 
