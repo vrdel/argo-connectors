@@ -17,20 +17,6 @@ def build_ssl_settings(globopts):
     return sslcontext
 
 
-def find_paging_cursor_count(res):
-    doc = xml.dom.minidom.parseString(res)
-    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-    links = doc.getElementsByTagName('link')
-    for le in links:
-        if le.getAttribute('rel') == 'next':
-            href = le.getAttribute('href')
-            for e in href.split('&'):
-                if 'next_cursor' in e:
-                    cursor = e.split('=')[1]
-
-    return count, cursor
-
-
 def build_connection_retry_settings(globopts):
     retry = int(globopts['ConnectionRetry'.lower()])
     sleep_retry = int(globopts['ConnectionSleepRetry'.lower()])
@@ -55,7 +41,6 @@ class ConnectorError(Exception):
 
 async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url,
                               custauth=None, paginated=False):
-
     ssl_context = build_ssl_settings(globopts)
     n_try, list_retry, client_timeout = build_connection_retry_settings(globopts)
 
@@ -67,25 +52,13 @@ async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url,
         async with RetryClient(retry_options=http_retry_options, timeout=client_timeout) as session:
             n = 1
             while n <= n_try:
-                if paginated:
-                    count, cursor = 1, 0
-                    while count != 0:
-                        try:
-                            content = await http_get(logger, session,
-                                                     '{}://{}{}&next_cursor={}'.format(scheme, host, url, cursor),
-                                                     ssl_context)
-                            count, cursor = find_paging_cursor_count(content)
-                            return content
-                        except asyncio.TimeoutError as e:
-                            logger.error(f'connection try - {n}')
-                else:
-                    try:
-                        content = await http_get(logger, session,
-                                                 '{}://{}{}'.format(scheme, host, url),
-                                                 ssl_context)
-                        return content
-                    except asyncio.TimeoutError as exc:
-                        logger.error(f'Connection try - {n}')
+                try:
+                    content = await http_get(logger, session,
+                                             '{}://{}{}'.format(scheme, host, url),
+                                             ssl_context)
+                    return content
+                except asyncio.TimeoutError as exc:
+                    logger.error(f'Connection try - {n}')
                 n += 1
             else:
                 logger.error('Connection retry exhausted')
