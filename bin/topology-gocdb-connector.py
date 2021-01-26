@@ -103,15 +103,73 @@ def write_state(confcust, fixed_date, state):
                     globopts['InputStateDays'.lower()])
 
 
+def find_next_paging_cursor_count(res):
+    cursor, count = None, None
+
+    doc = xml.dom.minidom.parseString(res)
+    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+    links = doc.getElementsByTagName('link')
+    for link in links:
+        if link.getAttribute('rel') == 'next':
+            href = link.getAttribute('href')
+            for query in href.split('&'):
+                if 'next_cursor' in query:
+                    cursor = query.split('=')[1]
+
+    return count, cursor
+
+
+def filter_multiple_tags(data):
+    """
+        Paginated content is represented with multiple XML enclosing tags
+        in a single buffer:
+
+        <?xml version="1.0" encoding="UTF-8"?>
+        <results>
+            topology entities
+        </results>
+        <?xml version="1.0" encoding="UTF-8"?>
+        <results>
+            topology entities
+        </results>
+        ...
+
+        Remove them and leave only one enclosing.
+    """
+    data_lines = data.split('\n')
+    data_lines = list(filter(lambda line:
+                             '</results>' not in line
+                             and '<results>' not in line
+                             and '<?xml' not in line,
+                             data_lines))
+    data_lines.insert(0, '<?xml version="1.0" encoding="UTF-8"?>')
+    data_lines.insert(1, '<results>')
+    data_lines.append('</results>')
+    return '\n'.join(data_lines)
+
+
 async def fetch_data(feed, api, auth_opts, paginated):
     feed_parts = urlparse(feed)
-    res = None
+    fetched_data = list()
+    if paginated:
+        count, cursor = 1, 0
+        while count != 0:
+            res = await ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
+                                            feed_parts.scheme,
+                                            feed_parts.netloc,
+                                            '{}&next_cursor={}'.format(api, cursor),
+                                            custauth=auth_opts)
+            count, cursor = find_next_paging_cursor_count(res)
+            fetched_data.append(res)
 
-    res = await ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
-                                    feed_parts.scheme, feed_parts.netloc, api,
-                                    custauth=auth_opts, paginated=paginated)
+        return filter_multiple_tags(''.join(fetched_data))
 
-    return res
+    else:
+        res = await ConnectionWithRetry(logger, os.path.basename(sys.argv[0]),
+                                        globopts, feed_parts.scheme,
+                                        feed_parts.netloc, api,
+                                        custauth=auth_opts)
+        return res
 
 
 def send_webapi(webapi_opts, group_groups, group_endpoints):

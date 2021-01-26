@@ -64,5 +64,6 @@ async def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url,
                 logger.error('Connection retry exhausted')
 
     except Exception as e:
+        # FIXME: correct logger messages
         print(type(e))
         print(e)
