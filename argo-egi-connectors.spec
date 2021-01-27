@@ -14,6 +14,7 @@ Requires: python3-avro
 Requires: python3-requests
 Requires: python3-aiohttp
 Requires: python3-aiohttp-retry
+Requires: python3-aiofiles
 
 BuildRequires: python3-devel python3-setuptools
 

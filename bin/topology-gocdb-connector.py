@@ -90,17 +90,17 @@ def get_webapi_opts(cglob, confcust):
     return webapi_opts
 
 
-def write_state(confcust, fixed_date, state):
+async def write_state(confcust, fixed_date, state):
     # safely assume here one customer defined in customer file
     cust = list(confcust.get_customers())[0]
     statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
     if fixed_date:
-        state_write(sys.argv[0], statedir, state,
-                    globopts['InputStateDays'.lower()],
-                    fixed_date.replace('-', '_'))
+        await state_write(sys.argv[0], statedir, state,
+                          globopts['InputStateDays'.lower()],
+                          fixed_date.replace('-', '_'))
     else:
-        state_write(sys.argv[0], statedir, state,
-                    globopts['InputStateDays'.lower()])
+        await state_write(sys.argv[0], statedir, state,
+                          globopts['InputStateDays'.lower()])
 
 
 def find_next_paging_cursor_count(res):
@@ -277,7 +277,10 @@ def main():
         group_endpoints += parsed_topology[1]
         group_groups += parsed_topology[2]
 
-        write_state(confcust, fixed_date, True)
+        loop.run_until_complete(
+            write_state(confcust, fixed_date, True)
+        )
+
         webapi_opts = get_webapi_opts(cglob, confcust)
 
         numge = len(group_endpoints)
