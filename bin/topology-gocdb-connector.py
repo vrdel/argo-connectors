@@ -36,7 +36,7 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from argo_egi_connectors.io.async_connection import ConnectionWithRetry, ConnectorError
+from argo_egi_connectors.io.async_connection import ConnectorError, SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -154,21 +154,22 @@ async def fetch_data(feed, api, auth_opts, paginated):
     if paginated:
         count, cursor = 1, 0
         while count != 0:
-            res = await ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
-                                            feed_parts.scheme,
-                                            feed_parts.netloc,
-                                            '{}&next_cursor={}'.format(api, cursor),
-                                            custauth=auth_opts)
+            session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
+                                       globopts)
+            res = await session.http_get(feed_parts.scheme, feed_parts.netloc,
+                                         '{}&next_cursor={}'.format(api,
+                                                                    cursor),
+                                         custauth=auth_opts)
             count, cursor = find_next_paging_cursor_count(res)
             fetched_data.append(res)
 
         return filter_multiple_tags(''.join(fetched_data))
 
     else:
-        res = await ConnectionWithRetry(logger, os.path.basename(sys.argv[0]),
-                                        globopts, feed_parts.scheme,
-                                        feed_parts.netloc, api,
-                                        custauth=auth_opts)
+        session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
+                                   globopts)
+        res = await session.http_get(feed_parts.scheme, feed_parts.netloc, api,
+                                     custauth=auth_opts)
         return res
 
 
