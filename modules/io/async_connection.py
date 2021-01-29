@@ -44,37 +44,41 @@ class SessionWithRetry(object):
     async def _http_method(self, method, url, data=None, headers=None,
                            auth=None, sslcontext=None):
         method_obj = getattr(self.session, method)
-        try:
-            async with method_obj(url, data=None, headers=None, ssl=sslcontext,
-                                  auth=auth) as response:
-                content = await response.text()
-                return content
-        except Exception as exc:
-            self.logger.error('from http_{}() - {}'.format(method, repr(exc)))
-            raise exc
-
-    async def http_get(self, scheme, host, url, custauth=None):
+        raised_exc = None
         n = 1
         try:
             while n <= self.n_try:
                 try:
-                    content = await self._http_method('get',
-                                                      '{}://{}{}'.format(scheme,
-                                                                         host,
-                                                                         url),
-                                                      sslcontext=self.ssl_context)
-                    return content
-                except asyncio.TimeoutError as exc:
-                    self.logger.error(f'Connection try - {n}')
+                    async with method_obj(url, data=None, headers=None,
+                                          ssl=sslcontext, auth=auth) as response:
+                        content = await response.text()
+                        return content
+
+                except Exception as exc:
+                    self.logger.error('from http_{}() - {}'.format(method, repr(exc)))
+                    raised_exc = exc
+
+                self.logger.info(f'Connection try - {n}')
                 n += 1
 
             else:
                 self.logger.error('Connection retry exhausted')
+                raise raised_exc
 
-        except Exception as e:
+        except Exception as exc:
             # FIXME: correct logger messages
-            print(type(e))
-            print(e)
+            raise exc
+
         finally:
             await self.session.close()
 
+    async def http_get(self, scheme, host, url, custauth=None):
+        try:
+            content = await self._http_method('get', '{}://{}{}'.format(scheme,
+                                                                        host,
+                                                                        url),
+                                              sslcontext=self.ssl_context)
+            return content
+
+        except Exception as exc:
+            raise exc
