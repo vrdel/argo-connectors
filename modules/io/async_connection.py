@@ -29,26 +29,6 @@ class ConnectorError(Exception):
     pass
 
 
-async def http_put(logger, session, url, data, headers=None, sslcontext=None):
-    try:
-        async with session.put(url, data=data, headers=header, ssl=sslcontext) as response:
-            content = await response.text()
-            return content
-    except Exception as exc:
-        logger.error('from http_put() {}'.format(repr(exc)))
-        raise exc
-
-
-async def http_get(logger, session, url, auth=None, sslcontext=None):
-    try:
-        async with session.get(url, ssl=sslcontext, auth=auth) as response:
-            content = await response.text()
-            return content
-    except Exception as exc:
-        logger.error('from http_get() {}'.format(repr(exc)))
-        raise exc
-
-
 class SessionWithRetry(object):
     def __init__(self, logger, msgprefix, globopts, custauth=None):
         self.ssl_context = build_ssl_settings(globopts)
@@ -61,21 +41,31 @@ class SessionWithRetry(object):
         self.n_try = n_try
         self.logger = logger
 
+    async def _http_method(self, method, url, data=None, headers=None,
+                           auth=None, sslcontext=None):
+        method_obj = getattr(self.session, method)
+        try:
+            async with method_obj(url, data=None, headers=None, ssl=sslcontext,
+                                  auth=auth) as response:
+                content = await response.text()
+                return content
+        except Exception as exc:
+            self.logger.error('from http_{}() - {}'.format(method, repr(exc)))
+            raise exc
+
     async def http_get(self, scheme, host, url, custauth=None):
         n = 1
         try:
             while n <= self.n_try:
                 try:
-                    content = await http_get(self.logger, self.session,
-                                             '{}://{}{}'.format(scheme, host,
-                                                                url),
-                                             sslcontext=self.ssl_context)
+                    content = await self._http_method('get',
+                                                      '{}://{}{}'.format(scheme,
+                                                                         host,
+                                                                         url),
+                                                      sslcontext=self.ssl_context)
                     return content
                 except asyncio.TimeoutError as exc:
                     self.logger.error(f'Connection try - {n}')
-                finally:
-                    await self.session.close()
-
                 n += 1
 
             else:
@@ -85,3 +75,6 @@ class SessionWithRetry(object):
             # FIXME: correct logger messages
             print(type(e))
             print(e)
+        finally:
+            await self.session.close()
+
