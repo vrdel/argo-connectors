@@ -5,6 +5,7 @@ import json
 
 from argo_egi_connectors.io.connection import Retry
 from argo_egi_connectors.tools import module_class_name
+from argo_egi_connectors.io.async_connection import SessionWithRetry
 
 
 class WebAPI(object):
@@ -39,6 +40,8 @@ class WebAPI(object):
         self.endpoints_group = endpoints_group
         self.date = date or self._construct_datenow()
         self.verifycert = eval(verifycert)
+        self.session = SessionWithRetry(self.logger, module_class_name(self),
+                                        self.retry_options)
 
     def _construct_datenow(self):
         d = datetime.datetime.now()
@@ -87,40 +90,29 @@ class WebAPI(object):
                               ret.content))
         return ret.status_code
 
-    @staticmethod
-    @Retry
-    def _get(logger, msgprefix, retryopts, api, headers, verifycert=False):
-        ret = requests.get(api, headers=headers,
-                           timeout=retryopts['ConnectionTimeout'.lower()], verify=verifycert)
-        return json.loads(ret.content)
+    async def _get(self, api, headers):
+        res = await self.session.http_get(api, headers=headers)
+        return json.loads(res)
 
-    @staticmethod
-    @Retry
-    def _delete(logger, msgprefix, retryopts, api, headers, id=None, verifycert=False):
+    async def _delete(self, api, id=None):
         from urllib.parse import urlparse
         loc = urlparse(api)
         if id is not None:
             loc = '{}://{}{}/{}'.format(loc.scheme, loc.hostname, loc.path, id)
         else:
             loc = '{}://{}{}'.format(loc.scheme, loc.hostname, loc.path)
-        ret = requests.delete(loc, headers=headers,
-                              timeout=retryopts['ConnectionTimeout'.lower()], verify=verifycert)
+        ret = await self.session.http_delete(loc, headers=self.headers)
         return ret
 
-    @staticmethod
-    @Retry
-    def _put(logger, msgprefix, retryopts, api, data_send, id, headers, verifycert=False):
+    async def _put(self, api, data_send, id):
         from urllib.parse import urlparse
         loc = urlparse(api)
         loc = '{}://{}{}/{}?{}'.format(loc.scheme, loc.hostname, loc.path, id, loc.query)
-        ret = requests.put(loc, data=json.dumps(data_send), headers=headers,
-                           timeout=retryopts['ConnectionTimeout'.lower()],
-                           verify=verifycert)
+        ret = await self.session.put(loc, data=json.dumps(data_send), headers=self.headers)
         return ret
 
-    def _update(self, api, data_send):
-        ret = self._get(self.logger, module_class_name(self),
-                        self.retry_options, api, self.headers, self.verifycert)
+    async def _update(self, api, data_send):
+        ret = await self._get(api, self.headers)
         target = list(filter(lambda w: w['name'] == data_send['name'], ret['data']))
         if len(target) > 1:
             self.logger.error('%s %s() Customer:%s Job:%s - HTTP PUT %s' %
@@ -129,9 +121,7 @@ class WebAPI(object):
                                'Name of resource not unique on WEB-API, cannot proceed with update'))
         else:
             id = target[0]['id']
-            ret = self._put(self.logger, module_class_name(self),
-                            self.retry_options, api, data_send, id, self.headers,
-                            self.verifycert)
+            ret = await self._put(api, data_send, id)
             if ret.status_code == 200:
                 self.logger.info('Succesfully updated (HTTP PUT) resource')
             else:
@@ -140,23 +130,19 @@ class WebAPI(object):
                                    self.logger.customer, self.logger.job,
                                    ret.content))
 
-    def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
+    async def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
         id = None
-        data = self._get(self.logger, module_class_name(self),
-                         self.retry_options, api, self.headers,
-                         self.verifycert)
+        data = await self._get(api, self.headers)
         if not topo_component and not downtimes_component:
             id = data['data'][0]['id']
-        ret = self._delete(self.logger, module_class_name(self),
-                           self.retry_options, api, self.headers, id,
-                           self.verifycert)
+        ret = await self._delete(api, id)
         if ret.status_code == 200:
             self._send(self.logger, module_class_name(self),
                        self.retry_options, api, data_send, self.headers,
                        self.connector, self.verifycert)
             self.logger.info('Succesfully deleted and created new resource')
 
-    def send(self, data, topo_component=None, downtimes_component=None):
+    async def send(self, data, topo_component=None, downtimes_component=None):
         if topo_component:
             # /topology/groups, /topology/endpoints
             webapi_url = '{}/{}'.format(self.webapi_method, topo_component)
@@ -187,7 +173,7 @@ class WebAPI(object):
 
         # delete resource on WEB-API and resend
         if ret == 409 and topo_component or downtimes_component:
-            self._delete_and_resend(api, data_send, topo_component, downtimes_component)
+            await self._delete_and_resend(api, data_send, topo_component, downtimes_component)
         elif ret == 409:
-            self._update(api, data_send)
+            await self._update(api, data_send)
 
