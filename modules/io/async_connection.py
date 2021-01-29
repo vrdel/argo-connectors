@@ -40,17 +40,17 @@ class SessionWithRetry(object):
         self.session = RetryClient(retry_options=http_retry_options, timeout=client_timeout)
         self.n_try = n_try
         self.logger = logger
+        self.custauth = custauth
 
-    async def _http_method(self, method, url, data=None, headers=None,
-                           auth=None, sslcontext=None):
+    async def _http_method(self, method, url, data=None, headers=None):
         method_obj = getattr(self.session, method)
         raised_exc = None
         n = 1
         try:
             while n <= self.n_try:
                 try:
-                    async with method_obj(url, data=None, headers=None,
-                                          ssl=sslcontext, auth=auth) as response:
+                    async with method_obj(url, data=data, headers=headers,
+                                          ssl=self.sslcontext, auth=self.custauth) as response:
                         content = await response.text()
                         return content
 
@@ -72,12 +72,17 @@ class SessionWithRetry(object):
         finally:
             await self.session.close()
 
-    async def http_get(self, scheme, host, url, custauth=None):
+    async def http_get(self, url):
         try:
-            content = await self._http_method('get', '{}://{}{}'.format(scheme,
-                                                                        host,
-                                                                        url),
-                                              sslcontext=self.ssl_context)
+            content = await self._http_method('get', url)
+            return content
+
+        except Exception as exc:
+            raise exc
+
+    async def http_put(self, url, data):
+        try:
+            content = await self._http_method('put', url, data=data)
             return content
 
         except Exception as exc:

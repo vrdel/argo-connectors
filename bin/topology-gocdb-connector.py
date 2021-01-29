@@ -155,11 +155,11 @@ async def fetch_data(feed, api, auth_opts, paginated):
         count, cursor = 1, 0
         while count != 0:
             session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
-                                       globopts)
-            res = await session.http_get(feed_parts.scheme, feed_parts.netloc,
-                                         '{}&next_cursor={}'.format(api,
-                                                                    cursor),
-                                         custauth=auth_opts)
+                                       globopts, custauth=auth_opts)
+            res = await session.http_get(
+                '{}://{}{}&next_cursor={}'.format(feed_parts.scheme,
+                                                  feed_parts.netloc, api,
+                                                  cursor), custauth=auth_opts)
             count, cursor = find_next_paging_cursor_count(res)
             fetched_data.append(res)
 
@@ -167,8 +167,10 @@ async def fetch_data(feed, api, auth_opts, paginated):
 
     else:
         session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
-                                   globopts)
-        res = await session.http_get(feed_parts.scheme, feed_parts.netloc, api,
+                                   globopts, custauth=auth_opts)
+        res = await session.http_get('{}://{}{}'.format(feed_parts.scheme,
+                                                        feed_parts.netloc,
+                                                        api),
                                      custauth=auth_opts)
         return res
 
