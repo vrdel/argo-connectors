@@ -124,3 +124,6 @@ class SessionWithRetry(object):
 
         except Exception as exc:
             raise exc
+
+    async def close(self):
+        return await self.session.close()

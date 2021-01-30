@@ -36,7 +36,7 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from argo_egi_connectors.io.async_connection import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.connection import ConnectorError, SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -179,11 +179,10 @@ async def send_webapi(webapi_opts, group_groups, group_endpoints):
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]),
-                    verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
+                    int(globopts['ConnectionSleepRetry'.lower()]))
     await webapi.send(group_groups, 'groups')
     await webapi.send(group_endpoints, 'endpoints')
-    await webapi.session.session.close()
+    await webapi.session.close()
 
 
 def write_avro(confcust, group_groups, group_endpoints, fixed_date):
