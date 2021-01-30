@@ -41,7 +41,8 @@ class WebAPI(object):
         self.date = date or self._construct_datenow()
         self.verifycert = eval(verifycert)
         self.session = SessionWithRetry(self.logger, module_class_name(self),
-                                        self.retry_options)
+                                        self.retry_options, verbose_ret=True,
+                                        handle_session_close=True)
 
     def _construct_datenow(self):
         d = datetime.datetime.now()
@@ -71,28 +72,25 @@ class WebAPI(object):
 
         return formatted
 
-    @staticmethod
-    @Retry
-    def _send(logger, msgprefix, retryopts, api, data_send, headers, connector,
-              verifycert=False):
-        ret = requests.post(api, data=json.dumps(data_send), headers=headers,
-                            timeout=retryopts['ConnectionTimeout'.lower()],
-                            verify=verifycert)
-        if ret.status_code != 201:
+    async def _send(self, api, data_send, connector):
+        content, headers, status = await self.session.http_post(api,
+                                                                data=json.dumps(data_send),
+                                                                headers=self.headers)
+        if status != 201:
             if connector.startswith('topology') or connector.startswith('downtimes'):
-                logger.error('%s %s() Customer:%s - HTTP POST %s' % (msgprefix,
-                                                                     '_send',
-                                                                     logger.customer,
-                                                                     ret.content))
+                self.logger.error('%s %s() Customer:%s - HTTP POST %s' % (module_class_name(self),
+                                                                          '_send',
+                                                                          self.logger.customer,
+                                                                          content))
             else:
-                logger.error('%s %s() Customer:%s Job:%s - HTTP POST %s' %
-                             (msgprefix, '_send', logger.customer, logger.job,
-                              ret.content))
-        return ret.status_code
+                self.logger.error('%s %s() Customer:%s Job:%s - HTTP POST %s' %
+                                  (module_class_name(self), '_send', self.logger.customer, self.logger.job,
+                                   content))
+        return status
 
-    async def _get(self, api, headers):
-        res = await self.session.http_get(api, headers=headers)
-        return json.loads(res)
+    async def _get(self, api):
+        content, headers, status = await self.session.http_get(api, headers=self.headers)
+        return json.loads(content)
 
     async def _delete(self, api, id=None):
         from urllib.parse import urlparse
@@ -101,19 +99,21 @@ class WebAPI(object):
             loc = '{}://{}{}/{}'.format(loc.scheme, loc.hostname, loc.path, id)
         else:
             loc = '{}://{}{}'.format(loc.scheme, loc.hostname, loc.path)
-        ret = await self.session.http_delete(loc, headers=self.headers)
-        return ret
+        content, headers, status = await self.session.http_delete(loc, headers=self.headers)
+        return status
 
     async def _put(self, api, data_send, id):
         from urllib.parse import urlparse
         loc = urlparse(api)
         loc = '{}://{}{}/{}?{}'.format(loc.scheme, loc.hostname, loc.path, id, loc.query)
-        ret = await self.session.put(loc, data=json.dumps(data_send), headers=self.headers)
-        return ret
+        content, headers, status = await self.session.http_put(loc,
+                                                               data=json.dumps(data_send),
+                                                               headers=self.headers)
+        return content
 
     async def _update(self, api, data_send):
-        ret = await self._get(api, self.headers)
-        target = list(filter(lambda w: w['name'] == data_send['name'], ret['data']))
+        content = await self._get(api)
+        target = list(filter(lambda w: w['name'] == data_send['name'], content['data']))
         if len(target) > 1:
             self.logger.error('%s %s() Customer:%s Job:%s - HTTP PUT %s' %
                               (module_class_name(self), '_update',
@@ -121,25 +121,23 @@ class WebAPI(object):
                                'Name of resource not unique on WEB-API, cannot proceed with update'))
         else:
             id = target[0]['id']
-            ret = await self._put(api, data_send, id)
-            if ret.status_code == 200:
+            content, headers, status = await self._put(api, data_send, id)
+            if status == 200:
                 self.logger.info('Succesfully updated (HTTP PUT) resource')
             else:
                 self.logger.error('%s %s() Customer:%s Job:%s - HTTP PUT %s' %
                                   (module_class_name(self), '_update',
                                    self.logger.customer, self.logger.job,
-                                   ret.content))
+                                   content))
 
     async def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
         id = None
-        data = await self._get(api, self.headers)
+        content = await self._get(api)
         if not topo_component and not downtimes_component:
-            id = data['data'][0]['id']
-        ret = await self._delete(api, id)
-        if ret.status_code == 200:
-            self._send(self.logger, module_class_name(self),
-                       self.retry_options, api, data_send, self.headers,
-                       self.connector, self.verifycert)
+            id = content['data'][0]['id']
+        status = await self._delete(api, id)
+        if status == 200:
+            await self._send(api, data_send, self.connector)
             self.logger.info('Succesfully deleted and created new resource')
 
     async def send(self, data, topo_component=None, downtimes_component=None):
@@ -167,13 +165,10 @@ class WebAPI(object):
         if self.connector.startswith('weights'):
             data_send = self._format_weights(data)
 
-        ret = self._send(self.logger, module_class_name(self),
-                         self.retry_options, api, data_send, self.headers,
-                         self.connector, self.verifycert)
+        status = await self._send(api, data_send, self.connector)
 
         # delete resource on WEB-API and resend
-        if ret == 409 and topo_component or downtimes_component:
+        if status == 409 and topo_component or downtimes_component:
             await self._delete_and_resend(api, data_send, topo_component, downtimes_component)
-        elif ret == 409:
+        elif status == 409:
             await self._update(api, data_send)
-
