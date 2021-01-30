@@ -183,6 +183,7 @@ async def send_webapi(webapi_opts, group_groups, group_endpoints):
                     verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
     await webapi.send(group_groups, 'groups')
     await webapi.send(group_endpoints, 'endpoints')
+    await webapi.session.session.close()
 
 
 def write_avro(confcust, group_groups, group_endpoints, fixed_date):

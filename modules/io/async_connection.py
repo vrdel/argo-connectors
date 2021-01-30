@@ -6,7 +6,9 @@ import asyncio
 import time
 import ssl
 import xml.dom.minidom
+
 from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
+from argo_egi_connectors.tools import module_class_name
 
 
 def build_ssl_settings(globopts):
@@ -34,7 +36,8 @@ class ConnectorError(Exception):
 
 
 class SessionWithRetry(object):
-    def __init__(self, logger, msgprefix, globopts, custauth=None):
+    def __init__(self, logger, msgprefix, globopts, custauth=None,
+                 verbose_ret=False, handle_session_close=False):
         self.ssl_context = build_ssl_settings(globopts)
         n_try, list_retry, client_timeout = build_connection_retry_settings(globopts)
         http_retry_options = ListRetry(timeouts=list_retry)
@@ -51,6 +54,8 @@ class SessionWithRetry(object):
             )
         else:
             self.custauth = None
+        self.verbose_ret = verbose_ret
+        self.handle_session_close = handle_session_close
 
     async def _http_method(self, method, url, data=None, headers=None):
         method_obj = getattr(self.session, method)
@@ -62,10 +67,13 @@ class SessionWithRetry(object):
                     async with method_obj(url, data=data, headers=headers,
                                           ssl=self.ssl_context, auth=self.custauth) as response:
                         content = await response.text()
-                        return content
+                        if self.verbose_ret:
+                            return (content, response.headers, response.status)
+                        else:
+                            return content
 
                 except Exception as exc:
-                    self.logger.error('from http_{}() - {}'.format(method, repr(exc)))
+                    self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
                     raised_exc = exc
 
                 self.logger.info(f'Connection try - {n}')
@@ -80,7 +88,8 @@ class SessionWithRetry(object):
             raise exc
 
         finally:
-            await self.session.close()
+            if not self.handle_session_close:
+                await self.session.close()
 
     async def http_get(self, url, headers=None):
         try:
