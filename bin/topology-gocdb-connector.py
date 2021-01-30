@@ -159,7 +159,7 @@ async def fetch_data(feed, api, auth_opts, paginated):
             res = await session.http_get(
                 '{}://{}{}&next_cursor={}'.format(feed_parts.scheme,
                                                   feed_parts.netloc, api,
-                                                  cursor), custauth=auth_opts)
+                                                  cursor))
             count, cursor = find_next_paging_cursor_count(res)
             fetched_data.append(res)
 
@@ -170,20 +170,19 @@ async def fetch_data(feed, api, auth_opts, paginated):
                                    globopts, custauth=auth_opts)
         res = await session.http_get('{}://{}{}'.format(feed_parts.scheme,
                                                         feed_parts.netloc,
-                                                        api),
-                                     custauth=auth_opts)
+                                                        api))
         return res
 
 
-def send_webapi(webapi_opts, group_groups, group_endpoints):
+async def send_webapi(webapi_opts, group_groups, group_endpoints):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
                     int(globopts['ConnectionSleepRetry'.lower()]),
                     verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
-    webapi.send(group_groups, 'groups')
-    webapi.send(group_endpoints, 'endpoints')
+    await webapi.send(group_groups, 'groups')
+    await webapi.send(group_endpoints, 'endpoints')
 
 
 def write_avro(confcust, group_groups, group_endpoints, fixed_date):
@@ -290,7 +289,8 @@ def main():
         numgg = len(group_groups)
 
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
-            send_webapi(webapi_opts, group_groups, group_endpoints)
+            loop.run_until_complete(send_webapi(webapi_opts, group_groups,
+                                                group_endpoints))
 
         if eval(globopts['GeneralWriteAvro'.lower()]):
             write_avro(confcust, group_groups, group_endpoints, fixed_date)
