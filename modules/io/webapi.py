@@ -1,9 +1,7 @@
 import datetime
 import os
-import requests
 import json
 
-from argo_egi_connectors.io.connection import Retry
 from argo_egi_connectors.tools import module_class_name
 from argo_egi_connectors.io.connection import SessionWithRetry
 
@@ -18,7 +16,7 @@ class WebAPI(object):
 
     def __init__(self, connector, host, token, logger, retry,
                  timeout=180, sleepretry=60, report=None, endpoints_group=None,
-                 date=None, verifycert=False):
+                 date=None):
         self.connector = os.path.basename(connector)
         self.webapi_method = self.methods[self.connector]
         self.host = host
@@ -39,7 +37,6 @@ class WebAPI(object):
         }
         self.endpoints_group = endpoints_group
         self.date = date or self._construct_datenow()
-        self.verifycert = eval(verifycert)
         self.session = SessionWithRetry(self.logger, module_class_name(self),
                                         self.retry_options, verbose_ret=True,
                                         handle_session_close=True)
