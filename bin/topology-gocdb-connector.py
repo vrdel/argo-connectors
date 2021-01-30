@@ -174,15 +174,13 @@ async def fetch_data(feed, api, auth_opts, paginated):
         return res
 
 
-async def send_webapi(webapi_opts, group_groups, group_endpoints):
+async def send_webapi(webapi_opts, data, type):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
                     int(globopts['ConnectionSleepRetry'.lower()]))
-    await webapi.send(group_groups, 'groups')
-    await webapi.send(group_endpoints, 'endpoints')
-    await webapi.session.close()
+    await webapi.send(data, type)
 
 
 def write_avro(confcust, group_groups, group_endpoints, fixed_date):
@@ -289,8 +287,8 @@ def main():
         numgg = len(group_groups)
 
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
-            loop.run_until_complete(send_webapi(webapi_opts, group_groups,
-                                                group_endpoints))
+            loop.run_until_complete(send_webapi(webapi_opts, group_groups, 'groups'))
+            loop.run_until_complete(send_webapi(webapi_opts, group_endpoints,'endpoints'))
 
         if eval(globopts['GeneralWriteAvro'.lower()]):
             write_avro(confcust, group_groups, group_endpoints, fixed_date)

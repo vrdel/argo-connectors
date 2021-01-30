@@ -169,3 +169,5 @@ class WebAPI(object):
             await self._delete_and_resend(api, data_send, topo_component, downtimes_component)
         elif status == 409:
             await self._update(api, data_send)
+
+        await self.session.close()
