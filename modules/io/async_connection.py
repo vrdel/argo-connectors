@@ -10,11 +10,15 @@ from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
 
 
 def build_ssl_settings(globopts):
-    sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()])
-    sslcontext.load_cert_chain(globopts['AuthenticationHostCert'.lower()],
-                               globopts['AuthenticationHostKey'.lower()])
+    try:
+        sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()])
+        sslcontext.load_cert_chain(globopts['AuthenticationHostCert'.lower()],
+                                globopts['AuthenticationHostKey'.lower()])
 
-    return sslcontext
+        return sslcontext
+
+    except KeyError:
+        return None
 
 
 def build_connection_retry_settings(globopts):
@@ -40,7 +44,13 @@ class SessionWithRetry(object):
         self.session = RetryClient(retry_options=http_retry_options, timeout=client_timeout)
         self.n_try = n_try
         self.logger = logger
-        self.custauth = custauth
+        if custauth:
+            self.custauth = aiohttp.BasicAuth(
+                custauth['AuthenticationHttpUser'.lower()],
+                'AuthenticationHttpPass'.lower()
+            )
+        else:
+            self.custauth = None
 
     async def _http_method(self, method, url, data=None, headers=None):
         method_obj = getattr(self.session, method)
@@ -50,7 +60,7 @@ class SessionWithRetry(object):
             while n <= self.n_try:
                 try:
                     async with method_obj(url, data=data, headers=headers,
-                                          ssl=self.sslcontext, auth=self.custauth) as response:
+                                          ssl=self.ssl_context, auth=self.custauth) as response:
                         content = await response.text()
                         return content
 
@@ -72,17 +82,35 @@ class SessionWithRetry(object):
         finally:
             await self.session.close()
 
-    async def http_get(self, url):
+    async def http_get(self, url, headers=None):
         try:
-            content = await self._http_method('get', url)
+            content = await self._http_method('get', url, headers=headers)
             return content
 
         except Exception as exc:
             raise exc
 
-    async def http_put(self, url, data):
+    async def http_put(self, url, data, headers=None):
         try:
-            content = await self._http_method('put', url, data=data)
+            content = await self._http_method('put', url, data=data,
+                                              headers=headers)
+            return content
+
+        except Exception as exc:
+            raise exc
+
+    async def http_post(self, url, data, headers=None):
+        try:
+            content = await self._http_method('post', url, data=data,
+                                              headers=headers)
+            return content
+
+        except Exception as exc:
+            raise exc
+
+    async def http_delete(self, url, headers=None):
+        try:
+            content = await self._http_method('delete', url, headers=headers)
             return content
 
         except Exception as exc:
