@@ -1,178 +1,126 @@
-import base64
-import json
-import requests
-import socket
+#!/usr/bin/python3
+
+import aiohttp
+import aiohttp.client_exceptions
+import asyncio
+import time
+import ssl
 import xml.dom.minidom
 
-from xml.parsers.expat import ExpatError
-from urllib.parse import urlparse
+from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
+from argo_egi_connectors.tools import module_class_name
 
 
-class Retry:
-    def __init__(self, func):
-        self.func = func
+def build_ssl_settings(globopts):
+    try:
+        sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()])
+        sslcontext.load_cert_chain(globopts['AuthenticationHostCert'.lower()],
+                                globopts['AuthenticationHostKey'.lower()])
 
-    def __call__(self, *args, **kwargs):
-        """
-        Decorator that will repeat function calls in case of errors.
+        return sslcontext
 
-        First three arguments of decorated function should be:
-            - logger object
-            - prefix of each log msg that is usually name of object
-              constructing msg
-            - dictionary holding num of retries, timeout and sleepretry
-              parameters
-        """
-        result = None
-        logger = args[0]
-        objname = args[1]
-        self.numr = int(args[2]['ConnectionRetry'.lower()])
-        self.sleepretry = int(args[2]['ConnectionSleepRetry'.lower()])
-        loops = self.numr + 1
-        try:
-            i = 1
-            while i <= loops:
-                try:
-                    result = self.func(*args, **kwargs)
-                except Exception as e:
-                    if i == loops:
-                        raise e
-                    else:
-                        if getattr(logger, 'job', False):
-                            msg = '{} {}() Customer:{} Job:{} Retry:{} Sleeping:{} - {}'.format(objname,
-                                                                                                self.func.__name__,
-                                                                                                logger.customer, logger.job, i,
-                                                                                                self.sleepretry, repr(e))
+    except KeyError:
+        return None
 
-                        else:
-                            msg = '{} {}() Customer:{} Retry:{} Sleeping:{} - {}'.format(objname,
-                                                                                         self.func.__name__,
-                                                                                         logger.customer, i,
-                                                                                         self.sleepretry, repr(e))
-                        logger.warn(msg)
-                        time.sleep(self.sleepretry)
-                        pass
-                else:
-                    break
-                i += 1
-        except Exception as e:
-            if getattr(logger, 'job', False):
-                msg = '{} {}() Customer:{} Job:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, logger.job, repr(e))
-            else:
-                msg = '{} {}() Customer:{} Giving up - {}'.format(objname, self.func.__name__, logger.customer, repr(e))
 
-            logger.error(msg)
-            return False
-
-        return result
+def build_connection_retry_settings(globopts):
+    retry = int(globopts['ConnectionRetry'.lower()])
+    sleep_retry = int(globopts['ConnectionSleepRetry'.lower()])
+    timeout = int(globopts['ConnectionTimeout'.lower()])
+    list_retry = [(i + 1) * sleep_retry for i in range(retry)]
+    return (retry, list_retry, timeout)
 
 
 class ConnectorError(Exception):
     pass
 
 
-@Retry
-def ConnectionWithRetry(logger, msgprefix, globopts, scheme, host, url, custauth=None):
-    try:
-        buf = None
-
-        headers = {}
-        if custauth and msgprefix == 'metricprofile-webapi-connector.py':
-            headers = {'x-api-key': custauth['WebApiToken'.lower()],
-                       'Accept': 'application/json'}
-        elif msgprefix != 'PoemReader' and custauth and eval(custauth['AuthenticationUsePlainHttpAuth'.lower()]):
-            userpass = '{}:{}'.format(custauth['AuthenticationHttpUser'.lower()], custauth['AuthenticationHttpPass'.lower()])
-            b64userpass = base64.b64encode(userpass.encode())
-            headers = {'Authorization': 'Basic ' + b64userpass.decode()}
-
-        if scheme.startswith('https'):
-            response = requests.get('https://' + host + url, headers=headers,
-                                    cert=(globopts['AuthenticationHostCert'.lower()],
-                                          globopts['AuthenticationHostKey'.lower()]),
-                                    verify=eval(globopts['AuthenticationVerifyServerCert'.lower()]),
-                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
-            response.raise_for_status()
+class SessionWithRetry(object):
+    def __init__(self, logger, msgprefix, globopts, custauth=None,
+                 verbose_ret=False, handle_session_close=False):
+        self.ssl_context = build_ssl_settings(globopts)
+        n_try, list_retry, client_timeout = build_connection_retry_settings(globopts)
+        http_retry_options = ListRetry(timeouts=list_retry)
+        client_timeout = aiohttp.ClientTimeout(total=client_timeout,
+                                               connect=None, sock_connect=None,
+                                               sock_read=None)
+        self.session = RetryClient(retry_options=http_retry_options, timeout=client_timeout)
+        self.n_try = n_try
+        self.logger = logger
+        if custauth:
+            self.custauth = aiohttp.BasicAuth(
+                custauth['AuthenticationHttpUser'.lower()],
+                'AuthenticationHttpPass'.lower()
+            )
         else:
-            response = requests.get('http://' + host + url, headers=headers,
-                                    timeout=int(globopts['ConnectionTimeout'.lower()]))
+            self.custauth = None
+        self.verbose_ret = verbose_ret
+        self.handle_session_close = handle_session_close
 
-        if response.status_code >= 300 and response.status_code < 400:
-            headers = response.headers
-            location = filter(lambda h: 'location' in h[0], headers)
-            if location:
-                redir = urlparse(location[0][1])
+    async def _http_method(self, method, url, data=None, headers=None):
+        method_obj = getattr(self.session, method)
+        raised_exc = None
+        n = 1
+        try:
+            while n <= self.n_try:
+                try:
+                    async with method_obj(url, data=data, headers=headers,
+                                          ssl=self.ssl_context, auth=self.custauth) as response:
+                        content = await response.text()
+                        if self.verbose_ret:
+                            return (content, response.headers, response.status)
+                        else:
+                            return content
+
+                except Exception as exc:
+                    self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
+                    raised_exc = exc
+
+                self.logger.info(f'Connection try - {n}')
+                n += 1
+
             else:
-                raise requests.exceptions.RequestException('No Location header set for redirect')
+                self.logger.error('Connection retry exhausted')
+                raise raised_exc
 
-            return ConnectionWithRetry(logger, msgprefix, globopts, scheme, redir.netloc, redir.path + '?' + redir.query, custauth=custauth)
+        except Exception as exc:
+            # FIXME: correct logger messages
+            raise exc
 
-        elif response.status_code == 200:
-            buf = response.content
-            if not buf:
-                raise requests.exceptions.RequestException('Empty response')
+        finally:
+            if not self.handle_session_close:
+                await self.session.close()
 
-        else:
-            raise requests.exceptions.RequestException('response: %s %s' % (response.status_code, response.reason))
+    async def http_get(self, url, headers=None):
+        try:
+            content = await self._http_method('get', url, headers=headers)
+            return content
 
-        return buf
+        except Exception as exc:
+            raise exc
 
-    except requests.exceptions.SSLError as e:
-        if (getattr(e, 'args', False) and type(e.args) == tuple and
-            type(e.args[0]) == str and 'timed out' in e.args[0]):
-            raise e
-        else:
-            if getattr(logger, 'job', False):
-                msg = '{}Customer:{} Job:{} SSL Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                                      logger.customer, logger.job,
-                                                                      scheme + '://' + host + url,
-                                                                      repr(e))
-            else:
-                msg = '{}Customer:{} SSL Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                               logger.customer,
-                                                               scheme + '://' + host + url,
-                                                               repr(e))
+    async def http_put(self, url, data, headers=None):
+        try:
+            content = await self._http_method('put', url, data=data,
+                                              headers=headers)
+            return content
 
-            logger.critical(msg)
-        return False
+        except Exception as exc:
+            raise exc
 
-    except(socket.error, socket.timeout) as e:
-        if getattr(logger, 'job', False):
-            msg = '{}Customer:{} Job:{} Connection error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                                         logger.customer, logger.job,
-                                                                         scheme + '://' + host + url,
-                                                                         repr(e))
-        else:
-            msg = '{}Customer:{} Connection error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                                  logger.customer,
-                                                                  scheme + '://' + host + url,
-                                                                  repr(e))
-        logger.warn(msg)
-        raise e
+    async def http_post(self, url, data, headers=None):
+        try:
+            content = await self._http_method('post', url, data=data,
+                                              headers=headers)
+            return content
 
-    except requests.exceptions.RequestException as e:
-        if getattr(logger, 'job', False):
-            msg = '{}Customer:{} Job:{} HTTP error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                                   logger.customer, logger.job,
-                                                                   scheme + '://' + host + url,
-                                                                   repr(e))
-        else:
-            msg = '{}Customer:{} HTTP error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                            logger.customer,
-                                                            scheme + '://' + host + url,
-                                                            repr(e))
-        logger.warn(msg)
-        raise e
+        except Exception as exc:
+            raise exc
 
-    except Exception as e:
-        if getattr(logger, 'job', False):
-            msg = '{}Customer:{} Job:{} Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                              logger.customer, logger.job,
-                                                              scheme + '://' + host + url,
-                                                              repr(e))
-        else:
-            msg = '{}Customer:{} Error {} - {}'.format(msgprefix + ' ' if msgprefix else '',
-                                                       logger.customer,
-                                                       scheme + '://' + host + url,
-                                                       repr(e))
-        logger.warn(msg)
-        return False
+    async def http_delete(self, url, headers=None):
+        try:
+            content = await self._http_method('delete', url, headers=headers)
+            return content
+
+        except Exception as exc:
+            raise exc

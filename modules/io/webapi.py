@@ -5,7 +5,7 @@ import json
 
 from argo_egi_connectors.io.connection import Retry
 from argo_egi_connectors.tools import module_class_name
-from argo_egi_connectors.io.async_connection import SessionWithRetry
+from argo_egi_connectors.io.connection import SessionWithRetry
 
 
 class WebAPI(object):
