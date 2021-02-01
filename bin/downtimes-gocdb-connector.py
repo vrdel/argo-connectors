@@ -79,14 +79,13 @@ def get_webapi_opts(cglob, confcust):
     return webapi_opts
 
 
-def send_webapi(webapi_opts, date, dts):
+async def send_webapi(webapi_opts, date, dts):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]), date=date,
-                    verifycert=globopts['AuthenticationVerifyServerCert'.lower()])
-    webapi.send(dts, downtimes_component=True)
+                    int(globopts['ConnectionSleepRetry'.lower()]), date=date)
+    await webapi.send(dts, downtimes_component=True)
 
 
 async def write_state(confcust, timestamp, state):
@@ -175,7 +174,9 @@ def main():
         webapi_opts = get_webapi_opts(cglob, confcust)
 
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
-            send_webapi(webapi_opts, args.date[0], dts)
+            loop.run_until_complete(
+                send_webapi(webapi_opts, args.date[0], dts)
+            )
 
         if dts or write_empty:
             cust = list(confcust.get_customers())[0]
