@@ -174,13 +174,13 @@ async def fetch_data(feed, api, auth_opts, paginated):
         return res
 
 
-async def send_webapi(webapi_opts, data, type):
+async def send_webapi(webapi_opts, data, topotype):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
                     int(globopts['ConnectionSleepRetry'.lower()]))
-    await webapi.send(data, type)
+    await webapi.send(data, topotype)
 
 
 def write_avro(confcust, group_groups, group_endpoints, fixed_date):
@@ -251,12 +251,14 @@ def main():
     try:
         group_endpoints, group_groups = list(), list()
 
+        # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(
             fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
             fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
             fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)
         ))
 
+        # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
         parse_workers = [
             loop.run_in_executor(executor,
@@ -286,9 +288,14 @@ def main():
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
+        # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
-            loop.run_until_complete(send_webapi(webapi_opts, group_groups, 'groups'))
-            loop.run_until_complete(send_webapi(webapi_opts, group_endpoints,'endpoints'))
+            loop.run_until_complete(
+                asyncio.gather(
+                    send_webapi(webapi_opts, group_groups, 'groups'),
+                    send_webapi(webapi_opts, group_endpoints,'endpoints')
+                )
+            )
 
         if eval(globopts['GeneralWriteAvro'.lower()]):
             write_avro(confcust, group_groups, group_endpoints, fixed_date)
