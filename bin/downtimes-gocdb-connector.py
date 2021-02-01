@@ -30,7 +30,10 @@ import os
 import sys
 from urllib.parse import urlparse
 
-from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
+import uvloop
+import asyncio
+
+from argo_egi_connectors.io.connection import ConnectorError, SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -46,14 +49,18 @@ globopts = {}
 DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
 
 
-def fetch_data(feed, auth_opts, start, end):
+async def fetch_data(feed, auth_opts, start, end):
     feed_parts = urlparse(feed)
     start_fmt = start.strftime("%Y-%m-%d")
     end_fmt = end.strftime("%Y-%m-%d")
-    res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
-                              feed_parts.scheme, feed_parts.netloc,
-                              '{}&windowstart={}&windowend={}'.format(DOWNTIMEPI, start_fmt, end_fmt),
-                              custauth=auth_opts)
+    session = SessionWithRetry(logger, os.path.basename(sys.argv[0]), globopts)
+    res = await session.http_get(
+        '{}://{}{}&windowstart={}&windowend={}'.format(feed_parts.scheme,
+                                                       feed_parts.netloc,
+                                                       DOWNTIMEPI, start_fmt,
+                                                       end_fmt)
+    )
+
     return res
 
 
@@ -82,12 +89,12 @@ def send_webapi(webapi_opts, date, dts):
     webapi.send(dts, downtimes_component=True)
 
 
-def write_state(confcust, timestamp, state):
+async def write_state(confcust, timestamp, state):
     # safely assume here one customer defined in customer file
     cust = list(confcust.get_customers())[0]
     statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-    state_write(sys.argv[0], statedir, state,
-                globopts['InputStateDays'.lower()], timestamp)
+    await state_write(sys.argv[0], statedir, state,
+                      globopts['InputStateDays'.lower()], timestamp)
 
 
 def write_avro(confcust, dts, timestamp):
@@ -146,17 +153,24 @@ def main():
         logger.error('Customer:{} authentication options incomplete, missing {}'.format(logger.customer, missing_err))
         raise SystemExit(1)
 
+    loop = uvloop.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     try:
         # we don't have multiple tenant definitions in one
         # customer file so we can safely assume one tenant/customer
         write_empty = confcust.send_empty(sys.argv[0])
         if not write_empty:
-            res = fetch_data(feed, auth_opts, start, end)
+            res = loop.run_until_complete(
+                fetch_data(feed, auth_opts, start, end)
+            )
             dts = parse_source(res, start, end, uidservtype)
         else:
             dts = []
 
-        write_state(confcust, timestamp, True)
+        loop.run_until_complete(
+            write_state(confcust, timestamp, True)
+        )
 
         webapi_opts = get_webapi_opts(cglob, confcust)
 
