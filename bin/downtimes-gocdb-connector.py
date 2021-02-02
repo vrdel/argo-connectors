@@ -187,7 +187,9 @@ def main():
             write_avro(confcust, dts, timestamp)
 
     except ConnectorError:
-        write_state(confcust, timestamp, False)
+        loop.run_until_complete(
+            write_state(confcust, timestamp, False)
+        )
 
 if __name__ == '__main__':
     main()
