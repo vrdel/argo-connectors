@@ -13,7 +13,8 @@ from argo_egi_connectors.tools import module_class_name
 
 def build_ssl_settings(globopts):
     try:
-        sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()])
+        sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()],
+                                                cafile=globopts['AuthenticationCAFile'.lower()])
         sslcontext.load_cert_chain(globopts['AuthenticationHostCert'.lower()],
                                    globopts['AuthenticationHostKey'.lower()])
 
@@ -73,6 +74,10 @@ class SessionWithRetry(object):
                         else:
                             return content
 
+                # do not retry on SSL errors, exit immediately
+                except ssl.SSLError as exc:
+                    raise exc
+
                 except Exception as exc:
                     self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
                     await asyncio.sleep(float(self.globopts['ConnectionSleepRetry'.lower()]))
@@ -86,7 +91,7 @@ class SessionWithRetry(object):
                 raise raised_exc
 
         except Exception as exc:
-            # FIXME: correct logger messages
+            self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
             raise exc
 
         finally:
