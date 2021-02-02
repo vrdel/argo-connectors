@@ -82,7 +82,7 @@ class WebAPI(object):
             else:
                 self.logger.error('%s %s() Customer:%s Job:%s - HTTP POST %s' %
                                   (module_class_name(self), '_send', self.logger.customer, self.logger.job,
-                                   json.loads(content)['message']))
+                                   json.loads(content)['errors'][0]['details']))
         return status
 
     async def _get(self, api):
@@ -106,7 +106,7 @@ class WebAPI(object):
         content, headers, status = await self.session.http_put(loc,
                                                                data=json.dumps(data_send),
                                                                headers=self.headers)
-        return content
+        return content, status
 
     async def _update(self, api, data_send):
         content = await self._get(api)
@@ -118,7 +118,7 @@ class WebAPI(object):
                                'Name of resource not unique on WEB-API, cannot proceed with update'))
         else:
             id = target[0]['id']
-            content, headers, status = await self._put(api, data_send, id)
+            content, status = await self._put(api, data_send, id)
             if status == 200:
                 self.logger.info('Succesfully updated (HTTP PUT) resource')
             else:
