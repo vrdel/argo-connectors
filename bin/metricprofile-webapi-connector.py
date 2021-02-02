@@ -29,7 +29,10 @@ import os
 import re
 import sys
 
-from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
+import uvloop
+import asyncio
+
+from argo_egi_connectors.io.connection import ConnectorError, SessionWithRetry
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
@@ -45,10 +48,10 @@ custname = ''
 API_PATH = '/api/v2/metric_profiles'
 
 
-def fetch_data(host, token):
-    res = ConnectionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
-                              'https', host, API_PATH,
-                               custauth={'WebAPIToken'.lower(): token})
+async def fetch_data(host, token):
+    session = SessionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
+                               token=token)
+    res = await session.http_get('{}://{}{}'.format('https', host, API_PATH))
     return res
 
 
@@ -57,17 +60,15 @@ def parse_source(res, profiles, namespace):
     return metric_profiles
 
 
-def write_state(cust, job, confcust, fixed_date, state):
+async def write_state(cust, job, confcust, fixed_date, state):
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
     if fixed_date:
-        state_write(sys.argv[0], jobstatedir,
-                    state,
-                    globopts['InputStateDays'.lower()],
-                    fixed_date.replace('-', '_'))
+        await state_write(sys.argv[0], jobstatedir, state,
+                          globopts['InputStateDays'.lower()],
+                          fixed_date.replace('-', '_'))
     else:
-        state_write(sys.argv[0], jobstatedir,
-                    state,
-                    globopts['InputStateDays'.lower()])
+        await state_write(sys.argv[0], jobstatedir, state,
+                          globopts['InputStateDays'.lower()])
 
 
 def write_avro(cust, job, confcust, fixed_date, fetched_profiles):
@@ -107,6 +108,9 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
+    loop = uvloop.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     for cust in confcust.get_customers():
         custname = confcust.get_custname(cust)
 
@@ -124,11 +128,15 @@ def main():
                 continue
 
             try:
-                res = fetch_data(webapi_opts['webapihost'], webapi_opts['webapitoken'])
+                res = loop.run_until_complete(
+                    fetch_data(webapi_opts['webapihost'], webapi_opts['webapitoken'])
+                )
+
                 fetched_profiles = parse_source(res, profiles, confcust.get_namespace(job))
 
-                jobdir = confcust.get_fulldir(cust, job)
-                write_state(cust, job, confcust, fixed_date, True)
+                loop.run_until_complete(
+                    write_state(cust, job, confcust, fixed_date, True)
+                )
 
                 if eval(globopts['GeneralWriteAvro'.lower()]):
                     write_avro(cust, job, confcust, fixed_date, fetched_profiles)
