@@ -15,7 +15,7 @@ def build_ssl_settings(globopts):
     try:
         sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()])
         sslcontext.load_cert_chain(globopts['AuthenticationHostCert'.lower()],
-                                globopts['AuthenticationHostKey'.lower()])
+                                   globopts['AuthenticationHostKey'.lower()])
 
         return sslcontext
 
@@ -56,6 +56,7 @@ class SessionWithRetry(object):
             self.custauth = None
         self.verbose_ret = verbose_ret
         self.handle_session_close = handle_session_close
+        self.globopts = globopts
 
     async def _http_method(self, method, url, data=None, headers=None):
         method_obj = getattr(self.session, method)
@@ -74,6 +75,7 @@ class SessionWithRetry(object):
 
                 except Exception as exc:
                     self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
+                    await asyncio.sleep(float(self.globopts['ConnectionSleepRetry'.lower()]))
                     raised_exc = exc
 
                 self.logger.info(f'Connection try - {n}')
