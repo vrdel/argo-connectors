@@ -92,7 +92,7 @@ class SessionWithRetry(object):
 
         except Exception as exc:
             self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
-            raise exc
+            raise ConnectorError()
 
         finally:
             if not self.handle_session_close:
