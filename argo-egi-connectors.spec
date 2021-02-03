@@ -13,11 +13,14 @@ Vendor:  SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
 Obsoletes: ar-sync
 Prefix:    %{_prefix}
 
-Requires: python3-avro
-Requires: python3-requests
+Requires: python3-aiofiles
 Requires: python3-aiohttp
 Requires: python3-aiohttp-retry
-Requires: python3-aiofiles
+Requires: python3-attrs
+Requires: python3-avro
+Requires: python3-requests
+Requires: python3-typing-extensions
+Requires: python3-uvloop
 
 BuildRequires: python3-devel python3-setuptools
 
