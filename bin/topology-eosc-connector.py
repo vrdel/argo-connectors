@@ -5,7 +5,10 @@ import os
 import sys
 import json
 
-from argo_egi_connectors.io.connection import ConnectionWithRetry, ConnectorError
+import uvloop
+import asyncio
+
+from argo_egi_connectors.io.connection import SessionWithRetry, ConnectorError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -29,9 +32,12 @@ def is_feed(feed):
         return True
 
 
-def fetch_data(feed):
+async def fetch_data(feed):
     remote_topo = urlparse(feed)
-    res = ConnectionWithRetry(logger, 'EOSC', globopts, remote_topo.scheme, remote_topo.netloc, remote_topo.path)
+    session = SessionWithRetry(logger, 'EOSC', globopts)
+    res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
+                                                    remote_topo.netloc,
+                                                    remote_topo.path))
     return res
 
 
@@ -40,17 +46,17 @@ def parse_source(res, uidservtype, fetchtype):
     return group_groups, group_endpoints
 
 
-def write_state(confcust, fixed_date, state):
+async def write_state(confcust, fixed_date, state):
     cust = list(confcust.get_customers())[0]
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
     fetchtype = confcust.get_topofetchtype()
     if fixed_date:
-        state_write(sys.argv[0], jobstatedir, state,
-                    globopts['InputStateDays'.lower()],
-                    fixed_date.replace('-', '_'))
+        await state_write(sys.argv[0], jobstatedir, state,
+                          globopts['InputStateDays'.lower()],
+                          fixed_date.replace('-', '_'))
     else:
-        state_write(sys.argv[0], jobstatedir, state,
-                    globopts['InputStateDays'.lower()])
+        await state_write(sys.argv[0], jobstatedir, state,
+                          globopts['InputStateDays'.lower()])
 
 
 def write_avro(confcust, group_groups, group_endpoints, fixed_date):
@@ -112,9 +118,12 @@ def main():
     uidservtype = confcust.get_uidserviceendpoints()
     topofeed = confcust.get_topofeed()
 
+    loop = uvloop.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     try:
         if is_feed(topofeed):
-            res = fetch_data(topofeed)
+            res = loop.run_until_complete(fetch_data(topofeed))
             group_groups, group_endpoints = parse_source(res, uidservtype, fetchtype)
         else:
             try:
@@ -124,7 +133,9 @@ def main():
             except IOError as exc:
                 logger.error('Customer:%s : Problem opening %s - %s' % (logger.customer, topofeed, repr(exc)))
 
-        write_state(confcust, fixed_date, True)
+        loop.run_until_complete(
+            write_state(confcust, fixed_date, True)
+        )
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
