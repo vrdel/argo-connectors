@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import aiohttp
 import aiohttp.client_exceptions
 import asyncio

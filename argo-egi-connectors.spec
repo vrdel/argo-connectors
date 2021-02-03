@@ -1,3 +1,6 @@
+# override so that bytecode compiling is called with python3
+%global __python /usr/bin/python3
+
 Name:    argo-egi-connectors
 Version: 1.7.4
 Release: 1%{?dist}
@@ -45,7 +48,8 @@ rm -rf $RPM_BUILD_ROOT
 %files -f INSTALLED_FILES
 %config(noreplace) /etc/argo-egi-connectors/*
 %attr(0755,root,root) %dir %{_libexecdir}/argo-egi-connectors/
-%attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/*.py*
+%attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/*.py
+%attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/__pycache__/*
 
 %attr(0755,root,root) %dir %{_sharedstatedir}/argo-connectors/
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
