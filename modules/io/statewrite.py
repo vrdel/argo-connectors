@@ -1,5 +1,6 @@
 import datetime
 import os
+import aiofiles
 
 from argo_egi_connectors.tools import datestamp
 
@@ -7,7 +8,7 @@ from argo_egi_connectors.tools import datestamp
 daysback = 1
 
 
-def state_write(caller, statedir, state, savedays, date=None):
+async def state_write(caller, statedir, state, savedays, date=None):
     filenamenew = ''
     if 'topology' in caller:
         filenamebase = 'topology-ok'
@@ -35,5 +36,5 @@ def state_write(caller, statedir, state, savedays, date=None):
             os.remove(statedir + '/' + filenameold)
         i += 1
 
-    with open(statedir + '/' + filenamenew, 'w') as fp:
-        fp.write(str(state))
+    async with aiofiles.open(statedir + '/' + filenamenew, mode='w') as fp:
+        await fp.write(str(state))

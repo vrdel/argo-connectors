@@ -41,6 +41,7 @@ class tools(object):
             raise exc
 
 
+
 class ParseSites(tools):
     def __init__(self, logger, data, custname, uid=False):
         super().__init__(logger)
@@ -64,7 +65,7 @@ class ParseSites(tools):
                 self._sites[site_name]['scope'] = ', '.join(self._parse_scopes(site))
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing - %s' % (logger.customer, logger.job, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def get_group_groups(self):
@@ -150,6 +151,7 @@ class ParseServiceGroups(tools):
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()
         self._parse_data()
+
 
     def _parse_data(self):
         try:

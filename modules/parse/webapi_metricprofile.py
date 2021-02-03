@@ -35,6 +35,7 @@ class ParseMetricProfiles(object):
                             'metric': metric,
                             'service': service['service']
                         })
+            return profile_list
 
         except (KeyError, IndexError, ValueError) as exc:
             self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(exc).replace('\'', '')))

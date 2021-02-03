@@ -1,6 +1,7 @@
 import avro.schema
 from avro.datafile import DataFileWriter
 from avro.io import DatumWriter, BinaryEncoder
+import aiofiles
 
 from io import BytesIO
 
