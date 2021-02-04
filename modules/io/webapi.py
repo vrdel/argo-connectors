@@ -75,10 +75,17 @@ class WebAPI(object):
                                                                 headers=self.headers)
         if status != 201:
             if connector.startswith('topology') or connector.startswith('downtimes'):
+                jsonret = json.loads(content)
+                msg = None
+                statusmsg = jsonret.get('status', False)
+                if statusmsg:
+                    msg = jsonret['status']['message']
+                else:
+                    msg = jsonret['message']
                 self.logger.error('%s %s() Customer:%s - HTTP POST %s' % (module_class_name(self),
                                                                           '_send',
                                                                           self.logger.customer,
-                                                                          json.loads(content)['message']))
+                                                                          msg))
             else:
                 self.logger.error('%s %s() Customer:%s Job:%s - HTTP POST %s' %
                                   (module_class_name(self), '_send', self.logger.customer, self.logger.job,
