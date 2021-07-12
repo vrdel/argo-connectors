@@ -41,9 +41,8 @@ class tools(object):
             raise exc
 
 
-
 class ParseSites(tools):
-    def __init__(self, logger, data, custname, uid=False):
+    def __init__(self, logger, data, custname, uid=False, pass_extensions=False):
         super().__init__(logger)
         self.data = data
         self.uidservtype = uid
@@ -87,7 +86,7 @@ class ParseSites(tools):
 
 
 class ParseServiceEndpoints(tools):
-    def __init__(self, logger, data, custname, uid=False):
+    def __init__(self, logger, data, custname, uid=False, pass_extensions=False):
         super().__init__(logger)
         self.data = data
         self.uidservtype = uid
@@ -143,7 +142,7 @@ class ParseServiceEndpoints(tools):
 
 
 class ParseServiceGroups(tools):
-    def __init__(self, logger, data, custname, uid=False):
+    def __init__(self, logger, data, custname, uid=False, pass_extensions=False):
         super().__init__(logger)
         self.data = data
         self.uidservtype = uid
