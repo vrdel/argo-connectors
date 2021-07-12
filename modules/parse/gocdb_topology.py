@@ -80,6 +80,7 @@ class ParseSites(tools):
                 self._sites[site_name]['certification'] = self._parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
                 self._sites[site_name]['ngi'] = self._parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
                 self._sites[site_name]['scope'] = ', '.join(self._parse_scopes(site))
+
                 if self.pass_extensions:
                     extensions = self._parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
                     self._sites[site_name]['extensions'] = extensions
@@ -100,6 +101,12 @@ class ParseSites(tools):
             tmpg['tags'] = {'certification': group['certification'],
                             'scope': group.get('scope', ''),
                             'infrastructure': group['infrastructure']}
+
+            if self.pass_extensions:
+                for key, value in group['extensions'].items():
+                    tmpg['tags'].update({
+                        'info.ext.' + key: value
+                    })
 
             groupofgroups.append(tmpg)
 
@@ -162,6 +169,13 @@ class ParseServiceEndpoints(tools):
                             group['monitored'] == 'True' else '0',
                             'production': '1' if group['production'] == 'Y' or
                             group['production'] == 'True' else '0'}
+
+            if self.pass_extensions:
+                for key, value in group['extensions'].items():
+                    tmpg['tags'].update({
+                        'info.ext.' + key: value
+                    })
+
             groupofendpoints.append(tmpg)
 
         return groupofendpoints
@@ -235,6 +249,13 @@ class ParseServiceGroups(tools):
                                 service['monitored'].lower() == 'True'.lower() else '0',
                                 'production': '1' if service['production'].lower() == 'Y'.lower() or
                                 service['production'].lower() == 'True'.lower() else '0'}
+
+                if self.pass_extensions:
+                    for key, value in service['extensions'].items():
+                        tmpg['tags'].update({
+                            'info.ext.' + key: value
+                        })
+
                 groupofendpoints.append(tmpg)
 
         return groupofendpoints
