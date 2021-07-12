@@ -61,21 +61,25 @@ custname = ''
 isok = True
 
 
-def parse_source_servicegroups(res, custname, uidservtype):
-    group_groups = ParseServiceGroups(logger, res, custname, uidservtype).get_group_groups()
-    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype).get_group_endpoints()
+def parse_source_servicegroups(res, custname, uidservtype, pass_extensions):
+    group_groups = ParseServiceGroups(logger, res, custname, uidservtype,
+                                      pass_extensions).get_group_groups()
+    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype,
+                                         pass_extensions).get_group_endpoints()
 
     return group_groups, group_endpoints
 
 
-def parse_source_endpoints(res, custname, uidservtype):
-    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype).get_group_endpoints()
+def parse_source_endpoints(res, custname, uidservtype, pass_extensions):
+    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype,
+                                            pass_extensions).get_group_endpoints()
 
     return group_endpoints
 
 
-def parse_source_sites(res, custname, uidservtype):
-    group_endpoints = ParseSites(logger, res, custname, uidservtype).get_group_groups()
+def parse_source_sites(res, custname, uidservtype, pass_extensions):
+    group_endpoints = ParseSites(logger, res, custname, uidservtype,
+                                 pass_extensions).get_group_groups()
 
     return group_endpoints
 
