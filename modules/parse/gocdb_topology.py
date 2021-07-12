@@ -15,6 +15,22 @@ class tools(object):
                 rc.append(node.data)
         return ''.join(rc)
 
+    def _parse_extensions(self, extensionsNode):
+        extensions_dict = dict()
+
+        for extension in extensionsNode:
+            if extension.nodeName == 'EXTENSION':
+                key, value = None, None
+                for ext_node in extension.childNodes:
+                    if ext_node.nodeName == 'KEY':
+                        key = ext_node.childNodes[0].nodeValue
+                    if ext_node.nodeName == 'VALUE':
+                        value = ext_node.childNodes[0].nodeValue
+                    if key and value:
+                        extensions_dict.update({key: value})
+
+        return extensions_dict
+
     def _parse_scopes(self, xml_node):
         scopes = list()
 
@@ -48,6 +64,7 @@ class ParseSites(tools):
         self.data = data
         self.uidservtype = uid
         self.custname = custname
+        self.pass_extensions = pass_extensions
         self._sites = dict()
         self._parse_data()
 
@@ -63,6 +80,9 @@ class ParseSites(tools):
                 self._sites[site_name]['certification'] = self._parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
                 self._sites[site_name]['ngi'] = self._parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
                 self._sites[site_name]['scope'] = ', '.join(self._parse_scopes(site))
+                if self.pass_extensions:
+                    extensions = self._parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                    self._sites[site_name]['extensions'] = extensions
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
@@ -93,6 +113,7 @@ class ParseServiceEndpoints(tools):
         self.data = data
         self.uidservtype = uid
         self.custname = custname
+        self.pass_extensions = pass_extensions
         self._service_endpoints = dict()
         self._parse_data()
 
@@ -115,6 +136,9 @@ class ParseServiceEndpoints(tools):
                 self._service_endpoints[service_id]['service_id'] = service_id
                 self._service_endpoints[service_id]['scope'] = ', '.join(self._parse_scopes(service))
                 self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + '-' + self._service_endpoints[service_id]['type'] + '-' + self._service_endpoints[service_id]['site']
+                if self.pass_extensions:
+                    extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                    self._service_endpoints[service_id]['extensions'] = extensions
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
@@ -150,6 +174,7 @@ class ParseServiceGroups(tools):
         self.data = data
         self.uidservtype = uid
         self.custname = custname
+        self.pass_extensions = pass_extensions
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()
         self._parse_data()
@@ -182,6 +207,9 @@ class ParseServiceGroups(tools):
                     tmps['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     tmps['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                     tmps['scope'] = ', '.join(self._parse_scopes(service))
+                    if self.pass_extensions:
+                        extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                        tmps['extensions'] = extensions
                     self._service_groups[group_id]['services'].append(tmps)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
