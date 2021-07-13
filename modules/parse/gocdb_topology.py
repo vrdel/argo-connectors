@@ -105,7 +105,7 @@ class ParseSites(tools):
             if self.pass_extensions:
                 for key, value in group['extensions'].items():
                     tmpg['tags'].update({
-                        'info.ext.' + key: value
+                        'info_ext_' + key: value
                     })
 
             groupofgroups.append(tmpg)
@@ -173,7 +173,7 @@ class ParseServiceEndpoints(tools):
             if self.pass_extensions:
                 for key, value in group['extensions'].items():
                     tmpg['tags'].update({
-                        'info.ext.' + key: value
+                        'info_ext_' + key: value
                     })
 
             groupofendpoints.append(tmpg)
@@ -253,7 +253,7 @@ class ParseServiceGroups(tools):
                 if self.pass_extensions:
                     for key, value in service['extensions'].items():
                         tmpg['tags'].update({
-                            'info.ext.' + key: value
+                            'info_ext_' + key: value
                         })
 
                 groupofendpoints.append(tmpg)
