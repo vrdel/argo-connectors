@@ -61,21 +61,25 @@ custname = ''
 isok = True
 
 
-def parse_source_servicegroups(res, custname, uidservtype):
-    group_groups = ParseServiceGroups(logger, res, custname, uidservtype).get_group_groups()
-    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype).get_group_endpoints()
+def parse_source_servicegroups(res, custname, uidservtype, pass_extensions):
+    group_groups = ParseServiceGroups(logger, res, custname, uidservtype,
+                                      pass_extensions).get_group_groups()
+    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype,
+                                         pass_extensions).get_group_endpoints()
 
     return group_groups, group_endpoints
 
 
-def parse_source_endpoints(res, custname, uidservtype):
-    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype).get_group_endpoints()
+def parse_source_endpoints(res, custname, uidservtype, pass_extensions):
+    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype,
+                                            pass_extensions).get_group_endpoints()
 
     return group_endpoints
 
 
-def parse_source_sites(res, custname, uidservtype):
-    group_endpoints = ParseSites(logger, res, custname, uidservtype).get_group_groups()
+def parse_source_sites(res, custname, uidservtype, pass_extensions):
+    group_endpoints = ParseSites(logger, res, custname, uidservtype,
+                                 pass_extensions).get_group_groups()
 
     return group_endpoints
 
@@ -225,6 +229,7 @@ def main():
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
+    pass_extensions = eval(globopts['GeneralPassExtensions'.lower()])
 
     confpath = args.custconf[0] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
@@ -264,15 +269,15 @@ def main():
             loop.run_in_executor(executor,
                                  partial(parse_source_servicegroups,
                                          fetched_topology[1], custname,
-                                         uidservtype)),
+                                         uidservtype, pass_extensions)),
             loop.run_in_executor(executor,
                                  partial(parse_source_endpoints,
                                          fetched_topology[0], custname,
-                                         uidservtype)),
+                                         uidservtype, pass_extensions)),
             loop.run_in_executor(executor,
                                  partial(parse_source_sites,
                                          fetched_topology[2], custname,
-                                         uidservtype))
+                                         uidservtype, pass_extensions))
         ]
         parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
         group_groups, group_endpoints = parsed_topology[0]

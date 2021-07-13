@@ -4,6 +4,7 @@ SchemaDir = /etc/argo-egi-connectors/schemas/
 [General]
 WriteAvro = True
 PublishWebAPI = True
+PassExtensions = True
 
 [Authentication]
 VerifyServerCert = False

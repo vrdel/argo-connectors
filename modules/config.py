@@ -11,7 +11,7 @@ class Global(object):
        Class represents parser for global.conf
     """
     # options common for all connectors
-    conf_general = {'General': ['WriteAvro', 'PublishWebAPI']}
+    conf_general = {'General': ['WriteAvro', 'PublishWebAPI', 'PassExtensions']}
     conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                     'VerifyServerCert', 'UsePlainHttpAuth',
                                     'HttpUser', 'HttpPass']}
