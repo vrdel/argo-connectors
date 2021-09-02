@@ -36,6 +36,10 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
+# Imports for LDAP 
+import bonsai
+from bonsai import LDAPClient
+
 from argo_egi_connectors.io.connection import ConnectorError, SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
@@ -209,6 +213,27 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
         raise SystemExit(1)
 
+async def get_ldap_data():
+    client = LDAPClient('ldap://bdii.egi.cro-ngi.hr:2170/')
+    conn = client.connect()
+    global ldap_data
+    ldap_data = conn.search('o=grid',
+        bonsai.LDAPSearchScope.SUB, "(&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))", ['GlueServiceEndpoint'])
+
+# Searches ldap_data and returns ldap port for hostname, or -1 if not found
+def ldap_get_srm_port(hostname, ldap_data):
+    for res in ldap_data:
+        glue_service_endpoint = res['GlueServiceEndpoint'][0]
+        no_protocol = glue_service_endpoint[glue_service_endpoint.index('//') + 2:]
+        clean_name = no_protocol[:no_protocol.index('/')]
+        port = clean_name[clean_name.index(':') + 1:]
+        fqdn = clean_name[:clean_name.index(':')]
+
+        if (fqdn == hostname):
+            return port
+
+    return -1
+
 
 def main():
     global logger, globopts, confcust
@@ -292,6 +317,14 @@ def main():
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
+
+        loop.run_until_complete(get_ldap_data())
+
+        for endpoint in group_endpoints:
+            if endpoint['service'] == 'SRM':
+                endpoint_port = ldap_get_srm_port(endpoint['hostname'], ldap_data)
+                if endpoint_port != -1:
+                    endpoint['tags']['info_srm_port'] = endpoint_port
 
         # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
