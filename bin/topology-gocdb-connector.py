@@ -216,9 +216,9 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
 async def get_ldap_data():
     client = LDAPClient('ldap://bdii.egi.cro-ngi.hr:2170/')
     conn = client.connect()
-    global ldap_data
-    ldap_data = conn.search('o=grid',
+    res = conn.search('o=grid',
         bonsai.LDAPSearchScope.SUB, "(&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))", ['GlueServiceEndpoint'])
+    return res
 
 # Searches ldap_data and returns ldap port for hostname, or -1 if not found
 def ldap_get_srm_port(hostname, ldap_data):
@@ -285,7 +285,8 @@ def main():
         fetched_topology = loop.run_until_complete(asyncio.gather(
             fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
             fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
-            fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)
+            fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging),
+            get_ldap_data()
         ))
 
         # proces data in parallel using multiprocessing
@@ -318,11 +319,9 @@ def main():
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
-        loop.run_until_complete(get_ldap_data())
-
         for endpoint in group_endpoints:
             if endpoint['service'] == 'SRM':
-                endpoint_port = ldap_get_srm_port(endpoint['hostname'], ldap_data)
+                endpoint_port = ldap_get_srm_port(endpoint['hostname'], fetched_topology[3])
                 if endpoint_port != -1:
                     endpoint['tags']['info_srm_port'] = endpoint_port
 
