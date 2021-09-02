@@ -96,13 +96,15 @@ class WebAPI(object):
         content, headers, status = await self.session.http_get(api, headers=self.headers)
         return json.loads(content)
 
-    async def _delete(self, api, id=None):
+    async def _delete(self, api, id=None, date=None):
         from urllib.parse import urlparse
         loc = urlparse(api)
         if id is not None:
             loc = '{}://{}{}/{}'.format(loc.scheme, loc.hostname, loc.path, id)
         else:
             loc = '{}://{}{}'.format(loc.scheme, loc.hostname, loc.path)
+        if date is not None:
+            loc = '{}?date={}'.format(loc, date)
         content, headers, status = await self.session.http_delete(loc, headers=self.headers)
         return status
 
@@ -139,7 +141,7 @@ class WebAPI(object):
         content = await self._get(api)
         if not topo_component and not downtimes_component:
             id = content['data'][0]['id']
-        status = await self._delete(api, id)
+        status = await self._delete(api, id, self.date)
         if status == 200:
             await self._send(api, data_send, self.connector)
             self.logger.info('Succesfully deleted and created new resource')
