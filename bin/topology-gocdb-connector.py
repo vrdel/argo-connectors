@@ -47,7 +47,11 @@ from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 
-from argo_egi_connectors.config import Global, CustomerConf
+#from argo_egi_connectors.config import Global, CustomerConf
+from argo_egi_connectors.config import Global
+sys.path.append("../modules")
+from config import CustomerConf
+
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
 
@@ -58,6 +62,7 @@ logger = None
 SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITES_PI = '/gocdbpi/private/?method=get_site&scope='
 SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
+
 
 globopts = {}
 custname = ''
@@ -213,26 +218,47 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
         raise SystemExit(1)
 
-async def get_ldap_data():
-    client = LDAPClient('ldap://bdii.egi.cro-ngi.hr:2170/')
-    conn = client.connect()
-    res = conn.search('o=grid',
-        bonsai.LDAPSearchScope.SUB, "(&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))", ['GlueServiceEndpoint'])
-    return res
+def parse_ldap_querry(ldap_query):
+    temp = ldap_query.split(' ')
+    temp[1] = temp[1][1:-1]
+    return temp
 
-# Searches ldap_data and returns ldap port for hostname, or -1 if not found
-def ldap_get_srm_port(hostname, ldap_data):
+async def fetch_ldap_data(bdii_opts):
+    try:
+        if bdii_opts is not None:
+            if bdii_opts['bdii']:
+                client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
+                conn = client.connect()
+                ldap_search_base, ldap_search_filter, ldap_search_attributes = parse_ldap_querry(bdii_opts['bdiiquery'])
+                ldap_attr_list = [ldap_search_attributes]
+                res = conn.search(ldap_search_base,
+                    bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list)
+                return res
+            else:
+                return None
+        else:
+            return None
+    except KeyError:
+        return None
+
+
+# Returnes a dictionary which maps hostnames to their respective ldap port if such exists
+def load_srm_ports(ldap_data):
+    port_dict = {}
     for res in ldap_data:
-        glue_service_endpoint = res['GlueServiceEndpoint'][0]
-        no_protocol = glue_service_endpoint[glue_service_endpoint.index('//') + 2:]
-        clean_name = no_protocol[:no_protocol.index('/')]
-        port = clean_name[clean_name.index(':') + 1:]
-        fqdn = clean_name[:clean_name.index(':')]
+        try:
+            glue_service_endpoint = res['GlueServiceEndpoint'][0]
+            no_protocol = glue_service_endpoint[glue_service_endpoint.index('//') + 2:]
+            clean_name = no_protocol[:no_protocol.index('/')]
+            colon_index = clean_name.index(':')
+            fqdn = clean_name[:colon_index]
+            port = clean_name[colon_index + 1:]
+            port_dict[fqdn] = port
+        except ValueError:
+            print('Exception happened while retrieving port from: ')
+            print(res)
 
-        if (fqdn == hostname):
-            return port
-
-    return -1
+    return port_dict
 
 
 def main():
@@ -268,6 +294,12 @@ def main():
     custname = confcust.get_custname()
     logger.customer = custname
 
+    bdii_custopts = confcust._get_cust_options('BDIIOpts')
+    if bdii_custopts is not None:
+        bdii_opts = cglob.merge_opts(bdii_custopts, 'bdii')
+    else:
+        bdii_opts = None
+
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
@@ -286,7 +318,7 @@ def main():
             fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
             fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
             fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging),
-            get_ldap_data()
+            fetch_ldap_data(bdii_opts)
         ))
 
         # proces data in parallel using multiprocessing
@@ -319,12 +351,18 @@ def main():
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
-        for endpoint in group_endpoints:
-            if endpoint['service'] == 'SRM':
-                endpoint_port = ldap_get_srm_port(endpoint['hostname'], fetched_topology[3])
-                if endpoint_port != -1:
-                    endpoint['tags']['info_srm_port'] = endpoint_port
+        # Get SRM ports from LDAP and put them under tags -> info_srm_port
+        # Maybe faster if Exceptions are removed
+        if fetched_topology[3] is not None:
+            srm_port_map = load_srm_ports(fetched_topology[3])
+            for endpoint in group_endpoints:
+                if endpoint['service'] == 'SRM':
+                    try:
+                        endpoint['tags']['info_srm_port'] = srm_port_map[endpoint['hostname']]
+                    except KeyError:
+                        pass
 
+                
         # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
             loop.run_until_complete(

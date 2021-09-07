@@ -3,7 +3,7 @@ import errno
 import os
 import re
 
-from .log import Logger
+from log import Logger
 
 
 class Global(object):
@@ -202,6 +202,7 @@ class CustomerConf(object):
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AuthenticationUsePlainHttpAuth', 'TopoUIDServiceEnpoints',
                       'AuthenticationHttpUser', 'AuthenticationHttpPass',
+                      'BDII', 'BDIIHost', 'BDIIPort', 'BDIIQuery',
                       'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
@@ -266,16 +267,19 @@ class CustomerConf(object):
                                              'TopoUIDServiceEnpoints': topouidservendpoints,
                                              'TopoType': topotype}})
                 if optopts:
-                    auth, webapi, empty_data = {}, {}, {}
+                    auth, webapi, empty_data, bdii = {}, {}, {}, {}
                     for k, v in optopts.items():
                         if k.startswith('authentication'):
                             auth.update({k: v})
                         if k.startswith('webapi'):
                             webapi.update({k: v})
+                        if k.startswith('bdii'):
+                            bdii.update({k: v})
                         if k.endswith('empty'):
                             empty_data.update({k: v})
                     self._cust[section].update(AuthOpts=auth)
                     self._cust[section].update(WebAPIOpts=webapi)
+                    self._cust[section].update(BDIIOpts=bdii)
                     self._cust[section].update(EmptyDataOpts=empty_data)
 
                 if self._custattrs:
@@ -338,6 +342,15 @@ class CustomerConf(object):
                     return dict()
         else:
             return self._get_cust_options('AuthOpts')
+            
+    def get_bdiiopts(self, cust=None):
+        if cust:
+            if 'BDIIOpts' in self._cust[cust]:
+                return self._cust[cust]['BDIIOpts']
+            else:
+                return dict()
+        else:
+            return self._get_cust_options('BDIIOpts')
 
     def get_fulldir(self, cust, job):
         return self.get_custdir(cust) + '/' + self.get_jobdir(job) + '/'
