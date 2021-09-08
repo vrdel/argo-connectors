@@ -3,7 +3,7 @@ import errno
 import os
 import re
 
-from log import Logger
+from .log import Logger
 
 
 class Global(object):

@@ -47,10 +47,7 @@ from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 
-#from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.config import Global
-sys.path.append("../modules")
-from config import CustomerConf
+from argo_egi_connectors.config import Global, CustomerConf
 
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
@@ -223,10 +220,13 @@ def parse_ldap_querry(ldap_query):
     temp[1] = temp[1][1:-1]
     return temp
 
+# Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
     try:
-        if bdii_opts is not None:
+        if len(bdii_opts) > 0:
+            print('BDII NIJE PRAZAN') # DELETE
             if bdii_opts['bdii']:
+                print('BDII JE TRUE') # DELETE
                 client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
                 conn = client.connect()
                 ldap_search_base, ldap_search_filter, ldap_search_attributes = parse_ldap_querry(bdii_opts['bdiiquery'])
@@ -235,15 +235,21 @@ async def fetch_ldap_data(bdii_opts):
                     bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list)
                 return res
             else:
+                print('BDII JE FALSE') # DELETE
                 return None
         else:
+            print('BDII JE PRAZAN') # DELETE
             return None
-    except KeyError:
+            
+    except Exception as e:
+        print(e)
+        print('An unexpected error occured! Check BDII parameters in customer.conf!')
+        print('Continuing without ldap SRM port information...')
         return None
 
 
 # Returnes a dictionary which maps hostnames to their respective ldap port if such exists
-def load_srm_ports(ldap_data):
+def load_srm_port_map(ldap_data):
     port_dict = {}
     for res in ldap_data:
         try:
@@ -295,10 +301,7 @@ def main():
     logger.customer = custname
 
     bdii_custopts = confcust._get_cust_options('BDIIOpts')
-    if bdii_custopts is not None:
-        bdii_opts = cglob.merge_opts(bdii_custopts, 'bdii')
-    else:
-        bdii_opts = None
+    bdii_opts = cglob.merge_opts(bdii_custopts, 'bdii')
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -354,7 +357,7 @@ def main():
         # Get SRM ports from LDAP and put them under tags -> info_srm_port
         # Maybe faster if Exceptions are removed
         if fetched_topology[3] is not None:
-            srm_port_map = load_srm_ports(fetched_topology[3])
+            srm_port_map = load_srm_port_map(fetched_topology[3])
             for endpoint in group_endpoints:
                 if endpoint['service'] == 'SRM':
                     try:
