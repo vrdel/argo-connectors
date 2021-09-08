@@ -224,9 +224,7 @@ def parse_ldap_querry(ldap_query):
 async def fetch_ldap_data(bdii_opts):
     try:
         if len(bdii_opts) > 0:
-            print('BDII NIJE PRAZAN') # DELETE
             if bdii_opts['bdii']:
-                print('BDII JE TRUE') # DELETE
                 client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
                 conn = client.connect()
                 ldap_search_base, ldap_search_filter, ldap_search_attributes = parse_ldap_querry(bdii_opts['bdiiquery'])
@@ -235,12 +233,10 @@ async def fetch_ldap_data(bdii_opts):
                     bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list)
                 return res
             else:
-                print('BDII JE FALSE') # DELETE
                 return None
         else:
-            print('BDII JE PRAZAN') # DELETE
             return None
-            
+
     except Exception as e:
         print(e)
         print('An unexpected error occured! Check BDII parameters in customer.conf!')
