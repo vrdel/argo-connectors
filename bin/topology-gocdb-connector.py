@@ -225,10 +225,10 @@ async def fetch_ldap_data(bdii_opts):
         if len(bdii_opts) > 0:
             if bdii_opts['bdii']:
                 client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
-                conn = client.connect()
+                conn = await client.connect(True)
                 ldap_search_base, ldap_search_filter, ldap_search_attributes = parse_ldap_querry(bdii_opts['bdiiquery'])
                 ldap_attr_list = [ldap_search_attributes]
-                res = conn.search(ldap_search_base,
+                res = await conn.search(ldap_search_base,
                     bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
                     timeout=int(globopts['ConnectionTimeout'.lower()]))
                 return res
