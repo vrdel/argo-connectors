@@ -60,7 +60,6 @@ SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITES_PI = '/gocdbpi/private/?method=get_site&scope='
 SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
 
-
 globopts = {}
 custname = ''
 
@@ -230,7 +229,8 @@ async def fetch_ldap_data(bdii_opts):
                 ldap_search_base, ldap_search_filter, ldap_search_attributes = parse_ldap_querry(bdii_opts['bdiiquery'])
                 ldap_attr_list = [ldap_search_attributes]
                 res = conn.search(ldap_search_base,
-                    bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list)
+                    bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
+                    timeout=int(globopts['ConnectionTimeout'.lower()]))
                 return res
             else:
                 return None
