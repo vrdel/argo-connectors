@@ -103,20 +103,15 @@ async def write_state(confcust, fixed_date, state):
                           globopts['InputStateDays'.lower()])
 
 
-async def fetch_data(feed, api, auth_opts):
+async def fetch_data(feed, auth_opts):
     feed_parts = urlparse(feed)
-    fetched_data = list()
-    count, cursor = 1, 0
-    while count != 0:
-        session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
-                                    globopts, custauth=auth_opts)
-        res = await session.http_get(
-            '{}://{}{}&next_cursor={}'.format(feed_parts.scheme,
-                                                feed_parts.netloc, api,
-                                                cursor))
-        fetched_data.append(res)
-
-    return filter_multiple_tags(''.join(fetched_data))
+    session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
+                                globopts, custauth=auth_opts)
+    res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
+                                                       feed_parts.netloc,
+                                                       feed_parts.path,
+                                                       feed_parts.query))
+    return res
 
 
 async def send_webapi(webapi_opts, data, topotype):
@@ -197,9 +192,8 @@ def main():
 
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(
-            fetch_data(topofeed, CSV_FEED, auth_opts),
+            fetch_data(topofeed, auth_opts),
         ))
-        import ipdb; ipdb.set_trace()
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
