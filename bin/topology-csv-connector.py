@@ -41,7 +41,7 @@ from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_egi_connectors.parse.csvtopo import ParseServiceGroupsEndpoints
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
@@ -59,27 +59,11 @@ custname = ''
 isok = True
 
 
-def parse_source_servicegroups(res, custname, uidservtype):
-    group_groups = ParseServiceGroups(logger, res, custname, uidservtype,
-                                      pass_extensions).get_group_groups()
-    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype,
-                                         pass_extensions).get_group_endpoints()
-
+def parse_source_csvtopo(res, custname, uidservtype):
+    topo_csv = ParseServiceGroupsEndpoints(logger, res, custname, uidservtype)
+    group_groups = topo_csv.get_groupgroups()
+    group_endpoints = topo_csv.get_groupendpoints()
     return group_groups, group_endpoints
-
-
-def parse_source_endpoints(res, custname, uidservtype, pass_extensions):
-    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype,
-                                            pass_extensions).get_group_endpoints()
-
-    return group_endpoints
-
-
-def parse_source_sites(res, custname, uidservtype, pass_extensions):
-    group_endpoints = ParseSites(logger, res, custname, uidservtype,
-                                 pass_extensions).get_group_groups()
-
-    return group_endpoints
 
 
 def get_webapi_opts(cglob, confcust):
@@ -155,7 +139,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
     avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
     ret, excep = avro.write(group_groups)
     if not ret:
-        logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
+        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
         raise SystemExit(1)
 
     if fixed_date:
@@ -218,26 +202,8 @@ def main():
             fetch_data(topofeed, auth_opts),
         ))
 
-        # proces data in parallel using multiprocessing
-        executor = ProcessPoolExecutor(max_workers=3)
-        parse_workers = [
-            loop.run_in_executor(executor,
-                                 partial(parse_source_servicegroups,
-                                         fetched_topology[1], custname,
-                                         uidservtype)),
-            loop.run_in_executor(executor,
-                                 partial(parse_source_endpoints,
-                                         fetched_topology[0], custname,
-                                         uidservtype)),
-            loop.run_in_executor(executor,
-                                 partial(parse_source_sites,
-                                         fetched_topology[2], custname,
-                                         uidservtype))
-        ]
-        parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
-        group_groups, group_endpoints = parsed_topology[0]
-        group_endpoints += parsed_topology[1]
-        group_groups += parsed_topology[2]
+        group_groups, group_endpoints = parse_source_csvtopo(fetched_topology[0], custname,
+                                               uidservtype)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
@@ -245,8 +211,8 @@ def main():
 
         webapi_opts = get_webapi_opts(cglob, confcust)
 
-        numge = len(group_endpoints)
         numgg = len(group_groups)
+        numge = len(group_endpoints)
 
         # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
