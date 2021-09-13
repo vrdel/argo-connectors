@@ -200,7 +200,7 @@ class CustomerConf(object):
                                                    'TopoFetchType']
                     }
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AuthenticationUsePlainHttpAuth',
+    _cust_optional = ['AuthenticationUsePlainHttpAuth', 'TopoUIDServiceEnpoints',
                       'AuthenticationHttpUser', 'AuthenticationHttpPass',
                       'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
@@ -238,6 +238,7 @@ class CustomerConf(object):
                     topofetchtype = config.get(section, 'TopoFetchType')
                     topofeed = config.get(section, 'TopoFeed')
                     topotype = config.get(section, 'TopoType')
+                    topouidservendpoints = config.get(section, 'TopoUIDServiceEndpoints', fallback=False)
                     topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
 
                     if not custdir.endswith('/'):
@@ -262,6 +263,7 @@ class CustomerConf(object):
                                              'TopoFetchType': topofetchtype,
                                              'TopoFeedPaging': topofeedpaging,
                                              'TopoFeed': topofeed,
+                                             'TopoUIDServiceEnpoints': topouidservendpoints,
                                              'TopoType': topotype}})
                 if optopts:
                     auth, webapi, empty_data = {}, {}, {}
@@ -463,7 +465,7 @@ class CustomerConf(object):
 
     def get_uidserviceendpoints(self):
         uidservend = self._get_cust_options('TopoUIDServiceEnpoints')
-        if uidservend is str:
+        if isinstance(uidservend, str):
             return eval(uidservend)
         else:
             return False
