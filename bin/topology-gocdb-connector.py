@@ -196,7 +196,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
     avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
     ret, excep = avro.write(group_groups)
     if not ret:
-        logger.error('Customer:%s Job:%s : %s' % (logger.customer, logger.job, repr(excep)))
+        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
         raise SystemExit(1)
 
     if fixed_date:
