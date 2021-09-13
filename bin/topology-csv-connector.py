@@ -198,12 +198,10 @@ def main():
         group_endpoints, group_groups = list(), list()
 
         # fetch topology data concurrently in coroutines
-        fetched_topology = loop.run_until_complete(asyncio.gather(
-            fetch_data(topofeed, auth_opts),
-        ))
+        fetched_topology = loop.run_until_complete(fetch_data(topofeed, auth_opts))
 
         try:
-            topo_json = csv_to_json(fetched_topology[0])
+            topo_json = csv_to_json(fetched_topology)
 
             group_groups, group_endpoints = parse_source_csvtopo(topo_json,
                                                                 custname,
