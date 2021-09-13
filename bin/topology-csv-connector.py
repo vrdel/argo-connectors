@@ -47,9 +47,11 @@ from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
 
-logger = None
+import csv
+import json
+from io import StringIO
 
-CSV_FEED = "https://docs.google.com/spreadsheets/d/1qs3ZvrYYW5nfqBrlsG0U-15pTlZTFGOJli5MvPbYSMY/export?gid=0&format=csv"
+logger = None
 
 globopts = {}
 custname = ''
@@ -111,8 +113,29 @@ async def fetch_data(feed, auth_opts):
                                                        feed_parts.netloc,
                                                        feed_parts.path,
                                                        feed_parts.query))
-    return res
+    return csv_to_json(res)
 
+
+def csv_to_json(csvdata):
+    data = StringIO(csvdata)
+    reader = csv.reader(data, delimiter=',')
+
+    num_row = 0
+    results = []
+    header = []
+    for row in reader:
+        if num_row == 0:
+            header = row
+            num_row = num_row + 1
+            continue
+        num_item = 0
+        datum = {}
+        for item in header:
+            datum[item] = row[num_item]
+            num_item = num_item + 1
+        results.append(datum)
+
+    return results
 
 async def send_webapi(webapi_opts, data, topotype):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
