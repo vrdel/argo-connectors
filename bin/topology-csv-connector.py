@@ -97,7 +97,7 @@ async def fetch_data(feed, auth_opts):
                                                        feed_parts.netloc,
                                                        feed_parts.path,
                                                        feed_parts.query))
-    return csv_to_json(res)
+    return res
 
 
 def csv_to_json(csvdata):
@@ -202,8 +202,14 @@ def main():
             fetch_data(topofeed, auth_opts),
         ))
 
-        group_groups, group_endpoints = parse_source_csvtopo(fetched_topology[0], custname,
-                                               uidservtype)
+        try:
+            topo_json = csv_to_json(fetched_topology[0])
+
+            group_groups, group_endpoints = parse_source_csvtopo(topo_json,
+                                                                custname,
+                                                                uidservtype)
+        except Exception as exc:
+            raise ConnectorError
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
@@ -229,7 +235,9 @@ def main():
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
     except ConnectorError:
-        write_state(confcust, fixed_date, False)
+        loop.run_until_complete(
+            write_state(confcust, fixed_date, False )
+        )
 
     finally:
         loop.close()
