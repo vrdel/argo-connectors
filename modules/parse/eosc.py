@@ -6,11 +6,13 @@ import json
 
 
 class ParseEoscTopo(object):
-    def __init__(self, logger, data, uidservtype=False, fetchtype='ServiceGroups', scope='EOSC'):
+    def __init__(self, logger, data, uidservtype=False,
+                 fetchtype='ServiceGroups', scope='EOSC'):
         self.data = data
         self.uidservtype = uidservtype
         self.fetchtype = fetchtype
         self.logger = logger
+        self.scope = scope
 
     def _construct_fqdn(self, http_endpoint):
         return urlparse(http_endpoint).netloc
@@ -39,7 +41,7 @@ class ParseEoscTopo(object):
             tmp_dict['type'] = 'PROJECT'
             tmp_dict['group'] = 'EOSC'
             tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
-            tmp_dict['tags'] = {'monitored': '1', 'scope': 'EOSC'}
+            tmp_dict['tags'] = {'monitored': '1', 'scope': self.scope}
 
             groups.append(tmp_dict)
 
@@ -60,7 +62,7 @@ class ParseEoscTopo(object):
                 tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(info_url))
             else:
                 tmp_dict['hostname'] = self._construct_fqdn(entity['URL'])
-            tmp_dict['tags'] = {'scope': 'EOSC', 'monitored': '1', 'info.URL': info_url}
+            tmp_dict['tags'] = {'scope': self.scope, 'monitored': '1', 'info.URL': info_url}
 
             groups.append(tmp_dict)
 
