@@ -38,5 +38,6 @@ setup(name=NAME,
                                                         'bin/topology-gocdb-connector.py',
                                                         'bin/topology-eosc-connector.py',
                                                         'bin/weights-vapor-connector.py',
+                                                        'bin/topology-csv-connector.py',
                                                         'bin/replay-avro-data.py']),
                   ('/etc/argo-egi-connectors/schemas', glob.glob('etc/schemas/*.avsc'))])
