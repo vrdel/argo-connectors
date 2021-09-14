@@ -86,7 +86,7 @@ class ParseSites(tools):
                     self._sites[site_name]['extensions'] = extensions
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, self.logger, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def get_group_groups(self):
@@ -148,7 +148,7 @@ class ParseServiceEndpoints(tools):
                     self._service_endpoints[service_id]['extensions'] = extensions
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def get_group_endpoints(self):
@@ -227,7 +227,7 @@ class ParseServiceGroups(tools):
                     self._service_groups[group_id]['services'].append(tmps)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s Job:%s : Error parsing feed - %s' % (self.logger.customer, self.logger.job, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def get_group_endpoints(self):

@@ -41,19 +41,17 @@ from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_egi_connectors.parse.csvtopo import ParseServiceGroupsEndpoints
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
 
-logger = None
+import csv
+import json
+from io import StringIO
 
-# GOCDB explicitly says &scope='' for all scopes
-# TODO: same methods can be served on different paths
-SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
-SITES_PI = '/gocdbpi/private/?method=get_site&scope='
-SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
+logger = None
 
 globopts = {}
 custname = ''
@@ -61,27 +59,11 @@ custname = ''
 isok = True
 
 
-def parse_source_servicegroups(res, custname, uidservtype, pass_extensions):
-    group_groups = ParseServiceGroups(logger, res, custname, uidservtype,
-                                      pass_extensions).get_group_groups()
-    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype,
-                                         pass_extensions).get_group_endpoints()
-
+def parse_source_csvtopo(res, custname, uidservtype):
+    topo_csv = ParseServiceGroupsEndpoints(logger, res, custname, uidservtype)
+    group_groups = topo_csv.get_groupgroups()
+    group_endpoints = topo_csv.get_groupendpoints()
     return group_groups, group_endpoints
-
-
-def parse_source_endpoints(res, custname, uidservtype, pass_extensions):
-    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype,
-                                            pass_extensions).get_group_endpoints()
-
-    return group_endpoints
-
-
-def parse_source_sites(res, custname, uidservtype, pass_extensions):
-    group_endpoints = ParseSites(logger, res, custname, uidservtype,
-                                 pass_extensions).get_group_groups()
-
-    return group_endpoints
 
 
 def get_webapi_opts(cglob, confcust):
@@ -107,76 +89,37 @@ async def write_state(confcust, fixed_date, state):
                           globopts['InputStateDays'.lower()])
 
 
-def find_next_paging_cursor_count(res):
-    cursor, count = None, None
-
-    doc = xml.dom.minidom.parseString(res)
-    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-    links = doc.getElementsByTagName('link')
-    for link in links:
-        if link.getAttribute('rel') == 'next':
-            href = link.getAttribute('href')
-            for query in href.split('&'):
-                if 'next_cursor' in query:
-                    cursor = query.split('=')[1]
-
-    return count, cursor
-
-
-def filter_multiple_tags(data):
-    """
-        Paginated content is represented with multiple XML enclosing tags
-        in a single buffer:
-
-        <?xml version="1.0" encoding="UTF-8"?>
-        <results>
-            topology entities
-        </results>
-        <?xml version="1.0" encoding="UTF-8"?>
-        <results>
-            topology entities
-        </results>
-        ...
-
-        Remove them and leave only one enclosing.
-    """
-    data_lines = data.split('\n')
-    data_lines = list(filter(lambda line:
-                             '</results>' not in line
-                             and '<results>' not in line
-                             and '<?xml' not in line,
-                             data_lines))
-    data_lines.insert(0, '<?xml version="1.0" encoding="UTF-8"?>')
-    data_lines.insert(1, '<results>')
-    data_lines.append('</results>')
-    return '\n'.join(data_lines)
-
-
-async def fetch_data(feed, api, auth_opts, paginated):
+async def fetch_data(feed, auth_opts):
     feed_parts = urlparse(feed)
-    fetched_data = list()
-    if paginated:
-        count, cursor = 1, 0
-        while count != 0:
-            session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
-                                       globopts, custauth=auth_opts)
-            res = await session.http_get(
-                '{}://{}{}&next_cursor={}'.format(feed_parts.scheme,
-                                                  feed_parts.netloc, api,
-                                                  cursor))
-            count, cursor = find_next_paging_cursor_count(res)
-            fetched_data.append(res)
+    session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
+                                globopts, custauth=auth_opts)
+    res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
+                                                       feed_parts.netloc,
+                                                       feed_parts.path,
+                                                       feed_parts.query))
+    return res
 
-        return filter_multiple_tags(''.join(fetched_data))
 
-    else:
-        session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
-                                   globopts, custauth=auth_opts)
-        res = await session.http_get('{}://{}{}'.format(feed_parts.scheme,
-                                                        feed_parts.netloc,
-                                                        api))
-        return res
+def csv_to_json(csvdata):
+    data = StringIO(csvdata)
+    reader = csv.reader(data, delimiter=',')
 
+    num_row = 0
+    results = []
+    header = []
+    for row in reader:
+        if num_row == 0:
+            header = row
+            num_row = num_row + 1
+            continue
+        num_item = 0
+        datum = {}
+        for item in header:
+            datum[item] = row[num_item]
+            num_item = num_item + 1
+        results.append(datum)
+
+    return results
 
 async def send_webapi(webapi_opts, data, topotype):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
@@ -213,7 +156,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
 def main():
     global logger, globopts, confcust
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
-                                                    from GOCDB for every customer and job listed in customer.conf and write them
+                                                    from CSV topology feed for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
@@ -229,7 +172,6 @@ def main():
     confpath = args.gloconf[0] if args.gloconf else None
     cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
-    pass_extensions = eval(globopts['GeneralPassExtensions'.lower()])
 
     confpath = args.custconf[0] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
@@ -237,7 +179,6 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     topofeed = confcust.get_topofeed()
-    topofeedpaging = confcust.get_topofeedpaging()
     uidservtype = confcust.get_uidserviceendpoints()
     topofetchtype = confcust.get_topofetchtype()
     custname = confcust.get_custname()
@@ -257,32 +198,16 @@ def main():
         group_endpoints, group_groups = list(), list()
 
         # fetch topology data concurrently in coroutines
-        fetched_topology = loop.run_until_complete(asyncio.gather(
-            fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
-            fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
-            fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)
-        ))
+        fetched_topology = loop.run_until_complete(fetch_data(topofeed, auth_opts))
 
-        # proces data in parallel using multiprocessing
-        executor = ProcessPoolExecutor(max_workers=3)
-        parse_workers = [
-            loop.run_in_executor(executor,
-                                 partial(parse_source_servicegroups,
-                                         fetched_topology[1], custname,
-                                         uidservtype, pass_extensions)),
-            loop.run_in_executor(executor,
-                                 partial(parse_source_endpoints,
-                                         fetched_topology[0], custname,
-                                         uidservtype, pass_extensions)),
-            loop.run_in_executor(executor,
-                                 partial(parse_source_sites,
-                                         fetched_topology[2], custname,
-                                         uidservtype, pass_extensions))
-        ]
-        parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
-        group_groups, group_endpoints = parsed_topology[0]
-        group_endpoints += parsed_topology[1]
-        group_groups += parsed_topology[2]
+        try:
+            topo_json = csv_to_json(fetched_topology)
+
+            group_groups, group_endpoints = parse_source_csvtopo(topo_json,
+                                                                custname,
+                                                                uidservtype)
+        except Exception as exc:
+            raise ConnectorError
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
@@ -290,8 +215,8 @@ def main():
 
         webapi_opts = get_webapi_opts(cglob, confcust)
 
-        numge = len(group_endpoints)
         numgg = len(group_groups)
+        numge = len(group_endpoints)
 
         # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
@@ -308,7 +233,9 @@ def main():
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
     except ConnectorError:
-        write_state(confcust, fixed_date, False)
+        loop.run_until_complete(
+            write_state(confcust, fixed_date, False )
+        )
 
     finally:
         loop.close()

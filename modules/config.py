@@ -61,6 +61,10 @@ class Global(object):
                         self._merge_dict(self.shared_secopts,
                                          self.conf_weights_schemas,
                                          self.conf_weights_output),
+                        'topology-csv-connector.py':
+                        self._merge_dict(self.shared_secopts,
+                                         self.conf_topo_schemas,
+                                         self.conf_topo_output),
                         'metricprofile-webapi-connector.py':
                         self._merge_dict(self.shared_secopts,
                                          self.conf_metricprofile_schemas,
@@ -187,13 +191,16 @@ class CustomerConf(object):
     """
     _custattrs = None
     _cust = {}
-    _defjobattrs = {'topology-gocdb-connector.py': [''], 'topology-eosc-connector.py': [''],
+    _defjobattrs = {'topology-gocdb-connector.py': [''],
+                    'topology-eosc-connector.py': [''],
+                    'topology-csv-connector.py': [''],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
-                    'weights-vapor-connector.py': ['WeightsFeed', 'TopoFetchType']
+                    'weights-vapor-connector.py': ['WeightsFeed',
+                                                   'TopoFetchType']
                     }
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AuthenticationUsePlainHttpAuth',
+    _cust_optional = ['AuthenticationUsePlainHttpAuth', 'TopoUIDServiceEnpoints',
                       'AuthenticationHttpUser', 'AuthenticationHttpPass',
                       'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
@@ -231,7 +238,8 @@ class CustomerConf(object):
                     topofetchtype = config.get(section, 'TopoFetchType')
                     topofeed = config.get(section, 'TopoFeed')
                     topotype = config.get(section, 'TopoType')
-                    topofeedpaging = config.get(section, 'TopoFeedPaging')
+                    topouidservendpoints = config.get(section, 'TopoUIDServiceEndpoints', fallback=False)
+                    topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
 
                     if not custdir.endswith('/'):
                         custdir = '{}/'.format(custdir)
@@ -255,6 +263,7 @@ class CustomerConf(object):
                                              'TopoFetchType': topofetchtype,
                                              'TopoFeedPaging': topofeedpaging,
                                              'TopoFeed': topofeed,
+                                             'TopoUIDServiceEnpoints': topouidservendpoints,
                                              'TopoType': topotype}})
                 if optopts:
                     auth, webapi, empty_data = {}, {}, {}
@@ -456,7 +465,7 @@ class CustomerConf(object):
 
     def get_uidserviceendpoints(self):
         uidservend = self._get_cust_options('TopoUIDServiceEnpoints')
-        if uidservend is str:
+        if isinstance(uidservend, str):
             return eval(uidservend)
         else:
             return False
