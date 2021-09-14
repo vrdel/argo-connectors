@@ -238,9 +238,7 @@ async def fetch_ldap_data(bdii_opts):
             return None
 
     except Exception as e:
-        print(e)
-        print('An unexpected error occured! Check BDII parameters in customer.conf!')
-        print('Continuing without ldap SRM port information...')
+        logger.error('''An unexpected error occured! Check BDII parameters in customer.conf!\nContinuing without ldap SRM port information...''')
         return None
 
 
@@ -257,8 +255,7 @@ def load_srm_port_map(ldap_data):
             port = clean_name[colon_index + 1:]
             port_dict[fqdn] = port
         except ValueError:
-            print('Exception happened while retrieving port from: ')
-            print(res)
+            logger.error('Exception happened while retrieving port from: %s' % res)
 
     return port_dict
 
