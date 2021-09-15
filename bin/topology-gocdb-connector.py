@@ -171,7 +171,6 @@ async def fetch_data(feed, api, auth_opts, paginated):
                                                   cursor))
             count, cursor = find_next_paging_cursor_count(res)
             fetched_data.append(res)
-
         return filter_multiple_tags(''.join(fetched_data))
 
     else:
@@ -226,7 +225,7 @@ def get_bdii_opts(confcust):
 async def fetch_ldap_data(bdii_opts):
     try:
         if len(bdii_opts) > 0:
-            if bdii_opts['bdii']:
+            if bdii_opts['bdii'] == 'True':
                 client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
                 conn = await client.connect(True)
                 ldap_search_base = bdii_opts['bdiiquerybase']
@@ -312,13 +311,16 @@ def main():
 
         bdii_opts = get_bdii_opts(confcust)
 
+        coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
+                 fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
+                 fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
+
+        bdii_enabled = eval(bdii_opts['bdii'])
+        if bdii_enabled:
+            coros.append(fetch_ldap_data(bdii_opts))
+        
         # fetch topology data concurrently in coroutines
-        fetched_topology = loop.run_until_complete(asyncio.gather(
-            fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
-            fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
-            fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging),
-            fetch_ldap_data(bdii_opts)
-        ))
+        fetched_topology = loop.run_until_complete(asyncio.gather(*coros))
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
@@ -352,7 +354,7 @@ def main():
 
         # Get SRM ports from LDAP and put them under tags -> info_srm_port
         # Maybe faster if Exceptions are removed
-        if fetched_topology[3] is not None:
+        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
             srm_port_map = load_srm_port_map(fetched_topology[3])
             for endpoint in group_endpoints:
                 if endpoint['service'] == 'SRM':
