@@ -351,11 +351,8 @@ def main():
         if len(fetched_topology) > 3 and fetched_topology[3] is not None:
             srm_port_map = load_srm_port_map(fetched_topology[3])
             for endpoint in group_endpoints:
-                if endpoint['service'] == 'SRM':
-                    try:
-                        endpoint['tags']['info_srm_port'] = srm_port_map[endpoint['hostname']]
-                    except KeyError:
-                        pass
+                if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
+                    endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]
 
        # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
