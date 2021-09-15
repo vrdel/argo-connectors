@@ -214,10 +214,13 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
         raise SystemExit(1)
 
-def parse_ldap_querry(ldap_query):
-    temp = ldap_query.split(' ')
-    temp[1] = temp[1][1:-1]
-    return temp
+def get_bdii_opts(confcust):
+    bdii_custopts = confcust._get_cust_options('BDIIOpts')
+    bdii_complete, missing = confcust.is_complete_bdii(bdii_custopts)
+    if not bdii_complete:
+        logger.error('%s options incomplete, missing %s' % ('bdii', ' '.join(missing)))
+        raise SystemExit(1)
+    return bdii_custopts
 
 # Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
@@ -226,8 +229,9 @@ async def fetch_ldap_data(bdii_opts):
             if bdii_opts['bdii']:
                 client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
                 conn = await client.connect(True)
-                ldap_search_base, ldap_search_filter, ldap_search_attributes = parse_ldap_querry(bdii_opts['bdiiquery'])
-                ldap_attr_list = [ldap_search_attributes]
+                ldap_search_base = bdii_opts['bdiiquerybase']
+                ldap_search_filter = bdii_opts['bdiiqueryfilter']
+                ldap_attr_list = bdii_opts['bdiiqueryattributes'].split(' ')
                 res = await conn.search(ldap_search_base,
                     bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
                     timeout=int(globopts['ConnectionTimeout'.lower()]))
@@ -293,9 +297,6 @@ def main():
     custname = confcust.get_custname()
     logger.customer = custname
 
-    bdii_custopts = confcust._get_cust_options('BDIIOpts')
-    bdii_opts = cglob.merge_opts(bdii_custopts, 'bdii')
-
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
@@ -308,6 +309,8 @@ def main():
 
     try:
         group_endpoints, group_groups = list(), list()
+
+        bdii_opts = get_bdii_opts(confcust)
 
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(
