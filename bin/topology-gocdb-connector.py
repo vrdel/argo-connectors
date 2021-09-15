@@ -225,18 +225,23 @@ def get_bdii_opts(confcust):
 
 # Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
-    client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
-    conn = await client.connect(True)
+    try:
+        client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
+        conn = await client.connect(True)
 
-    ldap_search_base = bdii_opts['bdiiquerybase']
-    ldap_search_filter = bdii_opts['bdiiqueryfilter']
-    ldap_attr_list = bdii_opts['bdiiqueryattributes'].split(' ')
+        ldap_search_base = bdii_opts['bdiiquerybase']
+        ldap_search_filter = bdii_opts['bdiiqueryfilter']
+        ldap_attr_list = bdii_opts['bdiiqueryattributes'].split(' ')
 
-    res = await conn.search(ldap_search_base,
-        bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
-        timeout=int(globopts['ConnectionTimeout'.lower()]))
+        res = await conn.search(ldap_search_base,
+            bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
+            timeout=int(globopts['ConnectionTimeout'.lower()]))
 
-    return res
+        return res
+
+    except bonsai.errors.ConnectionError as exc:
+        logger.error('Connection errors while contacting BDII: %s' % str(exc))
+        raise ConnectorError()
 
 
 # Returnes a dictionary which maps hostnames to their respective ldap port if such exists
@@ -347,7 +352,6 @@ def main():
         numgg = len(group_groups)
 
         # Get SRM ports from LDAP and put them under tags -> info_srm_port
-        # Maybe faster if Exceptions are removed
         if len(fetched_topology) > 3 and fetched_topology[3] is not None:
             srm_port_map = load_srm_port_map(fetched_topology[3])
             for endpoint in group_endpoints:
