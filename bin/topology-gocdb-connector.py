@@ -36,7 +36,7 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-# Imports for LDAP 
+# Imports for LDAP
 import bonsai
 from bonsai import LDAPClient
 
@@ -213,6 +213,7 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
         logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
         raise SystemExit(1)
 
+
 def get_bdii_opts(confcust):
     bdii_custopts = confcust._get_cust_options('BDIIOpts')
     bdii_complete, missing = confcust.is_complete_bdii(bdii_custopts)
@@ -221,28 +222,21 @@ def get_bdii_opts(confcust):
         raise SystemExit(1)
     return bdii_custopts
 
+
 # Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
-    try:
-        if len(bdii_opts) > 0:
-            if bdii_opts['bdii'] == 'True':
-                client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
-                conn = await client.connect(True)
-                ldap_search_base = bdii_opts['bdiiquerybase']
-                ldap_search_filter = bdii_opts['bdiiqueryfilter']
-                ldap_attr_list = bdii_opts['bdiiqueryattributes'].split(' ')
-                res = await conn.search(ldap_search_base,
-                    bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
-                    timeout=int(globopts['ConnectionTimeout'.lower()]))
-                return res
-            else:
-                return None
-        else:
-            return None
+    client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
+    conn = await client.connect(True)
 
-    except Exception as e:
-        logger.error('''An unexpected error occured! Check BDII parameters in customer.conf!\nContinuing without ldap SRM port information...''')
-        return None
+    ldap_search_base = bdii_opts['bdiiquerybase']
+    ldap_search_filter = bdii_opts['bdiiqueryfilter']
+    ldap_attr_list = bdii_opts['bdiiqueryattributes'].split(' ')
+
+    res = await conn.search(ldap_search_base,
+        bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
+        timeout=int(globopts['ConnectionTimeout'.lower()]))
+
+    return res
 
 
 # Returnes a dictionary which maps hostnames to their respective ldap port if such exists
@@ -318,7 +312,7 @@ def main():
         bdii_enabled = eval(bdii_opts['bdii'])
         if bdii_enabled:
             coros.append(fetch_ldap_data(bdii_opts))
-        
+
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros))
 
@@ -363,8 +357,7 @@ def main():
                     except KeyError:
                         pass
 
-                
-        # send concurrently to WEB-API in coroutines
+       # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
             loop.run_until_complete(
                 asyncio.gather(
