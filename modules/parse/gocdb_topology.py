@@ -143,6 +143,7 @@ class ParseServiceEndpoints(tools):
                 self._service_endpoints[service_id]['service_id'] = service_id
                 self._service_endpoints[service_id]['scope'] = ', '.join(self._parse_scopes(service))
                 self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + '-' + self._service_endpoints[service_id]['type'] + '-' + self._service_endpoints[service_id]['site']
+                self._service_endpoints[service_id]['url'] = self._parse_xmltext(service.getElementsByTagName('URL')[0].childNodes)
                 if self.pass_extensions:
                     extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                     self._service_endpoints[service_id]['extensions'] = extensions
@@ -169,6 +170,10 @@ class ParseServiceEndpoints(tools):
                             group['monitored'] == 'True' else '0',
                             'production': '1' if group['production'] == 'Y' or
                             group['production'] == 'True' else '0'}
+            if group['url']:
+                tmpg['tags'].update({
+                    'info_URL': group['url']
+                })
 
             if self.pass_extensions:
                 for key, value in group['extensions'].items():
