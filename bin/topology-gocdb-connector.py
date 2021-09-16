@@ -216,11 +216,14 @@ def write_avro(confcust, group_groups, group_endpoints, fixed_date):
 
 def get_bdii_opts(confcust):
     bdii_custopts = confcust._get_cust_options('BDIIOpts')
-    bdii_complete, missing = confcust.is_complete_bdii(bdii_custopts)
-    if not bdii_complete:
-        logger.error('%s options incomplete, missing %s' % ('bdii', ' '.join(missing)))
-        raise SystemExit(1)
-    return bdii_custopts
+    if bdii_custopts:
+        bdii_complete, missing = confcust.is_complete_bdii(bdii_custopts)
+        if not bdii_complete:
+            logger.error('%s options incomplete, missing %s' % ('bdii', ' '.join(missing)))
+            raise SystemExit(1)
+        return bdii_custopts
+    else:
+        return None
 
 
 # Fetches data from LDAP, connection parameters are set in customer.conf
@@ -303,20 +306,20 @@ def main():
         logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
         raise SystemExit(1)
 
+    bdii_opts = get_bdii_opts(confcust)
+
     loop = uvloop.new_event_loop()
     asyncio.set_event_loop(loop)
 
     try:
         group_endpoints, group_groups = list(), list()
 
-        bdii_opts = get_bdii_opts(confcust)
 
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
 
-        bdii_enabled = eval(bdii_opts['bdii'])
-        if bdii_enabled:
+        if bdii_opts and eval(bdii_opts['bdii']):
             coros.append(fetch_ldap_data(bdii_opts))
 
         # fetch topology data concurrently in coroutines
