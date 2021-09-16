@@ -250,11 +250,12 @@ def load_srm_port_map(ldap_data):
     for res in ldap_data:
         try:
             glue_service_endpoint = res['GlueServiceEndpoint'][0]
-            no_protocol = glue_service_endpoint[glue_service_endpoint.index('//') + 2:]
-            clean_name = no_protocol[:no_protocol.index('/')]
-            colon_index = clean_name.index(':')
-            fqdn = clean_name[:colon_index]
-            port = clean_name[colon_index + 1:]
+            start_index = glue_service_endpoint.index('//')
+            colon_index = glue_service_endpoint.index(':', start_index)
+            end_index = glue_service_endpoint.index('/', colon_index)
+            fqdn = glue_service_endpoint[start_index + 2:colon_index]
+            port = glue_service_endpoint[colon_index + 1:end_index]
+
             port_dict[fqdn] = port
         except ValueError:
             logger.error('Exception happened while retrieving port from: %s' % res)
