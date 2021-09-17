@@ -251,6 +251,7 @@ class ParseServiceGroups(tools):
                     tmps['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     tmps['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                     tmps['scope'] = ', '.join(self._parse_scopes(service))
+                    tmps['endpoint_urls'] = self._parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
                     if self.pass_extensions:
                         extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                         tmps['extensions'] = extensions
@@ -285,6 +286,10 @@ class ParseServiceGroups(tools):
                         tmpg['tags'].update({
                             'info_ext_' + key: value
                         })
+                if service['endpoint_urls']:
+                    tmpg['tags'].update({
+                        'info_service_endpoint_URL': service['endpoint_urls']
+                    })
 
                 groupofendpoints.append(tmpg)
 
