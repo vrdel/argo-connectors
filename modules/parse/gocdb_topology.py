@@ -38,10 +38,13 @@ class tools(object):
             if endpoint.nodeName == 'ENDPOINT':
                 url = None
                 for endpoint_node in endpoint.childNodes:
-                    if endpoint_node.nodeName == 'URL':
-                        if endpoint_node.childNodes:
-                            url = endpoint_node.childNodes[0].nodeValue
-                            endpoints_urls.append(url)
+                    if endpoint_node.nodeName == 'ENDPOINT_MONITORED':
+                        value = endpoint_node.childNodes[0].nodeValue
+                        if value.lower() == 'y':
+                            for url_node in endpoint.childNodes:
+                                if url_node.nodeName == 'URL' and url_node.childNodes:
+                                    url = url_node.childNodes[0].nodeValue
+                                    endpoints_urls.append(url)
 
         if endpoints_urls:
             return ', '.join(endpoints_urls)
@@ -103,7 +106,7 @@ class ParseSites(tools):
                     self._sites[site_name]['extensions'] = extensions
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, self.logger, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def get_group_groups(self):
