@@ -41,6 +41,7 @@ import bonsai
 from bonsai import LDAPClient
 
 from argo_egi_connectors.io.connection import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.ldap_connection import LDAPSessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -51,9 +52,6 @@ from argo_egi_connectors.config import Global, CustomerConf
 
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
-
-# TEST IMPORT - DELETE
-from ldap_connection import LDAPSessionWithRetry
 
 
 logger = None
@@ -232,27 +230,11 @@ def get_bdii_opts(confcust):
 
 # Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
-    try:
-        ldap_session = LDAPSessionWithRetry()
-        ldap_session.ldap_search('test')
+    ldap_session = LDAPSessionWithRetry(logger, globopts)
+    res = await ldap_session.search(bdii_opts['bdiihost'], bdii_opts['bdiiport'], bdii_opts['bdiiquerybase'],
+    bdii_opts['bdiiqueryfilter'], bdii_opts['bdiiqueryattributes'].split(' '))
+    return res
 
-
-        client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
-        conn = await client.connect(True)
-
-        ldap_search_base = bdii_opts['bdiiquerybase']
-        ldap_search_filter = bdii_opts['bdiiqueryfilter']
-        ldap_attr_list = bdii_opts['bdiiqueryattributes'].split(' ')
-
-        res = await conn.search(ldap_search_base,
-            bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
-            timeout=int(globopts['ConnectionTimeout'.lower()]))
-
-        return res
-
-    except bonsai.errors.ConnectionError as exc:
-        logger.error('Connection errors while contacting BDII: %s' % str(exc))
-        raise ConnectorError()
 
 
 # Returnes a dictionary which maps hostnames to their respective ldap port if such exists
@@ -326,7 +308,6 @@ def main():
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
-
         if bdii_opts and eval(bdii_opts['bdii']):
             coros.append(fetch_ldap_data(bdii_opts))
 
