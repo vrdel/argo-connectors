@@ -31,6 +31,26 @@ class tools(object):
 
         return extensions_dict
 
+    def _parse_url_endpoints(self, endpointsNode):
+        endpoints_urls = list()
+
+        for endpoint in endpointsNode:
+            if endpoint.nodeName == 'ENDPOINT':
+                url = None
+                for endpoint_node in endpoint.childNodes:
+                    if endpoint_node.nodeName == 'ENDPOINT_MONITORED':
+                        value = endpoint_node.childNodes[0].nodeValue
+                        if value.lower() == 'y':
+                            for url_node in endpoint.childNodes:
+                                if url_node.nodeName == 'URL' and url_node.childNodes:
+                                    url = url_node.childNodes[0].nodeValue
+                                    endpoints_urls.append(url)
+
+        if endpoints_urls:
+            return ', '.join(endpoints_urls)
+        else:
+            return None
+
     def _parse_scopes(self, xml_node):
         scopes = list()
 
@@ -86,7 +106,7 @@ class ParseSites(tools):
                     self._sites[site_name]['extensions'] = extensions
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, self.logger, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def get_group_groups(self):
@@ -143,9 +163,11 @@ class ParseServiceEndpoints(tools):
                 self._service_endpoints[service_id]['service_id'] = service_id
                 self._service_endpoints[service_id]['scope'] = ', '.join(self._parse_scopes(service))
                 self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + '-' + self._service_endpoints[service_id]['type'] + '-' + self._service_endpoints[service_id]['site']
+                self._service_endpoints[service_id]['url'] = self._parse_xmltext(service.getElementsByTagName('URL')[0].childNodes)
                 if self.pass_extensions:
                     extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                     self._service_endpoints[service_id]['extensions'] = extensions
+                self._service_endpoints[service_id]['endpoint_urls'] = self._parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
@@ -169,6 +191,14 @@ class ParseServiceEndpoints(tools):
                             group['monitored'] == 'True' else '0',
                             'production': '1' if group['production'] == 'Y' or
                             group['production'] == 'True' else '0'}
+            if group['url']:
+                tmpg['tags'].update({
+                    'info_URL': group['url']
+                })
+            if group['endpoint_urls']:
+                tmpg['tags'].update({
+                    'info_service_endpoint_URL': group['endpoint_urls']
+                })
 
             if self.pass_extensions:
                 for key, value in group['extensions'].items():
@@ -221,6 +251,7 @@ class ParseServiceGroups(tools):
                     tmps['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                     tmps['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                     tmps['scope'] = ', '.join(self._parse_scopes(service))
+                    tmps['endpoint_urls'] = self._parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
                     if self.pass_extensions:
                         extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                         tmps['extensions'] = extensions
@@ -255,6 +286,10 @@ class ParseServiceGroups(tools):
                         tmpg['tags'].update({
                             'info_ext_' + key: value
                         })
+                if service['endpoint_urls']:
+                    tmpg['tags'].update({
+                        'info_service_endpoint_URL': service['endpoint_urls']
+                    })
 
                 groupofendpoints.append(tmpg)
 
