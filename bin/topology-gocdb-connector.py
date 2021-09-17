@@ -52,6 +52,10 @@ from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
 
+# TEST IMPORT - DELETE
+from ldap_connection import LDAPSessionWithRetry
+
+
 logger = None
 
 # GOCDB explicitly says &scope='' for all scopes
@@ -229,6 +233,10 @@ def get_bdii_opts(confcust):
 # Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
     try:
+        ldap_session = LDAPSessionWithRetry()
+        ldap_session.ldap_search('test')
+
+
         client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
         conn = await client.connect(True)
 
