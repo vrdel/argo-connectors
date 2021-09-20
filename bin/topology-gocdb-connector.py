@@ -36,7 +36,6 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-# Imports for LDAP
 import bonsai
 from bonsai import LDAPClient
 
@@ -232,7 +231,7 @@ def get_bdii_opts(confcust):
 async def fetch_ldap_data(bdii_opts):
     ldap_session = LDAPSessionWithRetry(logger, int(globopts['ConnectionRetry'.lower()]),
         int(globopts['ConnectionSleepRetry'.lower()]), int(globopts['ConnectionTimeout'.lower()]))
-        
+
     res = await ldap_session.search(bdii_opts['bdiihost'], bdii_opts['bdiiport'], bdii_opts['bdiiquerybase'],
     bdii_opts['bdiiqueryfilter'], bdii_opts['bdiiqueryattributes'].split(' '))
     return res
@@ -240,18 +239,19 @@ async def fetch_ldap_data(bdii_opts):
 
 
 # Returnes a dictionary which maps hostnames to their respective ldap port if such exists
-def load_srm_port_map(ldap_data):
+def load_srm_port_map(ldap_data, attribute_name):
     port_dict = {}
     for res in ldap_data:
         try:
-            glue_service_endpoint = res['GlueServiceEndpoint'][0]
-            start_index = glue_service_endpoint.index('//')
-            colon_index = glue_service_endpoint.index(':', start_index)
-            end_index = glue_service_endpoint.index('/', colon_index)
-            fqdn = glue_service_endpoint[start_index + 2:colon_index]
-            port = glue_service_endpoint[colon_index + 1:end_index]
+            attribute = res[attribute_name][0]
+            start_index = attribute.index('//')
+            colon_index = attribute.index(':', start_index)
+            end_index = attribute.index('/', colon_index)
+            fqdn = attribute[start_index + 2:colon_index]
+            port = attribute[colon_index + 1:end_index]
 
             port_dict[fqdn] = port
+            
         except ValueError:
             logger.error('Exception happened while retrieving port from: %s' % res)
 
@@ -348,7 +348,7 @@ def main():
 
         # Get SRM ports from LDAP and put them under tags -> info_srm_port
         if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            srm_port_map = load_srm_port_map(fetched_topology[3])
+            srm_port_map = load_srm_port_map(fetched_topology[3], bdii_opts['bdiiqueryattributes'].split(' ')[0])
             for endpoint in group_endpoints:
                 if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
                     endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]
