@@ -40,8 +40,8 @@ from functools import partial
 import bonsai
 from bonsai import LDAPClient
 
-from argo_egi_connectors.io.connection import ConnectorError, SessionWithRetry
-from argo_egi_connectors.io.ldap_connection import LDAPSessionWithRetry
+from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -230,7 +230,9 @@ def get_bdii_opts(confcust):
 
 # Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
-    ldap_session = LDAPSessionWithRetry(logger, globopts)
+    ldap_session = LDAPSessionWithRetry(logger, int(globopts['ConnectionRetry'.lower()]),
+        int(globopts['ConnectionSleepRetry'.lower()]), int(globopts['ConnectionTimeout'.lower()]))
+        
     res = await ldap_session.search(bdii_opts['bdiihost'], bdii_opts['bdiiport'], bdii_opts['bdiiquerybase'],
     bdii_opts['bdiiqueryfilter'], bdii_opts['bdiiqueryattributes'].split(' '))
     return res

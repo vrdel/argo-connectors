@@ -3,20 +3,13 @@ import asyncio
 import bonsai
 
 from argo_egi_connectors.tools import module_class_name
-
-def build_connection_retry_settings(globopts):
-    retry = int(globopts['ConnectionRetry'.lower()])
-    sleep_retry = int(globopts['ConnectionSleepRetry'.lower()])
-    timeout = int(globopts['ConnectionTimeout'.lower()])
-    list_retry = [(i + 1) * sleep_retry for i in range(retry)]
-    return (retry, list_retry, timeout)
-
-class ConnectorError(Exception):
-    pass
+from argo_egi_connectors.io.http import ConnectorError
 
 class LDAPSessionWithRetry(object):
-    def __init__(self, logger, globopts):
-        self.n_try, self.sleep_retry_list, self.timeout = build_connection_retry_settings(globopts)
+    def __init__(self, logger, retry_attempts, retry_sleep, connection_timeout):
+        self.n_try = retry_attempts
+        self.retry_sleep_list = [(i + 1) * retry_sleep for i in range(retry_attempts)]
+        self.timeout = connection_timeout
         self.logger = logger
 
 
@@ -33,13 +26,12 @@ class LDAPSessionWithRetry(object):
                         bonsai.LDAPSearchScope.SUB, filter, attributes,
                         timeout=float(self.timeout))
 
-                    print('Connection Successful')
                     return res
 
 
                 except Exception as exc:
                     self.logger.error('from {}.search() - {}'.format(module_class_name(self), repr(exc)))
-                    await asyncio.sleep(float(self.sleep_retry_list[n - 1]))
+                    await asyncio.sleep(float(self.retry_sleep_list[n - 1]))
                     raised_exc = exc
 
                 self.logger.info(f'Connection try - {n}')
