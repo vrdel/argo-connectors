@@ -257,6 +257,13 @@ def load_srm_port_map(ldap_data, attribute_name):
 
     return port_dict
 
+def contains_exception(list):
+    for a in list:
+        if isinstance(a, Exception):
+            return True
+
+    return False
+
 
 def main():
     global logger, globopts, confcust
@@ -314,7 +321,10 @@ def main():
             coros.append(fetch_ldap_data(bdii_opts))
 
         # fetch topology data concurrently in coroutines
-        fetched_topology = loop.run_until_complete(asyncio.gather(*coros))
+        fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
+
+        if contains_exception(fetched_topology):
+            raise ConnectorError
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
