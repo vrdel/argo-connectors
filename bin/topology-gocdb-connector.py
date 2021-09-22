@@ -36,11 +36,11 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-# Imports for LDAP
 import bonsai
 from bonsai import LDAPClient
 
-from argo_egi_connectors.io.connection import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -51,6 +51,7 @@ from argo_egi_connectors.config import Global, CustomerConf
 
 from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
+
 
 logger = None
 
@@ -228,42 +229,40 @@ def get_bdii_opts(confcust):
 
 # Fetches data from LDAP, connection parameters are set in customer.conf
 async def fetch_ldap_data(bdii_opts):
-    try:
-        client = LDAPClient('ldap://' + bdii_opts['bdiihost'] + ':' + bdii_opts['bdiiport'] + '/')
-        conn = await client.connect(True)
+    ldap_session = LDAPSessionWithRetry(logger, int(globopts['ConnectionRetry'.lower()]),
+        int(globopts['ConnectionSleepRetry'.lower()]), int(globopts['ConnectionTimeout'.lower()]))
 
-        ldap_search_base = bdii_opts['bdiiquerybase']
-        ldap_search_filter = bdii_opts['bdiiqueryfilter']
-        ldap_attr_list = bdii_opts['bdiiqueryattributes'].split(' ')
+    res = await ldap_session.search(bdii_opts['bdiihost'], bdii_opts['bdiiport'], bdii_opts['bdiiquerybase'],
+    bdii_opts['bdiiqueryfilter'], bdii_opts['bdiiqueryattributes'].split(' '))
+    return res
 
-        res = await conn.search(ldap_search_base,
-            bonsai.LDAPSearchScope.SUB, ldap_search_filter, ldap_attr_list,
-            timeout=int(globopts['ConnectionTimeout'.lower()]))
-
-        return res
-
-    except bonsai.errors.ConnectionError as exc:
-        logger.error('Connection errors while contacting BDII: %s' % str(exc))
-        raise ConnectorError()
 
 
 # Returnes a dictionary which maps hostnames to their respective ldap port if such exists
-def load_srm_port_map(ldap_data):
+def load_srm_port_map(ldap_data, attribute_name):
     port_dict = {}
     for res in ldap_data:
         try:
-            glue_service_endpoint = res['GlueServiceEndpoint'][0]
-            start_index = glue_service_endpoint.index('//')
-            colon_index = glue_service_endpoint.index(':', start_index)
-            end_index = glue_service_endpoint.index('/', colon_index)
-            fqdn = glue_service_endpoint[start_index + 2:colon_index]
-            port = glue_service_endpoint[colon_index + 1:end_index]
+            attribute = res[attribute_name][0]
+            start_index = attribute.index('//')
+            colon_index = attribute.index(':', start_index)
+            end_index = attribute.index('/', colon_index)
+            fqdn = attribute[start_index + 2:colon_index]
+            port = attribute[colon_index + 1:end_index]
 
             port_dict[fqdn] = port
+            
         except ValueError:
             logger.error('Exception happened while retrieving port from: %s' % res)
 
     return port_dict
+
+def contains_exception(list):
+    for a in list:
+        if isinstance(a, Exception):
+            return True
+
+    return False
 
 
 def main():
@@ -318,12 +317,14 @@ def main():
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
-
         if bdii_opts and eval(bdii_opts['bdii']):
             coros.append(fetch_ldap_data(bdii_opts))
 
         # fetch topology data concurrently in coroutines
-        fetched_topology = loop.run_until_complete(asyncio.gather(*coros))
+        fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
+
+        if contains_exception(fetched_topology):
+            raise ConnectorError
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
@@ -357,7 +358,7 @@ def main():
 
         # Get SRM ports from LDAP and put them under tags -> info_srm_port
         if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            srm_port_map = load_srm_port_map(fetched_topology[3])
+            srm_port_map = load_srm_port_map(fetched_topology[3], bdii_opts['bdiiqueryattributes'].split(' ')[0])
             for endpoint in group_endpoints:
                 if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
                     endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]
