@@ -3,7 +3,7 @@ import os
 import json
 
 from argo_egi_connectors.tools import module_class_name
-from argo_egi_connectors.io.connection import SessionWithRetry
+from argo_egi_connectors.io.http import SessionWithRetry
 
 
 class WebAPI(object):

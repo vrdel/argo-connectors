@@ -3,7 +3,7 @@ import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
 from argo_egi_connectors.tools import module_class_name
-from argo_egi_connectors.io.connection import ConnectorError
+from argo_egi_connectors.io.http import ConnectorError
 
 
 class ParseDowntimes(object):
