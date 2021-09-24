@@ -21,12 +21,6 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                 if key.startswith('info_ext_'):
                     return True
         return False
-    
-    def endpoints_hostnames_contain_underscore(group_enpoints):
-        for endpoint in group_enpoints:
-            if '_' not in endpoint['hostname']:
-                return False
-            return True
 
     def get_group(group_endpoints, group_name):
         for group in group_endpoints:
