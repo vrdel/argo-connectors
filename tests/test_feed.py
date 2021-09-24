@@ -2,7 +2,6 @@ import unittest
 
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites, ConnectorError
-#from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 
 logger = Logger('test_feed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -15,6 +14,8 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
 
+    # Help function - check if any of endpoints contains extensions
+    # Used for checking if pass_extensions is working properly
     def endpoints_have_extension(group_endpoints):
         for gren in group_endpoints:
             for key in gren['tags'].keys():
@@ -22,6 +23,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                     return True
         return False
 
+    # Returns element of group_endpoints with given group_name or None
     def get_group(group_endpoints, group_name):
         for group in group_endpoints:
             if group['group'] == group_name:
@@ -53,7 +55,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         self.assertEqual(ral_lcg2_tags['monitored'], '1')
         self.assertEqual(ral_lcg2_tags['production'], '1')
 
-        # ASSERTIONS for AZ_IFAN
+        # Assertions for AZ_IFAN
         az_ifan = ParseServiceEndpointsTest.get_group(self.group_endpoints, 'AZ-IFAN')
         self.assertIsNotNone(az_ifan)
         self.assertEqual(az_ifan['service'], 'CREAM-CE')
