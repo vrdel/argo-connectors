@@ -238,7 +238,6 @@ async def fetch_ldap_data(bdii_opts):
     return res
 
 
-
 # Returnes a dictionary which maps hostnames to their respective ldap port if such exists
 def load_srm_port_map(ldap_data, attribute_name):
     port_dict = {}
@@ -257,6 +256,7 @@ def load_srm_port_map(ldap_data, attribute_name):
             logger.error('Exception happened while retrieving port from: %s' % res)
 
     return port_dict
+
 
 def contains_exception(list):
     for a in list:
