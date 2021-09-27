@@ -121,12 +121,13 @@ def csv_to_json(csvdata):
 
     return results
 
-async def send_webapi(webapi_opts, data, topotype):
+async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]))
+                    int(globopts['ConnectionSleepRetry'.lower()]),
+                    date=fixed_date)
     await webapi.send(data, topotype)
 
 
@@ -222,8 +223,8 @@ def main():
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
             loop.run_until_complete(
                 asyncio.gather(
-                    send_webapi(webapi_opts, group_groups, 'groups'),
-                    send_webapi(webapi_opts, group_endpoints,'endpoints')
+                    send_webapi(webapi_opts, group_groups, 'groups', fixed_date),
+                    send_webapi(webapi_opts, group_endpoints,'endpoints', fixed_date)
                 )
             )
 

@@ -32,6 +32,26 @@ def is_feed(feed):
         return True
 
 
+async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
+    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
+                    webapi_opts['webapitoken'], logger,
+                    int(globopts['ConnectionRetry'.lower()]),
+                    int(globopts['ConnectionTimeout'.lower()]),
+                    int(globopts['ConnectionSleepRetry'.lower()]),
+                    date=fixed_date)
+    await webapi.send(data, topotype)
+
+
+def get_webapi_opts(cglob, confcust):
+    webapi_custopts = confcust.get_webapiopts()
+    webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
+    webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
+    if not webapi_complete:
+        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
+        raise SystemExit(1)
+    return webapi_opts
+
+
 async def fetch_data(feed):
     remote_topo = urlparse(feed)
     session = SessionWithRetry(logger, 'EOSC', globopts)
@@ -137,8 +157,19 @@ def main():
             write_state(confcust, fixed_date, True)
         )
 
+        webapi_opts = get_webapi_opts(cglob, confcust)
+
         numge = len(group_endpoints)
         numgg = len(group_groups)
+
+        # send concurrently to WEB-API in coroutines
+        if eval(globopts['GeneralPublishWebAPI'.lower()]):
+            loop.run_until_complete(
+                asyncio.gather(
+                    send_webapi(webapi_opts, group_groups, 'groups', fixed_date),
+                    send_webapi(webapi_opts, group_endpoints,'endpoints', fixed_date)
+                )
+            )
 
         if eval(globopts['GeneralWriteAvro'.lower()]):
             write_avro(confcust, group_groups, group_endpoints, fixed_date)
