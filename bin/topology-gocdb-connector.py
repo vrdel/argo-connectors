@@ -183,12 +183,13 @@ async def fetch_data(feed, api, auth_opts, paginated):
         return res
 
 
-async def send_webapi(webapi_opts, data, topotype):
+async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]))
+                    int(globopts['ConnectionSleepRetry'.lower()]),
+                    date=fixed_date)
     await webapi.send(data, topotype)
 
 
@@ -251,7 +252,7 @@ def load_srm_port_map(ldap_data, attribute_name):
             port = attribute[colon_index + 1:end_index]
 
             port_dict[fqdn] = port
-            
+
         except ValueError:
             logger.error('Exception happened while retrieving port from: %s' % res)
 
@@ -363,12 +364,12 @@ def main():
                 if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
                     endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]
 
-       # send concurrently to WEB-API in coroutines
+        # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
             loop.run_until_complete(
                 asyncio.gather(
-                    send_webapi(webapi_opts, group_groups, 'groups'),
-                    send_webapi(webapi_opts, group_endpoints,'endpoints')
+                    send_webapi(webapi_opts, group_groups, 'groups', fixed_date),
+                    send_webapi(webapi_opts, group_endpoints,'endpoints', fixed_date)
                 )
             )
 
