@@ -25,19 +25,16 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 import argparse
-import copy
 import os
 import sys
-import re
 import xml.dom.minidom
 
-import uvloop
-import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from urllib.parse import urlparse
 
-import bonsai
-from bonsai import LDAPClient
+import asyncio
+import uvloop
 
 from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
 from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
@@ -49,9 +46,7 @@ from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseSe
 
 from argo_egi_connectors.config import Global, CustomerConf
 
-from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
-from urllib.parse import urlparse
-
+from argo_egi_connectors.tools import filename_date, date_check
 
 logger = None
 
