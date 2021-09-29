@@ -47,7 +47,7 @@ from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSer
 
 from argo_egi_connectors.config import Global, CustomerConf
 
-from argo_egi_connectors.tools import filename_date, date_check
+from argo_egi_connectors.utils import filename_date, date_check
 
 logger = None
 
@@ -60,6 +60,7 @@ SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
 ROC_CONTACTS = '/gocdbpi/private/?method=get_roc_contacts'
 SITE_CONTACTS = '/gocdbpi/private/?method=get_site_contacts'
 PROJECT_CONTACTS = '/gocdbpi/private/?method=get_project_contacts'
+SERVICEGROUP_CONTACTS = '/gocdbpi/private/?method=get_service_group_role'
 
 globopts = {}
 custname = ''
@@ -88,6 +89,9 @@ def parse_source_sites(res, custname, uidservtype, pass_extensions):
                                  pass_extensions).get_group_groups()
 
     return group_endpoints
+
+def parse_source_sitescontacts(res, custname):
+    contacts = ParseSiteContacts(logger, res, custname)
 
 
 def get_webapi_opts(cglob, confcust):
@@ -315,12 +319,13 @@ def main():
         group_endpoints, group_groups = list(), list()
 
         contact_coros = [
+            fetch_data(topofeed, SITE_CONTACTS, auth_opts, False),
             fetch_data(topofeed, ROC_CONTACTS, auth_opts, False),
             fetch_data(topofeed, PROJECT_CONTACTS, auth_opts, False),
-            fetch_data(topofeed, PROJECT_CONTACTS, auth_opts, False),
-            fetch_data(topofeed, SITE_CONTACTS, auth_opts, False),
+            fetch_data(topofeed, SERVICEGROUP_CONTACTS, auth_opts, False)
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros))
+        parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
 
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
