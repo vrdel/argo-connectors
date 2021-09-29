@@ -3,7 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites, ConnectorError
 
-logger = Logger('test_feed.py')
+logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
 # Help function - check if any of endpoints contains extensions
@@ -26,15 +26,19 @@ def get_group(group_endpoints, group_name):
 
 class ParseServiceEndpointsTest(unittest.TestCase):
     def setUp(self):
-        with open('sample-service_endpoint.xml') as feed_file:
+        with open('tests/sample-service_endpoint.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
         parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
 
-    def test_parseserviceendpoints(self):
+        parse_service_endpoints_ext = ParseServiceEndpoints(logger, self.content, 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        self.group_endpoints_ext = parse_service_endpoints_ext.get_group_endpoints()
+
+    def test_LenEndpoints(self):
         self.assertEqual(len(self.group_endpoints), 3) # Parsed correct number of endpoint groups
 
+    def test_DataEndpoints(self):
         # Assertions for GSI_LCG2
         gsi_lcg2 = get_group(self.group_endpoints, 'GSI-LCG2')
         self.assertIsNotNone(gsi_lcg2)
@@ -65,29 +69,29 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         self.assertEqual(az_ifan_tags['monitored'], '1')
         self.assertEqual(az_ifan_tags['production'], '1')
 
+    def test_HaveExtensions(self):
         # Assert pass_extensions=False is working
         self.assertFalse(endpoints_have_extension(self.group_endpoints))
 
-        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, 'CUSTOMERFOO', uid=True, pass_extensions=True)
-        # Assert customer name is set properly
-        self.assertEqual(parse_service_endpoints.custname, CUSTOMER_NAME)
-        group_endpoints = parse_service_endpoints.get_group_endpoints()
+    def test_EnabledExtensions(self):
         # Assert pass_extensions=True is working
-        self.assertTrue(endpoints_have_extension(group_endpoints))
+        self.assertTrue(endpoints_have_extension(self.group_endpoints_ext))
 
+    def test_SuffixUid(self):
         # Assert uid=True is working
-        temp_group = get_group(group_endpoints, 'GSI-LCG2')
+        temp_group = get_group(self.group_endpoints_ext, 'GSI-LCG2')
         self.assertIsNotNone(temp_group)
         self.assertEqual(temp_group['hostname'], 'grid13.gsi.de_14G0')
 
-        temp_group = get_group(group_endpoints, 'RAL-LCG2')
+        temp_group = get_group(self.group_endpoints_ext, 'RAL-LCG2')
         self.assertIsNotNone(temp_group)
         self.assertEqual(temp_group['hostname'], 'arc-ce01.gridpp.rl.ac.uk_782G0')
 
-        temp_group = get_group(group_endpoints, 'AZ-IFAN')
+        temp_group = get_group(self.group_endpoints_ext, 'AZ-IFAN')
         self.assertIsNotNone(temp_group)
         self.assertEqual(temp_group['hostname'], 'ce.physics.science.az_1555G0')
 
+    def test_ConnectorErrorException(self):
         # Assert proper exception is thrown if empty xml is given to the function
         self.assertRaises(ConnectorError, ParseServiceEndpoints, logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
 
