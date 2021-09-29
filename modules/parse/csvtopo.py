@@ -1,5 +1,5 @@
 from urllib.parse import urlparse
-from argo_egi_connectors.tools import filename_date, module_class_name
+from argo_egi_connectors.utils import filename_date, module_class_name
 
 
 class ParseServiceGroupsEndpoints(object):

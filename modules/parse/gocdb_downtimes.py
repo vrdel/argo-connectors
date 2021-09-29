@@ -2,7 +2,7 @@ import datetime
 import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
-from argo_egi_connectors.tools import module_class_name
+from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.io.http import ConnectorError
 
 

@@ -1,4 +1,4 @@
-from argo_egi_connectors.tools import module_class_name
+from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.io.http import ConnectorError
 

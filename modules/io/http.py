@@ -6,7 +6,7 @@ import ssl
 import xml.dom.minidom
 
 from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
-from argo_egi_connectors.tools import module_class_name
+from argo_egi_connectors.utils import module_class_name
 
 
 def build_ssl_settings(globopts):

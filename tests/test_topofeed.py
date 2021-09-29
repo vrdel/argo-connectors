@@ -95,5 +95,6 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         # Assert proper exception is thrown if empty xml is given to the function
         self.assertRaises(ConnectorError, ParseServiceEndpoints, logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -44,7 +44,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.csvtopo import ParseServiceGroupsEndpoints
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
+from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
 
 import csv
