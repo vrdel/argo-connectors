@@ -43,6 +43,7 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceGroupRoles, ParseProjectContacts, ParseRocContacts
 
 from argo_egi_connectors.config import Global, CustomerConf
 
@@ -55,6 +56,10 @@ logger = None
 SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITES_PI = '/gocdbpi/private/?method=get_site&scope='
 SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
+
+ROC_CONTACTS = '/gocdbpi/private/?method=get_roc_contacts'
+SITE_CONTACTS = '/gocdbpi/private/?method=get_site_contacts'
+PROJECT_CONTACTS = '/gocdbpi/private/?method=get_project_contacts'
 
 globopts = {}
 custname = ''
@@ -309,6 +314,13 @@ def main():
     try:
         group_endpoints, group_groups = list(), list()
 
+        contact_coros = [
+            fetch_data(topofeed, ROC_CONTACTS, auth_opts, False),
+            fetch_data(topofeed, PROJECT_CONTACTS, auth_opts, False),
+            fetch_data(topofeed, PROJECT_CONTACTS, auth_opts, False),
+            fetch_data(topofeed, SITE_CONTACTS, auth_opts, False),
+        ]
+        contacts = loop.run_until_complete(asyncio.gather(*contact_coros))
 
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
