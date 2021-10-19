@@ -16,10 +16,17 @@ class ParseHelpers(object):
                 rc.append(node.data)
         return ''.join(rc)
 
-    def _parse_extensions(self, extensionsNode):
+    def _parse_contact(self, contacts_node, *attrs):
+        values = list()
+        for xml_attr in attrs:
+            value = contacts_node.getElementsByTagName(xml_attr)
+            values.append(value[0].childNodes[0].nodeValue)
+        return values
+
+    def _parse_extensions(self, extensions_node):
         extensions_dict = dict()
 
-        for extension in extensionsNode:
+        for extension in extensions_node:
             if extension.nodeName == 'EXTENSION':
                 key, value = None, None
                 for ext_node in extension.childNodes:
@@ -32,10 +39,10 @@ class ParseHelpers(object):
 
         return extensions_dict
 
-    def _parse_url_endpoints(self, endpointsNode):
+    def _parse_url_endpoints(self, endpoints_node):
         endpoints_urls = list()
 
-        for endpoint in endpointsNode:
+        for endpoint in endpoints_node:
             if endpoint.nodeName == 'ENDPOINT':
                 url = None
                 for endpoint_node in endpoint.childNodes:
