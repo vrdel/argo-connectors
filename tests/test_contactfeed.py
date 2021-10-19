@@ -2,6 +2,8 @@ import unittest
 
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts
+from argo_egi_connectors.io.http import ConnectorError
+
 
 logger = Logger('test_contactfeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -16,7 +18,10 @@ class ParseSitesContactTest(unittest.TestCase):
         self.contacts = parse_sites_contacts.get_contacts()
 
     def test_LenContacts(self):
-        len(self.contacts)
+        self.assertEqual(len(self.contacts), 9)
+
+    def test_MalformedContacts(self):
+        self.assertRaises(ConnectorError, ParseSiteContacts, logger, 'wrong mocked data', CUSTOMER_NAME)
 
 
 if __name__ == '__main__':
