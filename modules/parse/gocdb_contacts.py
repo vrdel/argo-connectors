@@ -27,14 +27,26 @@ class ParseSiteContacts(ParseHelpers):
 
     def _parse_data(self):
         try:
+            data = list()
             xml_data = self._parse_xml(self.data)
             sites = xml_data.getElementsByTagName('SITE')
+            for site in sites:
+                contacts = site.getElementsByTagName('CONTACT')
+                for contact in contacts:
+                    interested = ('EMAIL',)
+                    email = self._parse_contact(contact, *interested)
+                    data.append({
+                        'email': email
+                    })
+
+            return data
+
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def get_contacts(self):
-        return []
+        return self._parse_data()
 
 
 class ParseProjectContacts(object):
