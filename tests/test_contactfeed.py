@@ -17,12 +17,14 @@ class ParseSitesContactTest(unittest.TestCase):
         parse_sites_contacts = ParseSiteContacts(logger, self.content, CUSTOMER_NAME)
         self.contacts = parse_sites_contacts.get_contacts()
 
-    def test_LenContacts(self):
+    def test_lenContacts(self):
         self.assertEqual(len(self.contacts), 9)
 
-    def test_MalformedContacts(self):
+    def test_malformedContacts(self):
         self.assertRaises(ConnectorError, ParseSiteContacts, logger, 'wrong mocked data', CUSTOMER_NAME)
 
+    def test_formatContacts(self):
+        import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     unittest.main()

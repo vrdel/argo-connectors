@@ -31,13 +31,26 @@ class ParseSiteContacts(ParseHelpers):
             xml_data = self._parse_xml(self.data)
             sites = xml_data.getElementsByTagName('SITE')
             for site in sites:
-                contacts = site.getElementsByTagName('CONTACT')
-                for contact in contacts:
-                    interested = ('EMAIL',)
-                    email = self._parse_contact(contact, *interested)
-                    data.append({
-                        'email': email
-                    })
+                if site.nodeName == 'SITE':
+                    emails = list()
+                    for site_node in site.childNodes:
+                        if site_node.nodeName == 'CONTACT':
+                            contact = site_node
+                            interested = ('EMAIL', 'FORENAME', 'SURNAME', 'CERTDN', 'ROLE_NAME')
+                            email, name, surname, certdn, role = self._parse_contact(contact, *interested)
+                            emails.append({
+                                'email': email,
+                                'forename': name,
+                                'surname': surname,
+                                'certdn': certdn,
+                                'role': role
+                            })
+                        if site_node.nodeName == 'SHORT_NAME':
+                            site_name = site_node.childNodes[0].nodeValue
+                data.append({
+                    'name': site_name,
+                    'contacts': emails
+                })
 
             return data
 
