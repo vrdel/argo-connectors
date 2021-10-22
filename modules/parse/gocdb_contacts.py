@@ -10,16 +10,21 @@ class ParseRocContacts(ParseHelpers):
     def __init__(self, logger, data, custname):
         super().__init__(logger)
         self.data = data
+        self.logger = logger
+        self.data = data
+        self.custname = custname
+        self._parse_data()
 
     def _parse_data(self):
-        pass
+        return self._parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
 
-    def contacts(self):
-        pass
+    def get_contacts(self):
+        return self._parse_data()
 
 
 class ParseSiteContacts(ParseHelpers):
     def __init__(self, logger, data, custname):
+        super().__init__(logger)
         self.logger = logger
         self.data = data
         self.custname = custname

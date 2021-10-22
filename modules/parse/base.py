@@ -23,6 +23,41 @@ class ParseHelpers(object):
             values.append(value[0].childNodes[0].nodeValue)
         return values
 
+    def _parse_contacts(self, data, root_node, child_node, topo_node):
+        interested = ('EMAIL', 'FORENAME', 'SURNAME', 'CERTDN', 'ROLE_NAME')
+
+        try:
+            data = list()
+            xml_data = self._parse_xml(self.data)
+            entities = xml_data.getElementsByTagName(root_node)
+            for entity in entities:
+                if entity.nodeName == root_node:
+                    emails = list()
+                    for entity_node in entity.childNodes:
+                        if entity_node.nodeName == child_node:
+                            contact = entity_node
+                            email, name, surname, certdn, role = self._parse_contact(contact, *interested)
+                            emails.append({
+                                'email': email,
+                                'forename': name,
+                                'surname': surname,
+                                'certdn': certdn,
+                                'role': role
+                            })
+                        if entity_node.nodeName == topo_node:
+                            entity_name = entity_node.childNodes[0].nodeValue
+                data.append({
+                    'name': entity_name,
+                    'contacts': emails
+                })
+
+            return data
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise exc
+
+
     def _parse_extensions(self, extensions_node):
         extensions_dict = dict()
 
