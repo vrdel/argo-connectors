@@ -15,16 +15,47 @@ class ParseSitesContactTest(unittest.TestCase):
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
         parse_sites_contacts = ParseSiteContacts(logger, self.content, CUSTOMER_NAME)
-        self.contacts = parse_sites_contacts.get_contacts()
+        self.site_contacts = parse_sites_contacts.get_contacts()
 
     def test_lenContacts(self):
-        self.assertEqual(len(self.contacts), 9)
+        self.assertEqual(len(self.site_contacts), 2)
+        site_1 = len(self.site_contacts[0]['contacts'])
+        site_2 = len(self.site_contacts[1]['contacts'])
+        self.assertEqual(9, site_1 + site_2)
 
     def test_malformedContacts(self):
         self.assertRaises(ConnectorError, ParseSiteContacts, logger, 'wrong mocked data', CUSTOMER_NAME)
 
     def test_formatContacts(self):
-        import ipdb; ipdb.set_trace()
+        self.assertEqual(self.site_contacts[0],
+            {
+                'name': 'Site1',
+                'contacts': [
+                    {
+                        'certdn': '/C=HR/O=CROGRID/O=SRCE/CN=Name1 Surname1',
+                        'email': 'Name1.Surname1@email.hr',
+                        'forename': 'Name1',
+                        'role': 'Site Security Officer',
+                        'surname': 'Surname1'
+                    },
+                    {
+                        'certdn': '/C=HR/O=CROGRID/O=SRCE/CN=Name1 Surname1',
+                        'email': 'Name1.Surname1@email.hr',
+                        'forename': 'Name1',
+                        'role': 'Site Operations Manager',
+                        'surname': 'Surname1'
+                    },
+                    {
+                        'certdn': '/C=HR/O=CROGRID/O=SRCE/CN=Name2 Surname2',
+                        'email': 'Name2.Surname2@email.hr',
+                        'forename': 'Name2',
+                        'role': 'Site Operations Manager',
+                        'surname': 'Surname2'
+                    }
+                ],
+            }
+
+        )
 
 if __name__ == '__main__':
     unittest.main()
