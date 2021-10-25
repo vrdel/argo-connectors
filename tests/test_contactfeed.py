@@ -2,6 +2,7 @@ import unittest
 
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseRocContacts
+from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints, ConnectorError
 from argo_egi_connectors.io.http import ConnectorError
 
 
@@ -94,6 +95,22 @@ class ParseSitesContactTest(unittest.TestCase):
                 ],
             }
         )
+
+
+class ParseServiceEndpointsWithContactsTest(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-service_endpoint_with_contacts.xml') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
+        self.group_endpoints = parse_service_endpoints.get_group_endpoints()
+
+        parse_service_endpoints_ext = ParseServiceEndpoints(logger, self.content, 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        self.group_endpoints_ext = parse_service_endpoints_ext.get_group_endpoints()
+
+    def test_LenEndpoints(self):
+        self.assertEqual(len(self.group_endpoints),
+
 
 if __name__ == '__main__':
     unittest.main()
