@@ -60,7 +60,14 @@ class ParseSites(ParseHelpers):
 
 
 class ParseServiceEndpoints(ParseHelpers):
-    def __init__(self, logger, data, custname, uid=False,
+    def __new__(cls, *args, **kwargs):
+        if getattr(cls, 'instanced', False):
+            return cls.instanced
+        else:
+            setattr(cls, 'instanced', object.__new__(cls))
+            return cls.instanced
+
+    def __init__(self, logger, data=None, custname=None, uid=False,
                  pass_extensions=False):
         super().__init__(logger)
         self.data = data

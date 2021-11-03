@@ -57,6 +57,8 @@ class ParseHelpers(object):
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
+    def _parse_serviceendpoint_contacts(self):
+        pass
 
     def _parse_extensions(self, extensions_node):
         extensions_dict = dict()

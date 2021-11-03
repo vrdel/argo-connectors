@@ -3,6 +3,7 @@ from xml.parsers.expat import ExpatError
 
 from argo_egi_connectors.io.http import ConnectorError
 from argo_egi_connectors.parse.base import ParseHelpers
+from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
 from argo_egi_connectors.utils import filename_date, module_class_name
 
 
@@ -36,6 +37,18 @@ class ParseSiteContacts(ParseHelpers):
     def get_contacts(self):
         return self._parse_data()
 
+
+class ParseServiceEndpointContacts(ParseServiceEndpoints):
+    def __init__(self, logger):
+        super().__init__(logger)
+        self.logger = logger
+        self._parse_data()
+
+    def _parse_data(self):
+        return self._parse_serviceendpoint_contacts()
+
+    def get_contacts(self):
+        return self._parse_data()
 
 class ParseProjectContacts(object):
     def __init__(self, logger, data, custname):
