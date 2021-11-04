@@ -72,7 +72,7 @@ class ParseHelpers(object):
                 if contact and name:
                     endpoints_contacts.append({
                         'name': name,
-                        'contacts': contact
+                        'contact': contact
                     })
             return endpoints_contacts
 
@@ -97,7 +97,7 @@ class ParseHelpers(object):
                 if contact:
                     endpoints_contacts.append({
                         'name': '{}+{}'.format(fqdn, servtype),
-                        'contacts': contact
+                        'contact': contact
                     })
             return endpoints_contacts
 

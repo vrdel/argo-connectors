@@ -114,7 +114,7 @@ class ParseServiceEndpointsWithContactsTest(unittest.TestCase):
     def test_formatContacts(self):
         self.assertEqual(self.serviceendpoint_contacts[0],
             {
-                'contacts': 'contact@email.com',
+                'contact': 'contact@email.com',
                 'name': 'some.fqdn.com+service.type'
             }
         )
@@ -135,7 +135,7 @@ class ParseServiceGroupRolesTest(unittest.TestCase):
     def test_formatContacts(self):
         self.assertEqual(self.servicegroup_contacts[0],
             {
-                'contacts': 'grid-admin@example.com',
+                'contact': 'grid-admin@example.com',
                 'name': 'GROUP1'
             }
         )
