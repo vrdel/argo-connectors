@@ -60,22 +60,15 @@ class ParseSites(ParseHelpers):
 
 
 class ParseServiceEndpoints(ParseHelpers):
-    def __new__(cls, *args, **kwargs):
-        if getattr(cls, 'instanced', False):
-            return cls.instanced
-        else:
-            setattr(cls, 'instanced', object.__new__(cls))
-            return cls.instanced
-
     def __init__(self, logger, data=None, custname=None, uid=False,
                  pass_extensions=False):
         super().__init__(logger)
         self.data = data
+        self.__class__.fetched_data = data
         self.uidservtype = uid
         self.custname = custname
         self.pass_extensions = pass_extensions
         self._service_endpoints = dict()
-        self._parse_data()
 
     def _parse_data(self):
         try:

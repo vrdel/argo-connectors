@@ -38,17 +38,18 @@ class ParseSiteContacts(ParseHelpers):
         return self._parse_data()
 
 
-class ParseServiceEndpointContacts(ParseServiceEndpoints):
-    def __init__(self, logger):
+class ParseServiceEndpointContacts(ParseHelpers):
+    def __init__(self, logger, data):
         super().__init__(logger)
         self.logger = logger
-        self._parse_data()
+        self.data = data
 
     def _parse_data(self):
-        return self._parse_serviceendpoint_contacts()
+        return self._parse_serviceendpoint_contacts(self.data)
 
     def get_contacts(self):
         return self._parse_data()
+
 
 class ParseProjectContacts(object):
     def __init__(self, logger, data, custname):
