@@ -57,8 +57,30 @@ class ParseHelpers(object):
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
-    def _parse_serviceendpoint_contacts(self):
-        pass
+    def _parse_serviceendpoint_contacts(self, data):
+        try:
+            endpoints_contacts = list()
+            xml_data = self._parse_xml(data)
+            elements = xml_data.getElementsByTagName('SERVICE_ENDPOINT')
+            for element in elements:
+                fqdn, contact, servtype = None, None, None
+                for child in element.childNodes:
+                    if child.nodeName == 'HOSTNAME':
+                        fqdn = child.childNodes[0].nodeValue
+                    if child.nodeName == 'CONTACT_EMAIL':
+                        contact = child.childNodes[0].nodeValue
+                    if child.nodeName == 'SERVICE_TYPE':
+                        servtype = child.childNodes[0].nodeValue
+                if contact:
+                    endpoints_contacts.append({
+                        'name': '{}+{}'.format(fqdn, servtype),
+                        'contacts': contact
+                    })
+            return endpoints_contacts
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise exc
 
     def _parse_extensions(self, extensions_node):
         extensions_dict = dict()
