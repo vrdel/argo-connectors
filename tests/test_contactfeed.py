@@ -102,14 +102,25 @@ class ParseServiceEndpointsWithContactsTest(unittest.TestCase):
         with open('tests/sample-service_endpoint_with_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
-        self.group_endpoints = parse_service_endpoints.get_group_endpoints()
 
-        # load firstly ParseServiceEndpoints so that
-        # subclass ParseServiceEndpointContacts has the data
-        # preloaded
-        parse_service_endpoints_ext = ParseServiceEndpoints(logger, self.content, 'CUSTOMERFOO', uid=True, pass_extensions=True)
-        self.serviceendpoint_contacts = ParseServiceEndpointContacts(logger)
+        serviceendpoint_contacts = ParseServiceEndpointContacts(logger, self.content)
+        self.serviceendpoint_contacts = serviceendpoint_contacts.get_contacts()
+
+        with open('tests/sample-service_endpoint.xml') as feed_file:
+            self.content = feed_file.read()
+        serviceendpoint_nocontacts = ParseServiceEndpointContacts(logger, self.content)
+        self.serviceendpoint_nocontacts = serviceendpoint_nocontacts.get_contacts()
+
+    def test_formatContacts(self):
+        self.assertEqual(self.serviceendpoint_contacts[0],
+            {
+                'contacts': 'contact@email.com',
+                'name': 'some.fqdn.com+service.type'
+            }
+        )
+
+    def test_formatNoContacts(self):
+        self.assertEqual(self.serviceendpoint_nocontacts, [])
 
 
 
