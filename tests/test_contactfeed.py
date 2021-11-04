@@ -1,7 +1,7 @@
 import unittest
 
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseRocContacts, ParseServiceEndpointContacts
+from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseRocContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints, ConnectorError
 from argo_egi_connectors.io.http import ConnectorError
 
@@ -15,7 +15,7 @@ class ParseRocContactTest(unittest.TestCase):
         with open('tests/sample-roc_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        parse_roc_contacts = ParseRocContacts(logger, self.content, CUSTOMER_NAME)
+        parse_roc_contacts = ParseRocContacts(logger, self.content)
         self.roc_contacts = parse_roc_contacts.get_contacts()
 
     def test_formatContacts(self):
@@ -54,7 +54,7 @@ class ParseSitesContactTest(unittest.TestCase):
         with open('tests/sample-site_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        parse_sites_contacts = ParseSiteContacts(logger, self.content, CUSTOMER_NAME)
+        parse_sites_contacts = ParseSiteContacts(logger, self.content)
         self.site_contacts = parse_sites_contacts.get_contacts()
 
     def test_lenContacts(self):
@@ -64,7 +64,7 @@ class ParseSitesContactTest(unittest.TestCase):
         self.assertEqual(9, site_1 + site_2)
 
     def test_malformedContacts(self):
-        self.assertRaises(ConnectorError, ParseSiteContacts, logger, 'wrong mocked data', CUSTOMER_NAME)
+        self.assertRaises(ConnectorError, ParseSiteContacts, logger, 'wrong mocked data')
 
     def test_formatContacts(self):
         self.assertEqual(self.site_contacts[0],
@@ -122,6 +122,23 @@ class ParseServiceEndpointsWithContactsTest(unittest.TestCase):
     def test_formatNoContacts(self):
         self.assertEqual(self.serviceendpoint_nocontacts, [])
 
+
+class ParseServiceGroupRolesTest(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-service_group_contacts.xml') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+
+        servicegroup_contacts = ParseServiceGroupRoles(logger, self.content)
+        self.servicegroup_contacts = servicegroup_contacts.get_contacts()
+
+    def test_formatContacts(self):
+        self.assertEqual(self.servicegroup_contacts[0],
+            {
+                'contacts': 'grid-admin@example.com',
+                'name': 'GROUP1'
+            }
+        )
 
 
 if __name__ == '__main__':

@@ -8,12 +8,11 @@ from argo_egi_connectors.utils import filename_date, module_class_name
 
 
 class ParseRocContacts(ParseHelpers):
-    def __init__(self, logger, data, custname):
+    def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
         self.logger = logger
         self.data = data
-        self.custname = custname
         self._parse_data()
 
     def _parse_data(self):
@@ -24,11 +23,10 @@ class ParseRocContacts(ParseHelpers):
 
 
 class ParseSiteContacts(ParseHelpers):
-    def __init__(self, logger, data, custname):
+    def __init__(self, logger, data):
         super().__init__(logger)
         self.logger = logger
         self.data = data
-        self.custname = custname
         self._parse_data()
 
     def _parse_data(self):
@@ -52,7 +50,7 @@ class ParseServiceEndpointContacts(ParseHelpers):
 
 
 class ParseProjectContacts(object):
-    def __init__(self, logger, data, custname):
+    def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
 
@@ -63,13 +61,13 @@ class ParseProjectContacts(object):
         pass
 
 
-class ParseServiceGroupRoles(object):
-    def __init__(self, logger, data, custname):
+class ParseServiceGroupRoles(ParseHelpers):
+    def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
 
     def _parse_data(self):
-        pass
+        return self._parse_servicegroup_contacts(self.data)
 
-    def contacts(self):
-        pass
+    def get_contacts(self):
+        return self._parse_data()
