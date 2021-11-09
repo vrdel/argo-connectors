@@ -98,10 +98,19 @@ class ParseHelpers(object):
                     if child.nodeName == 'SERVICE_TYPE':
                         servtype = child.childNodes[0].nodeValue
                 if contact:
-                    endpoints_contacts.append({
-                        'name': '{}+{}'.format(fqdn, servtype),
-                        'contact': contact
-                    })
+                    if ';' in contact:
+                        lcontacts = list()
+                        for single_contact in contact.split(';'):
+                            lcontacts.append(single_contact)
+                        endpoints_contacts.append({
+                            'name': '{}+{}'.format(fqdn, servtype),
+                            'contacts': lcontacts
+                        })
+                    else:
+                        endpoints_contacts.append({
+                            'name': '{}+{}'.format(fqdn, servtype),
+                            'contacts': [contact]
+                        })
             return endpoints_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:

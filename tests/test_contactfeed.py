@@ -97,7 +97,7 @@ class ParseSitesContactTest(unittest.TestCase):
         )
         # contact without surname
         self.assertEqual(
-            self.site_contacts[1]['contacts'][7],
+            self.site_contacts[1]['contacts'][6],
                 {
                     'certdn': '/C=HR/O=CROGRID/O=SRCE/CN=Name3 Surname3',
                     'email': 'Name3.Surname3@email.hr',
@@ -125,8 +125,15 @@ class ParseServiceEndpointsWithContactsTest(unittest.TestCase):
     def test_formatContacts(self):
         self.assertEqual(self.serviceendpoint_contacts[0],
             {
-                'contact': 'contact@email.com',
+                'contacts': ['contact@email.com'],
                 'name': 'some.fqdn.com+service.type'
+            }
+        )
+        self.assertEqual(self.serviceendpoint_contacts[2],
+            {
+                'contacts': ['contact1@email.com', 'contact2@email.com',
+                             'contact3@email.com'],
+                'name': 'some.fqdn2.com+service.type2'
             }
         )
 

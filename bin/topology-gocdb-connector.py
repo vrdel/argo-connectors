@@ -43,7 +43,7 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceGroupRoles, ParseProjectContacts, ParseRocContacts
+from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles
 
 from argo_egi_connectors.config import Global, CustomerConf
 
@@ -97,6 +97,11 @@ def parse_source_sitescontacts(res, custname):
 
 def parse_source_servicegroupscontacts(res, custname):
     contacts = ParseServiceGroupRoles(logger, res)
+    return contacts.get_contacts()
+
+
+def parse_source_serviceendpoints_contacts(res, custname):
+    contacts = ParseServiceEndpointContacts(logger, res)
     return contacts.get_contacts()
 
 
@@ -340,6 +345,8 @@ def main():
 
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
+
+        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
 
         if contains_exception(fetched_topology):
             raise ConnectorError
