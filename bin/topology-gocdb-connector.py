@@ -91,7 +91,13 @@ def parse_source_sites(res, custname, uidservtype, pass_extensions):
     return group_endpoints
 
 def parse_source_sitescontacts(res, custname):
-    contacts = ParseSiteContacts(logger, res, custname)
+    contacts = ParseSiteContacts(logger, res)
+    return contacts.get_contacts()
+
+
+def parse_source_servicegroupscontacts(res, custname):
+    contacts = ParseServiceGroupRoles(logger, res)
+    return contacts.get_contacts()
 
 
 def get_webapi_opts(cglob, confcust):
@@ -320,12 +326,11 @@ def main():
 
         contact_coros = [
             fetch_data(topofeed, SITE_CONTACTS, auth_opts, False),
-            fetch_data(topofeed, ROC_CONTACTS, auth_opts, False),
-            fetch_data(topofeed, PROJECT_CONTACTS, auth_opts, False),
             fetch_data(topofeed, SERVICEGROUP_CONTACTS, auth_opts, False)
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros))
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
+        parsed_servicegroups_contacts = parse_source_servicegroupscontacts(contacts[1], custname)
 
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
