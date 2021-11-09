@@ -20,7 +20,10 @@ class ParseHelpers(object):
         values = list()
         for xml_attr in attrs:
             value = contacts_node.getElementsByTagName(xml_attr)
-            values.append(value[0].childNodes[0].nodeValue)
+            if value and value[0].childNodes:
+                values.append(value[0].childNodes[0].nodeValue)
+            else:
+                values.append('')
         return values
 
     def _parse_contacts(self, data, root_node, child_node, topo_node):

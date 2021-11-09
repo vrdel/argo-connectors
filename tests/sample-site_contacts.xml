@@ -88,5 +88,13 @@
       <CERTDN>/C=HR/O=CROGRID/O=SRCE/CN=Name2 Surname2</CERTDN>
       <ROLE_NAME>Site Administrator</ROLE_NAME>
     </CONTACT>
+    <CONTACT USER_ID="266G0" PRIMARY_KEY="266G0">
+      <FORENAME>Name3</FORENAME>
+      <TITLE>Mr.</TITLE>
+      <EMAIL>Name3.Surname3@email.hr</EMAIL>
+      <TEL>+3333 33333333</TEL>
+      <CERTDN>/C=HR/O=CROGRID/O=SRCE/CN=Name3 Surname3</CERTDN>
+      <ROLE_NAME>Site Administrator</ROLE_NAME>
+    </CONTACT>
   </SITE>
 </results>

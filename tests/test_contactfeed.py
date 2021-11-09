@@ -61,7 +61,7 @@ class ParseSitesContactTest(unittest.TestCase):
         self.assertEqual(len(self.site_contacts), 2)
         site_1 = len(self.site_contacts[0]['contacts'])
         site_2 = len(self.site_contacts[1]['contacts'])
-        self.assertEqual(9, site_1 + site_2)
+        self.assertEqual(10, site_1 + site_2)
 
     def test_malformedContacts(self):
         self.assertRaises(ConnectorError, ParseSiteContacts, logger, 'wrong mocked data')
@@ -94,6 +94,17 @@ class ParseSitesContactTest(unittest.TestCase):
                     }
                 ],
             }
+        )
+        # contact without surname
+        self.assertEqual(
+            self.site_contacts[1]['contacts'][7],
+                {
+                    'certdn': '/C=HR/O=CROGRID/O=SRCE/CN=Name3 Surname3',
+                    'email': 'Name3.Surname3@email.hr',
+                    'forename': 'Name3',
+                    'role': 'Site Administrator',
+                    'surname': ''
+                }
         )
 
 
