@@ -1,7 +1,7 @@
 import unittest
 
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites, ConnectorError
+from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites, ConnectorHttpError
 
 logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -91,9 +91,9 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         self.assertIsNotNone(temp_group)
         self.assertEqual(temp_group['hostname'], 'ce.physics.science.az_1555G0')
 
-    def test_ConnectorErrorException(self):
+    def test_ConnectorHttpErrorException(self):
         # Assert proper exception is thrown if empty xml is given to the function
-        self.assertRaises(ConnectorError, ParseServiceEndpoints, logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        self.assertRaises(ConnectorHttpError, ParseServiceEndpoints, logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.io.http import ConnectorHttpError
 
 from urllib.parse import urlparse
 import json
@@ -23,7 +23,7 @@ class ParseEoscTopo(object):
 
         except ValueError as exc:
             self.logger.error('{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
-            raise ConnectorError()
+            raise ConnectorHttpError()
 
         except Exception as exc:
             self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))

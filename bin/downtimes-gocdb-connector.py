@@ -33,7 +33,7 @@ from urllib.parse import urlparse
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -186,7 +186,7 @@ def main():
         if eval(globopts['GeneralWriteAvro'.lower()]):
             write_avro(confcust, dts, timestamp)
 
-    except ConnectorError:
+    except ConnectorHttpError:
         loop.run_until_complete(
             write_state(confcust, timestamp, False)
         )

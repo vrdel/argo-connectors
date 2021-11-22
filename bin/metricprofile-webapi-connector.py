@@ -32,7 +32,7 @@ import sys
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
@@ -143,7 +143,7 @@ def main():
 
                 logger.info('Customer:' + custname + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))
 
-            except ConnectorError:
+            except ConnectorHttpError:
                 write_state(cust, job, confcust, fixed_date, False)
 
 if __name__ == '__main__':

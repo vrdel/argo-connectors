@@ -36,7 +36,8 @@ from urllib.parse import urlparse
 import asyncio
 import uvloop
 
-from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.parse.base import ConnectorParseError
+from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
 from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
@@ -89,6 +90,7 @@ def parse_source_sites(res, custname, uidservtype, pass_extensions):
                                  pass_extensions).get_group_groups()
 
     return group_endpoints
+
 
 def parse_source_sitescontacts(res, custname):
     contacts = ParseSiteContacts(logger, res)
@@ -326,17 +328,20 @@ def main():
     loop = uvloop.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    try:
-        group_endpoints, group_groups = list(), list()
+    group_endpoints, group_groups = list(), list()
 
+    try:
         contact_coros = [
             fetch_data(topofeed, SITE_CONTACTS, auth_opts, False),
             fetch_data(topofeed, SERVICEGROUP_CONTACTS, auth_opts, False)
         ]
-        contacts = loop.run_until_complete(asyncio.gather(*contact_coros))
+        contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
         parsed_servicegroups_contacts = parse_source_servicegroupscontacts(contacts[1], custname)
+    except (ConnectorHttpError, ConnectorParseError) as exc:
+        logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
+    try:
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
@@ -349,7 +354,7 @@ def main():
         parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
 
         if contains_exception(fetched_topology):
-            raise ConnectorError
+            raise ConnectorHttpError
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
@@ -402,7 +407,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except ConnectorError:
+    except ConnectorHttpError:
         write_state(confcust, fixed_date, False)
 
     finally:

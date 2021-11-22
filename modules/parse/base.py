@@ -1,8 +1,12 @@
 import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.io.http import ConnectorHttpError
 from argo_egi_connectors.utils import module_class_name
+
+
+class ConnectorParseError(Exception):
+    pass
 
 
 class ParseHelpers(object):
@@ -114,6 +118,7 @@ class ParseHelpers(object):
             return endpoints_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            import ipdb; ipdb.set_trace()
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
@@ -171,7 +176,7 @@ class ParseHelpers(object):
         except ExpatError as exc:
             msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
             self.logger.error(msg)
-            raise ConnectorError()
+            raise ConnectorParseError()
 
         except Exception as exc:
             msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))

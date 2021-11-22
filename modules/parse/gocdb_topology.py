@@ -1,4 +1,4 @@
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.io.http import ConnectorHttpError
 from argo_egi_connectors.parse.base import ParseHelpers
 from argo_egi_connectors.utils import module_class_name
 

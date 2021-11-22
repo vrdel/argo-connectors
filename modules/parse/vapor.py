@@ -1,6 +1,6 @@
 from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.io.http import ConnectorHttpError
 
 import json
 
@@ -37,7 +37,7 @@ class ParseWeights(object):
 
         except (KeyError, IndexError, ValueError) as exc:
             self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(exc).replace('\'', '')))
-            raise ConnectorError()
+            raise ConnectorHttpError()
 
         except Exception as exc:
             if getattr(self.logger, 'job', False):

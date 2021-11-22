@@ -30,7 +30,7 @@ def build_connection_retry_settings(globopts):
     return (retry, list_retry, timeout)
 
 
-class ConnectorError(Exception):
+class ConnectorHttpError(Exception):
     pass
 
 
@@ -97,7 +97,7 @@ class SessionWithRetry(object):
 
         except Exception as exc:
             self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
-            raise ConnectorError()
+            raise ConnectorHttpError()
 
         finally:
             if not self.handle_session_close:

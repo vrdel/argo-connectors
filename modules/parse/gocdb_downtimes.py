@@ -3,7 +3,7 @@ import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
 from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.io.http import ConnectorHttpError
 
 
 class ParseDowntimes(object):
@@ -28,7 +28,7 @@ class ParseDowntimes(object):
         except ExpatError as exc:
             msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
             self.logger.error(msg)
-            raise ConnectorError()
+            raise ConnectorHttpError()
 
         except Exception as exc:
             msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))

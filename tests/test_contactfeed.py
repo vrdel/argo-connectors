@@ -2,8 +2,8 @@ import unittest
 
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseRocContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints, ConnectorError
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints, ConnectorHttpError
+from argo_egi_connectors.io.http import ConnectorHttpError
 
 
 logger = Logger('test_contactfeed.py')
@@ -64,7 +64,7 @@ class ParseSitesContactTest(unittest.TestCase):
         self.assertEqual(10, site_1 + site_2)
 
     def test_malformedContacts(self):
-        self.assertRaises(ConnectorError, ParseSiteContacts, logger, 'wrong mocked data')
+        self.assertRaises(ConnectorHttpError, ParseSiteContacts, logger, 'wrong mocked data')
 
     def test_formatContacts(self):
         self.assertEqual(self.site_contacts[0],
