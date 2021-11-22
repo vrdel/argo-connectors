@@ -95,11 +95,11 @@ class ParseHelpers(object):
             for element in elements:
                 fqdn, contact, servtype = None, None, None
                 for child in element.childNodes:
-                    if child.nodeName == 'HOSTNAME':
+                    if child.nodeName == 'HOSTNAME' and child.childNodes:
                         fqdn = child.childNodes[0].nodeValue
-                    if child.nodeName == 'CONTACT_EMAIL':
+                    if child.nodeName == 'CONTACT_EMAIL' and child.childNodes:
                         contact = child.childNodes[0].nodeValue
-                    if child.nodeName == 'SERVICE_TYPE':
+                    if child.nodeName == 'SERVICE_TYPE' and child.childNodes:
                         servtype = child.childNodes[0].nodeValue
                 if contact:
                     if ';' in contact:
