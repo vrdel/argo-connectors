@@ -338,6 +338,7 @@ def main():
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
         parsed_servicegroups_contacts = parse_source_servicegroupscontacts(contacts[1], custname)
+
     except (ConnectorHttpError, ConnectorParseError) as exc:
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
@@ -407,7 +408,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except ConnectorHttpError:
+    except (ConnectorParseError, ConnectorHttpError):
         write_state(confcust, fixed_date, False)
 
     finally:
