@@ -1,6 +1,6 @@
-from argo_egi_connectors.io.http import ConnectorHttpError
 from argo_egi_connectors.parse.base import ParseHelpers
 from argo_egi_connectors.utils import module_class_name
+from argo_egi_connectors.parse.base import ConnectorParseError
 
 
 class ParseSites(ParseHelpers):
@@ -33,7 +33,7 @@ class ParseSites(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
 
     def get_group_groups(self):
         group_list, groupofgroups = list(), list()
@@ -97,7 +97,7 @@ class ParseServiceEndpoints(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
 
     def get_group_endpoints(self):
         group_list, groupofendpoints = list(), list()
@@ -185,7 +185,7 @@ class ParseServiceGroups(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
 
     def get_group_endpoints(self):
         group_list, groupofendpoints = list(), list()

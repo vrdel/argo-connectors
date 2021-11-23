@@ -62,7 +62,7 @@ class ParseHelpers(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
 
     def _parse_servicegroup_contacts(self, data):
         try:
@@ -85,7 +85,7 @@ class ParseHelpers(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
 
     def _parse_serviceendpoint_contacts(self, data):
         try:
@@ -118,9 +118,8 @@ class ParseHelpers(object):
             return endpoints_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            import ipdb; ipdb.set_trace()
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
 
     def _parse_extensions(self, extensions_node):
         extensions_dict = dict()
