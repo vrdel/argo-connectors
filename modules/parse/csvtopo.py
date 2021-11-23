@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 from argo_egi_connectors.utils import filename_date, module_class_name
+from argo_egi_connectors.exceptions import ConnectorParseError
 
 
 class ParseServiceGroupsEndpoints(object):
@@ -32,7 +33,7 @@ class ParseServiceGroupsEndpoints(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing CSV feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
 
     def get_groupendpoints(self):
         try:
@@ -57,4 +58,4 @@ class ParseServiceGroupsEndpoints(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing CSV feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
+            raise ConnectorParseError
