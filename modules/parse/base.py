@@ -1,12 +1,7 @@
 import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
-from argo_egi_connectors.io.http import ConnectorHttpError
 from argo_egi_connectors.utils import module_class_name
-
-
-class ConnectorParseError(Exception):
-    pass
 
 
 class ParseHelpers(object):
@@ -62,7 +57,7 @@ class ParseHelpers(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            raise exc
 
     def _parse_servicegroup_contacts(self, data):
         try:
@@ -85,7 +80,7 @@ class ParseHelpers(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            raise exc
 
     def _parse_serviceendpoint_contacts(self, data):
         try:
@@ -119,7 +114,7 @@ class ParseHelpers(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            raise exc
 
     def _parse_extensions(self, extensions_node):
         extensions_dict = dict()
@@ -175,7 +170,7 @@ class ParseHelpers(object):
         except ExpatError as exc:
             msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
             self.logger.error(msg)
-            raise ConnectorParseError()
+            raise exc
 
         except Exception as exc:
             msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))

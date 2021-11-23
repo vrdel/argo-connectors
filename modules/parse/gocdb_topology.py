@@ -1,6 +1,7 @@
+from xml.parsers.expat import ExpatError
 from argo_egi_connectors.parse.base import ParseHelpers
 from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.parse.base import ConnectorParseError
+from argo_egi_connectors.exceptions import ConnectorParseError
 
 
 class ParseSites(ParseHelpers):
@@ -69,6 +70,7 @@ class ParseServiceEndpoints(ParseHelpers):
         self.custname = custname
         self.pass_extensions = pass_extensions
         self._service_endpoints = dict()
+        self._parse_data()
 
     def _parse_data(self):
         try:
@@ -95,7 +97,7 @@ class ParseServiceEndpoints(ParseHelpers):
                     self._service_endpoints[service_id]['extensions'] = extensions
                 self._service_endpoints[service_id]['endpoint_urls'] = self._parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
@@ -149,7 +151,6 @@ class ParseServiceGroups(ParseHelpers):
         self._service_groups = dict()
         self._parse_data()
 
-
     def _parse_data(self):
         try:
             xml_data = self._parse_xml(self.data)
@@ -183,7 +184,7 @@ class ParseServiceGroups(ParseHelpers):
                         tmps['extensions'] = extensions
                     self._service_groups[group_id]['services'].append(tmps)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 

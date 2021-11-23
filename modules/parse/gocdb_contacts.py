@@ -1,10 +1,10 @@
 import xml.dom.minidom
 from xml.parsers.expat import ExpatError
 
-from argo_egi_connectors.io.http import ConnectorHttpError
 from argo_egi_connectors.parse.base import ParseHelpers
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
 from argo_egi_connectors.utils import filename_date, module_class_name
+from argo_egi_connectors.exceptions import ConnectorParseError
 
 
 class ParseRocContacts(ParseHelpers):
@@ -16,7 +16,12 @@ class ParseRocContacts(ParseHelpers):
         self._parse_data()
 
     def _parse_data(self):
-        return self._parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
+        try:
+            return self._parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise ConnectorParseError
 
     def get_contacts(self):
         return self._parse_data()
@@ -30,7 +35,12 @@ class ParseSiteContacts(ParseHelpers):
         self._parse_data()
 
     def _parse_data(self):
-        return self._parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
+        try:
+            return self._parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise ConnectorParseError
 
     def get_contacts(self):
         return self._parse_data()
@@ -43,7 +53,12 @@ class ParseServiceEndpointContacts(ParseHelpers):
         self.data = data
 
     def _parse_data(self):
-        return self._parse_serviceendpoint_contacts(self.data)
+        try:
+            return self._parse_serviceendpoint_contacts(self.data)
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise ConnectorParseError
 
     def get_contacts(self):
         return self._parse_data()
@@ -67,7 +82,13 @@ class ParseServiceGroupRoles(ParseHelpers):
         self.data = data
 
     def _parse_data(self):
-        return self._parse_servicegroup_contacts(self.data)
+        try:
+            return self._parse_servicegroup_contacts(self.data)
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise ConnectorParseError
+
 
     def get_contacts(self):
         return self._parse_data()

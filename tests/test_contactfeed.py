@@ -1,8 +1,9 @@
 import unittest
 
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseRocContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints, ConnectorParseError
+from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseRocContacts, \
+    ParseServiceEndpointContacts, ParseServiceGroupRoles, ConnectorParseError
+from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
 
 
 logger = Logger('test_contactfeed.py')
