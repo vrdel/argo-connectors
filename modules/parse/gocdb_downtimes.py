@@ -13,13 +13,14 @@ class ParseDowntimes(ParseHelpers):
         self.start = start
         self.end = end
         self.logger = logger
-        self.data = self._parse_xml(data)
+        self.data = data
 
     def get_data(self):
         filtered_downtimes = list()
 
-        downtimes = self.data.getElementsByTagName('DOWNTIME')
         try:
+            downtimes = self._parse_xml(self.data).getElementsByTagName('DOWNTIME')
+
             for downtime in downtimes:
                 classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
                 hostname = self._parse_xmltext(downtime.getElementsByTagName('HOSTNAME')[0].childNodes)
