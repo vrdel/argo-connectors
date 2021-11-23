@@ -2,6 +2,7 @@ import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
 from argo_egi_connectors.utils import module_class_name
+import json
 
 
 class ParseHelpers(object):
@@ -162,6 +163,21 @@ class ParseHelpers(object):
                         scopes.append(subelem.childNodes[0].nodeValue)
 
         return scopes
+
+    def _parse_json(self, data):
+        try:
+            doc = json.loads(data)
+
+        except ValueError as exc:
+            self.logger.error('{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
+            raise exc
+
+        except Exception as exc:
+            self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
+            raise exc
+
+        else:
+            return doc
 
     def _parse_xml(self, data):
         try:
