@@ -44,6 +44,7 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
+from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles
 
@@ -359,6 +360,15 @@ def main():
         group_endpoints += parsed_topology[1]
         group_groups += parsed_topology[2]
 
+        # check if we fetched SRM port info and attach it appropriate endpoint
+        # data
+        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
+            attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
+
+        if parsed_site_contacts:
+            import ipdb; ipdb.set_trace()
+            attach_contacts_topodata(logger, parse_sites_contacts, groups_groups)
+
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
         )
@@ -367,11 +377,6 @@ def main():
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
-
-        # check if we fetched SRM port info and attach it appropriate endpoint
-        # data
-        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
 
         # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
