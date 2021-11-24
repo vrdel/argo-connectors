@@ -3,6 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
 logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -95,6 +96,101 @@ class ParseServiceEndpointsTest(unittest.TestCase):
     def test_ConnectorParseErrorException(self):
         # Assert proper exception is thrown if empty xml is given to the function
         self.assertRaises(ConnectorParseError, ParseServiceEndpoints, logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
+
+
+class MeshSitesAndContacts(unittest.TestCase):
+    def setUp(self):
+        logger.customer = CUSTOMER_NAME
+        self.maxDiff = None
+        self.sample_sites_data = [
+            {
+                'group': 'iris.ac.uk',
+                'subgroup': 'dirac-durham',
+                'tags': {
+                    'certification': 'Certified', 'infrastructure':
+                    'Production', 'scope': 'iris.ac.uk'
+                },
+                'type': 'NGI'
+            },
+            {
+                'group': 'Russia',
+                'subgroup': 'RU-SARFTI',
+                'tags': {
+                    'certification': 'Certified', 'infrastructure':
+                    'Production', 'scope': 'EGI'
+                },
+                'type': 'NGI'
+            },
+        ]
+        self.sample_sites_contacts = [
+            {
+                'contacts': [
+                                {
+                                    'certdn': 'certdn1-dirac-durham',
+                                    'email': 'name1.surname1@durham.ac.uk',
+                                    'forename': 'Name1',
+                                    'role': 'Site Administrator',
+                                    'surname': 'Surname1'
+                                },
+                                {
+                                    'certdn': 'certdn2-dirac-durham',
+                                    'email': 'name2.surname2@durham.ac.uk',
+                                    'forename': 'Name2',
+                                    'role': 'Site Operations Manager',
+                                    'surname': 'Surname2'
+                                }
+                ],
+                'name': 'dirac-durham'
+            },
+            {
+                'contacts': [
+                                {
+                                    'certdn': 'certdn1-ru-sarfti',
+                                    'email': 'name1.surname1@gmail.com',
+                                    'forename': 'Name1',
+                                    'role': 'Site Administrator',
+                                    'surname': 'Surname1'
+                                },
+                                {
+                                    'certdn': 'certdn2-ru-sarfti',
+                                    'email': 'name2.surname2@gmail.com',
+                                    'forename': 'Name2',
+                                    'role': 'Site Administrator',
+                                    'surname': 'Surname2'
+                                },
+                ],
+                'name': 'RU-SARFTI'
+            },
+
+        ]
+
+    def test_SitesAndContacts(self):
+        attach_contacts_topodata(logger, self.sample_sites_data,
+                                 self.sample_sites_contacts)
+        self.assertEqual(self.sample_sites_data[0],
+            {
+                'group': 'iris.ac.uk',
+                'notifications': {'contacts': ['name1.surname1@durham.ac.uk',
+                                               'name2.surname2@durham.ac.uk'],
+                                  'enabled': True},
+                'subgroup': 'dirac-durham',
+                'tags': {'certification': 'Certified', 'infrastructure':
+                         'Production', 'scope': 'iris.ac.uk'},
+                'type': 'NGI'
+            }
+        )
+        self.assertEqual(self.sample_sites_data[1],
+            {
+                'group': 'Russia',
+                'notifications': {'contacts': ['name1.surname1@gmail.com',
+                                               'name2.surname2@gmail.com'],
+                                  'enabled': True},
+                'subgroup': 'RU-SARFTI',
+                'tags': {'certification': 'Certified', 'infrastructure':
+                         'Production', 'scope': 'EGI'},
+                'type': 'NGI'
+            }
+        )
 
 
 if __name__ == '__main__':
