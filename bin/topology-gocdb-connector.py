@@ -43,6 +43,7 @@ from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
+from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles
 
@@ -255,26 +256,6 @@ async def fetch_ldap_data(bdii_opts):
     return res
 
 
-# Returnes a dictionary which maps hostnames to their respective ldap port if such exists
-def load_srm_port_map(ldap_data, attribute_name):
-    port_dict = {}
-    for res in ldap_data:
-        try:
-            attribute = res[attribute_name][0]
-            start_index = attribute.index('//')
-            colon_index = attribute.index(':', start_index)
-            end_index = attribute.index('/', colon_index)
-            fqdn = attribute[start_index + 2:colon_index]
-            port = attribute[colon_index + 1:end_index]
-
-            port_dict[fqdn] = port
-
-        except ValueError:
-            logger.error('Exception happened while retrieving port from: %s' % res)
-
-    return port_dict
-
-
 def contains_exception(list):
     for a in list:
         if isinstance(a, Exception):
@@ -387,12 +368,10 @@ def main():
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
-        # Get SRM ports from LDAP and put them under tags -> info_srm_port
+        # check if we fetched SRM port info and attach it appropriate endpoint
+        # data
         if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            srm_port_map = load_srm_port_map(fetched_topology[3], bdii_opts['bdiiqueryattributes'].split(' ')[0])
-            for endpoint in group_endpoints:
-                if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
-                    endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]
+            attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
 
         # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
