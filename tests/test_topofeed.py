@@ -165,8 +165,7 @@ class MeshSitesAndContacts(unittest.TestCase):
         ]
 
     def test_SitesAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_sites_data,
-                                 self.sample_sites_contacts)
+        attach_contacts_topodata(logger, self.sample_sites_contacts, self.sample_sites_data)
         self.assertEqual(self.sample_sites_data[0],
             {
                 'group': 'iris.ac.uk',

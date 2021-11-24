@@ -366,8 +366,7 @@ def main():
             attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
 
         if parsed_site_contacts:
-            import ipdb; ipdb.set_trace()
-            attach_contacts_topodata(logger, parse_sites_contacts, groups_groups)
+            attach_contacts_topodata(logger, parsed_site_contacts, group_groups)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
