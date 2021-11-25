@@ -192,5 +192,61 @@ class MeshSitesAndContacts(unittest.TestCase):
         )
 
 
+class MeshServiceGroupsAndContacts(unittest.TestCase):
+    def setUp(self):
+        logger.customer = CUSTOMER_NAME
+        self.maxDiff = None
+        self.sample_servicegroups_data = [
+            {
+                'group': 'EGI',
+                'subgroup': 'NGI_ARMGRID_SERVICES',
+                'tags': {
+                    'monitored': '1',
+                    'scope': 'EGI'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EGI',
+                'subgroup': 'NGI_CYGRID_SERVICES',
+                'tags': {
+                    'monitored': '1',
+                    'scope': 'EGI'
+                },
+                'type': 'PROJECT'
+            },
+        ]
+        self.sample_servicegroup_contacts = [
+            {
+                'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+                'name': 'NGI_ARMGRID_SERVICES'
+            },
+            {
+                'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
+                'name': 'NGI_CYGRID_SERVICES'
+            },
+
+        ]
+
+    def test_ServiceGroupsAndContacts(self):
+        attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
+                                 self.sample_servicegroups_data)
+        self.assertEqual(self.sample_servicegroups_data[0],
+            {
+                'group': 'EGI',
+                'subgroup': 'NGI_ARMGRID_SERVICES',
+                'notifications': {
+                    'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+                    'enabled': True
+                },
+                'tags': {
+                    'monitored': '1',
+                    'scope': 'EGI'
+                },
+                'type': 'PROJECT'
+            }
+        )
+
+
 if __name__ == '__main__':
     unittest.main()

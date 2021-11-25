@@ -75,7 +75,7 @@ class ParseHelpers(object):
                 if contact and name:
                     endpoints_contacts.append({
                         'name': name,
-                        'contact': contact
+                        'contacts': [contact]
                     })
             return endpoints_contacts
 

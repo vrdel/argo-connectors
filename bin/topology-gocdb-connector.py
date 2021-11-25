@@ -311,6 +311,7 @@ def main():
     asyncio.set_event_loop(loop)
 
     group_endpoints, group_groups = list(), list()
+    parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
 
     try:
         contact_coros = [
@@ -367,6 +368,11 @@ def main():
 
         if parsed_site_contacts:
             attach_contacts_topodata(logger, parsed_site_contacts, group_groups)
+
+        if parsed_servicegroups_contacts:
+            attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
+
+        import ipdb; ipdb.set_trace()
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)

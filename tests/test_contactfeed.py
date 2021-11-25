@@ -153,7 +153,7 @@ class ParseServiceGroupRolesTest(unittest.TestCase):
     def test_formatContacts(self):
         self.assertEqual(self.servicegroup_contacts[0],
             {
-                'contact': 'grid-admin@example.com',
+                'contacts': ['grid-admin@example.com'],
                 'name': 'GROUP1'
             }
         )

@@ -7,12 +7,23 @@ def attach_contacts_topodata(logger, contacts, topodata):
                     contacts)
             )
             if found_contacts:
-                emails = [ contact['email'] for contact in found_contacts[0]['contacts'] ]
-                entity.update(notifications={
-                    'contacts': emails,
-                    'enabled': True
-                })
+                emails = list()
+                for contact in found_contacts[0]['contacts']:
+                    if isinstance(contact, str):
+                        entity.update(notifications={
+                            'contacts': found_contacts[0]['contacts'],
+                            'enabled': True
+                        })
+                        break
+                    else:
+                        emails.append(contact['email'])
+                if emails:
+                    entity.update(notifications={
+                        'contacts': emails,
+                        'enabled': True
+                    })
 
-    except (KeyError, ValueError) as exc:
-        logger.warning('Error joining contacts and topology data: %s' % repr(exc))
-        logger.warning('Topology entity: %s' % entity)
+    except (KeyError, ValueError, TypeError) as exc:
+        logger.warn('Error joining contacts and topology data: %s' % repr(exc))
+        logger.warn('Topology entity: %s' % entity)
+        logger.warn('Found contacts: %s' % found_contacts)
