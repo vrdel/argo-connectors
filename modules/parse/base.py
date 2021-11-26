@@ -60,6 +60,38 @@ class ParseHelpers(object):
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
+    def _parse_sites_with_contacts(self, data):
+        try:
+            sites_contacts = list()
+            xml_data = self._parse_xml(data)
+            elements = xml_data.getElementsByTagName('SITE')
+            for element in elements:
+                sitename, contact = None, None
+                for child in element.childNodes:
+                    if child.nodeName == 'CONTACT_EMAIL' and child.childNodes:
+                        contact = child.childNodes[0].nodeValue
+                    if child.nodeName == 'SHORT_NAME' and child.childNodes:
+                        sitename = child.childNodes[0].nodeValue
+                if contact:
+                    if ';' in contact:
+                        lcontacts = list()
+                        for single_contact in contact.split(';'):
+                            lcontacts.append(single_contact)
+                        sites_contacts.append({
+                            'name': sitename,
+                            'contacts': lcontacts
+                        })
+                    else:
+                        sites_contacts.append({
+                            'name': sitename,
+                            'contacts': [contact]
+                        })
+            return sites_contacts
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise exc
+
     def _parse_servicegroup_contacts(self, data):
         try:
             endpoints_contacts = list()

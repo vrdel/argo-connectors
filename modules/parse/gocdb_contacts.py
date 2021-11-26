@@ -36,7 +36,28 @@ class ParseSiteContacts(ParseHelpers):
 
     def _parse_data(self):
         try:
+            import ipdb; ipdb.set_trace()
             return self._parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise ConnectorParseError
+
+    def get_contacts(self):
+        return self._parse_data()
+
+
+class ParseSitesWithContacts(ParseHelpers):
+    def __init__(self, logger, data):
+        super().__init__(logger)
+        self.logger = logger
+        self.data = data
+        self._parse_data()
+
+    def _parse_data(self):
+        try:
+            import ipdb; ipdb.set_trace()
+            return self._parse_sites_with_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))

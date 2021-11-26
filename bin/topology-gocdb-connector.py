@@ -372,12 +372,14 @@ def main():
         if parsed_servicegroups_contacts:
             attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
 
-        import ipdb; ipdb.set_trace()
+        if parsed_serviceendpoint_contacts:
+            attach_contacts_topodata(logger, parsed_serviceendpoint_contacts, group_endpoints)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
         )
 
+        import ipdb; ipdb.set_trace()
         webapi_opts = get_webapi_opts(cglob, confcust)
 
         numge = len(group_endpoints)

@@ -1,8 +1,9 @@
 import unittest
 
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseRocContacts, \
-    ParseServiceEndpointContacts, ParseServiceGroupRoles, ConnectorParseError
+from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSitesWithContacts, \
+    ParseRocContacts, ParseServiceEndpointContacts, \
+    ParseServiceGroupRoles, ConnectorParseError
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
 
 
@@ -105,6 +106,24 @@ class ParseSitesContactTest(unittest.TestCase):
                     'role': 'Site Administrator',
                     'surname': ''
                 }
+        )
+
+
+class ParseSitesWithContactTest(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-sites_with_contacts.xml') as feed_file:
+            self.content = feed_file.read()
+        self.maxDiff = None
+        logger.customer = CUSTOMER_NAME
+        parse_sites_contacts = ParseSitesWithContacts(logger, self.content)
+        self.site_contacts = parse_sites_contacts.get_contacts()
+
+    def test_formatContacts(self):
+        self.assertEqual(self.site_contacts[0],
+            {
+                'name': 'INFN',
+                'contacts': ['name1.surname1@ba.infn.it']
+            }
         )
 
 
