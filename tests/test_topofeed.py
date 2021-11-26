@@ -248,5 +248,83 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
         )
 
 
+class MeshServiceEndpointsAndContacts(unittest.TestCase):
+    def setUp(self):
+        logger.customer = CUSTOMER_NAME
+        self.maxDiff = None
+        self.sample_serviceendpoints_data = [
+            {
+                'group': 'GROUP1',
+                'hostname': 'fqdn1.com',
+                'service': 'service1',
+                'tags': {
+                    'monitored': '1',
+                    'production': '0',
+                    'scope': ''
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'GROUP2',
+                'hostname': 'fqdn2.com',
+                'service': 'service2',
+                'tags': {
+                    'monitored': '1',
+                    'production': '0',
+                    'scope': ''
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        ]
+        self.sample_serviceendpoints_contacts = [
+            {
+                'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+                'name': 'fqdn1.com+service1'
+            },
+            {
+                'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
+                'name': 'fqdn2.com+service2'
+            }
+        ]
+
+    def test_ServiceEndpointsAndContacts(self):
+        attach_contacts_topodata(logger, self.sample_serviceendpoints_contacts,
+                                 self.sample_serviceendpoints_data)
+        self.assertEqual(self.sample_serviceendpoints_data[0],
+            {
+                'group': 'GROUP1',
+                'hostname': 'fqdn1.com',
+                'service': 'service1',
+                'notifications': {
+                    'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+                    'enabled': True
+                },
+                'tags': {
+                    'monitored': '1',
+                    'production': '0',
+                    'scope': ''
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        )
+        self.assertEqual(self.sample_serviceendpoints_data[1],
+            {
+                'group': 'GROUP2',
+                'hostname': 'fqdn2.com',
+                'service': 'service2',
+                'notifications': {
+                    'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
+                    'enabled': True
+                },
+                'tags': {
+                    'monitored': '1',
+                    'production': '0',
+                    'scope': ''
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        )
+
+
 if __name__ == '__main__':
     unittest.main()
