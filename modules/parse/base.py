@@ -173,6 +173,9 @@ class ParseContacts(ParseHelpers):
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
+    def parse_servicegroups_with_contacts(self, data):
+        return self.parse_servicegroup_contacts(data)
+
     def parse_servicegroup_contacts(self, data):
         try:
             endpoints_contacts = list()

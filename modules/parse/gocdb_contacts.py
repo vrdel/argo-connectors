@@ -95,6 +95,24 @@ class ParseProjectContacts(object):
         pass
 
 
+class ParseServiceGroupWithContacts(ParseContacts):
+    def __init__(self, logger, data):
+        super().__init__(logger)
+        self.data = data
+
+    def _parse_data(self):
+        try:
+            return self.parse_servicegroups_with_contacts(self.data)
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            raise ConnectorParseError
+
+
+    def get_contacts(self):
+        return self._parse_data()
+
+
 class ParseServiceGroupRoles(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)

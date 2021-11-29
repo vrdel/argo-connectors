@@ -3,7 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSitesWithContacts, \
     ParseRocContacts, ParseServiceEndpointContacts, \
-    ParseServiceGroupRoles, ConnectorParseError
+    ParseServiceGroupRoles, ParseServiceGroupWithContacts, ConnectorParseError
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
 
 
@@ -177,6 +177,23 @@ class ParseServiceGroupRolesTest(unittest.TestCase):
             }
         )
 
+
+class ParseServiceGroupWithContactsTest(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-service_group_with_contacts.xml') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+
+        servicegroup_contacts = ParseServiceGroupWithContacts(logger, self.content)
+        self.servicegroup_contacts = servicegroup_contacts.get_contacts()
+
+    def test_formatContacts(self):
+        self.assertEqual(self.servicegroup_contacts[0],
+            {
+                'contacts': ['name1.surname1@email.com'],
+                'name': 'B2FIND-Askeladden'
+            }
+        )
 
 if __name__ == '__main__':
     unittest.main()
