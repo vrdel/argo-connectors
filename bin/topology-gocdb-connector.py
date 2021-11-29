@@ -46,7 +46,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts
+from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
 
 from argo_egi_connectors.config import Global, CustomerConf
 
@@ -104,7 +104,7 @@ def parse_source_siteswithcontacts(res, custname):
     return contacts.get_contacts()
 
 def parse_source_servicegroupscontacts(res, custname):
-    contacts = ParseServiceGroupRoles(logger, res)
+    contacts = ParseServiceGroupWithContacts(logger, res)
     return contacts.get_contacts()
 
 
@@ -379,6 +379,11 @@ def main():
             attach_contacts_topodata(logger, parsed_site_contacts, group_groups)
 
         if parsed_servicegroups_contacts:
+            attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
+        else:
+            # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
+            # servicegroups topology entities
+            parsed_servicegroups_contacts = parse_source_servicegroupscontacts(fetched_topology[1], custname)
             attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
 
         if parsed_serviceendpoint_contacts:

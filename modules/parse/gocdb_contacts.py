@@ -20,7 +20,6 @@ class ParseRocContacts(ParseContacts):
             return self.parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -39,7 +38,6 @@ class ParseSiteContacts(ParseContacts):
             return self.parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -58,7 +56,6 @@ class ParseSitesWithContacts(ParseContacts):
             return self.parse_sites_with_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -76,7 +73,6 @@ class ParseServiceEndpointContacts(ParseContacts):
             return self.parse_serviceendpoint_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -105,7 +101,6 @@ class ParseServiceGroupWithContacts(ParseContacts):
             return self.parse_servicegroups_with_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
 
@@ -123,9 +118,7 @@ class ParseServiceGroupRoles(ParseContacts):
             return self.parse_servicegroup_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
-
 
     def get_contacts(self):
         return self._parse_data()

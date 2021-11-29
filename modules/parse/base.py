@@ -138,7 +138,7 @@ class ParseContacts(ParseHelpers):
             return data
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def parse_sites_with_contacts(self, data):
@@ -170,7 +170,7 @@ class ParseContacts(ParseHelpers):
             return sites_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def parse_servicegroups_with_contacts(self, data):
@@ -184,9 +184,9 @@ class ParseContacts(ParseHelpers):
             for element in elements:
                 name, contact = None, None
                 for child in element.childNodes:
-                    if child.nodeName == 'NAME':
+                    if child.nodeName == 'NAME' and child.childNodes:
                         name = child.childNodes[0].nodeValue
-                    if child.nodeName == 'CONTACT_EMAIL':
+                    if child.nodeName == 'CONTACT_EMAIL' and child.childNodes:
                         contact = child.childNodes[0].nodeValue
                 if contact and name:
                     endpoints_contacts.append({
@@ -196,7 +196,7 @@ class ParseContacts(ParseHelpers):
             return endpoints_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
     def parse_serviceendpoint_contacts(self, data):
@@ -230,5 +230,5 @@ class ParseContacts(ParseHelpers):
             return endpoints_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
