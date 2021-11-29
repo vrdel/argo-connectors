@@ -19,17 +19,17 @@ class ParseDowntimes(ParseHelpers):
         filtered_downtimes = list()
 
         try:
-            downtimes = self._parse_xml(self.data).getElementsByTagName('DOWNTIME')
+            downtimes = self.parse_xml(self.data).getElementsByTagName('DOWNTIME')
 
             for downtime in downtimes:
                 classification = downtime.getAttributeNode('CLASSIFICATION').nodeValue
-                hostname = self._parse_xmltext(downtime.getElementsByTagName('HOSTNAME')[0].childNodes)
-                service_type = self._parse_xmltext(downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                start_str = self._parse_xmltext(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
-                end_str = self._parse_xmltext(downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes)
-                severity = self._parse_xmltext(downtime.getElementsByTagName('SEVERITY')[0].childNodes)
+                hostname = self.parse_xmltext(downtime.getElementsByTagName('HOSTNAME')[0].childNodes)
+                service_type = self.parse_xmltext(downtime.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                start_str = self.parse_xmltext(downtime.getElementsByTagName('FORMATED_START_DATE')[0].childNodes)
+                end_str = self.parse_xmltext(downtime.getElementsByTagName('FORMATED_END_DATE')[0].childNodes)
+                severity = self.parse_xmltext(downtime.getElementsByTagName('SEVERITY')[0].childNodes)
                 try:
-                    service_id = self._parse_xmltext(downtime.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                    service_id = self.parse_xmltext(downtime.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
                 except IndexError:
                     service_id = downtime.getAttribute('PRIMARY_KEY')
                 start_time = datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")

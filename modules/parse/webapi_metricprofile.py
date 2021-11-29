@@ -11,12 +11,12 @@ class ParseMetricProfiles(object):
         self.target_profiles = target_profiles
         self.namespace = namespace
 
-    def _parse_json(self, buf):
+    def parse_json(self, buf):
         return json.loads(buf)
 
     def get_data(self):
         try:
-            fetched_profiles = self._parse_json(self.data)['data']
+            fetched_profiles = self.parse_json(self.data)['data']
             target_profiles = list(filter(lambda profile: profile['name'] in self.target_profiles, fetched_profiles))
             profile_list = list()
 

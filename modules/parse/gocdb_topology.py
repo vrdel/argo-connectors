@@ -17,19 +17,19 @@ class ParseSites(ParseHelpers):
 
     def _parse_data(self):
         try:
-            xml_data = self._parse_xml(self.data)
+            xml_data = self.parse_xml(self.data)
             sites = xml_data.getElementsByTagName('SITE')
             for site in sites:
                 site_name = site.getAttribute('NAME')
                 if site_name not in self._sites:
                     self._sites[site_name] = {'site': site_name}
-                self._sites[site_name]['infrastructure'] = self._parse_xmltext(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
-                self._sites[site_name]['certification'] = self._parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
-                self._sites[site_name]['ngi'] = self._parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
-                self._sites[site_name]['scope'] = ', '.join(self._parse_scopes(site))
+                self._sites[site_name]['infrastructure'] = self.parse_xmltext(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
+                self._sites[site_name]['certification'] = self.parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
+                self._sites[site_name]['ngi'] = self.parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
+                self._sites[site_name]['scope'] = ', '.join(self.parse_scopes(site))
 
                 if self.pass_extensions:
-                    extensions = self._parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                    extensions = self.parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
                     self._sites[site_name]['extensions'] = extensions
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
@@ -73,7 +73,7 @@ class ParseServiceEndpoints(ParseHelpers):
 
     def _parse_data(self):
         try:
-            xml_data = self._parse_xml(self.data)
+            xml_data = self.parse_xml(self.data)
             services = xml_data.getElementsByTagName('SERVICE_ENDPOINT')
             for service in services:
                 service_id = ''
@@ -81,20 +81,20 @@ class ParseServiceEndpoints(ParseHelpers):
                     service_id = str(service.attributes['PRIMARY_KEY'].value)
                 if service_id not in self._service_endpoints:
                     self._service_endpoints[service_id] = {}
-                self._service_endpoints[service_id]['hostname'] = self._parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
-                self._service_endpoints[service_id]['type'] = self._parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                self._service_endpoints[service_id]['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                self._service_endpoints[service_id]['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                self._service_endpoints[service_id]['site'] = self._parse_xmltext(service.getElementsByTagName('SITENAME')[0].childNodes)
-                self._service_endpoints[service_id]['roc'] = self._parse_xmltext(service.getElementsByTagName('ROC_NAME')[0].childNodes)
+                self._service_endpoints[service_id]['hostname'] = self.parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                self._service_endpoints[service_id]['type'] = self.parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                self._service_endpoints[service_id]['monitored'] = self.parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                self._service_endpoints[service_id]['production'] = self.parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                self._service_endpoints[service_id]['site'] = self.parse_xmltext(service.getElementsByTagName('SITENAME')[0].childNodes)
+                self._service_endpoints[service_id]['roc'] = self.parse_xmltext(service.getElementsByTagName('ROC_NAME')[0].childNodes)
                 self._service_endpoints[service_id]['service_id'] = service_id
-                self._service_endpoints[service_id]['scope'] = ', '.join(self._parse_scopes(service))
+                self._service_endpoints[service_id]['scope'] = ', '.join(self.parse_scopes(service))
                 self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + '-' + self._service_endpoints[service_id]['type'] + '-' + self._service_endpoints[service_id]['site']
-                self._service_endpoints[service_id]['url'] = self._parse_xmltext(service.getElementsByTagName('URL')[0].childNodes)
+                self._service_endpoints[service_id]['url'] = self.parse_xmltext(service.getElementsByTagName('URL')[0].childNodes)
                 if self.pass_extensions:
-                    extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                    extensions = self.parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                     self._service_endpoints[service_id]['extensions'] = extensions
-                self._service_endpoints[service_id]['endpoint_urls'] = self._parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
+                self._service_endpoints[service_id]['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             raise ConnectorParseError
@@ -151,34 +151,34 @@ class ParseServiceGroups(ParseHelpers):
 
     def _parse_data(self):
         try:
-            xml_data = self._parse_xml(self.data)
+            xml_data = self.parse_xml(self.data)
             groups = xml_data.getElementsByTagName('SERVICE_GROUP')
             for group in groups:
                 group_id = group.getAttribute('PRIMARY_KEY')
                 if group_id not in self._service_groups:
                     self._service_groups[group_id] = {}
-                self._service_groups[group_id]['name'] = self._parse_xmltext(group.getElementsByTagName('NAME')[0].childNodes)
-                self._service_groups[group_id]['monitored'] = self._parse_xmltext(group.getElementsByTagName('MONITORED')[0].childNodes)
+                self._service_groups[group_id]['name'] = self.parse_xmltext(group.getElementsByTagName('NAME')[0].childNodes)
+                self._service_groups[group_id]['monitored'] = self.parse_xmltext(group.getElementsByTagName('MONITORED')[0].childNodes)
 
                 self._service_groups[group_id]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
-                self._service_groups[group_id]['scope'] = ', '.join(self._parse_scopes(group))
+                self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))
 
                 for service in services:
                     tmps = dict()
 
-                    tmps['hostname'] = self._parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
+                    tmps['hostname'] = self.parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                     try:
-                        tmps['service_id'] = self._parse_xmltext(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
+                        tmps['service_id'] = self.parse_xmltext(service.getElementsByTagName('PRIMARY_KEY')[0].childNodes)
                     except IndexError:
                         tmps['service_id'] = service.getAttribute('PRIMARY_KEY')
-                    tmps['type'] = self._parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
-                    tmps['monitored'] = self._parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
-                    tmps['production'] = self._parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
-                    tmps['scope'] = ', '.join(self._parse_scopes(service))
-                    tmps['endpoint_urls'] = self._parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
+                    tmps['type'] = self.parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                    tmps['monitored'] = self.parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
+                    tmps['production'] = self.parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
+                    tmps['scope'] = ', '.join(self.parse_scopes(service))
+                    tmps['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
                     if self.pass_extensions:
-                        extensions = self._parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                        extensions = self.parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                         tmps['extensions'] = extensions
                     self._service_groups[group_id]['services'].append(tmps)
 

@@ -1,13 +1,13 @@
 import xml.dom.minidom
 from xml.parsers.expat import ExpatError
 
-from argo_egi_connectors.parse.base import ParseHelpers
+from argo_egi_connectors.parse.base import ParseContacts
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
 from argo_egi_connectors.utils import filename_date, module_class_name
 from argo_egi_connectors.exceptions import ConnectorParseError
 
 
-class ParseRocContacts(ParseHelpers):
+class ParseRocContacts(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
@@ -17,7 +17,7 @@ class ParseRocContacts(ParseHelpers):
 
     def _parse_data(self):
         try:
-            return self._parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
+            return self.parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
@@ -27,7 +27,7 @@ class ParseRocContacts(ParseHelpers):
         return self._parse_data()
 
 
-class ParseSiteContacts(ParseHelpers):
+class ParseSiteContacts(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
         self.logger = logger
@@ -36,8 +36,7 @@ class ParseSiteContacts(ParseHelpers):
 
     def _parse_data(self):
         try:
-            import ipdb; ipdb.set_trace()
-            return self._parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
+            return self.parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
@@ -47,7 +46,7 @@ class ParseSiteContacts(ParseHelpers):
         return self._parse_data()
 
 
-class ParseSitesWithContacts(ParseHelpers):
+class ParseSitesWithContacts(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
         self.logger = logger
@@ -56,8 +55,7 @@ class ParseSitesWithContacts(ParseHelpers):
 
     def _parse_data(self):
         try:
-            import ipdb; ipdb.set_trace()
-            return self._parse_sites_with_contacts(self.data)
+            return self.parse_sites_with_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
@@ -67,7 +65,7 @@ class ParseSitesWithContacts(ParseHelpers):
         return self._parse_data()
 
 
-class ParseServiceEndpointContacts(ParseHelpers):
+class ParseServiceEndpointContacts(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
         self.logger = logger
@@ -75,7 +73,7 @@ class ParseServiceEndpointContacts(ParseHelpers):
 
     def _parse_data(self):
         try:
-            return self._parse_serviceendpoint_contacts(self.data)
+            return self.parse_serviceendpoint_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
@@ -97,14 +95,14 @@ class ParseProjectContacts(object):
         pass
 
 
-class ParseServiceGroupRoles(ParseHelpers):
+class ParseServiceGroupRoles(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
 
     def _parse_data(self):
         try:
-            return self._parse_servicegroup_contacts(self.data)
+            return self.parse_servicegroup_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))

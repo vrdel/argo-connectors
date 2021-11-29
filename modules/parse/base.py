@@ -9,12 +9,93 @@ class ParseHelpers(object):
     def __init__(self, logger, *args, **kwargs):
         self.logger = logger
 
-    def _parse_xmltext(self, nodelist):
+    def parse_xmltext(self, nodelist):
         rc = []
         for node in nodelist:
             if node.nodeType == node.TEXT_NODE:
                 rc.append(node.data)
         return ''.join(rc)
+
+    def parse_extensions(self, extensions_node):
+        extensions_dict = dict()
+
+        for extension in extensions_node:
+            if extension.nodeName == 'EXTENSION':
+                key, value = None, None
+                for ext_node in extension.childNodes:
+                    if ext_node.nodeName == 'KEY':
+                        key = ext_node.childNodes[0].nodeValue
+                    if ext_node.nodeName == 'VALUE':
+                        value = ext_node.childNodes[0].nodeValue
+                    if key and value:
+                        extensions_dict.update({key: value})
+
+        return extensions_dict
+
+    def parse_url_endpoints(self, endpoints_node):
+        endpoints_urls = list()
+
+        for endpoint in endpoints_node:
+            if endpoint.nodeName == 'ENDPOINT':
+                url = None
+                for endpoint_node in endpoint.childNodes:
+                    if endpoint_node.nodeName == 'ENDPOINT_MONITORED':
+                        value = endpoint_node.childNodes[0].nodeValue
+                        if value.lower() == 'y':
+                            for url_node in endpoint.childNodes:
+                                if url_node.nodeName == 'URL' and url_node.childNodes:
+                                    url = url_node.childNodes[0].nodeValue
+                                    endpoints_urls.append(url)
+
+        if endpoints_urls:
+            return ', '.join(endpoints_urls)
+        else:
+            return None
+
+    def parse_scopes(self, xml_node):
+        scopes = list()
+
+        for elem in xml_node.childNodes:
+            if elem.nodeName == 'SCOPES':
+                for subelem in elem.childNodes:
+                    if subelem.nodeName == 'SCOPE':
+                        scopes.append(subelem.childNodes[0].nodeValue)
+
+        return scopes
+
+    def parse_json(self, data):
+        try:
+            doc = json.loads(data)
+
+        except ValueError as exc:
+            self.logger.error('{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
+            raise exc
+
+        except Exception as exc:
+            self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
+            raise exc
+
+        else:
+            return doc
+
+    def parse_xml(self, data):
+        try:
+            return xml.dom.minidom.parseString(data)
+
+        except ExpatError as exc:
+            msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
+            self.logger.error(msg)
+            raise exc
+
+        except Exception as exc:
+            msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
+            self.logger.error(msg)
+            raise exc
+
+
+class ParseContacts(ParseHelpers):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def _parse_contact(self, contacts_node, *attrs):
         values = list()
@@ -26,12 +107,12 @@ class ParseHelpers(object):
                 values.append('')
         return values
 
-    def _parse_contacts(self, data, root_node, child_node, topo_node):
+    def parse_contacts(self, data, root_node, child_node, topo_node):
         interested = ('EMAIL', 'FORENAME', 'SURNAME', 'CERTDN', 'ROLE_NAME')
 
         try:
             data = list()
-            xml_data = self._parse_xml(self.data)
+            xml_data = self.parse_xml(self.data)
             entities = xml_data.getElementsByTagName(root_node)
             for entity in entities:
                 if entity.nodeName == root_node:
@@ -60,10 +141,10 @@ class ParseHelpers(object):
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
-    def _parse_sites_with_contacts(self, data):
+    def parse_sites_with_contacts(self, data):
         try:
             sites_contacts = list()
-            xml_data = self._parse_xml(data)
+            xml_data = self.parse_xml(data)
             elements = xml_data.getElementsByTagName('SITE')
             for element in elements:
                 sitename, contact = None, None
@@ -92,10 +173,10 @@ class ParseHelpers(object):
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
-    def _parse_servicegroup_contacts(self, data):
+    def parse_servicegroup_contacts(self, data):
         try:
             endpoints_contacts = list()
-            xml_data = self._parse_xml(data)
+            xml_data = self.parse_xml(data)
             elements = xml_data.getElementsByTagName('SERVICE_GROUP')
             for element in elements:
                 name, contact = None, None
@@ -115,10 +196,10 @@ class ParseHelpers(object):
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise exc
 
-    def _parse_serviceendpoint_contacts(self, data):
+    def parse_serviceendpoint_contacts(self, data):
         try:
             endpoints_contacts = list()
-            xml_data = self._parse_xml(data)
+            xml_data = self.parse_xml(data)
             elements = xml_data.getElementsByTagName('SERVICE_ENDPOINT')
             for element in elements:
                 fqdn, contact, servtype = None, None, None
@@ -147,80 +228,4 @@ class ParseHelpers(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
-
-    def _parse_extensions(self, extensions_node):
-        extensions_dict = dict()
-
-        for extension in extensions_node:
-            if extension.nodeName == 'EXTENSION':
-                key, value = None, None
-                for ext_node in extension.childNodes:
-                    if ext_node.nodeName == 'KEY':
-                        key = ext_node.childNodes[0].nodeValue
-                    if ext_node.nodeName == 'VALUE':
-                        value = ext_node.childNodes[0].nodeValue
-                    if key and value:
-                        extensions_dict.update({key: value})
-
-        return extensions_dict
-
-    def _parse_url_endpoints(self, endpoints_node):
-        endpoints_urls = list()
-
-        for endpoint in endpoints_node:
-            if endpoint.nodeName == 'ENDPOINT':
-                url = None
-                for endpoint_node in endpoint.childNodes:
-                    if endpoint_node.nodeName == 'ENDPOINT_MONITORED':
-                        value = endpoint_node.childNodes[0].nodeValue
-                        if value.lower() == 'y':
-                            for url_node in endpoint.childNodes:
-                                if url_node.nodeName == 'URL' and url_node.childNodes:
-                                    url = url_node.childNodes[0].nodeValue
-                                    endpoints_urls.append(url)
-
-        if endpoints_urls:
-            return ', '.join(endpoints_urls)
-        else:
-            return None
-
-    def _parse_scopes(self, xml_node):
-        scopes = list()
-
-        for elem in xml_node.childNodes:
-            if elem.nodeName == 'SCOPES':
-                for subelem in elem.childNodes:
-                    if subelem.nodeName == 'SCOPE':
-                        scopes.append(subelem.childNodes[0].nodeValue)
-
-        return scopes
-
-    def _parse_json(self, data):
-        try:
-            doc = json.loads(data)
-
-        except ValueError as exc:
-            self.logger.error('{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
-            raise exc
-
-        except Exception as exc:
-            self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
-            raise exc
-
-        else:
-            return doc
-
-    def _parse_xml(self, data):
-        try:
-            return xml.dom.minidom.parseString(data)
-
-        except ExpatError as exc:
-            msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
-            self.logger.error(msg)
-            raise exc
-
-        except Exception as exc:
-            msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
-            self.logger.error(msg)
             raise exc

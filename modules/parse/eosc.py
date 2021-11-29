@@ -21,7 +21,7 @@ class ParseEoscTopo(ParseHelpers):
         try:
             groups = list()
 
-            for entity in self._parse_json(self.data):
+            for entity in self.parse_json(self.data):
                 tmp_dict = dict()
 
                 tmp_dict['type'] = 'PROJECT'
@@ -39,7 +39,7 @@ class ParseEoscTopo(ParseHelpers):
     def _get_groupendpoints(self):
         groups = list()
 
-        for entity in self._parse_json(self.data):
+        for entity in self.parse_json(self.data):
             tmp_dict = dict()
 
             tmp_dict['type'] = self.fetchtype.upper()

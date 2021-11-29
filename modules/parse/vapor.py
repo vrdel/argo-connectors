@@ -19,7 +19,7 @@ class ParseWeights(ParseHelpers):
     def get_data(self):
         try:
             weights = dict()
-            for ngi in self._parse_json(self.data):
+            for ngi in self.parse_json(self.data):
                 for site in ngi['site']:
                     key = site['id']
                     if 'ComputationPower' in site:
