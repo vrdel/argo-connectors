@@ -1,4 +1,6 @@
 def attach_contacts_topodata(logger, contacts, topodata):
+    updated_topodata = list()
+
     try:
         for entity in topodata:
             # group_groups topotype
@@ -41,6 +43,10 @@ def attach_contacts_topodata(logger, contacts, topodata):
                                 'contacts': emails,
                                 'enabled': True
                             })
+
+            updated_topodata.append(entity)
+
+        return updated_topodata
 
     except (KeyError, ValueError, TypeError) as exc:
         logger.warn('Error joining contacts and topology data: %s' % repr(exc))

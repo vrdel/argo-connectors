@@ -107,6 +107,9 @@ def parse_source_servicegroupscontacts(res, custname):
     contacts = ParseServiceGroupWithContacts(logger, res)
     return contacts.get_contacts()
 
+def parse_source_servicegroupsroles(res, custname):
+    contacts = ParseServiceGroupRoles(logger, res)
+    return contacts.get_contacts()
 
 def parse_source_serviceendpoints_contacts(res, custname):
     contacts = ParseServiceEndpointContacts(logger, res)
@@ -324,7 +327,7 @@ def main():
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
-        parsed_servicegroups_contacts = parse_source_servicegroupscontacts(contacts[1], custname)
+        parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
 
     except (ConnectorHttpError, ConnectorParseError) as exc:
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
@@ -338,8 +341,6 @@ def main():
 
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
-
-        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
 
         if contains_exception(fetched_topology):
             raise ConnectorHttpError
@@ -370,13 +371,29 @@ def main():
         if len(fetched_topology) > 3 and fetched_topology[3] is not None:
             attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
 
-        if parsed_site_contacts:
-            attach_contacts_topodata(logger, parsed_site_contacts, group_groups)
-        else:
+        # parse contacts from fetched service endpoints topology, if there are
+        # any
+        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
+
+
+        if not parsed_site_contacts:
             # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
             # sites topology entities
             parsed_site_contacts = parse_source_siteswithcontacts(fetched_topology[2], custname)
-            attach_contacts_topodata(logger, parsed_site_contacts, group_groups)
+
+        attach_contacts_workers = [
+            loop.run_in_executor(executor, partial(attach_contacts_topodata,
+                                                   logger,
+                                                   parsed_site_contacts,
+                                                   group_groups)),
+            loop.run_in_executor(executor, partial(attach_contacts_topodata,
+                                                   logger,
+                                                   parsed_serviceendpoint_contacts,
+                                                   group_endpoints))
+        ]
+
+        executor = ProcessPoolExecutor(max_workers=2)
+        group_groups, group_endpoints = loop.run_until_complete(asyncio.gather(*attach_contacts_workers))
 
         if parsed_servicegroups_contacts:
             attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
@@ -385,9 +402,6 @@ def main():
             # servicegroups topology entities
             parsed_servicegroups_contacts = parse_source_servicegroupscontacts(fetched_topology[1], custname)
             attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
-
-        if parsed_serviceendpoint_contacts:
-            attach_contacts_topodata(logger, parsed_serviceendpoint_contacts, group_endpoints)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
