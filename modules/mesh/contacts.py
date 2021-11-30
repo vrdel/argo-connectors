@@ -5,7 +5,13 @@ def filter_dups_noemails(contact_list):
     for contact in no_dups:
         if '@' not in contact:
             continue
-        only_emails.append(contact)
+
+        if ',' in contact:
+            only_emails = only_emails + contact.split(',')
+        elif ';' in contact:
+            only_emails = only_emails + contact.split(';')
+        else:
+            only_emails.append(contact)
 
     return only_emails
 
