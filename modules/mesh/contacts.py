@@ -1,3 +1,7 @@
+def filter_dups_noemails(contact_list):
+    no_dups = set(contact_list)
+    return list(no_dups)
+
 def attach_contacts_topodata(logger, contacts, topodata):
     updated_topodata = list()
 
@@ -15,7 +19,7 @@ def attach_contacts_topodata(logger, contacts, topodata):
                     for contact in found_contacts[0]['contacts']:
                         if isinstance(contact, str):
                             entity.update(notifications={
-                                'contacts': found_contacts[0]['contacts'],
+                                'contacts': filter_dups_noemails(found_contacts[0]['contacts']),
                                 'enabled': True
                             })
                             break
@@ -23,14 +27,14 @@ def attach_contacts_topodata(logger, contacts, topodata):
                             emails.append(contact['email'])
                     if emails:
                         entity.update(notifications={
-                            'contacts': emails,
+                            'contacts': filter_dups_noemails(emails),
                             'enabled': True
                         })
             # group_endpoints topotype
             else:
                 for contact in contacts:
                     fqdn, servtype = contact['name'].split('+')
-                    emails = contact['contacts']
+                    emails = filter_dups_noemails(contact['contacts'])
                     found_endpoints = list(
                         filter(lambda endpoint:
                                endpoint['hostname'] == fqdn \
