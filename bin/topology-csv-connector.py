@@ -36,7 +36,7 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -44,7 +44,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.csvtopo import ParseServiceGroupsEndpoints
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
+from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
 
 import csv
@@ -208,7 +208,7 @@ def main():
                                                                 custname,
                                                                 uidservtype)
         except Exception as exc:
-            raise ConnectorError
+            raise ConnectorHttpError
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
@@ -233,7 +233,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except ConnectorError:
+    except ConnectorHttpError:
         loop.run_until_complete(
             write_state(confcust, fixed_date, False )
         )

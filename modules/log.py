@@ -11,6 +11,7 @@ class Logger:
         lfs = '%(name)s[%(process)s]: %(levelname)s %(message)s'
         logformat = logging.Formatter(lfs)
         logverbose = logging.INFO
+        self.connector = connector
 
         logging.basicConfig(format=lfs, level=logging.INFO, stream=sys.stdout)
         self.logger = logging.getLogger(connector)
@@ -32,6 +33,15 @@ class Logger:
             self.logger.addHandler(filehandle)
         except Exception:
             pass
+
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        del d['logger']
+        return d
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+        self.logger = logging.getLogger(self.connector)
 
     def warn(self, msg):
         self.logger.warn(msg)

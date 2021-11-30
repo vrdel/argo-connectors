@@ -1,11 +1,10 @@
-from argo_egi_connectors.tools import module_class_name
+from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_egi_connectors.parse.base import ParseHelpers
 
-import json
 
-
-class ParseWeights(object):
+class ParseWeights(ParseHelpers):
     def __init__(self, logger, data):
         self.data = data
         self.logger = logger
@@ -17,13 +16,10 @@ class ParseWeights(object):
             datawr.append({'type': 'computationpower', 'site': key, 'weight': w})
         return datawr
 
-    def _parse_json(self, buf):
-        return json.loads(buf)
-
     def get_data(self):
         try:
             weights = dict()
-            for ngi in self._parse_json(self.data):
+            for ngi in self.parse_json(self.data):
                 for site in ngi['site']:
                     key = site['id']
                     if 'ComputationPower' in site:
@@ -36,8 +32,7 @@ class ParseWeights(object):
             return self._reformat(weights)
 
         except (KeyError, IndexError, ValueError) as exc:
-            self.logger.error(module_class_name(self) + ': Error parsing feed - %s' % (repr(exc).replace('\'', '')))
-            raise ConnectorError()
+            raise ConnectorParseError()
 
         except Exception as exc:
             if getattr(self.logger, 'job', False):

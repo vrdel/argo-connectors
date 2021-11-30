@@ -8,13 +8,13 @@ import json
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import SessionWithRetry, ConnectorError
+from argo_egi_connectors.io.http import SessionWithRetry, ConnectorHttpError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import filename_date, datestamp, date_check
+from argo_egi_connectors.utils import filename_date, datestamp, date_check
 from argo_egi_connectors.parse.eosc import ParseEoscTopo
 
 from urllib.parse import urlparse
@@ -176,7 +176,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
 
-    except ConnectorError:
+    except ConnectorHttpError:
         write_state(confcust, fixed_date, False)
 
 

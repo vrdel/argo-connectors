@@ -2,8 +2,8 @@ import asyncio
 
 import bonsai
 
-from argo_egi_connectors.tools import module_class_name
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.utils import module_class_name
+from argo_egi_connectors.io.http import ConnectorHttpError
 
 class LDAPSessionWithRetry(object):
     def __init__(self, logger, retry_attempts, retry_sleep, connection_timeout):
@@ -43,4 +43,4 @@ class LDAPSessionWithRetry(object):
 
         except Exception as exc:
             self.logger.error('from {}.search() - {}'.format(module_class_name(self), repr(exc)))
-            raise ConnectorError()
+            raise ConnectorHttpError()

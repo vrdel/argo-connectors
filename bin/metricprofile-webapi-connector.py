@@ -32,13 +32,13 @@ import sys
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, Global
-from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
+from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
 from argo_egi_connectors.parse.webapi_metricprofile import ParseMetricProfiles
 
 logger = None
@@ -143,7 +143,7 @@ def main():
 
                 logger.info('Customer:' + custname + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))
 
-            except ConnectorError:
+            except ConnectorHttpError:
                 write_state(cust, job, confcust, fixed_date, False)
 
 if __name__ == '__main__':

@@ -25,33 +25,32 @@
 # Framework Programme (contract # INFSO-RI-261323)
 
 import argparse
-import copy
 import os
 import sys
-import re
 import xml.dom.minidom
 
-import uvloop
-import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from urllib.parse import urlparse
 
-import bonsai
-from bonsai import LDAPClient
+import asyncio
+import uvloop
 
-from argo_egi_connectors.io.http import ConnectorError, SessionWithRetry
+from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
 from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
+from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
+from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
 
 from argo_egi_connectors.config import Global, CustomerConf
 
-from argo_egi_connectors.tools import filename_date, module_class_name, datestamp, date_check
-from urllib.parse import urlparse
-
+from argo_egi_connectors.utils import filename_date, date_check
 
 logger = None
 
@@ -60,6 +59,11 @@ logger = None
 SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITES_PI = '/gocdbpi/private/?method=get_site&scope='
 SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
+
+ROC_CONTACTS = '/gocdbpi/private/?method=get_roc_contacts'
+SITE_CONTACTS = '/gocdbpi/private/?method=get_site_contacts'
+PROJECT_CONTACTS = '/gocdbpi/private/?method=get_project_contacts'
+SERVICEGROUP_CONTACTS = '/gocdbpi/private/?method=get_service_group_role'
 
 globopts = {}
 custname = ''
@@ -88,6 +92,28 @@ def parse_source_sites(res, custname, uidservtype, pass_extensions):
                                  pass_extensions).get_group_groups()
 
     return group_endpoints
+
+
+def parse_source_sitescontacts(res, custname):
+    contacts = ParseSiteContacts(logger, res)
+    return contacts.get_contacts()
+
+
+def parse_source_siteswithcontacts(res, custname):
+    contacts = ParseSitesWithContacts(logger, res)
+    return contacts.get_contacts()
+
+def parse_source_servicegroupscontacts(res, custname):
+    contacts = ParseServiceGroupWithContacts(logger, res)
+    return contacts.get_contacts()
+
+def parse_source_servicegroupsroles(res, custname):
+    contacts = ParseServiceGroupRoles(logger, res)
+    return contacts.get_contacts()
+
+def parse_source_serviceendpoints_contacts(res, custname):
+    contacts = ParseServiceEndpointContacts(logger, res)
+    return contacts.get_contacts()
 
 
 def get_webapi_opts(cglob, confcust):
@@ -238,26 +264,6 @@ async def fetch_ldap_data(bdii_opts):
     return res
 
 
-# Returnes a dictionary which maps hostnames to their respective ldap port if such exists
-def load_srm_port_map(ldap_data, attribute_name):
-    port_dict = {}
-    for res in ldap_data:
-        try:
-            attribute = res[attribute_name][0]
-            start_index = attribute.index('//')
-            colon_index = attribute.index(':', start_index)
-            end_index = attribute.index('/', colon_index)
-            fqdn = attribute[start_index + 2:colon_index]
-            port = attribute[colon_index + 1:end_index]
-
-            port_dict[fqdn] = port
-
-        except ValueError:
-            logger.error('Exception happened while retrieving port from: %s' % res)
-
-    return port_dict
-
-
 def contains_exception(list):
     for a in list:
         if isinstance(a, Exception):
@@ -311,10 +317,22 @@ def main():
     loop = uvloop.new_event_loop()
     asyncio.set_event_loop(loop)
 
+    group_endpoints, group_groups = list(), list()
+    parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
+
     try:
-        group_endpoints, group_groups = list(), list()
+        contact_coros = [
+            fetch_data(topofeed, SITE_CONTACTS, auth_opts, False),
+            fetch_data(topofeed, SERVICEGROUP_CONTACTS, auth_opts, False)
+        ]
+        contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
+        parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
+        parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
 
+    except (ConnectorHttpError, ConnectorParseError) as exc:
+        logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
+    try:
         coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
@@ -325,7 +343,7 @@ def main():
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
         if contains_exception(fetched_topology):
-            raise ConnectorError
+            raise ConnectorHttpError
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
@@ -348,6 +366,43 @@ def main():
         group_endpoints += parsed_topology[1]
         group_groups += parsed_topology[2]
 
+        # check if we fetched SRM port info and attach it appropriate endpoint
+        # data
+        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
+            attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
+
+        # parse contacts from fetched service endpoints topology, if there are
+        # any
+        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
+
+
+        if not parsed_site_contacts:
+            # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
+            # sites topology entities
+            parsed_site_contacts = parse_source_siteswithcontacts(fetched_topology[2], custname)
+
+        attach_contacts_workers = [
+            loop.run_in_executor(executor, partial(attach_contacts_topodata,
+                                                   logger,
+                                                   parsed_site_contacts,
+                                                   group_groups)),
+            loop.run_in_executor(executor, partial(attach_contacts_topodata,
+                                                   logger,
+                                                   parsed_serviceendpoint_contacts,
+                                                   group_endpoints))
+        ]
+
+        executor = ProcessPoolExecutor(max_workers=2)
+        group_groups, group_endpoints = loop.run_until_complete(asyncio.gather(*attach_contacts_workers))
+
+        if parsed_servicegroups_contacts:
+            attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
+        else:
+            # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
+            # servicegroups topology entities
+            parsed_servicegroups_contacts = parse_source_servicegroupscontacts(fetched_topology[1], custname)
+            attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
+
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
         )
@@ -356,13 +411,6 @@ def main():
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
-
-        # Get SRM ports from LDAP and put them under tags -> info_srm_port
-        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            srm_port_map = load_srm_port_map(fetched_topology[3], bdii_opts['bdiiqueryattributes'].split(' ')[0])
-            for endpoint in group_endpoints:
-                if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
-                    endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]
 
         # send concurrently to WEB-API in coroutines
         if eval(globopts['GeneralPublishWebAPI'.lower()]):
@@ -378,7 +426,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except ConnectorError:
+    except (ConnectorParseError, ConnectorHttpError):
         write_state(confcust, fixed_date, False)
 
     finally:

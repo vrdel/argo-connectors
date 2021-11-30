@@ -1,11 +1,11 @@
-from argo_egi_connectors.tools import module_class_name
-from argo_egi_connectors.io.http import ConnectorError
+from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_egi_connectors.parse.base import ParseHelpers
 
 from urllib.parse import urlparse
 import json
 
 
-class ParseEoscTopo(object):
+class ParseEoscTopo(ParseHelpers):
     def __init__(self, logger, data, uidservtype=False,
                  fetchtype='ServiceGroups', scope='EOSC'):
         self.data = data
@@ -17,40 +17,29 @@ class ParseEoscTopo(object):
     def _construct_fqdn(self, http_endpoint):
         return urlparse(http_endpoint).netloc
 
-    def _parse_json(self, data):
-        try:
-            doc = json.loads(data)
-
-        except ValueError as exc:
-            self.logger.error('{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
-            raise ConnectorError()
-
-        except Exception as exc:
-            self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
-            raise exc
-
-        else:
-            return doc
-
     def _get_groupgroups(self):
-        groups = list()
+        try:
+            groups = list()
 
-        for entity in self._parse_json(self.data):
-            tmp_dict = dict()
+            for entity in self.parse_json(self.data):
+                tmp_dict = dict()
 
-            tmp_dict['type'] = 'PROJECT'
-            tmp_dict['group'] = 'EOSC'
-            tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
-            tmp_dict['tags'] = {'monitored': '1', 'scope': self.scope}
+                tmp_dict['type'] = 'PROJECT'
+                tmp_dict['group'] = 'EOSC'
+                tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
+                tmp_dict['tags'] = {'monitored': '1', 'scope': self.scope}
 
-            groups.append(tmp_dict)
+                groups.append(tmp_dict)
 
-        return groups
+            return groups
+
+        except (KeyError, IndexError, ValueError) as exc:
+            raise ConnectorParseError()
 
     def _get_groupendpoints(self):
         groups = list()
 
-        for entity in self._parse_json(self.data):
+        for entity in self.parse_json(self.data):
             tmp_dict = dict()
 
             tmp_dict['type'] = self.fetchtype.upper()

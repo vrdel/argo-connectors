@@ -31,7 +31,7 @@ import sys
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import SessionWithRetry, ConnectorError
+from argo_egi_connectors.io.http import SessionWithRetry, ConnectorHttpError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -39,7 +39,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.vapor import ParseWeights
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tools import filename_date, module_class_name, date_check
+from argo_egi_connectors.utils import filename_date, module_class_name, date_check
 from urllib.parse import urlparse
 
 globopts = {}
@@ -180,7 +180,7 @@ def main():
                                                                       jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
                                                                       len(weights)))
 
-        except ConnectorError:
+        except ConnectorHttpError:
             for job, cust in jobcust:
                 loop.run_until_complete(
                     write_state(cust, job, confcust, fixed_date, False)
