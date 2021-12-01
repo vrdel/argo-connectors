@@ -18,6 +18,7 @@ class ParseServiceGroupsEndpoints(object):
     def get_groupgroups(self):
         try:
             groups = list()
+            already_added = list()
 
             for entity in self.data:
                 tmp_dict = dict()
@@ -27,7 +28,11 @@ class ParseServiceGroupsEndpoints(object):
                 tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
                 tmp_dict['tags'] = {'monitored': '1', 'scope': self.project}
 
-                groups.append(tmp_dict)
+                if tmp_dict['subgroup'] in already_added:
+                    continue
+                else:
+                    groups.append(tmp_dict)
+                already_added.append(tmp_dict['subgroup'])
 
             return groups
 
