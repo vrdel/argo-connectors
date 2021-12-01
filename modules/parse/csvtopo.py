@@ -50,7 +50,7 @@ class ParseServiceGroupsEndpoints(object):
                     tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(info_url))
                 else:
                     tmp_dict['hostname'] = self._construct_fqdn(entity['URL'])
-                tmp_dict['tags'] = {'scope': self.project, 'monitored': '1', 'info.URL': info_url}
+                tmp_dict['tags'] = {'scope': self.project, 'monitored': '1', 'info_URL': info_url}
 
                 groups.append(tmp_dict)
 
