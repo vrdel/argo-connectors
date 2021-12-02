@@ -200,10 +200,13 @@ class CustomerConf(object):
                                                    'TopoFetchType']
                     }
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AuthenticationUsePlainHttpAuth', 'TopoUIDServiceEnpoints',
-                      'AuthenticationHttpUser', 'AuthenticationHttpPass',
-                      'BDII', 'BDIIHost', 'BDIIPort', 'BDIIQueryBase', 'BDIIQueryFilter', 'BDIIQueryAttributes',
-                      'WebAPIToken', 'WeightsEmpty', 'DowntimesEmpty']
+    _cust_optional = ['AuthenticationUsePlainHttpAuth',
+                      'TopoUIDServiceEnpoints', 'AuthenticationHttpUser',
+                      'AuthenticationHttpPass', 'BDII', 'BDIIHost', 'BDIIPort',
+                      'BDIIQueryBase', 'BDIIQueryFilterSRM',
+                      'BDIIQueryAttributesSRM', 'BDIIQueryFilterSEPATH',
+                      'BDIIQueryAttributesSEPATH', 'WebAPIToken',
+                      'WeightsEmpty', 'DowntimesEmpty']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -342,7 +345,7 @@ class CustomerConf(object):
                     return dict()
         else:
             return self._get_cust_options('AuthOpts')
-            
+
     def get_bdiiopts(self, cust=None):
         if cust:
             if 'BDIIOpts' in self._cust[cust]:
@@ -351,7 +354,7 @@ class CustomerConf(object):
                 return dict()
         else:
             return self._get_cust_options('BDIIOpts')
-    
+
     def is_complete_bdii(self, opts):
         diff = []
         for opt in self._cust_optional:
