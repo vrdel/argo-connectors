@@ -16,8 +16,10 @@ BDII = True
 BDIIHost = bdii.egi.cro-ngi.hr
 BDIIPort = 2170
 BDIIQueryBase = o=grid
-BDIIQueryFilter = (&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))
-BDIIQueryAttributes = GlueServiceEndpoint
+BDIIQueryFilterSRM = (&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))
+BDIIQueryAttributesSRM = GlueServiceEndpoint
+BDIIQueryFilterSEPATH = (&(objectClass=GlueSATop)(GlueChunkKey=GlueSEUniqueID=lcgse01.phy.bris.ac.uk))
+BDIIQueryAttributesSEPATH = GlueVOInfoAccessControlBaseRule GlueVOInfoPath
 
 [Critical]
 Dirname = EGI_Critical
