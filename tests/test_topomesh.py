@@ -26,6 +26,18 @@ class MeshSePathAndTopodata(unittest.TestCase):
                 'dn': '<LDAPDN GlueVOInfoLocalID=gridpp:hdfs_pool,GlueSALocalID=hdfs_pool:replica:online,GlueSEUniqueID=lcgse01.phy.bris.ac.uk,Mds-Vo-name=UKI-SOUTHGRID-BRIS-HEP,Mds-Vo-name=local,o=grid>'
             }
         ]
+        self.sample_gridftp_endpoints = [
+            {
+                'group': 'UKI-SOUTHGRID-BRIS-HEP',
+                'hostname': 'lcgse01.phy.bris.ac.uk',
+                'service': 'webdav',
+                'tags': {'info_URL': 'https://lcgse01.phy.bris.ac.uk/dpm/phy.bris.ac.uk/home/ops/',
+                        'monitored': '0',
+                        'production': '0',
+                        'scope': 'EGI, wlcg, tier2, atlas, cms, lhcb'},
+                'type': 'SITES'
+            }
+        ]
 
 
     def test_meshSePathTopo(self):
