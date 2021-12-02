@@ -44,6 +44,7 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
+from argo_egi_connectors.mesh.gridsftp_vosepath import attach_gridftpsepath_topodata
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
@@ -344,6 +345,11 @@ def main():
                                          bdii_opts['bdiiqueryfiltersrm'],
                                          bdii_opts['bdiiqueryattributessrm'].split(' ')))
 
+            coros.append(fetch_ldap_data(host, port, base,
+                                         bdii_opts['bdiiqueryfiltersepath'],
+                                         bdii_opts['bdiiqueryattributessepath'].split(' ')))
+
+
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
         import ipdb; ipdb.set_trace()
@@ -375,12 +381,14 @@ def main():
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data
         if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
+            attach_srmport_topodata(logger, bdii_opts['bdiiqueryattributessrm'].split(' ')[0], fetched_topology[3], group_endpoints)
+
+        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
+            attach_gridftpsepath_topodata(logger, bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_topology[4], group_endpoints)
 
         # parse contacts from fetched service endpoints topology, if there are
         # any
         parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
-
 
         if not parsed_site_contacts:
             # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
