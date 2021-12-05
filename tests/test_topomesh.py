@@ -1,10 +1,7 @@
 import unittest
 
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSitesWithContacts, \
-    ParseRocContacts, ParseServiceEndpointContacts, \
-    ParseServiceGroupRoles, ParseServiceGroupWithContacts, ConnectorParseError
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
+from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
 
 from bonsai import LDAPEntry
 
@@ -16,6 +13,17 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 class MeshSePathAndTopodata(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
+        self.bdiiopts =  {
+            'bdii': 'True', 'bdiihost': 'bdii.egi.cro-ngi.hr',
+            'bdiiport': '2170',
+            'bdiiqueryattributessepath': 'GlueVOInfoAccessControlBaseRule GlueVOInfoPath',
+            'bdiiqueryattributessrm': 'GlueServiceEndpoint',
+            'bdiiquerybase': 'o=grid',
+            'bdiiqueryfiltersepath': '(objectClass=GlueSATop)',
+            'bdiiqueryfiltersrm': '(&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))'
+        }
+
+
         self.sample_ldap = [
             {
                 'GlueVOInfoAccessControlBaseRule': ['VO:ukqcd.vo.gridpp.ac.uk'],
@@ -73,37 +81,10 @@ class MeshSePathAndTopodata(unittest.TestCase):
             tmp.append(new_entry)
         self.sample_ldap = tmp
 
-    def extract_value(self, key, entry):
-        if isinstance(entry, tuple):
-            for e in entry:
-                k, v = e[0]
-                if key == k:
-                    return v
-        else:
-            return entry[key]
-
     def test_meshSePathTopo(self):
-        endpoints_bdii = dict()
+        new_endpoints = attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
+        import ipdb; ipdb.set_trace()
 
-        for entry in self.sample_ldap:
-            voname = self.extract_value('GlueVOInfoAccessControlBaseRule', entry)
-            voname  = voname[0].split(':')[1]
-            sepath = self.extract_value('GlueVOInfoPath', entry)
-            sepath = sepath[0]
-            endpoint = self.extract_value('GlueSEUniqueID', entry['dn'].rdns)
-
-            endpoints_bdii[endpoint] = {
-                'voname': voname,
-                'GlueVOInfoPath': sepath
-            }
-
-        for endpoint in self.sample_storage_endpoints:
-            if endpoint['hostname'] in endpoints_bdii:
-                voname = endpoints_bdii[endpoint['hostname']]['voname']
-                sepath = endpoints_bdii[endpoint['hostname']]['GlueVOInfoPath']
-                endpoint['tags'].update({
-                    'vo_{}_attr_GlueVOInfoPath'.format(voname): sepath
-                })
 
 if __name__ == '__main__':
     unittest.main()

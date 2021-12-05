@@ -44,7 +44,7 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
-from argo_egi_connectors.mesh.gridsftp_vosepath import attach_gridftpsepath_topodata
+from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
@@ -352,7 +352,6 @@ def main():
 
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
-        import ipdb; ipdb.set_trace()
 
         if contains_exception(fetched_topology):
             raise ConnectorHttpError
@@ -377,14 +376,13 @@ def main():
         group_groups, group_endpoints = parsed_topology[0]
         group_endpoints += parsed_topology[1]
         group_groups += parsed_topology[2]
+        import ipdb; ipdb.set_trace()
 
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data
-        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
+        if  bdii_opts and eval(bdii_opts['bdii']):
             attach_srmport_topodata(logger, bdii_opts['bdiiqueryattributessrm'].split(' ')[0], fetched_topology[3], group_endpoints)
-
-        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            attach_gridftpsepath_topodata(logger, bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_topology[4], group_endpoints)
+            attach_sepath_topodata(logger, bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_topology[4], group_endpoints)
 
         # parse contacts from fetched service endpoints topology, if there are
         # any
