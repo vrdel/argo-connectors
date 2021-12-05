@@ -376,7 +376,6 @@ def main():
         group_groups, group_endpoints = parsed_topology[0]
         group_endpoints += parsed_topology[1]
         group_groups += parsed_topology[2]
-        import ipdb; ipdb.set_trace()
 
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data

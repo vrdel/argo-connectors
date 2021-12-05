@@ -8,23 +8,27 @@ def extract_value(key, entry):
         return entry.get(key, None)
 
 
-def build_map_endpoint_path(bdiidata):
+def build_map_endpoint_path(logger, bdiidata):
     mapping = dict()
 
-    for entry in bdiidata:
-        voname = extract_value('GlueVOInfoAccessControlBaseRule', entry)
-        voname  = voname[0].split(':')[1] if isinstance(voname, list) else None
-        sepath = extract_value('GlueVOInfoPath', entry)
-        sepath = sepath[0] if isinstance(sepath, list) else None
-        endpoint = extract_value('GlueSEUniqueID', entry['dn'].rdns)
+    try:
+        for entry in bdiidata:
+            voname = extract_value('GlueVOInfoAccessControlBaseRule', entry)
+            voname = list(filter(lambda e: 'VO:' in e, voname))
+            voname  = voname[0].split(':')[1] if isinstance(voname, list) else None
+            sepath = extract_value('GlueVOInfoPath', entry)
+            sepath = sepath[0] if isinstance(sepath, list) else None
+            endpoint = extract_value('GlueSEUniqueID', entry['dn'].rdns)
 
-        if voname and sepath and endpoint:
-            mapping[endpoint] = {
-                'voname': voname,
-                'GlueVOInfoPath': sepath
-            }
+            if voname and sepath and endpoint:
+                mapping[endpoint] = {
+                    'voname': voname,
+                    'GlueVOInfoPath': sepath
+                }
+    except IndexError as exc:
+        logger.error('Error building map of endpoints and storage paths from BDII data: %s' % repr(exc))
+        logger.error('LDAP entry: %s' % entry)
 
-    import ipdb; ipdb.set_trace()
     return mapping
 
 
@@ -32,7 +36,7 @@ def attach_sepath_topodata(logger, bdii_opts, bdiidata, group_endpoints):
     """
         Get SRM ports from LDAP and put them under tags -> info_srm_port
     """
-    endpoint_sepaths = build_map_endpoint_path(bdiidata)
+    endpoint_sepaths = build_map_endpoint_path(logger, bdiidata)
     new_group_endpoints = list()
 
     for endpoint in group_endpoints:

@@ -26,7 +26,7 @@ class MeshSePathAndTopodata(unittest.TestCase):
 
         self.sample_ldap = [
             {
-                'GlueVOInfoAccessControlBaseRule': ['VO:ukqcd.vo.gridpp.ac.uk'],
+                'GlueVOInfoAccessControlBaseRule': ['ukqcd.vo.gridpp.ac.uk', 'VO:ukqcd.vo.gridpp.ac.uk'],
                 'GlueVOInfoPath': ['/dpm/gla.scotgrid.ac.uk/home/ukqcd.vo.gridpp.ac.uk'],
                 'dn': 'GlueVOInfoLocalID=ukqcd.vo.gridpp.ac.uk:generalPool,GlueSALocalID=generalPool:replica:online,GlueSEUniqueID=svr018.gla.scotgrid.ac.uk,Mds-Vo-name=UKI-SCOTGRID-GLASGOW,Mds-Vo-name=local,o=grid'
             },
@@ -68,9 +68,9 @@ class MeshSePathAndTopodata(unittest.TestCase):
                 }
             }
         ]
-        self.construct_ldap_entries()
+        self._construct_ldap_entries()
 
-    def construct_ldap_entries(self):
+    def _construct_ldap_entries(self):
         tmp = list()
         for entry in self.sample_ldap:
             new_entry = LDAPEntry(entry['dn'])
@@ -82,8 +82,8 @@ class MeshSePathAndTopodata(unittest.TestCase):
         self.sample_ldap = tmp
 
     def test_meshSePathTopo(self):
-        new_endpoints = attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
         import ipdb; ipdb.set_trace()
+        new_endpoints = attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
 
 
 if __name__ == '__main__':
