@@ -28,7 +28,7 @@ class MeshSePathAndTopodata(unittest.TestCase):
                 'dn': 'GlueVOInfoLocalID=atlas,GlueSALocalID=atlas:ATLASLOCALGROUPDISK,GlueSEUniqueID=lcg-se1.sfu.computecanada.ca,Mds-Vo-name=CA-SFU-T2,Mds-Vo-name=local,o=grid'
             }
         ]
-        self.sample_gridftp_endpoints = [
+        self.sample_storage_endpoints = [
             {
                 "type": "SITES", "group": "UKI-SCOTGRID-GLASGOW", "service":
                 "eu.egi.storage.accounting", "hostname":
@@ -49,10 +49,18 @@ class MeshSePathAndTopodata(unittest.TestCase):
                     "info_URL": "httpg://lcg-se1.uw.computecanada.ca:8443/srm/managerv2",
                     "info_SRM_port": "8443"
                 }
+            },
+            {
+                "type": "SITES", "group": "CA-SFU-T2", "service": "SRM",
+                "hostname": "lcg-se1.sfu.computecanada.ca", "notifications": None,
+                "tags": {"scope": "EGI", "monitored": "1", "production": "1",
+                         "info_URL":
+                         "httpg://lcg-se1.sfu.computecanada.ca:8443/srm/managerv2",
+                         "info_SRM_port": "8443"
+                }
             }
         ]
         self.construct_ldap_entries()
-
 
     def construct_ldap_entries(self):
         tmp = list()
@@ -75,12 +83,27 @@ class MeshSePathAndTopodata(unittest.TestCase):
             return entry[key]
 
     def test_meshSePathTopo(self):
+        endpoints_bdii = dict()
+
         for entry in self.sample_ldap:
             voname = self.extract_value('GlueVOInfoAccessControlBaseRule', entry)
-            vopath = self.extract_value('GlueVOInfoPath', entry)
+            voname  = voname[0].split(':')[1]
+            sepath = self.extract_value('GlueVOInfoPath', entry)
+            sepath = sepath[0]
             endpoint = self.extract_value('GlueSEUniqueID', entry['dn'].rdns)
-            import ipdb; ipdb.set_trace()
 
+            endpoints_bdii[endpoint] = {
+                'voname': voname,
+                'GlueVOInfoPath': sepath
+            }
+
+        for endpoint in self.sample_storage_endpoints:
+            if endpoint['hostname'] in endpoints_bdii:
+                voname = endpoints_bdii[endpoint['hostname']]['voname']
+                sepath = endpoints_bdii[endpoint['hostname']]['GlueVOInfoPath']
+                endpoint['tags'].update({
+                    'vo_{}_attr_GlueVOInfoPath'.format(voname): sepath
+                })
 
 if __name__ == '__main__':
     unittest.main()
