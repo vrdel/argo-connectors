@@ -37,8 +37,11 @@ class MeshSePathAndTopodata(unittest.TestCase):
             },
             {
                 'dn': 'GlueSALocalID=tape-,GlueSEUniqueID=srm.pic.es,Mds-Vo-name=pic,Mds-Vo-name=local,o=grid'
+            },
+            {
+                'dn': 'GlueVOInfoLocalID=vo.cta.in2p3.fr:CTA,GlueSALocalID=CTA:SR:replica:online,GlueSEUniqueID=atlasse.lnf.infn.it,Mds-Vo-name=INFN-FRASCATI,Mds-Vo-name=local,o=grid',
+                'GlueVOInfoAccessControlBaseRule': ['VOMS:/vo.cta.in2p3.fr/Role=production', 'VOMS:/vo.cta.in2p3.fr/Role=users'], 'GlueVOInfoPath': ['/dpm/lnf.infn.it/home/vo.cta.in2p3.fr']
             }
-
         ]
         self.sample_storage_endpoints = [
             {
