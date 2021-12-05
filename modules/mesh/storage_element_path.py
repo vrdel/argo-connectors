@@ -14,8 +14,9 @@ def build_map_endpoint_path(logger, bdiidata):
     try:
         for entry in bdiidata:
             voname = extract_value('GlueVOInfoAccessControlBaseRule', entry)
-            voname = list(filter(lambda e: 'VO:' in e, voname))
-            voname  = voname[0].split(':')[1] if isinstance(voname, list) else None
+            if isinstance(voname, list):
+                voname = list(filter(lambda e: 'VO:' in e, voname))
+                voname  = voname[0].split(':')[1]
             sepath = extract_value('GlueVOInfoPath', entry)
             sepath = sepath[0] if isinstance(sepath, list) else None
             endpoint = extract_value('GlueSEUniqueID', entry['dn'].rdns)

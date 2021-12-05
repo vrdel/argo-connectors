@@ -34,7 +34,11 @@ class MeshSePathAndTopodata(unittest.TestCase):
                 'GlueVOInfoAccessControlBaseRule': ['VO:atlas'],
                 'GlueVOInfoPath': ['/atlas'],
                 'dn': 'GlueVOInfoLocalID=atlas,GlueSALocalID=atlas:ATLASLOCALGROUPDISK,GlueSEUniqueID=lcg-se1.sfu.computecanada.ca,Mds-Vo-name=CA-SFU-T2,Mds-Vo-name=local,o=grid'
+            },
+            {
+                'dn': 'GlueSALocalID=tape-,GlueSEUniqueID=srm.pic.es,Mds-Vo-name=pic,Mds-Vo-name=local,o=grid'
             }
+
         ]
         self.sample_storage_endpoints = [
             {
@@ -82,7 +86,6 @@ class MeshSePathAndTopodata(unittest.TestCase):
         self.sample_ldap = tmp
 
     def test_meshSePathTopo(self):
-        import ipdb; ipdb.set_trace()
         new_endpoints = attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
 
 
