@@ -41,7 +41,6 @@ def attach_sepath_topodata(logger, bdii_opts, bdiidata, group_endpoints):
         Get SRM ports from LDAP and put them under tags -> info_srm_port
     """
     endpoint_sepaths = build_map_endpoint_path(logger, bdiidata)
-    new_group_endpoints = list()
 
     for endpoint in group_endpoints:
         if endpoint['hostname'] in endpoint_sepaths:
@@ -50,7 +49,4 @@ def attach_sepath_topodata(logger, bdii_opts, bdiidata, group_endpoints):
             endpoint['tags'].update({
                 'vo_{}_attr_GlueVOInfoPath'.format(voname): sepath
             })
-        new_group_endpoints.append(endpoint)
-
-    return new_group_endpoints
 

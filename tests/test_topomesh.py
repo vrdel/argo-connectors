@@ -89,7 +89,50 @@ class MeshSePathAndTopodata(unittest.TestCase):
         self.sample_ldap = tmp
 
     def test_meshSePathTopo(self):
-        new_endpoints = attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
+        attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
+        self.assertEqual(self.sample_storage_endpoints, [
+            {
+                'group': 'UKI-SCOTGRID-GLASGOW',
+                'hostname': 'svr018.gla.scotgrid.ac.uk',
+                'notifications': None,
+                'service': 'eu.egi.storage.accounting',
+                'tags': {
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI, wlcg, tier2, atlas, cms, lhcb',
+                    'vo_ukqcd.vo.gridpp.ac.uk_attr_GlueVOInfoPath': '/dpm/gla.scotgrid.ac.uk/home/ukqcd.vo.gridpp.ac.uk'
+                },
+                'type': 'SITES'
+            },
+            {
+                'group': 'CA-WATERLOO-T2',
+                'hostname': 'lcg-se1.uw.computecanada.ca',
+                'notifications': None,
+                'service': 'SRM',
+                'tags': {
+                    'info_SRM_port': '8443',
+                    'info_URL': 'httpg://lcg-se1.uw.computecanada.ca:8443/srm/managerv2',
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI'
+                },
+                'type': 'SITES'},
+            {
+                'group': 'CA-SFU-T2',
+                'hostname': 'lcg-se1.sfu.computecanada.ca',
+                'notifications': None,
+                'service': 'SRM',
+                'tags': {
+                    'info_SRM_port': '8443',
+                    'info_URL': 'httpg://lcg-se1.sfu.computecanada.ca:8443/srm/managerv2',
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI',
+                    'vo_atlas_attr_GlueVOInfoPath': '/atlas'
+                },
+                'type': 'SITES'
+            }
+        ])
 
 
 if __name__ == '__main__':
