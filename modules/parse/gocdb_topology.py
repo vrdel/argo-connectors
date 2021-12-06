@@ -117,6 +117,8 @@ class ParseServiceEndpoints(ParseHelpers):
                             group['monitored'] == 'True' else '0',
                             'production': '1' if group['production'] == 'Y' or
                             group['production'] == 'True' else '0'}
+            tmpg['tags'].update({'info_id': group['service_id']})
+
             if group['url']:
                 tmpg['tags'].update({
                     'info_URL': group['url']
@@ -125,7 +127,6 @@ class ParseServiceEndpoints(ParseHelpers):
                 tmpg['tags'].update({
                     'info_service_endpoint_URL': group['endpoint_urls']
                 })
-
             if self.pass_extensions:
                 for key, value in group['extensions'].items():
                     tmpg['tags'].update({
@@ -204,6 +205,7 @@ class ParseServiceGroups(ParseHelpers):
                                 service['monitored'].lower() == 'True'.lower() else '0',
                                 'production': '1' if service['production'].lower() == 'Y'.lower() or
                                 service['production'].lower() == 'True'.lower() else '0'}
+                tmpg['tags'].update({'info_id': service['service_id']})
 
                 if self.pass_extensions:
                     for key, value in service['extensions'].items():
