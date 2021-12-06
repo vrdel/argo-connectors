@@ -53,6 +53,10 @@ class ParseEoscTopo(ParseHelpers):
                 tmp_dict['hostname'] = self._construct_fqdn(entity['URL'])
             tmp_dict['tags'] = {'scope': self.scope, 'monitored': '1', 'info_URL': info_url}
 
+            tmp_dict['tags'].update({
+                'info_id': str(entity['Service Unique ID']),
+                'hostname': self._construct_fqdn(entity['URL'])
+            })
             groups.append(tmp_dict)
 
         return groups
