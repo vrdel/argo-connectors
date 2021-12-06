@@ -18,7 +18,7 @@ BDIIPort = 2170
 BDIIQueryBase = o=grid
 BDIIQueryFilterSRM = (&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))
 BDIIQueryAttributesSRM = GlueServiceEndpoint
-BDIIQueryFilterSEPATH = (&(objectClass=GlueSATop)(GlueChunkKey=GlueSEUniqueID=lcgse01.phy.bris.ac.uk))
+BDIIQueryFilterSEPATH = (objectClass=GlueSATop)
 BDIIQueryAttributesSEPATH = GlueVOInfoAccessControlBaseRule GlueVOInfoPath
 
 [Critical]
