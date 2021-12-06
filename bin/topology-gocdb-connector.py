@@ -44,6 +44,7 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
+from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
@@ -255,12 +256,11 @@ def get_bdii_opts(confcust):
 
 
 # Fetches data from LDAP, connection parameters are set in customer.conf
-async def fetch_ldap_data(bdii_opts):
+async def fetch_ldap_data(host, port, base, filter, attributes):
     ldap_session = LDAPSessionWithRetry(logger, int(globopts['ConnectionRetry'.lower()]),
         int(globopts['ConnectionSleepRetry'.lower()]), int(globopts['ConnectionTimeout'.lower()]))
 
-    res = await ldap_session.search(bdii_opts['bdiihost'], bdii_opts['bdiiport'], bdii_opts['bdiiquerybase'],
-    bdii_opts['bdiiqueryfilter'], bdii_opts['bdiiqueryattributes'].split(' '))
+    res = await ldap_session.search(host, port, base, filter, attributes)
     return res
 
 
@@ -337,7 +337,18 @@ def main():
                  fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
                  fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
         if bdii_opts and eval(bdii_opts['bdii']):
-            coros.append(fetch_ldap_data(bdii_opts))
+            host = bdii_opts['bdiihost']
+            port = bdii_opts['bdiiport']
+            base = bdii_opts['bdiiquerybase']
+
+            coros.append(fetch_ldap_data(host, port, base,
+                                         bdii_opts['bdiiqueryfiltersrm'],
+                                         bdii_opts['bdiiqueryattributessrm'].split(' ')))
+
+            coros.append(fetch_ldap_data(host, port, base,
+                                         bdii_opts['bdiiqueryfiltersepath'],
+                                         bdii_opts['bdiiqueryattributessepath'].split(' ')))
+
 
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
@@ -368,13 +379,13 @@ def main():
 
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data
-        if len(fetched_topology) > 3 and fetched_topology[3] is not None:
-            attach_srmport_topodata(logger, bdii_opts, fetched_topology[3], group_endpoints)
+        if  bdii_opts and eval(bdii_opts['bdii']):
+            attach_srmport_topodata(logger, bdii_opts['bdiiqueryattributessrm'].split(' ')[0], fetched_topology[3], group_endpoints)
+            attach_sepath_topodata(logger, bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_topology[4], group_endpoints)
 
         # parse contacts from fetched service endpoints topology, if there are
         # any
         parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
-
 
         if not parsed_site_contacts:
             # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched

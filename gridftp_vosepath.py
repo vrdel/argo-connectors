@@ -19,11 +19,11 @@ def load_srm_port_map(logger, ldap_data, attribute_name):
 
     return port_dict
 
-def attach_srmport_topodata(logger, attributes, topodata, group_endpoints):
+def attach_gridftpsepath_topodata(logger, bdii_opts, topodata, group_endpoints):
     """
-        Get SRM ports from LDAP and put them under tags -> info_srm_port
+        Get SEPATH attribute from LDAP and put them under tags for globus-GridFTP service endpoints
     """
-    srm_port_map = load_srm_port_map(logger, topodata, attributes)
+    srm_port_map = load_srm_port_map(logger, topodata, bdii_opts['bdiiqueryattributes'].split(' ')[0])
     for endpoint in group_endpoints:
         if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
             endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]

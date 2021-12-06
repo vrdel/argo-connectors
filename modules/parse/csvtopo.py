@@ -61,6 +61,7 @@ class ParseServiceGroupsEndpoints(object):
                                     'info_URL': info_url,
                                     'hostname': self._construct_fqdn(entity['URL'])}
 
+                tmp_dict['tags'].update({'info_id': str(entity['Service Unique ID'])})
                 groups.append(tmp_dict)
 
             return groups

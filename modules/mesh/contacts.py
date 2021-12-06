@@ -72,5 +72,7 @@ def attach_contacts_topodata(logger, contacts, topodata):
 
     except (KeyError, ValueError, TypeError) as exc:
         logger.warn('Error joining contacts and topology data: %s' % repr(exc))
-        logger.warn('Topology entity: %s' % entity)
-        logger.warn('Found contacts: %s' % found_contacts)
+        if entity:
+            logger.warn('Topology entity: %s' % entity)
+        if found_contacts:
+            logger.warn('Found contacts: %s' % found_contacts)
