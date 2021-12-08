@@ -41,7 +41,18 @@ class MeshSePathAndTopodata(unittest.TestCase):
             {
                 'dn': 'GlueVOInfoLocalID=vo.cta.in2p3.fr:CTA,GlueSALocalID=CTA:SR:replica:online,GlueSEUniqueID=atlasse.lnf.infn.it,Mds-Vo-name=INFN-FRASCATI,Mds-Vo-name=local,o=grid',
                 'GlueVOInfoAccessControlBaseRule': ['VOMS:/vo.cta.in2p3.fr/Role=production', 'VOMS:/vo.cta.in2p3.fr/Role=users'], 'GlueVOInfoPath': ['/dpm/lnf.infn.it/home/vo.cta.in2p3.fr']
+            },
+            {
+                'dn': 'GlueVOInfoLocalID=default-store-ops,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
+                'GlueVOInfoAccessControlBaseRule': ['VO:ops'],
+                'GlueVOInfoPath' : ['/pnfs/physik.uni-wuppertal.de/data/ops']
+            },
+            {
+                'dn': 'GlueVOInfoLocalID=default-store-dteam,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
+                'GlueVOInfoAccessControlBaseRule': ['VO:dteam'],
+                'GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam'
             }
+
         ]
         self.sample_storage_endpoints = [
             {

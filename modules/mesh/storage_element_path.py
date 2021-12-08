@@ -10,6 +10,7 @@ def extract_value(key, entry):
 
 def build_map_endpoint_path(logger, bdiidata):
     mapping = dict()
+    visited_vos = set()
 
     try:
         for entry in bdiidata:
@@ -25,10 +26,19 @@ def build_map_endpoint_path(logger, bdiidata):
             endpoint = extract_value('GlueSEUniqueID', entry['dn'].rdns)
 
             if voname and sepath and endpoint:
-                mapping[endpoint] = {
-                    'voname': voname,
-                    'GlueVOInfoPath': sepath
-                }
+                if endpoint not in mapping:
+                    mapping[endpoint] = list()
+                    mapping[endpoint].append({
+                        'voname': voname,
+                        'GlueVOInfoPath': sepath
+                    })
+                elif voname not in visited_vos:
+                    mapping[endpoint].append({
+                        'voname': voname,
+                        'GlueVOInfoPath': sepath
+                    })
+            visited_vos.add(voname)
+
     except IndexError as exc:
         logger.error('Error building map of endpoints and storage paths from BDII data: %s' % repr(exc))
         logger.error('LDAP entry: %s' % entry)
