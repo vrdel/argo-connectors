@@ -21,11 +21,12 @@ def build_map_endpoint_path(logger, bdiidata):
                     voname = voname[0].split(':')[1]
                 else:
                     continue
+
             sepath = extract_value('GlueVOInfoPath', entry)
             sepath = sepath[0] if isinstance(sepath, list) else None
             endpoint = extract_value('GlueSEUniqueID', entry['dn'].rdns)
 
-            if voname and sepath and endpoint:
+            if voname and sepath and endpoint and ' ' not in voname:
                 if endpoint not in mapping:
                     mapping[endpoint] = list()
                     mapping[endpoint].append({
@@ -37,7 +38,23 @@ def build_map_endpoint_path(logger, bdiidata):
                         'voname': voname,
                         'GlueVOInfoPath': sepath
                     })
-            visited_vos.add(voname)
+                visited_vos.add(voname)
+
+            elif voname and sepath and endpoint and ' ' in voname:
+                vonames = voname.split(' ')
+                for vo in vonames:
+                    if endpoint not in mapping:
+                        mapping[endpoint] = list()
+                        mapping[endpoint].append({
+                            'voname': vo,
+                            'GlueVOInfoPath': sepath
+                        })
+                    elif voname not in visited_vos:
+                        mapping[endpoint].append({
+                            'voname': vo,
+                            'GlueVOInfoPath': sepath
+                        })
+                    visited_vos.add(vo)
 
     except IndexError as exc:
         logger.error('Error building map of endpoints and storage paths from BDII data: %s' % repr(exc))

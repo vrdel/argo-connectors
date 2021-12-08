@@ -13,6 +13,7 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 class MeshSePathAndTopodata(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
+        self.maxDiff = None
         self.bdiiopts =  {
             'bdii': 'True', 'bdiihost': 'bdii.egi.cro-ngi.hr',
             'bdiiport': '2170',
@@ -51,9 +52,14 @@ class MeshSePathAndTopodata(unittest.TestCase):
                 'dn': 'GlueVOInfoLocalID=default-store-dteam,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
                 'GlueVOInfoAccessControlBaseRule': ['VO:dteam'],
                 'GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam'
+            },
+            {
+                'dn': 'GlueVOInfoLocalID=ops dteam:INFO-TOKEN,GlueSALocalID=info:replica:online,GlueSEUniqueID=se02.esc.qmul.ac.uk,Mds-Vo-name=UKI-LT2-QMUL,Mds-Vo-name=local,o=grid',
+                'GlueVOInfoAccessControlBaseRule': ['VO:ops dteam'],
+                'GlueVOInfoPath': '/info'
             }
-
         ]
+
         self.sample_storage_endpoints = [
             {
                 "type": "SITES", "group": "UKI-SCOTGRID-GLASGOW", "service":
@@ -91,7 +97,19 @@ class MeshSePathAndTopodata(unittest.TestCase):
                 "notifications": None,
                 "tags": {"scope": "EGI, wlcg, tier2, atlas", "monitored": "1",
                          "production": "1", "info_id": "3077G0",
-                         "info_SRM_port": "8443"}
+                         "info_SRM_port": "8443"
+                }
+            },
+            {
+                "type": "SITES",
+                "group": "UKI-LT2-QMUL",
+                "service": "SRM",
+                "hostname": "se02.esc.qmul.ac.uk",
+                "notifications": None,
+                "tags": {"scope": "EGI, wlcg, tier2, atlas, lhcb", "monitored": "1",
+                         "production": "0", "info_id": "8458G0",
+                         "info_SRM_port": "8444"
+                }
             }
         ]
         self._construct_ldap_entries()
@@ -166,8 +184,22 @@ class MeshSePathAndTopodata(unittest.TestCase):
                     'vo_ops_attr_GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/ops'
                 },
                 'type': 'SITES'
-            }
-        ])
+            },
+            {
+                'group': 'UKI-LT2-QMUL',
+                'hostname': 'se02.esc.qmul.ac.uk',
+                'notifications': None,
+                'service': 'SRM',
+                'tags': {'info_SRM_port': '8444',
+                    'info_id': '8458G0',
+                    'monitored': '1',
+                    'production': '0',
+                    'scope': 'EGI, wlcg, tier2, atlas, lhcb',
+                    'vo_dteam_attr_GlueVOInfoPath': '/info',
+                    'vo_ops_attr_GlueVOInfoPath': '/info'
+                },
+                'type': 'SITES'
+            }])
 
 
 if __name__ == '__main__':
