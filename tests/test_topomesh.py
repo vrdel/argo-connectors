@@ -109,7 +109,6 @@ class MeshSePathAndTopodata(unittest.TestCase):
 
     def test_meshSePathTopo(self):
         attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
-        import ipdb; ipdb.set_trace()
         self.assertEqual(self.sample_storage_endpoints, [
             {
                 'group': 'UKI-SCOTGRID-GLASGOW',
@@ -149,6 +148,22 @@ class MeshSePathAndTopodata(unittest.TestCase):
                     'production': '1',
                     'scope': 'EGI',
                     'vo_atlas_attr_GlueVOInfoPath': '/atlas'
+                },
+                'type': 'SITES'
+            },
+            {
+                'group': 'wuppertalprod',
+                'hostname': 'grid-se.physik.uni-wuppertal.de',
+                'notifications': None,
+                'service': 'SRM',
+                'tags': {
+                    'info_SRM_port': '8443',
+                    'info_id': '3077G0',
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI, wlcg, tier2, atlas',
+                    'vo_dteam_attr_GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam',
+                    'vo_ops_attr_GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/ops'
                 },
                 'type': 'SITES'
             }
