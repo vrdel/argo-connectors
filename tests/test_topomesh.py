@@ -84,6 +84,14 @@ class MeshSePathAndTopodata(unittest.TestCase):
                          "httpg://lcg-se1.sfu.computecanada.ca:8443/srm/managerv2",
                          "info_SRM_port": "8443"
                 }
+            },
+            {
+                "type": "SITES", "group": "wuppertalprod", "service": "SRM",
+                "hostname": "grid-se.physik.uni-wuppertal.de",
+                "notifications": None,
+                "tags": {"scope": "EGI, wlcg, tier2, atlas", "monitored": "1",
+                         "production": "1", "info_id": "3077G0",
+                         "info_SRM_port": "8443"}
             }
         ]
         self._construct_ldap_entries()
@@ -101,6 +109,7 @@ class MeshSePathAndTopodata(unittest.TestCase):
 
     def test_meshSePathTopo(self):
         attach_sepath_topodata(logger, self.bdiiopts, self.sample_ldap, self.sample_storage_endpoints)
+        import ipdb; ipdb.set_trace()
         self.assertEqual(self.sample_storage_endpoints, [
             {
                 'group': 'UKI-SCOTGRID-GLASGOW',

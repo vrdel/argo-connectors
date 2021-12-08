@@ -54,9 +54,10 @@ def attach_sepath_topodata(logger, bdii_opts, bdiidata, group_endpoints):
 
     for endpoint in group_endpoints:
         if endpoint['hostname'] in endpoint_sepaths:
-            voname = endpoint_sepaths[endpoint['hostname']]['voname']
-            sepath = endpoint_sepaths[endpoint['hostname']]['GlueVOInfoPath']
-            endpoint['tags'].update({
-                'vo_{}_attr_GlueVOInfoPath'.format(voname): sepath
-            })
+            for paths in endpoint_sepaths[endpoint['hostname']]:
+                voname = paths['voname']
+                sepath = paths['GlueVOInfoPath']
+                endpoint['tags'].update({
+                    'vo_{}_attr_GlueVOInfoPath'.format(voname): sepath
+                })
 
