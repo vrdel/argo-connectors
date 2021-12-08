@@ -75,6 +75,6 @@ def attach_sepath_topodata(logger, bdii_opts, bdiidata, group_endpoints):
                 voname = paths['voname']
                 sepath = paths['GlueVOInfoPath']
                 endpoint['tags'].update({
-                    'vo_{}_attr_GlueVOInfoPath'.format(voname): sepath
+                    'vo_{}_attr_SE_PATH'.format(voname): sepath
                 })
 

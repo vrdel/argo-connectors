@@ -137,7 +137,7 @@ class MeshSePathAndTopodata(unittest.TestCase):
                     'monitored': '1',
                     'production': '1',
                     'scope': 'EGI, wlcg, tier2, atlas, cms, lhcb',
-                    'vo_ukqcd.vo.gridpp.ac.uk_attr_GlueVOInfoPath': '/dpm/gla.scotgrid.ac.uk/home/ukqcd.vo.gridpp.ac.uk'
+                    'vo_ukqcd.vo.gridpp.ac.uk_attr_SE_PATH': '/dpm/gla.scotgrid.ac.uk/home/ukqcd.vo.gridpp.ac.uk'
                 },
                 'type': 'SITES'
             },
@@ -165,7 +165,7 @@ class MeshSePathAndTopodata(unittest.TestCase):
                     'monitored': '1',
                     'production': '1',
                     'scope': 'EGI',
-                    'vo_atlas_attr_GlueVOInfoPath': '/atlas'
+                    'vo_atlas_attr_SE_PATH': '/atlas'
                 },
                 'type': 'SITES'
             },
@@ -180,8 +180,8 @@ class MeshSePathAndTopodata(unittest.TestCase):
                     'monitored': '1',
                     'production': '1',
                     'scope': 'EGI, wlcg, tier2, atlas',
-                    'vo_dteam_attr_GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam',
-                    'vo_ops_attr_GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/ops'
+                    'vo_dteam_attr_SE_PATH': '/pnfs/physik.uni-wuppertal.de/data/dteam',
+                    'vo_ops_attr_SE_PATH': '/pnfs/physik.uni-wuppertal.de/data/ops'
                 },
                 'type': 'SITES'
             },
@@ -195,8 +195,8 @@ class MeshSePathAndTopodata(unittest.TestCase):
                     'monitored': '1',
                     'production': '0',
                     'scope': 'EGI, wlcg, tier2, atlas, lhcb',
-                    'vo_dteam_attr_GlueVOInfoPath': '/info',
-                    'vo_ops_attr_GlueVOInfoPath': '/info'
+                    'vo_dteam_attr_SE_PATH': '/info',
+                    'vo_ops_attr_SE_PATH': '/info'
                 },
                 'type': 'SITES'
             }])
