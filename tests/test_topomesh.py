@@ -49,6 +49,11 @@ class MeshSePathAndTopodata(unittest.TestCase):
                 'GlueVOInfoPath' : ['/pnfs/physik.uni-wuppertal.de/data/ops']
             },
             {
+                'dn': 'GlueVOInfoLocalID=default-pool-dteam,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
+                'GlueVOInfoAccessControlBaseRule': ['VO:dteam'],
+                'GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam'
+            },
+            {
                 'dn': 'GlueVOInfoLocalID=default-store-dteam,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
                 'GlueVOInfoAccessControlBaseRule': ['VO:dteam'],
                 'GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam'
