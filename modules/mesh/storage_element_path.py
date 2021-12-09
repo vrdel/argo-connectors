@@ -8,9 +8,38 @@ def extract_value(key, entry):
         return entry.get(key, None)
 
 
+def update_map_entry(endpoint, mapping, sepath, voname):
+    if endpoint not in mapping:
+        mapping[endpoint] = list()
+        mapping[endpoint].append({
+            'voname': voname,
+            'GlueVOInfoPath': sepath
+        })
+    else:
+        mapping[endpoint].append({
+            'voname': voname,
+            'GlueVOInfoPath': sepath
+        })
+
+
+def ispath_already_added(endpoint, mapping, sepath):
+    target = None
+
+    if endpoint in mapping:
+        target = mapping[endpoint]
+        sepaths = set()
+
+        for entry in target:
+            sepaths.add(entry['GlueVOInfoPath'])
+
+        return sepath in sepaths
+
+    else:
+        return False
+
+
 def build_map_endpoint_path(logger, bdiidata):
     mapping = dict()
-    visited_vos = set()
 
     try:
         for entry in bdiidata:
@@ -26,35 +55,17 @@ def build_map_endpoint_path(logger, bdiidata):
             sepath = sepath[0] if isinstance(sepath, list) else None
             endpoint = extract_value('GlueSEUniqueID', entry['dn'].rdns)
 
-            if voname and sepath and endpoint and ' ' not in voname:
-                if endpoint not in mapping:
-                    mapping[endpoint] = list()
-                    mapping[endpoint].append({
-                        'voname': voname,
-                        'GlueVOInfoPath': sepath
-                    })
-                elif voname not in visited_vos:
-                    mapping[endpoint].append({
-                        'voname': voname,
-                        'GlueVOInfoPath': sepath
-                    })
-                visited_vos.add(voname)
+            if (voname and sepath and endpoint
+                and not ispath_already_added(endpoint, mapping, sepath)
+                and ' ' not in voname):
+                update_map_entry(endpoint, mapping, sepath, voname)
 
-            elif voname and sepath and endpoint and ' ' in voname:
+            elif (voname and sepath and endpoint
+                and not ispath_already_added(endpoint, mapping, sepath)
+                and ' ' in voname):
                 vonames = voname.split(' ')
                 for vo in vonames:
-                    if endpoint not in mapping:
-                        mapping[endpoint] = list()
-                        mapping[endpoint].append({
-                            'voname': vo,
-                            'GlueVOInfoPath': sepath
-                        })
-                    elif voname not in visited_vos:
-                        mapping[endpoint].append({
-                            'voname': vo,
-                            'GlueVOInfoPath': sepath
-                        })
-                    visited_vos.add(vo)
+                    update_map_entry(endpoint, mapping, sepath, vo)
 
     except IndexError as exc:
         logger.error('Error building map of endpoints and storage paths from BDII data: %s' % repr(exc))
