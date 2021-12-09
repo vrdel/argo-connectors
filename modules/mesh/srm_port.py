@@ -26,4 +26,4 @@ def attach_srmport_topodata(logger, attributes, topodata, group_endpoints):
     srm_port_map = load_srm_port_map(logger, topodata, attributes)
     for endpoint in group_endpoints:
         if endpoint['service'] == 'SRM' and srm_port_map.get(endpoint['hostname'], False):
-            endpoint['tags']['info_SRM_port'] = srm_port_map[endpoint['hostname']]
+            endpoint['tags']['info_bdii_SRM_PORT'] = srm_port_map[endpoint['hostname']]
