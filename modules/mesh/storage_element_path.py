@@ -10,6 +10,7 @@ def extract_value(key, entry):
 
 def build_map_endpoint_path(logger, bdiidata):
     mapping = dict()
+    visited_vos = set()
 
     try:
         for entry in bdiidata:
@@ -20,15 +21,41 @@ def build_map_endpoint_path(logger, bdiidata):
                     voname = voname[0].split(':')[1]
                 else:
                     continue
+
             sepath = extract_value('GlueVOInfoPath', entry)
             sepath = sepath[0] if isinstance(sepath, list) else None
             endpoint = extract_value('GlueSEUniqueID', entry['dn'].rdns)
 
-            if voname and sepath and endpoint:
-                mapping[endpoint] = {
-                    'voname': voname,
-                    'GlueVOInfoPath': sepath
-                }
+            if voname and sepath and endpoint and ' ' not in voname:
+                if endpoint not in mapping:
+                    mapping[endpoint] = list()
+                    mapping[endpoint].append({
+                        'voname': voname,
+                        'GlueVOInfoPath': sepath
+                    })
+                elif voname not in visited_vos:
+                    mapping[endpoint].append({
+                        'voname': voname,
+                        'GlueVOInfoPath': sepath
+                    })
+                visited_vos.add(voname)
+
+            elif voname and sepath and endpoint and ' ' in voname:
+                vonames = voname.split(' ')
+                for vo in vonames:
+                    if endpoint not in mapping:
+                        mapping[endpoint] = list()
+                        mapping[endpoint].append({
+                            'voname': vo,
+                            'GlueVOInfoPath': sepath
+                        })
+                    elif voname not in visited_vos:
+                        mapping[endpoint].append({
+                            'voname': vo,
+                            'GlueVOInfoPath': sepath
+                        })
+                    visited_vos.add(vo)
+
     except IndexError as exc:
         logger.error('Error building map of endpoints and storage paths from BDII data: %s' % repr(exc))
         logger.error('LDAP entry: %s' % entry)
@@ -44,9 +71,10 @@ def attach_sepath_topodata(logger, bdii_opts, bdiidata, group_endpoints):
 
     for endpoint in group_endpoints:
         if endpoint['hostname'] in endpoint_sepaths:
-            voname = endpoint_sepaths[endpoint['hostname']]['voname']
-            sepath = endpoint_sepaths[endpoint['hostname']]['GlueVOInfoPath']
-            endpoint['tags'].update({
-                'vo_{}_attr_GlueVOInfoPath'.format(voname): sepath
-            })
+            for paths in endpoint_sepaths[endpoint['hostname']]:
+                voname = paths['voname']
+                sepath = paths['GlueVOInfoPath']
+                endpoint['tags'].update({
+                    'vo_{}_attr_SE_PATH'.format(voname): sepath
+                })
 
