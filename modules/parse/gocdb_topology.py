@@ -70,6 +70,7 @@ class ParseServiceEndpoints(ParseHelpers):
         self.pass_extensions = pass_extensions
         self._service_endpoints = dict()
         self._parse_data()
+        self.maxDiff = None
 
     def _parse_data(self):
         try:
@@ -83,6 +84,9 @@ class ParseServiceEndpoints(ParseHelpers):
                     self._service_endpoints[service_id] = {}
                 self._service_endpoints[service_id]['hostname'] = self.parse_xmltext(service.getElementsByTagName('HOSTNAME')[0].childNodes)
                 self._service_endpoints[service_id]['type'] = self.parse_xmltext(service.getElementsByTagName('SERVICE_TYPE')[0].childNodes)
+                hostdn = service.getElementsByTagName('HOSTDN')
+                if hostdn:
+                    self._service_endpoints[service_id]['hostdn'] = self.parse_xmltext(hostdn[0].childNodes)
                 self._service_endpoints[service_id]['monitored'] = self.parse_xmltext(service.getElementsByTagName('NODE_MONITORED')[0].childNodes)
                 self._service_endpoints[service_id]['production'] = self.parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                 self._service_endpoints[service_id]['site'] = self.parse_xmltext(service.getElementsByTagName('SITENAME')[0].childNodes)
@@ -117,7 +121,10 @@ class ParseServiceEndpoints(ParseHelpers):
                             group['monitored'] == 'True' else '0',
                             'production': '1' if group['production'] == 'Y' or
                             group['production'] == 'True' else '0'}
-            tmpg['tags'].update({'info_id': str(group['service_id'])})
+            tmpg['tags'].update({'info_ID': str(group['service_id'])})
+
+            if 'hostdn' in group:
+                tmpg['tags'].update({'info_HOSTDN': group['hostdn']})
 
             if group['url']:
                 tmpg['tags'].update({
