@@ -1,4 +1,5 @@
 import unittest
+import json
 
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
@@ -13,6 +14,9 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 class MeshSePathAndTopodata(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
+        with open('tests/sample-bdii_sepaths.json') as fh:
+            content = fh.read()
+            self.sample_ldap = json.loads(content)
         self.maxDiff = None
         self.bdiiopts =  {
             'bdii': 'True', 'bdiihost': 'bdii.egi.cro-ngi.hr',
@@ -24,46 +28,6 @@ class MeshSePathAndTopodata(unittest.TestCase):
             'bdiiqueryfiltersrm': '(&(objectClass=GlueService)(|(GlueServiceType=srm_v1)(GlueServiceType=srm)))'
         }
 
-
-        self.sample_ldap = [
-            {
-                'GlueVOInfoAccessControlBaseRule': ['ukqcd.vo.gridpp.ac.uk', 'VO:ukqcd.vo.gridpp.ac.uk'],
-                'GlueVOInfoPath': ['/dpm/gla.scotgrid.ac.uk/home/ukqcd.vo.gridpp.ac.uk'],
-                'dn': 'GlueVOInfoLocalID=ukqcd.vo.gridpp.ac.uk:generalPool,GlueSALocalID=generalPool:replica:online,GlueSEUniqueID=svr018.gla.scotgrid.ac.uk,Mds-Vo-name=UKI-SCOTGRID-GLASGOW,Mds-Vo-name=local,o=grid'
-            },
-            {
-                'GlueVOInfoAccessControlBaseRule': ['VO:atlas'],
-                'GlueVOInfoPath': ['/atlas'],
-                'dn': 'GlueVOInfoLocalID=atlas,GlueSALocalID=atlas:ATLASLOCALGROUPDISK,GlueSEUniqueID=lcg-se1.sfu.computecanada.ca,Mds-Vo-name=CA-SFU-T2,Mds-Vo-name=local,o=grid'
-            },
-            {
-                'dn': 'GlueSALocalID=tape-,GlueSEUniqueID=srm.pic.es,Mds-Vo-name=pic,Mds-Vo-name=local,o=grid'
-            },
-            {
-                'dn': 'GlueVOInfoLocalID=vo.cta.in2p3.fr:CTA,GlueSALocalID=CTA:SR:replica:online,GlueSEUniqueID=atlasse.lnf.infn.it,Mds-Vo-name=INFN-FRASCATI,Mds-Vo-name=local,o=grid',
-                'GlueVOInfoAccessControlBaseRule': ['VOMS:/vo.cta.in2p3.fr/Role=production', 'VOMS:/vo.cta.in2p3.fr/Role=users'], 'GlueVOInfoPath': ['/dpm/lnf.infn.it/home/vo.cta.in2p3.fr']
-            },
-            {
-                'dn': 'GlueVOInfoLocalID=default-store-ops,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
-                'GlueVOInfoAccessControlBaseRule': ['VO:ops'],
-                'GlueVOInfoPath' : ['/pnfs/physik.uni-wuppertal.de/data/ops']
-            },
-            {
-                'dn': 'GlueVOInfoLocalID=default-pool-dteam,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
-                'GlueVOInfoAccessControlBaseRule': ['VO:dteam'],
-                'GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam'
-            },
-            {
-                'dn': 'GlueVOInfoLocalID=default-store-dteam,GlueSALocalID=nas-complex-7a759b03,GlueSEUniqueID=grid-se.physik.uni-wuppertal.de,Mds-Vo-name=wuppertalprod,Mds-Vo-name=local,o=grid',
-                'GlueVOInfoAccessControlBaseRule': ['VO:dteam'],
-                'GlueVOInfoPath': '/pnfs/physik.uni-wuppertal.de/data/dteam'
-            },
-            {
-                'dn': 'GlueVOInfoLocalID=ops dteam:INFO-TOKEN,GlueSALocalID=info:replica:online,GlueSEUniqueID=se02.esc.qmul.ac.uk,Mds-Vo-name=UKI-LT2-QMUL,Mds-Vo-name=local,o=grid',
-                'GlueVOInfoAccessControlBaseRule': ['VO:ops dteam'],
-                'GlueVOInfoPath': '/info'
-            }
-        ]
 
         self.sample_storage_endpoints = [
             {
