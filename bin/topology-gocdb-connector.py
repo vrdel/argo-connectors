@@ -330,7 +330,6 @@ def main():
         parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
 
     except (ConnectorHttpError, ConnectorParseError) as exc:
-        import ipdb; ipdb.set_trace()
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
     try:
@@ -438,7 +437,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except (ConnectorParseError, ConnectorHttpError):
+    except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt):
         loop.run_until_complete(
             write_state(confcust, fixed_date, False)
         )

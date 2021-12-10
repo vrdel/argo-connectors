@@ -180,7 +180,7 @@ def main():
                                                                       jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
                                                                       len(weights)))
 
-        except ConnectorHttpError:
+        except (ConnectorHttpError, KeyboardInterrupt):
             for job, cust in jobcust:
                 loop.run_until_complete(
                     write_state(cust, job, confcust, fixed_date, False)
