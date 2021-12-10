@@ -41,35 +41,33 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         self.assertEqual(len(self.group_endpoints), 3) # Parsed correct number of endpoint groups
 
     def test_DataEndpoints(self):
-        # Assertions for GSI_LCG2
-        gsi_lcg2 = get_group(self.group_endpoints, 'GSI-LCG2')
-        self.assertIsNotNone(gsi_lcg2)
-        self.assertEqual(gsi_lcg2['service'], 'CE')
-        self.assertEqual(gsi_lcg2['hostname'], 'grid13.gsi.de')
-        gsi_lcg2_tags = gsi_lcg2['tags']
-        self.assertEqual(gsi_lcg2_tags['scope'], 'EGI, wlcg, tier2, alice')
-        self.assertEqual(gsi_lcg2_tags['monitored'], '0')
-        self.assertEqual(gsi_lcg2_tags['production'], '0')
+        self.assertEqual(self.group_endpoints[0],
+            {
+                'group': 'AZ-IFAN',
+                'hostname': 'ce.physics.science.az',
+                'service': 'CREAM-CE',
+                'tags': {'info_HOSTDN': '/DC=ORG/DC=SEE-GRID/O=Hosts/O=Institute of Physics of ANAS/CN=ce.physics.science.az',
+                'info_ID': '1555G0',
+                'info_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
+                'info_service_endpoint_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
+                'monitored': '1',
+                'production': '1',
+                'scope': 'EGI, wlcg, atlas'},
+                'type': 'SITES'
+            },
+            {
+                'group': 'RAL-LCG2',
+                'hostname': 'arc-ce01.gridpp.rl.ac.uk',
+                'service': 'gLite-APEL',
+                'tags': {'info_HOSTDN': '/C=UK/O=eScience/OU=CLRC/L=RAL/CN=arc-ce01.gridpp.rl.ac.uk',
+                    'info_ID': '782G0',
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI, wlcg, tier1, alice, atlas, cms, lhcb'},
+                'type': 'SITES'
+            }
 
-        # Assertions for RAL_LCG2
-        ral_lcg2 = get_group(self.group_endpoints, 'RAL-LCG2')
-        self.assertIsNotNone(ral_lcg2)
-        self.assertEqual(ral_lcg2['service'], 'gLite-APEL')
-        self.assertEqual(ral_lcg2['hostname'], 'arc-ce01.gridpp.rl.ac.uk')
-        ral_lcg2_tags = ral_lcg2['tags']
-        self.assertEqual(ral_lcg2_tags['scope'], 'EGI, wlcg, tier1, alice, atlas, cms, lhcb')
-        self.assertEqual(ral_lcg2_tags['monitored'], '1')
-        self.assertEqual(ral_lcg2_tags['production'], '1')
-
-        # Assertions for AZ_IFAN
-        az_ifan = get_group(self.group_endpoints, 'AZ-IFAN')
-        self.assertIsNotNone(az_ifan)
-        self.assertEqual(az_ifan['service'], 'CREAM-CE')
-        self.assertEqual(az_ifan['hostname'], 'ce.physics.science.az')
-        az_ifan_tags = az_ifan['tags']
-        self.assertEqual(az_ifan_tags['scope'], 'EGI, wlcg, atlas')
-        self.assertEqual(az_ifan_tags['monitored'], '1')
-        self.assertEqual(az_ifan_tags['production'], '1')
+        )
 
     def test_HaveExtensions(self):
         # Assert pass_extensions=False is working
