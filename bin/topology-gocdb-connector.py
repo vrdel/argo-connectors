@@ -437,8 +437,10 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except (ConnectorParseError, ConnectorHttpError):
-        write_state(confcust, fixed_date, False)
+    except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt):
+        loop.run_until_complete(
+            write_state(confcust, fixed_date, False)
+        )
 
     finally:
         loop.close()

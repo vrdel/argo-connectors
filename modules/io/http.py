@@ -84,7 +84,7 @@ class SessionWithRetry(object):
                     raise exc
 
                 except Exception as exc:
-                    self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
+                    self.logger.error('from {}.http_{}({}) - {}'.format(module_class_name(self), method, url, repr(exc)))
                     await asyncio.sleep(float(self.globopts['ConnectionSleepRetry'.lower()]))
                     raised_exc = exc
 
@@ -96,7 +96,7 @@ class SessionWithRetry(object):
                 raise raised_exc
 
         except Exception as exc:
-            self.logger.error('from {}.http_{}() - {}'.format(module_class_name(self), method, repr(exc)))
+            self.logger.error('from {}.http_{}({}) - {}'.format(module_class_name(self), method, url, repr(exc)))
             raise ConnectorHttpError()
 
         finally:

@@ -186,10 +186,12 @@ def main():
         if eval(globopts['GeneralWriteAvro'.lower()]):
             write_avro(confcust, dts, timestamp)
 
-    except ConnectorHttpError:
+    except (ConnectorHttpError, KeyboardInterrupt):
         loop.run_until_complete(
             write_state(confcust, timestamp, False)
         )
+
+    loop.close()
 
 if __name__ == '__main__':
     main()

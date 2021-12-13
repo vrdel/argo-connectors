@@ -177,7 +177,9 @@ def main():
         logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
 
     except ConnectorHttpError:
-        write_state(confcust, fixed_date, False)
+        loop.run_until_complete(
+            write_state(confcust, fixed_date, False )
+        )
 
 
 if __name__ == '__main__':

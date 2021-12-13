@@ -1,6 +1,15 @@
 def filter_dups_noemails(contact_list):
-    no_dups = list(set(contact_list))
+    # does not preserve order needed for test
+    # no_dups = list(orderedset(contact_list))
     only_emails = list()
+    no_dups = list()
+    visited = set()
+    for contact in contact_list:
+        if contact in visited:
+            continue
+        else:
+            no_dups.append(contact)
+        visited.add(contact)
 
     for contact in no_dups:
         if '@' not in contact:
