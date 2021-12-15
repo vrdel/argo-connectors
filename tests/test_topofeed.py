@@ -2,6 +2,7 @@ import unittest
 
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
 from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -322,6 +323,21 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             }
         )
+
+
+class ParseServiceEndpointsCsv(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-topo.csv') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        topology = ParseFlatEndpoints(logger, self.content,
+                                               CUSTOMER_NAME, uidservtype=True,
+                                               fetchtype='ServiceGroups',
+                                               scope=CUSTOMER_NAME, is_csv=True)
+
+    def testParse(self):
+        pass
+
 
 
 if __name__ == '__main__':

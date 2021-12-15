@@ -18,6 +18,7 @@ class ParseFlatEndpoints(object):
         self.fetchtype = fetchtype
         self.logger = logger
         self.project = project
+        self.is_csv = is_csv
         self.scope = scope if scope else project
 
     def _construct_fqdn(self, http_endpoint):
@@ -66,7 +67,8 @@ class ParseFlatEndpoints(object):
             return groups
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing CSV feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
+            feedtype = 'CSV' if self.is_csv else 'JSON'
+            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_groupendpoints(self):
