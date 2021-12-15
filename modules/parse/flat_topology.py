@@ -13,11 +13,12 @@ class ParseFlatEndpoints(object):
         if is_csv:
             self.data = self._csv_to_json(data)
         else:
-            self.data = data
+            self.data = json.loads(data)
         self.uidservtype = uidservtype
         self.fetchtype = fetchtype
         self.logger = logger
         self.project = project
+        self.scope = scope if scope else project
 
     def _construct_fqdn(self, http_endpoint):
         return urlparse(http_endpoint).netloc
@@ -54,7 +55,7 @@ class ParseFlatEndpoints(object):
                 tmp_dict['type'] = 'PROJECT'
                 tmp_dict['group'] = self.project
                 tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
-                tmp_dict['tags'] = {'monitored': '1', 'scope': self.project}
+                tmp_dict['tags'] = {'monitored': '1', 'scope': self.scope}
 
                 if tmp_dict['subgroup'] in already_added:
                     continue
@@ -89,7 +90,7 @@ class ParseFlatEndpoints(object):
                                     'info_URL': info_url,
                                     'hostname': self._construct_fqdn(entity['URL'])}
 
-                tmp_dict['tags'].update({'info_id': str(entity['Service Unique ID'])})
+                tmp_dict['tags'].update({'info_ID': str(entity['Service Unique ID'])})
                 groups.append(tmp_dict)
 
             return groups

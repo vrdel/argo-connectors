@@ -15,7 +15,6 @@ from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, datestamp, date_check
-from argo_egi_connectors.parse.eosc import ParseEoscTopo
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
 
 from urllib.parse import urlparse
@@ -64,9 +63,8 @@ async def fetch_data(feed):
 
 
 def parse_source_topo(res, uidservtype, fetchtype):
-    import ipdb; ipdb.set_trace()
     # group_groups, group_endpoints = ParseEoscTopo(logger, res, uidservtype, fetchtype).get_data()
-    topo = ParseFlatEndpoints(logger, res, custname, uidservtype, fetchtype)
+    topo = ParseFlatEndpoints(logger, res, custname, uidservtype, fetchtype, scope=custname)
     group_groups = topo.get_groupgroups()
     group_endpoints = topo.get_groupendpoints()
 
