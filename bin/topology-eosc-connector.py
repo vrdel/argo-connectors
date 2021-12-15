@@ -16,11 +16,13 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, datestamp, date_check
 from argo_egi_connectors.parse.eosc import ParseEoscTopo
+from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
 
 from urllib.parse import urlparse
 
 logger = None
 globopts = {}
+custname = ''
 
 
 def is_feed(feed):
@@ -54,15 +56,20 @@ def get_webapi_opts(cglob, confcust):
 
 async def fetch_data(feed):
     remote_topo = urlparse(feed)
-    session = SessionWithRetry(logger, 'EOSC', globopts)
+    session = SessionWithRetry(logger, custname, globopts)
     res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                     remote_topo.netloc,
                                                     remote_topo.path))
     return res
 
 
-def parse_source(res, uidservtype, fetchtype):
-    group_groups, group_endpoints = ParseEoscTopo(logger, res, uidservtype, fetchtype).get_data()
+def parse_source_topo(res, uidservtype, fetchtype):
+    import ipdb; ipdb.set_trace()
+    # group_groups, group_endpoints = ParseEoscTopo(logger, res, uidservtype, fetchtype).get_data()
+    topo = ParseFlatEndpoints(logger, res, custname, uidservtype, fetchtype)
+    group_groups = topo.get_groupgroups()
+    group_endpoints = topo.get_groupendpoints()
+
     return group_groups, group_endpoints
 
 
@@ -126,6 +133,7 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
+    global custname
     custname = confcust.get_custname()
 
     # safely assume here one customer defined in customer file
@@ -144,12 +152,12 @@ def main():
     try:
         if is_feed(topofeed):
             res = loop.run_until_complete(fetch_data(topofeed))
-            group_groups, group_endpoints = parse_source(res, uidservtype, fetchtype)
+            group_groups, group_endpoints = parse_source_topo(res, uidservtype, fetchtype)
         else:
             try:
                 with open(topofeed) as fp:
                     js = json.load(fp)
-                    group_groups, group_endpoints = parse_source(js, uidservtype, fetchtype)
+                    group_groups, group_endpoints = parse_source_topo(js, uidservtype, fetchtype)
             except IOError as exc:
                 logger.error('Customer:%s : Problem opening %s - %s' % (logger.customer, topofeed, repr(exc)))
 

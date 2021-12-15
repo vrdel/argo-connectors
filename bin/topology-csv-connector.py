@@ -56,9 +56,9 @@ isok = True
 
 
 def parse_source_topo(res, custname, uidservtype):
-    topo_csv = ParseFlatEndpoints(logger, res, custname, uidservtype, is_csv=True)
-    group_groups = topo_csv.get_groupgroups()
-    group_endpoints = topo_csv.get_groupendpoints()
+    topo = ParseFlatEndpoints(logger, res, custname, uidservtype, is_csv=True)
+    group_groups = topo.get_groupgroups()
+    group_endpoints = topo.get_groupendpoints()
     return group_groups, group_endpoints
 
 

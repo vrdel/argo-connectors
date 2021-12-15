@@ -9,7 +9,7 @@ from io import StringIO
 
 class ParseFlatEndpoints(object):
     def __init__(self, logger, data, project, uidservtype=False,
-                 fetchtype='ServiceGroups', is_csv=False):
+                 fetchtype='ServiceGroups', is_csv=False, scope=None):
         if is_csv:
             self.data = self._csv_to_json(data)
         else:
