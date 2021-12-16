@@ -16,7 +16,8 @@ from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, datestamp, date_check
-from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
+from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints, ParseContacts
+from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
 from urllib.parse import urlparse
 
@@ -152,6 +153,8 @@ def main():
         if is_feed(topofeed):
             res = loop.run_until_complete(fetch_data(topofeed))
             group_groups, group_endpoints = parse_source_topo(res, uidservtype, fetchtype)
+            contacts = ParseContacts(logger, res, uidservtype, is_csv=False).get_contacts()
+            attach_contacts_topodata(logger, contacts, group_endpoints)
         else:
             try:
                 with open(topofeed) as fp:

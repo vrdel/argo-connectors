@@ -330,6 +330,7 @@ class ParseServiceEndpointsCsv(unittest.TestCase):
         with open('tests/sample-topo.csv') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
+
         self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
                                            uidservtype=True,
                                            fetchtype='ServiceGroups',

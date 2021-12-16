@@ -42,7 +42,6 @@ from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
-from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints, ParseContacts
 

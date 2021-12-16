@@ -6,6 +6,7 @@ import csv
 import json
 from io import StringIO
 
+
 def csv_to_json(csvdata):
     data = StringIO(csvdata)
     reader = csv.reader(data, delimiter=',')
@@ -53,7 +54,7 @@ class ParseContacts(object):
             value = entity['CONTACT_EMAIL']
             contacts.append({
                 'name': key,
-                'contacts': [value]
+                'contacts': [value] if not type(value) == list else value
             })
 
         return contacts
