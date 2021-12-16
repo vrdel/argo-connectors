@@ -389,5 +389,71 @@ class ParseServiceEndpointsCsv(unittest.TestCase):
         )
 
 
+class ParseServiceEndpointsJson(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-topo.json') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+
+        self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
+                                           uidservtype=True,
+                                           fetchtype='ServiceGroups',
+                                           scope=CUSTOMER_NAME, is_csv=False)
+
+    def test_JsonEndpoints(self):
+        group_groups = self.topology.get_groupgroups()
+        self.assertEqual(group_groups,
+            [
+                {
+                    'group': 'CUSTOMERFOO',
+                    'subgroup': 'Open Telekom Cloud',
+                    'tags': {
+                        'monitored': '1', 'scope': 'CUSTOMERFOO'
+                    },
+                    'type': 'PROJECT'
+                },
+                {
+                    'group': 'CUSTOMERFOO',
+                    'subgroup': 'PaaS Orchestrator ',
+                    'tags': {'monitored': '1', 'scope': 'CUSTOMERFOO'},
+                    'type': 'PROJECT'
+                }
+            ]
+        )
+        group_endpoints = self.topology.get_groupendpoints()
+        self.assertEqual(group_endpoints,
+            [
+                {
+                    'group': 'Open Telekom Cloud',
+                    'hostname': 'open-telekom-cloud.com_227',
+                    'service': 'eu.eosc.portal.services.url',
+                    'tags': {
+                        'hostname': 'open-telekom-cloud.com',
+                        'info_ID': '227',
+                        'info_URL': 'https://open-telekom-cloud.com/en',
+                        'monitored': '1',
+                        'scope': 'CUSTOMERFOO'
+                    },
+                    'type': 'SERVICEGROUPS'
+                },
+                {
+                    'group': 'PaaS Orchestrator ',
+                    'hostname': 'indigo-paas.cloud.ba.infn.it_243',
+                    'service': 'eu.eosc.portal.services.url',
+                    'tags': {
+                        'hostname': 'indigo-paas.cloud.ba.infn.it',
+                        'info_ID': '243',
+                        'info_URL': 'https://indigo-paas.cloud.ba.infn.it',
+                        'monitored': '1',
+                        'scope': 'CUSTOMERFOO'
+                    },
+                    'type': 'SERVICEGROUPS'
+                }
+            ]
+
+        )
+
+
+
 if __name__ == '__main__':
     unittest.main()
