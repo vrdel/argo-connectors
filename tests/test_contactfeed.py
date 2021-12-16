@@ -5,6 +5,7 @@ from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSit
     ParseRocContacts, ParseServiceEndpointContacts, \
     ParseServiceGroupRoles, ParseServiceGroupWithContacts, ConnectorParseError
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
+from argo_egi_connectors.parse.flat_topology import ParseContacts
 
 
 logger = Logger('test_contactfeed.py')
@@ -193,6 +194,33 @@ class ParseServiceGroupWithContactsTest(unittest.TestCase):
                 'contacts': ['name1.surname1@email.com'],
                 'name': 'B2FIND-Askeladden'
             }
+        )
+
+
+class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-topo.csv') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+
+        self.contacts = ParseContacts(logger, self.content, uidservtype=True, is_csv=True).get_contacts()
+
+    def test_FormatContacts(self):
+        self.assertEqual(self.contacts,
+            [
+                {
+                    'contacts': ['name.surname@country.com'],
+                    'name': 'files.dev.tenant.eu_tenant_1+nextcloud'
+                },
+                {
+                    'contacts': ['name.surname@country.com'],
+                    'name': 'files.tenant.eu_tenant_2+nextcloud'
+                },
+                {
+                    'contacts': ['name.surname@country.com'],
+                    'name': 'sso.tenant.eu_tenant_3+aai'
+                }
+            ]
         )
 
 if __name__ == '__main__':
