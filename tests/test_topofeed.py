@@ -330,14 +330,62 @@ class ParseServiceEndpointsCsv(unittest.TestCase):
         with open('tests/sample-topo.csv') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        topology = ParseFlatEndpoints(logger, self.content,
-                                               CUSTOMER_NAME, uidservtype=True,
-                                               fetchtype='ServiceGroups',
-                                               scope=CUSTOMER_NAME, is_csv=True)
+        self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
+                                           uidservtype=True,
+                                           fetchtype='ServiceGroups',
+                                           scope=CUSTOMER_NAME, is_csv=True)
 
-    def testParse(self):
-        pass
-
+    def test_CsvEndpoints(self):
+        group_groups = self.topology.get_groupgroups()
+        self.assertEqual(group_groups,
+            [
+                {
+                    'group': 'CUSTOMERFOO',
+                    'subgroup': 'NextCloud',
+                    'tags': {'monitored': '1', 'scope': 'CUSTOMERFOO'},
+                    'type': 'PROJECT'
+                },
+                {
+                    'group': 'CUSTOMERFOO',
+                    'subgroup': 'AAI',
+                    'tags': {'monitored': '1', 'scope': 'CUSTOMERFOO'},
+                    'type': 'PROJECT'
+                }
+            ]
+        )
+        group_endpoints = self.topology.get_groupendpoints()
+        self.assertEqual(group_endpoints,
+            [
+                {
+                    'group': 'NextCloud',
+                    'hostname': 'files.dev.tenant.eu_tenant_1',
+                    'service': 'nextcloud',
+                    'tags': {'hostname': 'files.dev.tenant.eu', 'info_ID':
+                             'tenant_1', 'info_URL':
+                             'https://files.dev.tenant.eu', 'monitored': '1',
+                             'scope': 'CUSTOMERFOO'},
+                    'type': 'SERVICEGROUPS'
+                },
+                {
+                    'group': 'NextCloud',
+                    'hostname': 'files.tenant.eu_tenant_2',
+                    'service': 'nextcloud',
+                    'tags': {'hostname': 'files.tenant.eu', 'info_ID':
+                             'tenant_2', 'info_URL': 'https://files.tenant.eu',
+                             'monitored': '1', 'scope': 'CUSTOMERFOO'},
+                    'type': 'SERVICEGROUPS'
+                },
+                {
+                    'group': 'AAI',
+                    'hostname': 'sso.tenant.eu_tenant_3',
+                    'service': 'aai',
+                    'tags': {'hostname': 'sso.tenant.eu', 'info_ID': 'tenant_3',
+                            'info_URL': 'https://sso.tenant.eu', 'monitored': '1',
+                            'scope': 'CUSTOMERFOO'},
+                    'type': 'SERVICEGROUPS'
+                }
+            ]
+        )
 
 
 if __name__ == '__main__':
