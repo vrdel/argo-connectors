@@ -36,12 +36,13 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
+from argo_egi_connectors.io.http import SessionWithRetry
+from argo_egi_connectors.exceptions import ConnectorHttpError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
+from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints, ParseContacts
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check

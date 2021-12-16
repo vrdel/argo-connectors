@@ -49,7 +49,7 @@ class Global(object):
                         self._merge_dict(self.shared_secopts,
                                          self.conf_topo_schemas,
                                          self.conf_topo_output),
-                        'topology-eosc-connector.py':
+                        'topology-json-connector.py':
                         self._merge_dict(self.shared_secopts,
                                          self.conf_topo_schemas,
                                          self.conf_topo_output),
@@ -192,7 +192,7 @@ class CustomerConf(object):
     _custattrs = None
     _cust = {}
     _defjobattrs = {'topology-gocdb-connector.py': [''],
-                    'topology-eosc-connector.py': [''],
+                    'topology-json-connector.py': [''],
                     'topology-csv-connector.py': [''],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],

@@ -7,6 +7,7 @@ import xml.dom.minidom
 
 from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
 from argo_egi_connectors.utils import module_class_name
+from argo_egi_connectors.exceptions import ConnectorHttpError
 
 
 def build_ssl_settings(globopts):
@@ -28,10 +29,6 @@ def build_connection_retry_settings(globopts):
     timeout = int(globopts['ConnectionTimeout'.lower()])
     list_retry = [(i + 1) * sleep_retry for i in range(retry)]
     return (retry, list_retry, timeout)
-
-
-class ConnectorHttpError(Exception):
-    pass
 
 
 class SessionWithRetry(object):

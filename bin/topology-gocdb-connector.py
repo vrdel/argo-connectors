@@ -36,8 +36,8 @@ from urllib.parse import urlparse
 import asyncio
 import uvloop
 
-from argo_egi_connectors.exceptions import ConnectorParseError
-from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
+from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
