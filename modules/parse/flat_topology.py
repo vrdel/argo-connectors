@@ -6,12 +6,64 @@ import csv
 import json
 from io import StringIO
 
+def csv_to_json(csvdata):
+    data = StringIO(csvdata)
+    reader = csv.reader(data, delimiter=',')
+
+    num_row = 0
+    results = []
+    header = []
+    for row in reader:
+        if num_row == 0:
+            header = row
+            num_row = num_row + 1
+            continue
+        num_item = 0
+        datum = {}
+        for item in header:
+            datum[item] = row[num_item]
+            num_item = num_item + 1
+        results.append(datum)
+
+    return results
+
+
+def construct_fqdn(http_endpoint):
+    return urlparse(http_endpoint).netloc
+
+
+class ParseContacts(object):
+    def __init__(self, logger, data, uidservtype=False, is_csv=False):
+        self.logger = logger
+        self.uidservtype = uidservtype
+        if is_csv:
+            self.data = csv_to_json(data)
+        else:
+            self.data = json.loads(data)
+
+    def get_contacts(self):
+        contacts = list()
+
+        for entity in self.data:
+            if self.uidservtype:
+                key = '{}_{}+{}'.format(construct_fqdn(entity['URL']), entity['Service Unique ID'], entity['SERVICE_TYPE'])
+            else:
+                key = '{}+{}'.format(construct_fqdn(entity['URL']), entity['SERVICE_TYPE'])
+
+            value = entity['CONTACT_EMAIL']
+            contacts.append({
+                'name': key,
+                'contacts': [value]
+            })
+
+        return contacts
+
 
 class ParseFlatEndpoints(object):
     def __init__(self, logger, data, project, uidservtype=False,
                  fetchtype='ServiceGroups', is_csv=False, scope=None):
         if is_csv:
-            self.data = self._csv_to_json(data)
+            self.data = csv_to_json(data)
         else:
             self.data = json.loads(data)
         self.uidservtype = uidservtype
@@ -21,29 +73,7 @@ class ParseFlatEndpoints(object):
         self.is_csv = is_csv
         self.scope = scope if scope else project
 
-    def _construct_fqdn(self, http_endpoint):
-        return urlparse(http_endpoint).netloc
 
-    def _csv_to_json(self, csvdata):
-        data = StringIO(csvdata)
-        reader = csv.reader(data, delimiter=',')
-
-        num_row = 0
-        results = []
-        header = []
-        for row in reader:
-            if num_row == 0:
-                header = row
-                num_row = num_row + 1
-                continue
-            num_item = 0
-            datum = {}
-            for item in header:
-                datum[item] = row[num_item]
-                num_item = num_item + 1
-            results.append(datum)
-
-        return results
 
     def get_groupgroups(self):
         try:
@@ -83,14 +113,14 @@ class ParseFlatEndpoints(object):
                 tmp_dict['service'] = entity['SERVICE_TYPE']
                 info_url = entity['URL']
                 if self.uidservtype:
-                    tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], self._construct_fqdn(info_url))
+                    tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], construct_fqdn(info_url))
                 else:
-                    tmp_dict['hostname'] = self._construct_fqdn(entity['URL'])
+                    tmp_dict['hostname'] = construct_fqdn(entity['URL'])
 
                 tmp_dict['tags'] = {'scope': self.project,
                                     'monitored': '1',
                                     'info_URL': info_url,
-                                    'hostname': self._construct_fqdn(entity['URL'])}
+                                    'hostname': construct_fqdn(entity['URL'])}
 
                 tmp_dict['tags'].update({'info_ID': str(entity['Service Unique ID'])})
                 groups.append(tmp_dict)

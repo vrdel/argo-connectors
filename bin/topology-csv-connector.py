@@ -41,6 +41,8 @@ from argo_egi_connectors.exceptions import ConnectorHttpError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
+from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
+from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints, ParseContacts
 
@@ -182,6 +184,9 @@ def main():
             group_groups, group_endpoints = parse_source_topo(fetched_topology,
                                                               custname,
                                                               uidservtype)
+            contacts = ParseContacts(logger, fetched_topology, uidservtype, is_csv=True).get_contacts()
+            attach_contacts_topodata(logger, contacts, group_endpoints)
+
         except Exception as exc:
             raise ConnectorHttpError
 
