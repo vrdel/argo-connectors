@@ -31,7 +31,8 @@ import sys
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import SessionWithRetry, ConnectorHttpError
+from argo_egi_connectors.io.http import SessionWithRetry
+from argo_egi_connectors.exceptions import ConnectorHttpError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write

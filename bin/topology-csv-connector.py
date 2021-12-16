@@ -36,20 +36,18 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from argo_egi_connectors.io.http import ConnectorHttpError, SessionWithRetry
+from argo_egi_connectors.io.http import SessionWithRetry
+from argo_egi_connectors.exceptions import ConnectorHttpError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
+from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.csvtopo import ParseServiceGroupsEndpoints
+from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints, ParseContacts
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
 from urllib.parse import urlparse
-
-import csv
-import json
-from io import StringIO
 
 logger = None
 
@@ -59,10 +57,10 @@ custname = ''
 isok = True
 
 
-def parse_source_csvtopo(res, custname, uidservtype):
-    topo_csv = ParseServiceGroupsEndpoints(logger, res, custname, uidservtype)
-    group_groups = topo_csv.get_groupgroups()
-    group_endpoints = topo_csv.get_groupendpoints()
+def parse_source_topo(res, custname, uidservtype):
+    topo = ParseFlatEndpoints(logger, res, custname, uidservtype, is_csv=True)
+    group_groups = topo.get_groupgroups()
+    group_endpoints = topo.get_groupendpoints()
     return group_groups, group_endpoints
 
 
@@ -100,26 +98,6 @@ async def fetch_data(feed, auth_opts):
     return res
 
 
-def csv_to_json(csvdata):
-    data = StringIO(csvdata)
-    reader = csv.reader(data, delimiter=',')
-
-    num_row = 0
-    results = []
-    header = []
-    for row in reader:
-        if num_row == 0:
-            header = row
-            num_row = num_row + 1
-            continue
-        num_item = 0
-        datum = {}
-        for item in header:
-            datum[item] = row[num_item]
-            num_item = num_item + 1
-        results.append(datum)
-
-    return results
 
 async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
@@ -202,11 +180,12 @@ def main():
         fetched_topology = loop.run_until_complete(fetch_data(topofeed, auth_opts))
 
         try:
-            topo_json = csv_to_json(fetched_topology)
+            group_groups, group_endpoints = parse_source_topo(fetched_topology,
+                                                              custname,
+                                                              uidservtype)
+            contacts = ParseContacts(logger, fetched_topology, uidservtype, is_csv=True).get_contacts()
+            attach_contacts_topodata(logger, contacts, group_endpoints)
 
-            group_groups, group_endpoints = parse_source_csvtopo(topo_json,
-                                                                custname,
-                                                                uidservtype)
         except Exception as exc:
             raise ConnectorHttpError
 

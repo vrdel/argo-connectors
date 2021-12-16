@@ -3,7 +3,8 @@ import asyncio
 import bonsai
 
 from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.io.http import ConnectorHttpError
+from argo_egi_connectors.exceptions import ConnectorHttpError
+
 
 class LDAPSessionWithRetry(object):
     def __init__(self, logger, retry_attempts, retry_sleep, connection_timeout):
