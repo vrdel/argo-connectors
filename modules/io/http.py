@@ -71,10 +71,13 @@ class SessionWithRetry(object):
                     async with method_obj(url, data=data, headers=headers,
                                           ssl=self.ssl_context, auth=self.custauth) as response:
                         content = await response.text()
-                        if self.verbose_ret:
-                            return (content, response.headers, response.status)
+                        if content:
+                            if self.verbose_ret:
+                                return (content, response.headers, response.status)
+                            else:
+                                return content
                         else:
-                            return content
+                            self.logger.warn(f'Empty response')
 
                 # do not retry on SSL errors, exit immediately
                 except ssl.SSLError as exc:
