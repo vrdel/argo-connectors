@@ -88,9 +88,15 @@ class WebAPI(object):
                                                                           self.logger.customer,
                                                                           msg))
             else:
+                errormsg = json.loads(content)
+                if 'errors' in errormsg:
+                    errormsg = errormsg['errors'][0]['details']
+                elif 'status' in errormsg:
+                    errormsg = errormsg['status']['message']
                 self.logger.error('%s %s() Customer:%s Job:%s - HTTP POST %s' %
-                                  (module_class_name(self), '_send', self.logger.customer, self.logger.job,
-                                   json.loads(content)['errors'][0]['details']))
+                                  (module_class_name(self), '_send',
+                                   self.logger.customer, self.logger.job,
+                                   errormsg))
         return status
 
     async def _get(self, api):
