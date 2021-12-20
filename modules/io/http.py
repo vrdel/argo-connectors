@@ -76,6 +76,8 @@ class SessionWithRetry(object):
                                 return (content, response.headers, response.status)
                             else:
                                 return content
+                        else:
+                            self.logger.warn(f'Empty response')
 
                 # do not retry on SSL errors, exit immediately
                 except ssl.SSLError as exc:
