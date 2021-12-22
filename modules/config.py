@@ -243,6 +243,7 @@ class CustomerConf(object):
                     topofeed = config.get(section, 'TopoFeed')
                     topotype = config.get(section, 'TopoType')
                     topouidservendpoints = config.get(section, 'TopoUIDServiceEndpoints', fallback=False)
+                    toposcope = config.get(section, 'TopoScope', fallback=None)
                     topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
 
                     if not custdir.endswith('/'):
@@ -266,6 +267,7 @@ class CustomerConf(object):
                                              custdir, 'Name': custname,
                                              'TopoFetchType': topofetchtype,
                                              'TopoFeedPaging': topofeedpaging,
+                                             'TopoScope': toposcope,
                                              'TopoFeed': topofeed,
                                              'TopoUIDServiceEnpoints': topouidservendpoints,
                                              'TopoType': topotype}})
@@ -480,6 +482,9 @@ class CustomerConf(object):
 
     def get_topofeedpaging(self):
         return eval(self._get_cust_options('TopoFeedPaging'))
+
+    def get_toposcope(self):
+        return self._get_cust_options('TopoScope')
 
     def get_topofetchtype(self):
         fetchtype = self._get_cust_options('TopoFetchType')
