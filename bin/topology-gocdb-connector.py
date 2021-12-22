@@ -61,6 +61,9 @@ SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITES_PI = '/gocdbpi/private/?method=get_site&scope='
 SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
 
+# SITES_PI = '/vapor/downloadLavoisier/option/xml/view/vapor_sites/param/vo=biomed'
+# SERVICE_ENDPOINTS_PI = '/vapor/downloadLavoisier/option/xml/view/vapor_endpoints'
+
 ROC_CONTACTS = '/gocdbpi/private/?method=get_roc_contacts'
 SITE_CONTACTS = '/gocdbpi/private/?method=get_site_contacts'
 PROJECT_CONTACTS = '/gocdbpi/private/?method=get_project_contacts'
@@ -333,9 +336,22 @@ def main():
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
     try:
-        coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging),
-                 fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging),
-                 fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging)]
+        toposcope = confcust.get_toposcope()
+        if toposcope:
+            global SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI
+            SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI + toposcope
+            SERVICE_GROUPS_PI = SERVICE_GROUPS_PI + toposcope
+            SITES_PI = SITES_PI + toposcope
+
+        fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
+        fetched_bdii = None
+
+        coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
+        if 'servicegroups' in topofetchtype:
+            coros.append(fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
+        if 'sites' in topofetchtype:
+            coros.append(fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging))
+
         if bdii_opts and eval(bdii_opts['bdii']):
             host = bdii_opts['bdiihost']
             port = bdii_opts['bdiiport']
@@ -349,9 +365,21 @@ def main():
                                          bdii_opts['bdiiqueryfiltersepath'],
                                          bdii_opts['bdiiqueryattributessepath'].split(' ')))
 
-
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
+
+        fetched_endpoints = fetched_topology[0]
+        if bdii_opts and eval(bdii_opts['bdii']):
+            fetched_bdii = list()
+            fetched_bdii.append(fetched_topology[-2])
+            fetched_bdii.append(fetched_topology[-1])
+        if len(topofetchtype) == 2:
+            fetched_servicegroups, fetched_sites = (fetched_topology[1], fetched_topology[2])
+        elif 'sites' in topofetchtype:
+            fetched_sites = fetched_topology[1]
+        elif 'servicegroups' in topofetchtype:
+            fetched_servicegroups = fetched_topology[1]
+
 
         if contains_exception(fetched_topology):
             raise ConnectorHttpError
@@ -360,37 +388,49 @@ def main():
         executor = ProcessPoolExecutor(max_workers=3)
         parse_workers = [
             loop.run_in_executor(executor,
-                                 partial(parse_source_servicegroups,
-                                         fetched_topology[1], custname,
-                                         uidservtype, pass_extensions)),
-            loop.run_in_executor(executor,
                                  partial(parse_source_endpoints,
-                                         fetched_topology[0], custname,
+                                         fetched_endpoints, custname,
                                          uidservtype, pass_extensions)),
-            loop.run_in_executor(executor,
-                                 partial(parse_source_sites,
-                                         fetched_topology[2], custname,
-                                         uidservtype, pass_extensions))
         ]
+
+        if fetched_servicegroups:
+            parse_workers.append(
+                loop.run_in_executor(executor,
+                                    partial(parse_source_servicegroups,
+                                            fetched_servicegroups, custname,
+                                            uidservtype, pass_extensions))
+            )
+        if fetched_sites:
+            parse_workers.append(
+                loop.run_in_executor(executor,
+                                    partial(parse_source_sites,
+                                            fetched_sites, custname,
+                                            uidservtype, pass_extensions))
+            )
+
         parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
-        group_groups, group_endpoints = parsed_topology[0]
-        group_endpoints += parsed_topology[1]
-        group_groups += parsed_topology[2]
+        group_endpoints += parsed_topology[0]
+        if len(parsed_topology) == 3:
+            group_groups, group_endpoints = parsed_topology[1]
+            group_groups += parsed_topology[2]
+        else:
+            group_groups += parsed_topology[1]
 
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data
-        if  bdii_opts and eval(bdii_opts['bdii']):
-            attach_srmport_topodata(logger, bdii_opts['bdiiqueryattributessrm'].split(' ')[0], fetched_topology[3], group_endpoints)
-            attach_sepath_topodata(logger, bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_topology[4], group_endpoints)
+        if bdii_opts and eval(bdii_opts['bdii']):
+            attach_srmport_topodata(logger, bdii_opts['bdiiqueryattributessrm'].split(' ')[0], fetched_bdii[0], group_endpoints)
+            attach_sepath_topodata(logger, bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_bdii[1], group_endpoints)
 
         # parse contacts from fetched service endpoints topology, if there are
         # any
-        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_topology[0], custname)
+        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_endpoints, custname)
 
-        if not parsed_site_contacts:
+        import ipdb; ipdb.set_trace()
+        if not parsed_site_contacts and fetched_sites:
             # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
             # sites topology entities
-            parsed_site_contacts = parse_source_siteswithcontacts(fetched_topology[2], custname)
+            parsed_site_contacts = parse_source_siteswithcontacts(fetched_sites, custname)
 
         attach_contacts_workers = [
             loop.run_in_executor(executor, partial(attach_contacts_topodata,
@@ -408,10 +448,10 @@ def main():
 
         if parsed_servicegroups_contacts:
             attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
-        else:
+        elif fetched_servicegroups:
             # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
             # servicegroups topology entities
-            parsed_servicegroups_contacts = parse_source_servicegroupscontacts(fetched_topology[1], custname)
+            parsed_servicegroups_contacts = parse_source_servicegroupscontacts(fetched_servicegroups, custname)
             attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
 
         loop.run_until_complete(
@@ -437,10 +477,11 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt):
+    except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         loop.run_until_complete(
             write_state(confcust, fixed_date, False)
         )
+        logger.error(exc)
 
     finally:
         loop.close()
