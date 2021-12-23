@@ -26,6 +26,10 @@ def filter_dups_noemails(contact_list):
 
 def attach_contacts_topodata(logger, contacts, topodata):
     updated_topodata = list()
+    found_contacts = None
+
+    if len(contacts) == 0:
+        return topodata
 
     try:
         for entity in topodata:
@@ -64,9 +68,9 @@ def attach_contacts_topodata(logger, contacts, topodata):
                     emails = filter_dups_noemails(contact['contacts'])
                     found_endpoints = list(
                         filter(lambda endpoint:
-                               endpoint['hostname'] == fqdn \
-                               and endpoint['service'] == servtype,
-                               topodata)
+                            endpoint['hostname'] == fqdn \
+                            and endpoint['service'] == servtype,
+                            topodata)
                     )
                     if emails:
                         for endpoint in found_endpoints:
@@ -77,11 +81,11 @@ def attach_contacts_topodata(logger, contacts, topodata):
 
             updated_topodata.append(entity)
 
-        return updated_topodata
-
     except (KeyError, ValueError, TypeError) as exc:
         logger.warn('Error joining contacts and topology data: %s' % repr(exc))
         if entity:
             logger.warn('Topology entity: %s' % entity)
         if found_contacts:
             logger.warn('Found contacts: %s' % found_contacts)
+
+    return updated_topodata
