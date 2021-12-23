@@ -386,35 +386,51 @@ def main():
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
-        parse_workers = [
-            loop.run_in_executor(executor,
-                                 partial(parse_source_endpoints,
-                                         fetched_endpoints, custname,
-                                         uidservtype, pass_extensions)),
-        ]
+        parse_workers = list()
+        exe_parse_source_endpoints = partial(parse_source_endpoints,
+                                             fetched_endpoints, custname,
+                                             uidservtype, pass_extensions)
+        exe_parse_source_servicegroups = partial(parse_source_servicegroups,
+                                                 fetched_servicegroups,
+                                                 custname, uidservtype,
+                                                 pass_extensions)
+        exe_parse_source_sites = partial(parse_source_sites, fetched_sites,
+                                         custname, uidservtype,
+                                         pass_extensions)
 
-        if fetched_servicegroups:
+        if fetched_servicegroups and fetched_sites:
             parse_workers.append(
-                loop.run_in_executor(executor,
-                                    partial(parse_source_servicegroups,
-                                            fetched_servicegroups, custname,
-                                            uidservtype, pass_extensions))
+                loop.run_in_executor(executor, exe_parse_source_endpoints)
             )
-        if fetched_sites:
             parse_workers.append(
-                loop.run_in_executor(executor,
-                                    partial(parse_source_sites,
-                                            fetched_sites, custname,
-                                            uidservtype, pass_extensions))
+                loop.run_in_executor(executor, exe_parse_source_servicegroups)
+            )
+            parse_workers.append(
+                loop.run_in_executor(executor, exe_parse_source_sites)
+            )
+        elif fetched_servicegroups and not fetched_sites:
+            parse_workers.append(
+                loop.run_in_executor(executor, exe_parse_source_servicegroups)
+            )
+        elif fetched_sites and not fetched_servicegroups:
+            parse_workers.append(
+                loop.run_in_executor(executor, exe_parse_source_endpoints)
+            )
+            parse_workers.append(
+                loop.run_in_executor(executor, exe_parse_source_sites)
             )
 
         parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
-        group_endpoints += parsed_topology[0]
-        if len(parsed_topology) == 3:
-            group_groups, group_endpoints = parsed_topology[1]
+        if fetched_servicegroups and fetched_sites:
+            group_endpoints = parsed_topology[0]
+            group_groups, group_endpoints_sg = parsed_topology[1]
+            group_endpoints += group_endpoints_sg
             group_groups += parsed_topology[2]
-        else:
-            group_groups += parsed_topology[1]
+        elif fetched_servicegroups and not fetched_sites:
+            group_groups, group_endpoints = parsed_topology[0]
+        elif fetched_sites and not fetched_servicegroups:
+            group_endpoints = parsed_topology[0]
+            group_groups = parsed_topology[1]
 
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data
@@ -426,7 +442,6 @@ def main():
         # any
         parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_endpoints, custname)
 
-        import ipdb; ipdb.set_trace()
         if not parsed_site_contacts and fetched_sites:
             # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
             # sites topology entities
