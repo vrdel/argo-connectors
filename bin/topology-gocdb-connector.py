@@ -373,13 +373,12 @@ def main():
             fetched_bdii = list()
             fetched_bdii.append(fetched_topology[-2])
             fetched_bdii.append(fetched_topology[-1])
-        if len(topofetchtype) == 2:
+        if 'sites' in topofetchtype and 'servicegroups' in topofetchtype:
             fetched_servicegroups, fetched_sites = (fetched_topology[1], fetched_topology[2])
         elif 'sites' in topofetchtype:
             fetched_sites = fetched_topology[1]
         elif 'servicegroups' in topofetchtype:
             fetched_servicegroups = fetched_topology[1]
-
 
         if contains_exception(fetched_topology):
             raise ConnectorHttpError
@@ -398,6 +397,8 @@ def main():
                                          custname, uidservtype,
                                          pass_extensions)
 
+        # parse topology depend on configured components fetch. we can fetch
+        # only sites, only servicegroups or both.
         if fetched_servicegroups and fetched_sites:
             parse_workers.append(
                 loop.run_in_executor(executor, exe_parse_source_endpoints)
@@ -421,6 +422,7 @@ def main():
             )
 
         parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
+
         if fetched_servicegroups and fetched_sites:
             group_endpoints = parsed_topology[0]
             group_groups, group_endpoints_sg = parsed_topology[1]
@@ -492,11 +494,10 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
+    except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt):
         loop.run_until_complete(
             write_state(confcust, fixed_date, False)
         )
-        logger.error(exc)
 
     finally:
         loop.close()
