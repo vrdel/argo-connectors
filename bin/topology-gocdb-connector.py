@@ -337,11 +337,20 @@ def main():
 
     try:
         toposcope = confcust.get_toposcope()
+        topofeedendpoints = confcust.get_topofeedendpoints()
+        topofeedservicegroups = confcust.get_topofeedservicegroups()
+        topofeedsites = confcust.get_topofeedsites()
+        global SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI
         if toposcope:
-            global SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI
             SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI + toposcope
             SERVICE_GROUPS_PI = SERVICE_GROUPS_PI + toposcope
             SITES_PI = SITES_PI + toposcope
+        if topofeedendpoints:
+            SERVICE_ENDPOINTS_PI = topofeedendpoints
+        if topofeedservicegroups:
+            SERVICE_GROUPS_PI = topofeedservicegroups
+        if topofeedsites:
+            SITES_PI = topofeedsites
 
         fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
         fetched_bdii = None
