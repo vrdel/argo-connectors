@@ -8,6 +8,7 @@ class ParseSites(ParseHelpers):
     def __init__(self, logger, data, custname, uid=False,
                  pass_extensions=False):
         super().__init__(logger)
+        self.logger = logger
         self.data = data
         self.uidservtype = uid
         self.custname = custname
@@ -43,6 +44,7 @@ class ParseSites(ParseHelpers):
                         pass
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_group_groups(self):
@@ -111,6 +113,7 @@ class ParseServiceEndpoints(ParseHelpers):
                 self._service_endpoints[service_id]['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_group_endpoints(self):
@@ -201,6 +204,7 @@ class ParseServiceGroups(ParseHelpers):
                     self._service_groups[group_id]['services'].append(tmps)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_group_endpoints(self):

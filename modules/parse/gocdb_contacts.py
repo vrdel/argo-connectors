@@ -95,6 +95,7 @@ class ParseServiceGroupWithContacts(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
+        self.logger = logger
 
     def _parse_data(self):
         try:
@@ -112,6 +113,7 @@ class ParseServiceGroupRoles(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
+        self.logger = logger
 
     def _parse_data(self):
         try:
