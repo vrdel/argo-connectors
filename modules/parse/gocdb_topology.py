@@ -23,14 +23,24 @@ class ParseSites(ParseHelpers):
                 site_name = site.getAttribute('NAME')
                 if site_name not in self._sites:
                     self._sites[site_name] = {'site': site_name}
-                self._sites[site_name]['infrastructure'] = self.parse_xmltext(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
-                self._sites[site_name]['certification'] = self.parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
-                self._sites[site_name]['ngi'] = self.parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
+                production_infra = site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')
+                if production_infra:
+                    self._sites[site_name]['infrastructure'] = self.parse_xmltext(production_infra[0].childNodes)
+                certification_status = site.getElementsByTagName('CERTIFICATION_STATUS')
+                if certification_status:
+                    self._sites[site_name]['certification'] = self.parse_xmltext(certification_status[0].childNodes)
+                try:
+                    self._sites[site_name]['ngi'] = self.parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
+                except IndexError:
+                    self._sites[site_name]['ngi'] = site.getAttribute('ROC')
                 self._sites[site_name]['scope'] = ', '.join(self.parse_scopes(site))
 
                 if self.pass_extensions:
-                    extensions = self.parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
-                    self._sites[site_name]['extensions'] = extensions
+                    try:
+                        extensions = self.parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                        self._sites[site_name]['extensions'] = extensions
+                    except IndexError:
+                        pass
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             raise ConnectorParseError
