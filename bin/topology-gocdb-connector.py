@@ -188,18 +188,16 @@ def filter_multiple_tags(data):
     return '\n'.join(data_lines)
 
 
-async def fetch_data(feed, api, auth_opts, paginated):
-    feed_parts = urlparse(feed)
+async def fetch_data(api, auth_opts, paginated):
+    feed_parts = urlparse(api)
     fetched_data = list()
     if paginated:
         count, cursor = 1, 0
         while count != 0:
             session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
                                        globopts, custauth=auth_opts)
-            res = await session.http_get(
-                '{}://{}{}&next_cursor={}'.format(feed_parts.scheme,
-                                                  feed_parts.netloc, api,
-                                                  cursor))
+            res = await session.http_get( '{}&next_cursor={}'.format(api,
+                                                                     cursor))
             count, cursor = find_next_paging_cursor_count(res)
             fetched_data.append(res)
         return filter_multiple_tags(''.join(fetched_data))
@@ -207,9 +205,7 @@ async def fetch_data(feed, api, auth_opts, paginated):
     else:
         session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
                                    globopts, custauth=auth_opts)
-        res = await session.http_get('{}://{}{}'.format(feed_parts.scheme,
-                                                        feed_parts.netloc,
-                                                        api))
+        res = await session.http_get(api)
         return res
 
 
@@ -325,8 +321,8 @@ def main():
 
     try:
         contact_coros = [
-            fetch_data(topofeed, SITE_CONTACTS, auth_opts, False),
-            fetch_data(topofeed, SERVICEGROUP_CONTACTS, auth_opts, False)
+            fetch_data(topofeed + SITE_CONTACTS, auth_opts, False),
+            fetch_data(topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
@@ -347,19 +343,25 @@ def main():
             SITES_PI = SITES_PI + toposcope
         if topofeedendpoints:
             SERVICE_ENDPOINTS_PI = topofeedendpoints
+        else:
+            SERVICE_ENDPOINTS_PI = topofeed + SERVICE_ENDPOINTS_PI
         if topofeedservicegroups:
             SERVICE_GROUPS_PI = topofeedservicegroups
+        else:
+            SERVICE_GROUPS_PI = topofeed + SERVICE_GROUPS_PI
         if topofeedsites:
             SITES_PI = topofeedsites
+        else:
+            SITES_PI = topofeed + SITES_PI
 
         fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
         fetched_bdii = None
 
-        coros = [fetch_data(topofeed, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
+        coros = [fetch_data(SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
         if 'servicegroups' in topofetchtype:
-            coros.append(fetch_data(topofeed, SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
+            coros.append(fetch_data(SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
         if 'sites' in topofetchtype:
-            coros.append(fetch_data(topofeed, SITES_PI, auth_opts, topofeedpaging))
+            coros.append(fetch_data(SITES_PI, auth_opts, topofeedpaging))
 
         if bdii_opts and eval(bdii_opts['bdii']):
             host = bdii_opts['bdiihost']
@@ -375,6 +377,7 @@ def main():
                                          bdii_opts['bdiiqueryattributessepath'].split(' ')))
 
         # fetch topology data concurrently in coroutines
+        import ipdb; ipdb.set_trace()
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
         fetched_endpoints = fetched_topology[0]
