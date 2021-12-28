@@ -92,10 +92,10 @@ def parse_source_endpoints(res, custname, uidservtype, pass_extensions):
 
 
 def parse_source_sites(res, custname, uidservtype, pass_extensions):
-    group_endpoints = ParseSites(logger, res, custname, uidservtype,
+    group_groups = ParseSites(logger, res, custname, uidservtype,
                                  pass_extensions).get_group_groups()
 
-    return group_endpoints
+    return group_groups
 
 
 def parse_source_sitescontacts(res, custname):
@@ -377,7 +377,6 @@ def main():
                                          bdii_opts['bdiiqueryattributessepath'].split(' ')))
 
         # fetch topology data concurrently in coroutines
-        import ipdb; ipdb.set_trace()
         fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
         fetched_endpoints = fetched_topology[0]
@@ -398,6 +397,7 @@ def main():
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
         parse_workers = list()
+        sites = parse_source_sites(fetched_sites, custname, uidservtype, pass_extensions)
         exe_parse_source_endpoints = partial(parse_source_endpoints,
                                              fetched_endpoints, custname,
                                              uidservtype, pass_extensions)
