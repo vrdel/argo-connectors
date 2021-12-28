@@ -7,7 +7,7 @@ import xml.dom.minidom
 
 from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
 from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.exceptions import ConnectorHttpError
+from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 
 
 def build_ssl_settings(globopts):
@@ -71,13 +71,14 @@ class SessionWithRetry(object):
                     async with method_obj(url, data=data, headers=headers,
                                           ssl=self.ssl_context, auth=self.custauth) as response:
                         content = await response.text()
+                        import ipdb; ipdb.set_trace()
                         if content:
                             if self.verbose_ret:
                                 return (content, response.headers, response.status)
                             else:
                                 return content
                         else:
-                            self.logger.warn(f'Empty response')
+                            raise ConnectorParseError('Empty response')
 
                 # do not retry on SSL errors, exit immediately
                 except ssl.SSLError as exc:
