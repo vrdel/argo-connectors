@@ -1,5 +1,8 @@
-class ConnectorParseError(Exception):
-    pass
+class ConnectorParseError(BaseException):
+    def __init__(self, msg=None):
+        self.msg = msg
 
-class ConnectorHttpError(Exception):
-    pass
+
+class ConnectorHttpError(BaseException):
+    def __init__(self, msg=None):
+        self.msg = msg

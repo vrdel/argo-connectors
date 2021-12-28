@@ -8,6 +8,7 @@ class ParseSites(ParseHelpers):
     def __init__(self, logger, data, custname, uid=False,
                  pass_extensions=False):
         super().__init__(logger)
+        self.logger = logger
         self.data = data
         self.uidservtype = uid
         self.custname = custname
@@ -23,16 +24,28 @@ class ParseSites(ParseHelpers):
                 site_name = site.getAttribute('NAME')
                 if site_name not in self._sites:
                     self._sites[site_name] = {'site': site_name}
-                self._sites[site_name]['infrastructure'] = self.parse_xmltext(site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')[0].childNodes)
-                self._sites[site_name]['certification'] = self.parse_xmltext(site.getElementsByTagName('CERTIFICATION_STATUS')[0].childNodes)
-                self._sites[site_name]['ngi'] = self.parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
+                production_infra = site.getElementsByTagName('PRODUCTION_INFRASTRUCTURE')
+                if production_infra:
+                    self._sites[site_name]['infrastructure'] = self.parse_xmltext(production_infra[0].childNodes)
+                certification_status = site.getElementsByTagName('CERTIFICATION_STATUS')
+                if certification_status:
+                    self._sites[site_name]['certification'] = self.parse_xmltext(certification_status[0].childNodes)
+                try:
+                    self._sites[site_name]['ngi'] = self.parse_xmltext(site.getElementsByTagName('ROC')[0].childNodes)
+                except IndexError:
+                    self._sites[site_name]['ngi'] = site.getAttribute('ROC')
                 self._sites[site_name]['scope'] = ', '.join(self.parse_scopes(site))
 
+                # biomed feed does not have extensions
                 if self.pass_extensions:
-                    extensions = self.parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
-                    self._sites[site_name]['extensions'] = extensions
+                    try:
+                        extensions = self.parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
+                        self._sites[site_name]['extensions'] = extensions
+                    except IndexError:
+                        pass
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_group_groups(self):
@@ -44,11 +57,11 @@ class ParseSites(ParseHelpers):
             tmpg['type'] = 'NGI'
             tmpg['group'] = group['ngi']
             tmpg['subgroup'] = group['site']
-            tmpg['tags'] = {'certification': group['certification'],
+            tmpg['tags'] = {'certification': group.get('certification', ''),
                             'scope': group.get('scope', ''),
-                            'infrastructure': group['infrastructure']}
+                            'infrastructure': group.get('infrastructure', '')}
 
-            if self.pass_extensions:
+            if self.pass_extensions and 'extensions' in group:
                 for key, value in group['extensions'].items():
                     tmpg['tags'].update({
                         'info_ext_' + key: value
@@ -101,6 +114,7 @@ class ParseServiceEndpoints(ParseHelpers):
                 self._service_endpoints[service_id]['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_group_endpoints(self):
@@ -191,6 +205,7 @@ class ParseServiceGroups(ParseHelpers):
                     self._service_groups[group_id]['services'].append(tmps)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
             raise ConnectorParseError
 
     def get_group_endpoints(self):

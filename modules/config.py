@@ -243,6 +243,10 @@ class CustomerConf(object):
                     topofeed = config.get(section, 'TopoFeed')
                     topotype = config.get(section, 'TopoType')
                     topouidservendpoints = config.get(section, 'TopoUIDServiceEndpoints', fallback=False)
+                    toposcope = config.get(section, 'TopoScope', fallback=None)
+                    topofeedsites = config.get(section, 'TopoFeedSites', fallback=None)
+                    topofeedendpoints = config.get(section, 'TopoFeedServiceEndpoints', fallback=None)
+                    topofeedservicegroups = config.get(section, 'TopoFeedServiceGroups', fallback=None)
                     topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
 
                     if not custdir.endswith('/'):
@@ -266,7 +270,11 @@ class CustomerConf(object):
                                              custdir, 'Name': custname,
                                              'TopoFetchType': topofetchtype,
                                              'TopoFeedPaging': topofeedpaging,
+                                             'TopoScope': toposcope,
                                              'TopoFeed': topofeed,
+                                             'TopoFeedSites': topofeedsites,
+                                             'TopoFeedServiceGroups': topofeedservicegroups,
+                                             'TopoFeedEndpoints': topofeedendpoints,
                                              'TopoUIDServiceEnpoints': topouidservendpoints,
                                              'TopoType': topotype}})
                 if optopts:
@@ -478,8 +486,20 @@ class CustomerConf(object):
     def get_topofeed(self):
         return self._get_cust_options('TopoFeed')
 
+    def get_topofeedsites(self):
+        return self._get_cust_options('TopoFeedSites')
+
+    def get_topofeedendpoints(self):
+        return self._get_cust_options('TopoFeedEndpoints')
+
+    def get_topofeedservicegroups(self):
+        return self._get_cust_options('TopoFeedServiceGroups')
+
     def get_topofeedpaging(self):
         return eval(self._get_cust_options('TopoFeedPaging'))
+
+    def get_toposcope(self):
+        return self._get_cust_options('TopoScope')
 
     def get_topofetchtype(self):
         fetchtype = self._get_cust_options('TopoFetchType')
