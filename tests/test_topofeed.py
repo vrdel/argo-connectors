@@ -124,43 +124,42 @@ class MeshSitesAndContacts(unittest.TestCase):
         self.sample_sites_contacts = [
             {
                 'contacts': [
-                                {
-                                    'certdn': 'certdn1-dirac-durham',
-                                    'email': 'name1.surname1@durham.ac.uk',
-                                    'forename': 'Name1',
-                                    'role': 'Site Administrator',
-                                    'surname': 'Surname1'
-                                },
-                                {
-                                    'certdn': 'certdn2-dirac-durham',
-                                    'email': 'name2.surname2@durham.ac.uk',
-                                    'forename': 'Name2',
-                                    'role': 'Site Operations Manager',
-                                    'surname': 'Surname2'
-                                }
+                    {
+                        'certdn': 'certdn1-dirac-durham',
+                        'email': 'name1.surname1@durham.ac.uk',
+                        'forename': 'Name1',
+                        'role': 'Site Administrator',
+                        'surname': 'Surname1'
+                    },
+                    {
+                        'certdn': 'certdn2-dirac-durham',
+                        'email': 'name2.surname2@durham.ac.uk',
+                        'forename': 'Name2',
+                        'role': 'Site Operations Manager',
+                        'surname': 'Surname2'
+                    }
                 ],
                 'name': 'dirac-durham'
             },
             {
                 'contacts': [
-                                {
-                                    'certdn': 'certdn1-ru-sarfti',
-                                    'email': 'name1.surname1@gmail.com',
-                                    'forename': 'Name1',
-                                    'role': 'Site Administrator',
-                                    'surname': 'Surname1'
-                                },
-                                {
-                                    'certdn': 'certdn2-ru-sarfti',
-                                    'email': 'name2.surname2@gmail.com',
-                                    'forename': 'Name2',
-                                    'role': 'Site Administrator',
-                                    'surname': 'Surname2'
-                                },
+                    {
+                        'certdn': 'certdn1-ru-sarfti',
+                        'email': 'name1.surname1@gmail.com',
+                        'forename': 'Name1',
+                        'role': 'Site Administrator',
+                        'surname': 'Surname1'
+                    },
+                    {
+                        'certdn': 'certdn2-ru-sarfti',
+                        'email': 'name2.surname2@gmail.com',
+                        'forename': 'Name2',
+                        'role': 'Site Administrator',
+                        'surname': 'Surname2'
+                    },
                 ],
                 'name': 'RU-SARFTI'
             },
-
         ]
 
     def test_SitesAndContacts(self):
@@ -325,7 +324,7 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
         )
 
 
-class ParseServiceEndpointsCsv(unittest.TestCase):
+class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-topo.csv') as feed_file:
             self.content = feed_file.read()
@@ -336,7 +335,7 @@ class ParseServiceEndpointsCsv(unittest.TestCase):
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=True)
 
-    def test_CsvEndpoints(self):
+    def test_CsvTopology(self):
         group_groups = self.topology.get_groupgroups()
         self.assertEqual(group_groups,
             [
@@ -389,7 +388,7 @@ class ParseServiceEndpointsCsv(unittest.TestCase):
         )
 
 
-class ParseServiceEndpointsJson(unittest.TestCase):
+class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-topo.json') as feed_file:
             self.content = feed_file.read()
@@ -400,7 +399,7 @@ class ParseServiceEndpointsJson(unittest.TestCase):
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=False)
 
-    def test_JsonEndpoints(self):
+    def test_JsonTopology(self):
         group_groups = self.topology.get_groupgroups()
         self.assertEqual(group_groups,
             [
@@ -454,6 +453,75 @@ class ParseServiceEndpointsJson(unittest.TestCase):
         )
 
 
+class ParseServiceEndpointsBiomed(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-service_endpoint_biomed.xml') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
+        self.group_endpoints = parse_service_endpoints.get_group_endpoints()
+
+
+    def test_BiomedEndpoints(self):
+        self.assertEqual(self.group_endpoints,
+            [
+                {
+                    'group': 'HG-02-IASA',
+                    'hostname': 'cream-ce01.marie.hellasgrid.gr',
+                    'service': 'APEL',
+                    'tags': {
+                        'info_ID': '451G0',
+                        'monitored': '1',
+                        'production': '1',
+                        'scope': 'EGI'
+                    },
+                    'type': 'SITES'},
+                {
+                    'group': 'TR-10-ULAKBIM',
+                    'hostname': 'kalkan1.ulakbim.gov.tr',
+                    'service': 'APEL',
+                    'tags': {
+                        'info_HOSTDN': '/C=TR/O=TRGrid/OU=TUBITAK-ULAKBIM/CN=kalkan1.ulakbim.gov.tr',
+                        'info_ID': '375G0',
+                        'monitored': '1',
+                        'production': '1',
+                        'scope': 'EGI, wlcg, tier2, atlas'
+                    },
+                    'type': 'SITES'
+                }
+            ]
+        )
+
+class ParseSitesBiomed(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-sites_biomed.xml') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
+        self.group_groups = parse_sites.get_group_groups()
+
+
+    def test_BiomedSites(self):
+        self.assertEqual(self.group_groups,
+            [
+                {
+                    'group': 'NGI_FRANCE',
+                    'subgroup': 'AUVERGRID',
+                    'tags': {
+                        'certification': '', 'infrastructure': '', 'scope': ''
+                    },
+                    'type': 'NGI'
+                },
+                {
+                    'group': 'NGI_IT',
+                    'subgroup': 'CNR-ILC-PISA',
+                    'tags': {
+                        'certification': '', 'infrastructure': '', 'scope': ''
+                    },
+                    'type': 'NGI'
+                }
+            ]
+        )
 
 if __name__ == '__main__':
     unittest.main()
