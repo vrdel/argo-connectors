@@ -36,6 +36,7 @@ class ParseSites(ParseHelpers):
                     self._sites[site_name]['ngi'] = site.getAttribute('ROC')
                 self._sites[site_name]['scope'] = ', '.join(self.parse_scopes(site))
 
+                # biomed feed does not have extensions
                 if self.pass_extensions:
                     try:
                         extensions = self.parse_extensions(site.getElementsByTagName('EXTENSIONS')[0].childNodes)
@@ -56,11 +57,11 @@ class ParseSites(ParseHelpers):
             tmpg['type'] = 'NGI'
             tmpg['group'] = group['ngi']
             tmpg['subgroup'] = group['site']
-            tmpg['tags'] = {'certification': group['certification'],
+            tmpg['tags'] = {'certification': group.get('certification', ''),
                             'scope': group.get('scope', ''),
-                            'infrastructure': group['infrastructure']}
+                            'infrastructure': group.get('infrastructure', '')}
 
-            if self.pass_extensions:
+            if self.pass_extensions and 'extensions' in group:
                 for key, value in group['extensions'].items():
                     tmpg['tags'].update({
                         'info_ext_' + key: value

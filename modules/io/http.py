@@ -71,7 +71,6 @@ class SessionWithRetry(object):
                     async with method_obj(url, data=data, headers=headers,
                                           ssl=self.ssl_context, auth=self.custauth) as response:
                         content = await response.text()
-                        import ipdb; ipdb.set_trace()
                         if content:
                             if self.verbose_ret:
                                 return (content, response.headers, response.status)
