@@ -113,9 +113,12 @@ class ParseServiceEndpoints(ParseHelpers):
                     self._service_endpoints[service_id]['extensions'] = extensions
                 self._service_endpoints[service_id]['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing topology service endpoint feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
 
     def get_group_endpoints(self):
         group_list, groupofendpoints = list(), list()
