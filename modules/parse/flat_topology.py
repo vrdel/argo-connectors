@@ -75,7 +75,6 @@ class ParseFlatEndpoints(object):
         self.scope = scope if scope else project
 
 
-
     def get_groupgroups(self):
         try:
             groups = list()
@@ -99,8 +98,8 @@ class ParseFlatEndpoints(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             feedtype = 'CSV' if self.is_csv else 'JSON'
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
 
     def get_groupendpoints(self):
         try:
@@ -129,5 +128,5 @@ class ParseFlatEndpoints(object):
             return groups
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing CSV feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            msg = 'Customer:%s : Error parsing CSV feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
