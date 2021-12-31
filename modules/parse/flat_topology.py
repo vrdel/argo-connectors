@@ -63,16 +63,21 @@ class ParseContacts(object):
 class ParseFlatEndpoints(object):
     def __init__(self, logger, data, project, uidservtype=False,
                  fetchtype='ServiceGroups', is_csv=False, scope=None):
-        if is_csv:
-            self.data = csv_to_json(data)
-        else:
-            self.data = json.loads(data)
         self.uidservtype = uidservtype
         self.fetchtype = fetchtype
         self.logger = logger
         self.project = project
         self.is_csv = is_csv
         self.scope = scope if scope else project
+        try:
+            if is_csv:
+                self.data = csv_to_json(data)
+            else:
+                self.data = json.loads(data)
+        except json.JSONDecodeError as exc:
+            feedtype = 'CSV' if self.is_csv else 'JSON'
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
 
 
     def get_groupgroups(self):
@@ -128,5 +133,6 @@ class ParseFlatEndpoints(object):
             return groups
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            msg = 'Customer:%s : Error parsing CSV feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            feedtype = 'CSV' if self.is_csv else 'JSON'
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)

@@ -96,7 +96,6 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         # Assert proper exception is thrown if empty xml is given to the function
         with self.assertRaises(ConnectorParseError) as cm:
             ParseServiceEndpoints(logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
-
         excep = cm.exception
         self.assertTrue('XML feed' in excep.msg)
         self.assertTrue('ExpatError' in excep.msg)
@@ -453,9 +452,18 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
                     'type': 'SERVICEGROUPS'
                 }
             ]
-
         )
 
+    def test_Failed_JsonTopology(self):
+        with self.assertRaises(ConnectorParseError) as cm:
+            self.failed_topology = ParseFlatEndpoints(logger, '', CUSTOMER_NAME,
+                                                    uidservtype=True,
+                                                    fetchtype='ServiceGroups',
+                                                    scope=CUSTOMER_NAME,
+                                                    is_csv=False)
+        excep = cm.exception
+        self.assertTrue('JSON feed' in excep.msg)
+        self.assertTrue('JSONDecodeError' in excep.msg)
 
 class ParseServiceEndpointsBiomed(unittest.TestCase):
     def setUp(self):
@@ -496,6 +504,7 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
             ]
         )
 
+
 class ParseSitesBiomed(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-sites_biomed.xml') as feed_file:
@@ -503,7 +512,6 @@ class ParseSitesBiomed(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
         parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
         self.group_groups = parse_sites.get_group_groups()
-
 
     def test_BiomedSites(self):
         self.assertEqual(self.group_groups,
