@@ -100,6 +100,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         self.assertTrue('XML feed' in excep.msg)
         self.assertTrue('ExpatError' in excep.msg)
 
+
 class MeshSitesAndContacts(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
@@ -390,6 +391,17 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
             ]
         )
 
+    def test_FailedCsvTopology(self):
+        with self.assertRaises(ConnectorParseError) as cm:
+            self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA',
+                                                    CUSTOMER_NAME,
+                                                    uidservtype=True,
+                                                    fetchtype='ServiceGroups',
+                                                    scope=CUSTOMER_NAME,
+                                                    is_csv=True)
+        excep = cm.exception
+        self.assertTrue('CSV feed' in excep.msg)
+
 
 class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def setUp(self):
@@ -454,9 +466,9 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
             ]
         )
 
-    def test_Failed_JsonTopology(self):
+    def test_FailedJsonTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_topology = ParseFlatEndpoints(logger, '', CUSTOMER_NAME,
+            self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA', CUSTOMER_NAME,
                                                     uidservtype=True,
                                                     fetchtype='ServiceGroups',
                                                     scope=CUSTOMER_NAME,
@@ -464,6 +476,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
         excep = cm.exception
         self.assertTrue('JSON feed' in excep.msg)
         self.assertTrue('JSONDecodeError' in excep.msg)
+
 
 class ParseServiceEndpointsBiomed(unittest.TestCase):
     def setUp(self):

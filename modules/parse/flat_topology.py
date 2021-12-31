@@ -26,6 +26,8 @@ def csv_to_json(csvdata):
             num_item = num_item + 1
         results.append(datum)
 
+    if not results:
+        raise ConnectorParseError('Error parsing CSV feed - empty data')
     return results
 
 
@@ -74,11 +76,16 @@ class ParseFlatEndpoints(object):
                 self.data = csv_to_json(data)
             else:
                 self.data = json.loads(data)
+
         except json.JSONDecodeError as exc:
             feedtype = 'CSV' if self.is_csv else 'JSON'
             msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
+        except ConnectorParseError as exc:
+            feedtype = 'CSV' if self.is_csv else 'JSON'
+            msg = 'Customer:%s : %s' % (self.logger.customer, exc.msg)
+            raise ConnectorParseError(msg)
 
     def get_groupgroups(self):
         try:
