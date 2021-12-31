@@ -94,8 +94,12 @@ class ParseServiceEndpointsTest(unittest.TestCase):
 
     def test_ConnectorParseErrorException(self):
         # Assert proper exception is thrown if empty xml is given to the function
-        self.assertRaises(ConnectorParseError, ParseServiceEndpoints, logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        with self.assertRaises(ConnectorParseError) as cm:
+            ParseServiceEndpoints(logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
 
+        excep = cm.exception
+        self.assertTrue('XML feed' in excep.msg)
+        self.assertTrue('ExpatError' in excep.msg)
 
 class MeshSitesAndContacts(unittest.TestCase):
     def setUp(self):
