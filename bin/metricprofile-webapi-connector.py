@@ -144,7 +144,8 @@ def main():
 
                 logger.info('Customer:' + custname + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))
 
-            except (ConnectorHttpError, KeyboardInterrupt):
+            except (ConnectorHttpError, KeyboardInterrupt) as exc:
+                logger.error(repr(exc))
                 loop.run_until_complete(
                     write_state(cust, job, confcust, fixed_date, False)
                 )

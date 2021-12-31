@@ -182,6 +182,7 @@ def main():
                                                                       len(weights)))
 
         except (ConnectorHttpError, KeyboardInterrupt):
+            # TODO: print exception error msg
             for job, cust in jobcust:
                 loop.run_until_complete(
                     write_state(cust, job, confcust, fixed_date, False)
