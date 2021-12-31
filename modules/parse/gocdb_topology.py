@@ -1,4 +1,3 @@
-from xml.parsers.expat import ExpatError
 from argo_egi_connectors.parse.base import ParseHelpers
 from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.exceptions import ConnectorParseError
@@ -210,7 +209,7 @@ class ParseServiceGroups(ParseHelpers):
                         tmps['extensions'] = extensions
                     self._service_groups[group_id]['services'].append(tmps)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing service groups feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
