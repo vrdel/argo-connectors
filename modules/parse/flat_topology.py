@@ -1,6 +1,8 @@
 from urllib.parse import urlparse
 from argo_egi_connectors.utils import filename_date, module_class_name
 from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_egi_connectors.parse.base import ParseHelpers
+
 
 import csv
 import json
@@ -35,14 +37,14 @@ def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
 
-class ParseContacts(object):
+class ParseContacts(ParseHelpers):
     def __init__(self, logger, data, uidservtype=False, is_csv=False):
         self.logger = logger
         self.uidservtype = uidservtype
         if is_csv:
             self.data = csv_to_json(data)
         else:
-            self.data = json.loads(data)
+            self.data = self.parse_json(data)
 
     def get_contacts(self):
         contacts = list()
@@ -62,7 +64,7 @@ class ParseContacts(object):
         return contacts
 
 
-class ParseFlatEndpoints(object):
+class ParseFlatEndpoints(ParseHelpers):
     def __init__(self, logger, data, project, uidservtype=False,
                  fetchtype='ServiceGroups', is_csv=False, scope=None):
         self.uidservtype = uidservtype
@@ -75,17 +77,10 @@ class ParseFlatEndpoints(object):
             if is_csv:
                 self.data = csv_to_json(data)
             else:
-                self.data = json.loads(data)
-
-        except json.JSONDecodeError as exc:
-            feedtype = 'CSV' if self.is_csv else 'JSON'
-            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
-            raise ConnectorParseError(msg)
+                self.data = self.parse_json(data)
 
         except ConnectorParseError as exc:
-            feedtype = 'CSV' if self.is_csv else 'JSON'
-            msg = 'Customer:%s : %s' % (self.logger.customer, exc.msg)
-            raise ConnectorParseError(msg)
+            raise exc
 
     def get_groupgroups(self):
         try:
