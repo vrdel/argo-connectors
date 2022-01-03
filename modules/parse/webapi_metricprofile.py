@@ -2,17 +2,15 @@ import json
 from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.io.http import ConnectorHttpError
 from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_egi_connectors.parse.base import ParseHelpers
 
 
-class ParseMetricProfiles(object):
+class ParseMetricProfiles(ParseHelpers):
     def __init__(self, logger, data, target_profiles, namespace):
         self.logger = logger
         self.data = data
         self.target_profiles = target_profiles
         self.namespace = namespace
-
-    def parse_json(self, buf):
-        return json.loads(buf)
 
     def get_data(self):
         try:
