@@ -4,35 +4,6 @@ from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.parse.base import ParseHelpers
 
 
-import csv
-import json
-from io import StringIO
-
-
-def csv_to_json(csvdata):
-    data = StringIO(csvdata)
-    reader = csv.reader(data, delimiter=',')
-
-    num_row = 0
-    results = []
-    header = []
-    for row in reader:
-        if num_row == 0:
-            header = row
-            num_row = num_row + 1
-            continue
-        num_item = 0
-        datum = {}
-        for item in header:
-            datum[item] = row[num_item]
-            num_item = num_item + 1
-        results.append(datum)
-
-    if not results:
-        raise ConnectorParseError('Error parsing CSV feed - empty data')
-    return results
-
-
 def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
@@ -42,7 +13,7 @@ class ParseContacts(ParseHelpers):
         self.logger = logger
         self.uidservtype = uidservtype
         if is_csv:
-            self.data = csv_to_json(data)
+            self.data = self.csv_to_json(data)
         else:
             self.data = self.parse_json(data)
 
@@ -75,7 +46,7 @@ class ParseFlatEndpoints(ParseHelpers):
         self.scope = scope if scope else project
         try:
             if is_csv:
-                self.data = csv_to_json(data)
+                self.data = self.csv_to_json(data)
             else:
                 self.data = self.parse_json(data)
 

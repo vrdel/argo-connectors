@@ -1,9 +1,13 @@
 import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
+from io import StringIO
+
 from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.exceptions import ConnectorParseError
+
 import json
+import csv
 
 
 class ParseHelpers(object):
@@ -100,3 +104,27 @@ class ParseHelpers(object):
         except Exception as exc:
             msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
             raise ConnectorParseError(msg)
+
+    def csv_to_json(self, data):
+        data = StringIO(data)
+        reader = csv.reader(data, delimiter=',')
+
+        num_row = 0
+        results = []
+        header = []
+        for row in reader:
+            if num_row == 0:
+                header = row
+                num_row = num_row + 1
+                continue
+            num_item = 0
+            datum = {}
+            for item in header:
+                datum[item] = row[num_item]
+                num_item = num_item + 1
+            results.append(datum)
+
+        if not results:
+            raise ConnectorParseError('Error parsing CSV feed - empty data')
+        return results
+
