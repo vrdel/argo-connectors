@@ -40,7 +40,6 @@ class LDAPSessionWithRetry(object):
 
             else:
                 self.logger.error('LDAP Connection retry exhausted')
-                raise raised_exc
 
         except Exception as exc:
             self.logger.error('from {}.search() - {}'.format(module_class_name(self), repr(exc)))
