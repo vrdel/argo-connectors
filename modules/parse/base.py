@@ -125,6 +125,7 @@ class ParseHelpers(object):
             results.append(datum)
 
         if not results:
-            raise ConnectorParseError('Error parsing CSV feed - empty data')
+            msg = '{} Customer:{} : Error parsing CSV feed - empty data'.format(module_class_name(self), self.logger.customer)
+            raise ConnectorParseError(msg)
         return results
 
