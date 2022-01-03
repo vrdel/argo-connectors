@@ -67,7 +67,10 @@ class ParseHelpers(object):
     def parse_json(self, data):
         try:
             if data is None:
-                raise ConnectorParseError("{} Customer:{} : No JSON data fetched".format(module_class_name(self), self.logger.customer))
+                if getattr(self.logger, 'job', False):
+                    raise ConnectorParseError("{} Customer:{} Job:{} : No JSON data fetched".format(module_class_name(self), self.logger.customer, self.logger.job))
+                else:
+                    raise ConnectorParseError("{} Customer:{} : No JSON data fetched".format(module_class_name(self), self.logger.customer))
 
             return json.loads(data)
 
@@ -82,7 +85,11 @@ class ParseHelpers(object):
     def parse_xml(self, data):
         try:
             if data is None:
-                raise ConnectorParseError("{} Customer:{} : No XML data fetched".format(module_class_name(self), self.logger.customer))
+                if getattr(self.logger, 'job', False):
+                    raise ConnectorParseError("{} Customer:{} Job:{} : No XML data fetched".format(module_class_name(self), self.logger.customer, self.logger.job))
+                else:
+                    raise ConnectorParseError("{} Customer:{} : No XML data fetched".format(module_class_name(self), self.logger.customer))
+
 
             return xml.dom.minidom.parseString(data)
 
