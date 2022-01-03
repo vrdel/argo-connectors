@@ -66,7 +66,10 @@ class ParseHelpers(object):
 
     def parse_json(self, data):
         try:
-            doc = json.loads(data)
+            if data is None:
+                raise ConnectorParseError("{} Customer:{} : No JSON data fetched".format(module_class_name(self), self.logger.customer))
+
+            return json.loads(data)
 
         except ValueError as exc:
             msg = '{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
@@ -76,11 +79,11 @@ class ParseHelpers(object):
             msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
             raise ConnectorParseError(msg)
 
-        else:
-            return doc
-
     def parse_xml(self, data):
         try:
+            if data is None:
+                raise ConnectorParseError("{} Customer:{} : No XML data fetched".format(module_class_name(self), self.logger.customer))
+
             return xml.dom.minidom.parseString(data)
 
         except ExpatError as exc:
