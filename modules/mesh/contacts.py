@@ -24,6 +24,7 @@ def filter_dups_noemails(contact_list):
 
     return only_emails
 
+
 def attach_contacts_topodata(logger, contacts, topodata):
     updated_topodata = list()
     found_contacts = None

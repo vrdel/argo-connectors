@@ -94,7 +94,11 @@ class ParseServiceEndpointsTest(unittest.TestCase):
 
     def test_ConnectorParseErrorException(self):
         # Assert proper exception is thrown if empty xml is given to the function
-        self.assertRaises(ConnectorParseError, ParseServiceEndpoints, logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        with self.assertRaises(ConnectorParseError) as cm:
+            ParseServiceEndpoints(logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        excep = cm.exception
+        self.assertTrue('XML feed' in excep.msg)
+        self.assertTrue('ExpatError' in excep.msg)
 
 
 class MeshSitesAndContacts(unittest.TestCase):
@@ -387,6 +391,17 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
             ]
         )
 
+    def test_FailedCsvTopology(self):
+        with self.assertRaises(ConnectorParseError) as cm:
+            self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA',
+                                                    CUSTOMER_NAME,
+                                                    uidservtype=True,
+                                                    fetchtype='ServiceGroups',
+                                                    scope=CUSTOMER_NAME,
+                                                    is_csv=True)
+        excep = cm.exception
+        self.assertTrue('CSV feed' in excep.msg)
+
 
 class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def setUp(self):
@@ -449,8 +464,18 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
                     'type': 'SERVICEGROUPS'
                 }
             ]
-
         )
+
+    def test_FailedJsonTopology(self):
+        with self.assertRaises(ConnectorParseError) as cm:
+            self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA', CUSTOMER_NAME,
+                                                    uidservtype=True,
+                                                    fetchtype='ServiceGroups',
+                                                    scope=CUSTOMER_NAME,
+                                                    is_csv=False)
+        excep = cm.exception
+        self.assertTrue('JSON feed' in excep.msg)
+        self.assertTrue('JSONDecodeError' in excep.msg)
 
 
 class ParseServiceEndpointsBiomed(unittest.TestCase):
@@ -492,6 +517,7 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
             ]
         )
 
+
 class ParseSitesBiomed(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-sites_biomed.xml') as feed_file:
@@ -499,7 +525,6 @@ class ParseSitesBiomed(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
         parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
         self.group_groups = parse_sites.get_group_groups()
-
 
     def test_BiomedSites(self):
         self.assertEqual(self.group_groups,

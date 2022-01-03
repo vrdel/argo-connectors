@@ -1,4 +1,3 @@
-from xml.parsers.expat import ExpatError
 from argo_egi_connectors.parse.base import ParseHelpers
 from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.exceptions import ConnectorParseError
@@ -45,8 +44,11 @@ class ParseSites(ParseHelpers):
                         pass
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            msg = module_class_name(self) + ' Customer:%s : Error parsing sites feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
 
     def get_group_groups(self):
         group_list, groupofgroups = list(), list()
@@ -113,9 +115,12 @@ class ParseServiceEndpoints(ParseHelpers):
                     self._service_endpoints[service_id]['extensions'] = extensions
                 self._service_endpoints[service_id]['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing topology service endpoint feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
 
     def get_group_endpoints(self):
         group_list, groupofendpoints = list(), list()
@@ -204,9 +209,12 @@ class ParseServiceGroups(ParseHelpers):
                         tmps['extensions'] = extensions
                     self._service_groups[group_id]['services'].append(tmps)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing service groups feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
 
     def get_group_endpoints(self):
         group_list, groupofendpoints = list(), list()

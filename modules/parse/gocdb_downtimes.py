@@ -53,5 +53,9 @@ class ParseDowntimes(ParseHelpers):
 
             return filtered_downtimes
 
-        except (KeyError, IndexError, AttributeError, TypeError, AssertionError, ExpatError) as exc:
-            raise ConnectorParseError
+        except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as exc:
+            msg = '{} Customer:{} : Error parsing downtimes feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc

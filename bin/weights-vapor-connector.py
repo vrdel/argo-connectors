@@ -32,7 +32,7 @@ import uvloop
 import asyncio
 
 from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.exceptions import ConnectorHttpError
+from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -181,7 +181,8 @@ def main():
                                                                       jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
                                                                       len(weights)))
 
-        except (ConnectorHttpError, KeyboardInterrupt):
+        except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
+            logger.error(repr(exc))
             for job, cust in jobcust:
                 loop.run_until_complete(
                     write_state(cust, job, confcust, fixed_date, False)

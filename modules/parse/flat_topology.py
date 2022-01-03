@@ -1,46 +1,21 @@
 from urllib.parse import urlparse
 from argo_egi_connectors.utils import filename_date, module_class_name
 from argo_egi_connectors.exceptions import ConnectorParseError
-
-import csv
-import json
-from io import StringIO
-
-
-def csv_to_json(csvdata):
-    data = StringIO(csvdata)
-    reader = csv.reader(data, delimiter=',')
-
-    num_row = 0
-    results = []
-    header = []
-    for row in reader:
-        if num_row == 0:
-            header = row
-            num_row = num_row + 1
-            continue
-        num_item = 0
-        datum = {}
-        for item in header:
-            datum[item] = row[num_item]
-            num_item = num_item + 1
-        results.append(datum)
-
-    return results
+from argo_egi_connectors.parse.base import ParseHelpers
 
 
 def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
 
-class ParseContacts(object):
+class ParseContacts(ParseHelpers):
     def __init__(self, logger, data, uidservtype=False, is_csv=False):
         self.logger = logger
         self.uidservtype = uidservtype
         if is_csv:
-            self.data = csv_to_json(data)
+            self.data = self.csv_to_json(data)
         else:
-            self.data = json.loads(data)
+            self.data = self.parse_json(data)
 
     def get_contacts(self):
         contacts = list()
@@ -60,21 +35,23 @@ class ParseContacts(object):
         return contacts
 
 
-class ParseFlatEndpoints(object):
+class ParseFlatEndpoints(ParseHelpers):
     def __init__(self, logger, data, project, uidservtype=False,
                  fetchtype='ServiceGroups', is_csv=False, scope=None):
-        if is_csv:
-            self.data = csv_to_json(data)
-        else:
-            self.data = json.loads(data)
         self.uidservtype = uidservtype
         self.fetchtype = fetchtype
         self.logger = logger
         self.project = project
         self.is_csv = is_csv
         self.scope = scope if scope else project
+        try:
+            if is_csv:
+                self.data = self.csv_to_json(data)
+            else:
+                self.data = self.parse_json(data)
 
-
+        except ConnectorParseError as exc:
+            raise exc
 
     def get_groupgroups(self):
         try:
@@ -99,8 +76,8 @@ class ParseFlatEndpoints(object):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             feedtype = 'CSV' if self.is_csv else 'JSON'
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
 
     def get_groupendpoints(self):
         try:
@@ -129,5 +106,6 @@ class ParseFlatEndpoints(object):
             return groups
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + 'Customer:%s : Error parsing CSV feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise ConnectorParseError
+            feedtype = 'CSV' if self.is_csv else 'JSON'
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)

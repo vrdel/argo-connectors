@@ -1,8 +1,13 @@
 import xml.dom.minidom
 
 from xml.parsers.expat import ExpatError
+from io import StringIO
+
 from argo_egi_connectors.utils import module_class_name
+from argo_egi_connectors.exceptions import ConnectorParseError
+
 import json
+import csv
 
 
 class ParseHelpers(object):
@@ -65,170 +70,62 @@ class ParseHelpers(object):
 
     def parse_json(self, data):
         try:
-            doc = json.loads(data)
+            if data is None:
+                if getattr(self.logger, 'job', False):
+                    raise ConnectorParseError("{} Customer:{} Job:{} : No JSON data fetched".format(module_class_name(self), self.logger.customer, self.logger.job))
+                else:
+                    raise ConnectorParseError("{} Customer:{} : No JSON data fetched".format(module_class_name(self), self.logger.customer))
+
+            return json.loads(data)
 
         except ValueError as exc:
-            self.logger.error('{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
-            raise exc
+            msg = '{} Customer:{} : Error parsing JSON feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
+            raise ConnectorParseError(msg)
 
         except Exception as exc:
-            self.logger.error('{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc)))
-            raise exc
-
-        else:
-            return doc
+            msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
+            raise ConnectorParseError(msg)
 
     def parse_xml(self, data):
         try:
+            if data is None:
+                if getattr(self.logger, 'job', False):
+                    raise ConnectorParseError("{} Customer:{} Job:{} : No XML data fetched".format(module_class_name(self), self.logger.customer, self.logger.job))
+                else:
+                    raise ConnectorParseError("{} Customer:{} : No XML data fetched".format(module_class_name(self), self.logger.customer))
+
+
             return xml.dom.minidom.parseString(data)
 
         except ExpatError as exc:
             msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
-            self.logger.error(msg)
-            raise exc
+            raise ConnectorParseError(msg)
 
         except Exception as exc:
             msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
-            self.logger.error(msg)
-            raise exc
+            raise ConnectorParseError(msg)
 
+    def csv_to_json(self, data):
+        data = StringIO(data)
+        reader = csv.reader(data, delimiter=',')
 
-class ParseContacts(ParseHelpers):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        num_row = 0
+        results = []
+        header = []
+        for row in reader:
+            if num_row == 0:
+                header = row
+                num_row = num_row + 1
+                continue
+            num_item = 0
+            datum = {}
+            for item in header:
+                datum[item] = row[num_item]
+                num_item = num_item + 1
+            results.append(datum)
 
-    def _parse_contact(self, contacts_node, *attrs):
-        values = list()
-        for xml_attr in attrs:
-            value = contacts_node.getElementsByTagName(xml_attr)
-            if value and value[0].childNodes:
-                values.append(value[0].childNodes[0].nodeValue)
-            else:
-                values.append('')
-        return values
+        if not results:
+            msg = '{} Customer:{} : Error parsing CSV feed - empty data'.format(module_class_name(self), self.logger.customer)
+            raise ConnectorParseError(msg)
+        return results
 
-    def parse_contacts(self, data, root_node, child_node, topo_node):
-        interested = ('EMAIL', 'FORENAME', 'SURNAME', 'CERTDN', 'ROLE_NAME')
-
-        try:
-            data = list()
-            xml_data = self.parse_xml(self.data)
-            entities = xml_data.getElementsByTagName(root_node)
-            for entity in entities:
-                if entity.nodeName == root_node:
-                    emails = list()
-                    for entity_node in entity.childNodes:
-                        if entity_node.nodeName == child_node:
-                            contact = entity_node
-                            email, name, surname, certdn, role = self._parse_contact(contact, *interested)
-                            emails.append({
-                                'email': email,
-                                'forename': name,
-                                'surname': surname,
-                                'certdn': certdn,
-                                'role': role
-                            })
-                        if entity_node.nodeName == topo_node:
-                            entity_name = entity_node.childNodes[0].nodeValue
-                data.append({
-                    'name': entity_name,
-                    'contacts': emails
-                })
-
-            return data
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
-
-    def parse_sites_with_contacts(self, data):
-        try:
-            sites_contacts = list()
-            xml_data = self.parse_xml(data)
-            elements = xml_data.getElementsByTagName('SITE')
-            for element in elements:
-                sitename, contact = None, None
-                for child in element.childNodes:
-                    if child.nodeName == 'CONTACT_EMAIL' and child.childNodes:
-                        contact = child.childNodes[0].nodeValue
-                    if child.nodeName == 'SHORT_NAME' and child.childNodes:
-                        sitename = child.childNodes[0].nodeValue
-                if contact:
-                    if ';' in contact:
-                        lcontacts = list()
-                        for single_contact in contact.split(';'):
-                            lcontacts.append(single_contact)
-                        sites_contacts.append({
-                            'name': sitename,
-                            'contacts': lcontacts
-                        })
-                    else:
-                        sites_contacts.append({
-                            'name': sitename,
-                            'contacts': [contact]
-                        })
-            return sites_contacts
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
-
-    def parse_servicegroups_with_contacts(self, data):
-        return self.parse_servicegroup_contacts(data)
-
-    def parse_servicegroup_contacts(self, data):
-        try:
-            endpoints_contacts = list()
-            xml_data = self.parse_xml(data)
-            elements = xml_data.getElementsByTagName('SERVICE_GROUP')
-            for element in elements:
-                name, contact = None, None
-                for child in element.childNodes:
-                    if child.nodeName == 'NAME' and child.childNodes:
-                        name = child.childNodes[0].nodeValue
-                    if child.nodeName == 'CONTACT_EMAIL' and child.childNodes:
-                        contact = child.childNodes[0].nodeValue
-                if contact and name:
-                    endpoints_contacts.append({
-                        'name': name,
-                        'contacts': [contact]
-                    })
-            return endpoints_contacts
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
-
-    def parse_serviceendpoint_contacts(self, data):
-        try:
-            endpoints_contacts = list()
-            xml_data = self.parse_xml(data)
-            elements = xml_data.getElementsByTagName('SERVICE_ENDPOINT')
-            for element in elements:
-                fqdn, contact, servtype = None, None, None
-                for child in element.childNodes:
-                    if child.nodeName == 'HOSTNAME' and child.childNodes:
-                        fqdn = child.childNodes[0].nodeValue
-                    if child.nodeName == 'CONTACT_EMAIL' and child.childNodes:
-                        contact = child.childNodes[0].nodeValue
-                    if child.nodeName == 'SERVICE_TYPE' and child.childNodes:
-                        servtype = child.childNodes[0].nodeValue
-                if contact:
-                    if ';' in contact:
-                        lcontacts = list()
-                        for single_contact in contact.split(';'):
-                            lcontacts.append(single_contact)
-                        endpoints_contacts.append({
-                            'name': '{}+{}'.format(fqdn, servtype),
-                            'contacts': lcontacts
-                        })
-                    else:
-                        endpoints_contacts.append({
-                            'name': '{}+{}'.format(fqdn, servtype),
-                            'contacts': [contact]
-                        })
-            return endpoints_contacts
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc

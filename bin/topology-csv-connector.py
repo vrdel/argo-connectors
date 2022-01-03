@@ -37,7 +37,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.exceptions import ConnectorHttpError
+from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
@@ -179,15 +179,12 @@ def main():
         # fetch topology data concurrently in coroutines
         fetched_topology = loop.run_until_complete(fetch_data(topofeed, auth_opts))
 
-        try:
-            group_groups, group_endpoints = parse_source_topo(fetched_topology,
-                                                              custname,
-                                                              uidservtype)
-            contacts = ParseContacts(logger, fetched_topology, uidservtype, is_csv=True).get_contacts()
-            attach_contacts_topodata(logger, contacts, group_endpoints)
+        group_groups, group_endpoints = parse_source_topo(fetched_topology,
+                                                            custname,
+                                                            uidservtype)
+        contacts = ParseContacts(logger, fetched_topology, uidservtype, is_csv=True).get_contacts()
+        attach_contacts_topodata(logger, contacts, group_endpoints)
 
-        except Exception as exc:
-            raise ConnectorHttpError
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
@@ -212,7 +209,8 @@ def main():
 
         logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-    except ConnectorHttpError:
+    except (ConnectorHttpError, ConnectorParseError) as exc:
+        logger.error(repr(exc))
         loop.run_until_complete(
             write_state(confcust, fixed_date, False )
         )
