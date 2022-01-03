@@ -35,11 +35,11 @@ class LDAPSessionWithRetry(object):
                     await asyncio.sleep(float(self.retry_sleep_list[n - 1]))
                     raised_exc = exc
 
-                self.logger.info(f'Connection try - {n}')
+                self.logger.info(f'LDAP Connection try - {n}')
                 n += 1
 
             else:
-                self.logger.error('Connection retry exhausted')
+                self.logger.error('LDAP Connection retry exhausted')
                 raise raised_exc
 
         except Exception as exc:

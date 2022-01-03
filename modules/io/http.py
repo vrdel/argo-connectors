@@ -77,7 +77,7 @@ class SessionWithRetry(object):
                             else:
                                 return content
                         else:
-                            raise ConnectorParseError('Empty response')
+                            raise ConnectorParseError('HTTP Empty response')
 
                 # do not retry on SSL errors, exit immediately
                 except ssl.SSLError as exc:
@@ -88,12 +88,11 @@ class SessionWithRetry(object):
                     await asyncio.sleep(float(self.globopts['ConnectionSleepRetry'.lower()]))
                     raised_exc = exc
 
-                self.logger.info(f'Connection try - {n}')
+                self.logger.info(f'HTTP Connection try - {n}')
                 n += 1
 
             else:
-                self.logger.error('Connection retry exhausted')
-                raise raised_exc
+                self.logger.error('HTTP Connection retry exhausted')
 
         except Exception as exc:
             self.logger.error('from {}.http_{}({}) - {}'.format(module_class_name(self), method, url, repr(exc)))
