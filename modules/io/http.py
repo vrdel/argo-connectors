@@ -77,7 +77,7 @@ class SessionWithRetry(object):
                             else:
                                 return content
                         else:
-                            raise ConnectorParseError('HTTP Empty response')
+                            self.logger.warn('HTTP Empty response')
 
                 # do not retry on SSL errors, exit immediately
                 except ssl.SSLError as exc:
