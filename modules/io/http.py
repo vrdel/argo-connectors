@@ -77,25 +77,52 @@ class SessionWithRetry(object):
                             else:
                                 return content
                         else:
-                            self.logger.warn('HTTP Empty response')
+                            if getattr(self.logger, 'job', False):
+                                self.logger.warn("{} Customer:{} Job:{} : HTTP Empty response".format(module_class_name(self),
+                                                                                                      self.logger.customer, self.logger.job))
+                            else:
+                                self.logger.warn("{} Customer:{} : HTTP Empty response".format(module_class_name(self),
+                                                                                               self.logger.customer))
 
-                # do not retry on SSL errors, exit immediately
+                # do not retry on SSL errors
                 except ssl.SSLError as exc:
                     raise exc
 
                 except Exception as exc:
-                    self.logger.error('from {}.http_{}({}) - {}'.format(module_class_name(self), method, url, repr(exc)))
-                    await asyncio.sleep(float(self.globopts['ConnectionSleepRetry'.lower()]))
+                    if getattr(self.logger, 'job', False):
+                        self.logger.error('{}.http_{}({}) Customer:{} Job:{} - {}'.format(module_class_name(self),
+                                                                                          method, url, self.logger.customer,
+                                                                                          self.logger.job, repr(exc)))
+                    else:
+                        self.logger.error('{}.http_{}({}) Customer:{} - {}'.format(module_class_name(self),
+                                                                                   method, url, self.logger.customer,
+                                                                                   repr(exc)))
                     raised_exc = exc
 
-                self.logger.info(f'HTTP Connection try - {n}')
+                if getattr(self.logger, 'job', False):
+                    self.logger.info(f"{module_class_name(self)} Customer:{self.logger.customer} Job:{self.logger.job} : HTTP Connection try - {n}")
+                else:
+                    self.logger.info(f"{module_class_name(self)} Customer:{self.logger.customer} : HTTP Connection try - {n}")
+                await asyncio.sleep(float(self.globopts['ConnectionSleepRetry'.lower()]))
                 n += 1
 
             else:
-                self.logger.error('HTTP Connection retry exhausted')
+                if getattr(self.logger, 'job', False):
+                    self.logger.info("{} Customer:{} Job:{} : HTTP Connection retry exhausted".format(module_class_name(self),
+                                                                                                       self.logger.customer, self.logger.job))
+                else:
+                    self.logger.info("{} Customer:{} : HTTP Connection retry exhausted".format(module_class_name(self),
+                                                                                               self.logger.customer))
 
         except Exception as exc:
-            self.logger.error('from {}.http_{}({}) - {}'.format(module_class_name(self), method, url, repr(exc)))
+            if getattr(self.logger, 'job', False):
+                self.logger.error('{}.http_{}({}) Customer:{} Job:{} - {}'.format(module_class_name(self),
+                                                                                  method, url, self.logger.customer,
+                                                                                  self.logger.job, repr(exc)))
+            else:
+                self.logger.error('{}.http_{}({}) Customer:{} - {}'.format(module_class_name(self),
+                                                                           method, url, self.logger.customer,
+                                                                           repr(exc)))
             raise ConnectorHttpError()
 
         finally:
