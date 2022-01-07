@@ -186,7 +186,7 @@ def main():
 
         logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
 
-    except (ConnectorHttpError, ConnectorParseError) as exc:
+    except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
             write_state(confcust, fixed_date, False )
