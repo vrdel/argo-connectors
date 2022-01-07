@@ -66,7 +66,14 @@ class SessionWithRetry(object):
                 'Accept': 'application/json'
             })
         try:
+            sleepsecs = float(self.globopts['ConnectionSleepRetry'.lower()])
+
             while n <= self.n_try:
+                if n > 1:
+                    if getattr(self.logger, 'job', False):
+                        self.logger.info(f"{module_class_name(self)} Customer:{self.logger.customer} Job:{self.logger.job} : HTTP Connection try - {n} after sleep {sleepsecs} seconds")
+                    else:
+                        self.logger.info(f"{module_class_name(self)} Customer:{self.logger.customer} : HTTP Connection try - {n} after sleep {sleepsecs} seconds")
                 try:
                     async with method_obj(url, data=data, headers=headers,
                                           ssl=self.ssl_context, auth=self.custauth) as response:
@@ -99,11 +106,7 @@ class SessionWithRetry(object):
                                                                                    repr(exc)))
                     raised_exc = exc
 
-                if getattr(self.logger, 'job', False):
-                    self.logger.info(f"{module_class_name(self)} Customer:{self.logger.customer} Job:{self.logger.job} : HTTP Connection try - {n}")
-                else:
-                    self.logger.info(f"{module_class_name(self)} Customer:{self.logger.customer} : HTTP Connection try - {n}")
-                await asyncio.sleep(float(self.globopts['ConnectionSleepRetry'.lower()]))
+                await asyncio.sleep(sleepsecs)
                 n += 1
 
             else:
