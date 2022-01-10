@@ -196,8 +196,8 @@ async def fetch_data(api, auth_opts, paginated):
         while count != 0:
             session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
                                        globopts, custauth=auth_opts)
-            res = await session.http_get( '{}&next_cursor={}'.format(api,
-                                                                     cursor))
+            res = await session.http_get('{}&next_cursor={}'.format(api,
+                                                                    cursor))
             count, cursor = find_next_paging_cursor_count(res)
             fetched_data.append(res)
         return filter_multiple_tags(''.join(fetched_data))
