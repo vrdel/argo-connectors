@@ -1,11 +1,13 @@
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.log import Logger
 
-from aiohttp import web
 from functools import wraps
 
 import asyncio
 import unittest
+import mock
+
+from mock import AsyncMock
 
 logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -21,7 +23,11 @@ def async_test(f):
     return g
 
 
+
+
 class ConnectorsHttpRetry(unittest.TestCase):
+    ret_http = AsyncMock(return_value='foo')
+
     @classmethod
     def setUpClass(cls):
         # you probably have some existing code above here
@@ -48,12 +54,15 @@ class ConnectorsHttpRetry(unittest.TestCase):
         async def setsession():
             self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts)
 
+
         self.loop.run_until_complete(setsession())
 
+    @mock.patch('argo_egi_connectors.io.http.SessionWithRetry._http_method', side_effect=ret_http)
     @async_test
-    async def test_WeightsRetry(self):
+    async def test_WeightsRetry(self, mocked_http_method):
         path='/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
+        self.assertTrue(mocked_http_method.called)
 
     def tearDown(self):
         async def run():
