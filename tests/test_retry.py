@@ -50,7 +50,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
             'authenticationuseplainhttpauth': 'False',
             'authenticationverifyservercert': 'True', 'avroschemasweights':
             '/etc/argo-egi-connectors/schemas//weight_sites.avsc',
-            'connectionretry': '3', 'connectionsleepretry': '15',
+            'connectionretry': '3', 'connectionsleepretry': '1',
             'connectiontimeout': '180', 'generalpassextensions': 'True',
             'generalpublishwebapi': 'False', 'generalwriteavro': 'True',
             'inputstatedays': '3', 'inputstatesavedir':
@@ -69,6 +69,8 @@ class ConnectorsHttpRetry(unittest.TestCase):
         path='/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
         self.assertTrue(mocked_get.called)
+        # defined in connectionretry
+        self.assertEqual(mocked_get.call_count, 3)
 
     def tearDown(self):
         async def run():
