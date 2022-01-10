@@ -23,11 +23,17 @@ def async_test(f):
     return g
 
 
+class retHttpGetEmpty(AsyncMock):
+    async def __aenter__(self, *args, **kwargs):
+        mock_obj = AsyncMock()
+        mock_obj.text.return_value = ''
+        return mock_obj
+
+    async def __aexit__(self, *args, **kwargs):
+        pass
 
 
 class ConnectorsHttpRetry(unittest.TestCase):
-    ret_http = AsyncMock(return_value='foo')
-
     @classmethod
     def setUpClass(cls):
         # you probably have some existing code above here
@@ -57,12 +63,12 @@ class ConnectorsHttpRetry(unittest.TestCase):
 
         self.loop.run_until_complete(setsession())
 
-    @mock.patch('argo_egi_connectors.io.http.SessionWithRetry._http_method', side_effect=ret_http)
+    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=retHttpGetEmpty)
     @async_test
-    async def test_WeightsRetry(self, mocked_http_method):
+    async def test_WeightsRetry(self, mocked_get):
         path='/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
-        self.assertTrue(mocked_http_method.called)
+        self.assertTrue(mocked_get.called)
 
     def tearDown(self):
         async def run():
