@@ -36,7 +36,6 @@ class retHttpGetEmpty(AsyncMock):
 class ConnectorsHttpRetry(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # you probably have some existing code above here
         cls.loop = asyncio.get_event_loop()
 
     def setUp(self):
@@ -59,8 +58,6 @@ class ConnectorsHttpRetry(unittest.TestCase):
         }
         async def setsession():
             self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts)
-
-
         self.loop.run_until_complete(setsession())
 
     @mock.patch('aiohttp_retry.RetryClient.get', side_effect=retHttpGetEmpty)
