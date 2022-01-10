@@ -65,12 +65,13 @@ class ConnectorsHttpRetry(unittest.TestCase):
 
     @mock.patch('aiohttp_retry.RetryClient.get', side_effect=retHttpGetEmpty)
     @async_test
-    async def test_WeightsRetry(self, mocked_get):
-        path='/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
+    async def test_ConnectorRetry(self, mocked_get):
+        path='/url_path'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
         self.assertTrue(mocked_get.called)
         # defined in connectionretry
         self.assertEqual(mocked_get.call_count, 3)
+        self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
 
     def tearDown(self):
         async def run():
