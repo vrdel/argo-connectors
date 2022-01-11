@@ -13,14 +13,15 @@ logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
 
-def async_test(f):
+def async_test(test_method):
     """
     Decorator to create asyncio context for asyncio methods or functions.
     """
-    @wraps(f)
-    def g(*args, **kwargs):
-        args[0].loop.run_until_complete(f(*args, **kwargs))
-    return g
+    @wraps(test_method)
+    def wrapper(*args, **kwargs):
+        test_obj = args[0]
+        test_obj.loop.run_until_complete(test_method(*args, **kwargs))
+    return wrapper
 
 
 class retHttpGetEmpty(AsyncMock):
