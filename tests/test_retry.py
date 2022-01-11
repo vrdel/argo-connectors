@@ -46,11 +46,8 @@ class mockConnectionProblem(mock.AsyncMock):
 
 
 class ConnectorsHttpRetry(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.loop = asyncio.get_event_loop()
-
     def setUp(self):
+        self.loop = asyncio.get_event_loop()
         logger.customer = CUSTOMER_NAME
         self.globopts = {
             'authenticationcafile': '/etc/pki/tls/certs/ca-bundle.crt',
@@ -96,5 +93,3 @@ class ConnectorsHttpRetry(unittest.TestCase):
         async def run():
             await self.session.close()
         self.loop.run_until_complete(run())
-        self.loop.close()
-
