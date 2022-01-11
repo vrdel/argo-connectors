@@ -5,6 +5,7 @@ import ssl
 import xml.dom.minidom
 
 from aiohttp_retry import RetryClient, ExponentialRetry, ListRetry
+from aiohttp import client_exceptions, http_exceptions
 from argo_egi_connectors.utils import module_class_name
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 
@@ -94,7 +95,7 @@ class SessionWithRetry(object):
                 except ssl.SSLError as exc:
                     raise exc
 
-                except Exception as exc:
+                except (client_exceptions.ClientError) as exc:
                     if getattr(self.logger, 'job', False):
                         self.logger.error('{}.http_{}({}) Customer:{} Job:{} - {}'.format(module_class_name(self),
                                                                                           method, url, self.logger.customer,
@@ -104,6 +105,18 @@ class SessionWithRetry(object):
                                                                                    method, url, self.logger.customer,
                                                                                    repr(exc)))
                     raised_exc = exc
+
+                # do not retry on HTTP protocol errors
+                except (http_exceptions.HttpProcessingError) as exc:
+                    if getattr(self.logger, 'job', False):
+                        self.logger.error('{}.http_{}({}) Customer:{} Job:{} - {}'.format(module_class_name(self),
+                                                                                          method, url, self.logger.customer,
+                                                                                          self.logger.job, repr(exc)))
+                    else:
+                        self.logger.error('{}.http_{}({}) Customer:{} - {}'.format(module_class_name(self),
+                                                                                   method, url, self.logger.customer,
+                                                                                   repr(exc)))
+                    raise exc
 
                 await asyncio.sleep(sleepsecs)
                 n += 1
