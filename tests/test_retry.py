@@ -3,11 +3,13 @@ import mock
 import asyncio
 
 from aiohttp import client_exceptions
+from aiohttp import http_exceptions
 
 from functools import wraps
 
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.log import Logger
+from argo_egi_connectors.exceptions import ConnectorHttpError
 
 
 logger = Logger('test_topofeed.py')
@@ -40,6 +42,15 @@ class mockConnectionProblem(mock.AsyncMock):
         mock_obj = mock.AsyncMock()
         mock_oserror = mock.create_autospec(OSError)
         mock_obj.text.side_effect = client_exceptions.ClientConnectorError('mocked key', mock_oserror)
+        return mock_obj
+    async def __aexit__(self, *args, **kwargs):
+        pass
+
+
+class mockProtocolProblem(mock.AsyncMock):
+    async def __aenter__(self, *args, **kwargs):
+        mock_obj = mock.AsyncMock()
+        mock_obj.text.side_effect = http_exceptions.HttpBadRequest('mocked bad HTTP request')
         return mock_obj
     async def __aexit__(self, *args, **kwargs):
         pass
@@ -87,7 +98,20 @@ class ConnectorsHttpRetry(unittest.TestCase):
         path='/url_path'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
         self.assertTrue(mocked_get.called)
-        # defined in connectionretry
+        self.assertEqual(mocked_get.call_count, 3)
+        self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
+
+    # @unittest.skip("demonstrating skipping")
+    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockProtocolProblem)
+    @async_test
+    async def test_ConnectorProtocolError(self, mocked_protocolerror):
+        path='/url_path'
+        with self.assertRaises(ConnectorHttpError) as cm:
+            res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
+        excep = cm.exception
+        self.assertIsInstance(excep, ConnectorHttpError)
+        self.assertTrue(mocked_protocolerror.called)
+        self.assertEqual(mocked_protocolerror.call_count, 1)
 
     def tearDown(self):
         async def run():
