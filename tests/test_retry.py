@@ -1,13 +1,13 @@
+import unittest
+import mock
+import asyncio
+
+from mock import AsyncMock
+from functools import wraps
+
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.log import Logger
 
-from functools import wraps
-
-import asyncio
-import unittest
-import mock
-
-from mock import AsyncMock
 
 logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
