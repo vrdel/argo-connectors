@@ -13,23 +13,23 @@ logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
 
-def async_test(test_method):
+class async_test(object):
     """
     Decorator to create asyncio context for asyncio methods or functions.
     """
-    @wraps(test_method)
-    def wrapper(*args, **kwargs):
+    def __init__(self, test_method):
+        self.test_method = test_method
+
+    def __call__(self, *args, **kwargs):
         test_obj = args[0]
-        test_obj.loop.run_until_complete(test_method(*args, **kwargs))
-    return wrapper
+        test_obj.loop.run_until_complete(self.test_method(*args, **kwargs))
 
 
-class retHttpGetEmpty(AsyncMock):
+class mockHttpGetEmpty(AsyncMock):
     async def __aenter__(self, *args, **kwargs):
         mock_obj = AsyncMock()
         mock_obj.text.return_value = ''
         return mock_obj
-
     async def __aexit__(self, *args, **kwargs):
         pass
 
@@ -61,7 +61,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
             self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts)
         self.loop.run_until_complete(setsession())
 
-    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=retHttpGetEmpty)
+    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockHttpGetEmpty)
     @async_test
     async def test_ConnectorRetry(self, mocked_get):
         path='/url_path'
