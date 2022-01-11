@@ -1,5 +1,4 @@
 import aiohttp
-import aiohttp.client_exceptions
 import asyncio
 import time
 import ssl
