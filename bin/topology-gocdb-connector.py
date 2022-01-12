@@ -266,9 +266,9 @@ async def fetch_ldap_data(host, port, base, filter, attributes):
 def contains_exception(list):
     for a in list:
         if isinstance(a, Exception):
-            return True
+            return (True, a)
 
-    return False
+    return (False, None)
 
 
 def main():
@@ -326,9 +326,9 @@ def main():
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
 
-        import ipdb; ipdb.set_trace()
-        if contains_exception(contacts):
-            raise ConnectorHttpError
+        exc_raised, exc = contains_exception(contacts)
+        if exc_raised:
+            raise ConnectorHttpError(repr(exc))
 
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
         parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
@@ -397,8 +397,9 @@ def main():
         elif 'servicegroups' in topofetchtype:
             fetched_servicegroups = fetched_topology[1]
 
-        if contains_exception(fetched_topology):
-            raise ConnectorHttpError
+        exc_raised, exc = contains_exception(fetched_topology)
+        if exc_raised:
+            raise ConnectorHttpError(repr(exc))
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
