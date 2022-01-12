@@ -265,7 +265,7 @@ async def fetch_ldap_data(host, port, base, filter, attributes):
 
 def contains_exception(list):
     for a in list:
-        if isinstance(a, Exception):
+        if isinstance(a, BaseException) or isinstance(a, Exception):
             return True
 
     return False
@@ -325,8 +325,13 @@ def main():
             fetch_data(topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
+
+        if contains_exception(contacts):
+            raise ConnectorHttpError
+
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
         parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
+
 
     except (ConnectorHttpError, ConnectorParseError) as exc:
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
