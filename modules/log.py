@@ -44,7 +44,7 @@ class Logger:
         self.logger = logging.getLogger(self.connector)
 
     def warn(self, msg):
-        self.logger.warn(msg)
+        self.logger.warning(msg)
 
     def critical(self, msg):
         self.logger.critical(msg)
