@@ -27,13 +27,13 @@ def build_connection_retry_settings(globopts):
 
 
 class SessionWithRetry(object):
-    def __init__(self, logger, globopts, token=None, custauth=None,
+    def __init__(self, logger, msgprefix, globopts, token=None, custauth=None,
                  verbose_ret=False, handle_session_close=False):
         self.ssl_context = build_ssl_settings(globopts)
         n_try, client_timeout = build_connection_retry_settings(globopts)
         client_timeout = aiohttp.ClientTimeout(total=client_timeout,
-                                               connect=None, sock_connect=None,
-                                               sock_read=None)
+                                               connect=client_timeout, sock_connect=client_timeout,
+                                               sock_read=client_timeout)
         self.session = ClientSession(timeout=client_timeout)
         self.n_try = n_try
         self.logger = logger
