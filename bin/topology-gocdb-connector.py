@@ -265,7 +265,7 @@ async def fetch_ldap_data(host, port, base, filter, attributes):
 
 def contains_exception(list):
     for a in list:
-        if isinstance(a, BaseException) or isinstance(a, Exception):
+        if isinstance(a, Exception):
             return True
 
     return False
@@ -326,6 +326,7 @@ def main():
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
 
+        import ipdb; ipdb.set_trace()
         if contains_exception(contacts):
             raise ConnectorHttpError
 

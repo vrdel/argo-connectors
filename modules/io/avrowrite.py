@@ -6,7 +6,7 @@ import aiofiles
 from io import BytesIO
 
 
-class AvroWriteException(BaseException):
+class AvroWriteException(Exception):
     pass
 
 
