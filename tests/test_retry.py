@@ -95,7 +95,8 @@ class ConnectorsHttpRetry(unittest.TestCase):
     @async_test
     async def test_ConnectorEmptyRetry(self, mocked_get):
         path='/url_path'
-        res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
+        with self.assertRaises(ConnectorHttpError) as cm:
+            res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
         self.assertTrue(mocked_get.called)
         # defined in connectionretry
         self.assertEqual(mocked_get.call_count, 3)
@@ -106,7 +107,8 @@ class ConnectorsHttpRetry(unittest.TestCase):
     @async_test
     async def test_ConnectorConnectionRetry(self, mocked_get):
         path='/url_path'
-        res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
+        with self.assertRaises(ConnectorHttpError) as cm:
+            res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
         self.assertTrue(mocked_get.called)
         self.assertEqual(mocked_get.call_count, 3)
         self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
