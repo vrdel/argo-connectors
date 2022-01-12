@@ -88,4 +88,3 @@ def attach_sepath_topodata(logger, bdii_opts, bdiidata, group_endpoints):
                 endpoint['tags'].update({
                     'vo_{}_attr_SE_PATH'.format(voname): sepath
                 })
-

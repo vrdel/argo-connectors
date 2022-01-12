@@ -92,9 +92,11 @@ class SessionWithRetry(object):
                                                                                                self.logger.customer))
 
                 # do not retry on SSL errors
+                # raise exc that will be handled in outer try/except clause
                 except ssl.SSLError as exc:
                     raise exc
 
+                # retry on client errors
                 except (client_exceptions.ClientError) as exc:
                     if getattr(self.logger, 'job', False):
                         self.logger.error('{}.http_{}({}) Customer:{} Job:{} - {}'.format(module_class_name(self),
@@ -107,6 +109,7 @@ class SessionWithRetry(object):
                     raised_exc = exc
 
                 # do not retry on HTTP protocol errors
+                # raise exc that will be handled in outer try/except clause
                 except (http_exceptions.HttpProcessingError) as exc:
                     if getattr(self.logger, 'job', False):
                         self.logger.error('{}.http_{}({}) Customer:{} Job:{} - {}'.format(module_class_name(self),

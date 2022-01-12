@@ -56,6 +56,16 @@ class mockProtocolProblem(mock.AsyncMock):
         pass
 
 
+class mockHttpAcceptableStatuses(mock.AsyncMock):
+    async def __aenter__(self, *args, **kwargs):
+        mock_obj = mock.AsyncMock()
+        mock_obj.text.return_value = 'mocked response data'
+        mock_obj.status.return_value = 202
+        return mock_obj
+    async def __aexit__(self, *args, **kwargs):
+        pass
+
+
 class ConnectorsHttpRetry(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
@@ -80,7 +90,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
             self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts)
         self.loop.run_until_complete(setsession())
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockHttpGetEmpty)
     @async_test
     async def test_ConnectorEmptyRetry(self, mocked_get):
@@ -91,7 +101,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertEqual(mocked_get.call_count, 3)
         self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockConnectionProblem)
     @async_test
     async def test_ConnectorConnectionRetry(self, mocked_get):
@@ -101,7 +111,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertEqual(mocked_get.call_count, 3)
         self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockProtocolProblem)
     @async_test
     async def test_ConnectorProtocolError(self, mocked_protocolerror):
@@ -112,6 +122,15 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertIsInstance(excep, ConnectorHttpError)
         self.assertTrue(mocked_protocolerror.called)
         self.assertEqual(mocked_protocolerror.call_count, 1)
+
+    # @unittest.skip("demonstrating skipping")
+    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockHttpAcceptableStatuses)
+    @async_test
+    async def test_ConnectorHttpAcceptable(self, mocked_httpstatuses):
+        path='/url_path'
+        res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
+        import ipdb; ipdb.set_trace()
+        self.assertTrue(mocked_httpstatuses.called)
 
     def tearDown(self):
         async def run():
