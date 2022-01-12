@@ -93,7 +93,9 @@ class SessionWithRetry(object):
                     raise exc
 
                 # retry on client errors
-                except (client_exceptions.ClientError) as exc:
+                except (client_exceptions.ClientError,
+                        client_exceptions.ServerTimeoutError,
+                        asyncio.TimeoutError) as exc:
                     if getattr(self.logger, 'job', False):
                         self.logger.error('{}.http_{}({}) Customer:{} Job:{} - {}'.format(module_class_name(self),
                                                                                           method, url, self.logger.customer,
@@ -136,45 +138,28 @@ class SessionWithRetry(object):
                 self.logger.error('{}.http_{}({}) Customer:{} - {}'.format(module_class_name(self),
                                                                            method, url, self.logger.customer,
                                                                            repr(exc)))
-            raise ConnectorHttpError()
 
         finally:
             if not self.handle_session_close:
                 await self.session.close()
 
     async def http_get(self, url, headers=None):
-        try:
-            content = await self._http_method('get', url, headers=headers)
-            return content
-
-        except Exception as exc:
-            raise exc
+        content = await self._http_method('get', url, headers=headers)
+        return content
 
     async def http_put(self, url, data, headers=None):
-        try:
-            content = await self._http_method('put', url, data=data,
-                                              headers=headers)
-            return content
-
-        except Exception as exc:
-            raise exc
+        content = await self._http_method('put', url, data=data,
+                                            headers=headers)
+        return content
 
     async def http_post(self, url, data, headers=None):
-        try:
-            content = await self._http_method('post', url, data=data,
-                                              headers=headers)
-            return content
-
-        except Exception as exc:
-            raise exc
+        content = await self._http_method('post', url, data=data,
+                                            headers=headers)
+        return content
 
     async def http_delete(self, url, headers=None):
-        try:
-            content = await self._http_method('delete', url, headers=headers)
-            return content
-
-        except Exception as exc:
-            raise exc
+        content = await self._http_method('delete', url, headers=headers)
+        return content
 
     async def close(self):
         return await self.session.close()
