@@ -54,7 +54,6 @@ class SessionWithRetry(object):
 
     async def _http_method(self, method, url, data=None, headers=None):
         method_obj = getattr(self.session, method)
-        raised_exc = None
         n = 1
         if self.token:
             headers = headers or {}
@@ -103,7 +102,6 @@ class SessionWithRetry(object):
                         self.logger.error('{}.http_{}({}) Customer:{} - {}'.format(module_class_name(self),
                                                                                    method, url, self.logger.customer,
                                                                                    repr(exc)))
-                    raised_exc = exc
 
                 # do not retry on HTTP protocol errors
                 # raise exc that will be handled in outer try/except clause
