@@ -1,12 +1,10 @@
-import aiohttp
-import asyncio
-import time
 import ssl
-import xml.dom.minidom
+import asyncio
+import aiohttp
 
 from aiohttp import client_exceptions, http_exceptions, ClientSession
 from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_egi_connectors.exceptions import ConnectorHttpError
 
 
 def build_ssl_settings(globopts):
@@ -24,13 +22,12 @@ def build_ssl_settings(globopts):
 
 def build_connection_retry_settings(globopts):
     retry = int(globopts['ConnectionRetry'.lower()])
-    sleep_retry = int(globopts['ConnectionSleepRetry'.lower()])
     timeout = int(globopts['ConnectionTimeout'.lower()])
     return (retry, timeout)
 
 
 class SessionWithRetry(object):
-    def __init__(self, logger, msgprefix, globopts, token=None, custauth=None,
+    def __init__(self, logger, globopts, token=None, custauth=None,
                  verbose_ret=False, handle_session_close=False):
         self.ssl_context = build_ssl_settings(globopts)
         n_try, client_timeout = build_connection_retry_settings(globopts)
@@ -54,6 +51,7 @@ class SessionWithRetry(object):
 
     async def _http_method(self, method, url, data=None, headers=None):
         method_obj = getattr(self.session, method)
+        raised_exc = None
         n = 1
         if self.token:
             headers = headers or {}
@@ -77,15 +75,14 @@ class SessionWithRetry(object):
                         if content:
                             if self.verbose_ret:
                                 return (content, response.headers, response.status)
-                            else:
-                                return content
+                            return content
+
+                        if getattr(self.logger, 'job', False):
+                            self.logger.warn("{} Customer:{} Job:{} : HTTP Empty response".format(module_class_name(self),
+                                                                                                    self.logger.customer, self.logger.job))
                         else:
-                            if getattr(self.logger, 'job', False):
-                                self.logger.warn("{} Customer:{} Job:{} : HTTP Empty response".format(module_class_name(self),
-                                                                                                      self.logger.customer, self.logger.job))
-                            else:
-                                self.logger.warn("{} Customer:{} : HTTP Empty response".format(module_class_name(self),
-                                                                                               self.logger.customer))
+                            self.logger.warn("{} Customer:{} : HTTP Empty response".format(module_class_name(self),
+                                                                                            self.logger.customer))
 
                 # do not retry on SSL errors
                 # raise exc that will be handled in outer try/except clause
@@ -104,6 +101,7 @@ class SessionWithRetry(object):
                         self.logger.error('{}.http_{}({}) Customer:{} - {}'.format(module_class_name(self),
                                                                                    method, url, self.logger.customer,
                                                                                    repr(exc)))
+                    raised_exc = exc
 
                 # do not retry on HTTP protocol errors
                 # raise exc that will be handled in outer try/except clause
@@ -128,6 +126,7 @@ class SessionWithRetry(object):
                 else:
                     self.logger.info("{} Customer:{} : HTTP Connection retry exhausted".format(module_class_name(self),
                                                                                                self.logger.customer))
+                raise raised_exc
 
         except Exception as exc:
             if getattr(self.logger, 'job', False):
@@ -138,28 +137,46 @@ class SessionWithRetry(object):
                 self.logger.error('{}.http_{}({}) Customer:{} - {}'.format(module_class_name(self),
                                                                            method, url, self.logger.customer,
                                                                            repr(exc)))
+            raise exc
 
         finally:
             if not self.handle_session_close:
                 await self.session.close()
 
     async def http_get(self, url, headers=None):
-        content = await self._http_method('get', url, headers=headers)
-        return content
+        try:
+            content = await self._http_method('get', url, headers=headers)
+            return content
+
+        except Exception as exc:
+            raise ConnectorHttpError(repr(exc)) from exc
 
     async def http_put(self, url, data, headers=None):
-        content = await self._http_method('put', url, data=data,
-                                            headers=headers)
-        return content
+        try:
+            content = await self._http_method('put', url, data=data,
+                                                headers=headers)
+            return content
+
+        except Exception as exc:
+            raise ConnectorHttpError(repr(exc)) from exc
 
     async def http_post(self, url, data, headers=None):
-        content = await self._http_method('post', url, data=data,
-                                            headers=headers)
-        return content
+        try:
+            content = await self._http_method('post', url, data=data,
+                                                headers=headers)
+            return content
+
+        except Exception as exc:
+            raise ConnectorHttpError(repr(exc)) from exc
 
     async def http_delete(self, url, headers=None):
-        content = await self._http_method('delete', url, headers=headers)
-        return content
+        try:
+            content = await self._http_method('delete', url, headers=headers)
+            return content
+
+        except Exception as exc:
+            raise ConnectorHttpError(repr(exc)) from exc
+
 
     async def close(self):
         return await self.session.close()
