@@ -87,11 +87,11 @@ class ConnectorsHttpRetry(unittest.TestCase):
             'weights_DATE.avro', 'webapihost': 'api.devel.argo.grnet.gr'
         }
         async def setsession():
-            self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts)
+            self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts, verbose_ret=True)
         self.loop.run_until_complete(setsession())
 
-    @unittest.skip("demonstrating skipping")
-    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockHttpGetEmpty)
+    # @unittest.skip("demonstrating skipping")
+    @mock.patch('aiohttp.ClientSession.get', side_effect=mockHttpGetEmpty)
     @async_test
     async def test_ConnectorEmptyRetry(self, mocked_get):
         path='/url_path'
@@ -101,8 +101,8 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertEqual(mocked_get.call_count, 3)
         self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
 
-    @unittest.skip("demonstrating skipping")
-    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockConnectionProblem)
+    # @unittest.skip("demonstrating skipping")
+    @mock.patch('aiohttp.ClientSession.get', side_effect=mockConnectionProblem)
     @async_test
     async def test_ConnectorConnectionRetry(self, mocked_get):
         path='/url_path'
@@ -111,8 +111,8 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertEqual(mocked_get.call_count, 3)
         self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
 
-    @unittest.skip("demonstrating skipping")
-    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockProtocolProblem)
+    # @unittest.skip("demonstrating skipping")
+    @mock.patch('aiohttp.ClientSession.get', side_effect=mockProtocolProblem)
     @async_test
     async def test_ConnectorProtocolError(self, mocked_protocolerror):
         path='/url_path'
@@ -124,12 +124,11 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertEqual(mocked_protocolerror.call_count, 1)
 
     # @unittest.skip("demonstrating skipping")
-    @mock.patch('aiohttp_retry.RetryClient.get', side_effect=mockHttpAcceptableStatuses)
+    @mock.patch('aiohttp.ClientSession.get', side_effect=mockHttpAcceptableStatuses)
     @async_test
     async def test_ConnectorHttpAcceptable(self, mocked_httpstatuses):
         path='/url_path'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
-        import ipdb; ipdb.set_trace()
         self.assertTrue(mocked_httpstatuses.called)
 
     def tearDown(self):
