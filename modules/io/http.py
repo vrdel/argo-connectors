@@ -48,6 +48,7 @@ class SessionWithRetry(object):
         self.verbose_ret = verbose_ret
         self.handle_session_close = handle_session_close
         self.globopts = globopts
+        self.erroneous_statuses = [404]
 
     async def _http_method(self, method, url, data=None, headers=None):
         method_obj = getattr(self.session, method)
@@ -71,6 +72,23 @@ class SessionWithRetry(object):
                 try:
                     async with method_obj(url, data=data, headers=headers,
                                           ssl=self.ssl_context, auth=self.custauth) as response:
+                        if response.status in self.erroneous_statuses:
+                            if getattr(self.logger, 'job', False):
+                                self.logger.error('{}.http_{}({}) Customer:{} Job:{} - Erroneous HTTP status: {} {}'.\
+                                                  format(module_class_name(self),
+                                                         method, url,
+                                                         self.logger.customer,
+                                                         self.logger.job,
+                                                         response.status,
+                                                         response.reason))
+                            else:
+                                self.logger.error('{}.http_{}({}) Customer:{} - Erroneus HTTP status: {} {}'.\
+                                                  format(module_class_name(self),
+                                                         method, url,
+                                                         self.logger.customer,
+                                                         response.status,
+                                                         response.reason))
+                            break
                         content = await response.text()
                         if content:
                             if self.verbose_ret:
