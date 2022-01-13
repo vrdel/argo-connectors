@@ -93,7 +93,7 @@ def parse_source_endpoints(res, custname, uidservtype, pass_extensions):
 
 def parse_source_sites(res, custname, uidservtype, pass_extensions):
     group_groups = ParseSites(logger, res, custname, uidservtype,
-                                 pass_extensions).get_group_groups()
+                              pass_extensions).get_group_groups()
 
     return group_groups
 
@@ -266,9 +266,9 @@ async def fetch_ldap_data(host, port, base, filter, attributes):
 def contains_exception(list):
     for a in list:
         if isinstance(a, Exception):
-            return True
+            return (True, a)
 
-    return False
+    return (False, None)
 
 
 def main():
@@ -325,8 +325,14 @@ def main():
             fetch_data(topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
+
+        exc_raised, exc = contains_exception(contacts)
+        if exc_raised:
+            raise ConnectorHttpError(repr(exc))
+
         parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
         parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
+
 
     except (ConnectorHttpError, ConnectorParseError) as exc:
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
@@ -391,13 +397,13 @@ def main():
         elif 'servicegroups' in topofetchtype:
             fetched_servicegroups = fetched_topology[1]
 
-        if contains_exception(fetched_topology):
-            raise ConnectorHttpError
+        exc_raised, exc = contains_exception(fetched_topology)
+        if exc_raised:
+            raise ConnectorHttpError(repr(exc))
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
         parse_workers = list()
-        sites = parse_source_sites(fetched_sites, custname, uidservtype, pass_extensions)
         exe_parse_source_endpoints = partial(parse_source_endpoints,
                                              fetched_endpoints, custname,
                                              uidservtype, pass_extensions)
