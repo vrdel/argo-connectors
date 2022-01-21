@@ -5,7 +5,7 @@
     <SHORT_NAME>INFN</SHORT_NAME>
     <OFFICIAL_NAME>Istituto Nazionale di Fisica Nucleare</OFFICIAL_NAME>
     <DPMT_URL>https://dp.eudat.eu/providers/infn</DPMT_URL>
-    <GOCDB_PORTAL_URL>No 'creg_id' found</GOCDB_PORTAL_URL>\n"
+    <GOCDB_PORTAL_URL>No 'creg_id' found</GOCDB_PORTAL_URL>
     <HOME_URL>https://www.infn.it/</HOME_URL>
     <CONTACT_EMAIL>name1.surname1@ba.infn.it</CONTACT_EMAIL>
     <CONTACT_TEL>not set</CONTACT_TEL>
@@ -35,7 +35,7 @@
     <SHORT_NAME>DATACITE</SHORT_NAME>
     <OFFICIAL_NAME>DataCite – International Data Citation Initiative e.V.</OFFICIAL_NAME>
     <DPMT_URL>https://dp.eudat.eu/providers/DataCite</DPMT_URL>
-    <GOCDB_PORTAL_URL>No 'creg_id' found</GOCDB_PORTAL_URL>\n"
+    <GOCDB_PORTAL_URL>No 'creg_id' found</GOCDB_PORTAL_URL>
     <HOME_URL>http://datacite.org</HOME_URL>
     <CONTACT_EMAIL>name2.surname2@email.com</CONTACT_EMAIL>
     <CONTACT_TEL>not set</CONTACT_TEL>
