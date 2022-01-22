@@ -29,11 +29,10 @@
     </EXTENSION>
     </EXTENSIONS>
   </SITE>
-
   <SITE ID="DataCite" PRIMARY_KEY="ea9a749d796f4cfcab23764eec0d897a" NAME="DATACITE">
     <PRIMARY_KEY>ea9a749d796f4cfcab23764eec0d897a</PRIMARY_KEY>
     <SHORT_NAME>DATACITE</SHORT_NAME>
-    <OFFICIAL_NAME>DataCite – International Data Citation Initiative e.V.</OFFICIAL_NAME>
+    <OFFICIAL_NAME>DataCite</OFFICIAL_NAME>
     <DPMT_URL>https://dp.eudat.eu/providers/DataCite</DPMT_URL>
     <GOCDB_PORTAL_URL>No 'creg_id' found</GOCDB_PORTAL_URL>
     <HOME_URL>http://datacite.org</HOME_URL>
