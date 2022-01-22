@@ -2,8 +2,6 @@ import unittest
 import mock
 import asyncio
 
-import ssl
-
 from aiohttp import client_exceptions
 from aiohttp import http_exceptions
 
@@ -98,7 +96,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
             'webapihost': 'api.devel.argo.grnet.gr'
         }
         async def setsession():
-            with mock.patch('argo_egi_connectors.io.http.build_ssl_settings', return_value=ssl.create_default_context()):
+            with mock.patch('argo_egi_connectors.io.http.build_ssl_settings'):
                 self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts, verbose_ret=True)
         self.loop.run_until_complete(setsession())
 
