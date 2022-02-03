@@ -35,14 +35,22 @@ pipeline {
                     }
                 }
                 stage ('Execute tests') {
-                    sh '''
-                        cd $WORKSPACE/$PROJECT_DIR/
-                        ln -s $PWD/modules/ tests/argo_egi_connectors
-                        coverage run -m xmlrunner discover --output-file junit.xml -v tests/
-                        coverage xml
-                    '''
-                    cobertura coberturaReportFile: 'coverage.xml'
-                    junit 'junit.xml'
+                    agent {
+                        docker {
+                            image 'ipanema:5000/epel-7-ams'
+                            args '-u jenkins:jenkins'
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/
+                            ln -s $PWD/modules/ tests/argo_egi_connectors
+                            coverage run -m xmlrunner discover --output-file junit.xml -v tests/
+                            coverage xml
+                        '''
+                        cobertura coberturaReportFile: 'coverage.xml'
+                        junit 'junit.xml'
+                    }
                 }
             }
         }
