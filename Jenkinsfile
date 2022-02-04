@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage ('Build'){
             parallel {
-                stage ('Build Centos 7') {
+                stage ('Build Centos 7 RPM') {
                     agent {
                         docker {
                             image 'argo.registry:5000/epel-7-ams'
