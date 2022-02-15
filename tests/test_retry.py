@@ -5,12 +5,9 @@ import asyncio
 from aiohttp import client_exceptions
 from aiohttp import http_exceptions
 
-from functools import wraps
-
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.exceptions import ConnectorHttpError
-
 
 logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -82,26 +79,28 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.loop = asyncio.get_event_loop()
         logger.customer = CUSTOMER_NAME
         self.globopts = {
-            'authenticationcafile': '/etc/pki/tls/certs/ca-bundle.crt',
-            'authenticationcapath': '/etc/grid-security/certificates',
-            'authenticationhostcert': '/etc/grid-security/hostcert.pem',
-            'authenticationhostkey': '/etc/grid-security/hostkey.pem',
-            'authenticationhttppass': 'xxxx', 'authenticationhttpuser': 'xxxx',
+            'authenticationcafile': 'fakeca',
+            'authenticationcapath': 'fakepath',
+            'authenticationhostcert': 'fakehostcert',
+            'authenticationhostkey': 'fakehostkey',
+            'authenticationhttppass': 'xxxx',
+            'authenticationhttpuser': 'xxxx',
             'authenticationuseplainhttpauth': 'False',
-            'authenticationverifyservercert': 'True', 'avroschemasweights':
-            '/etc/argo-egi-connectors/schemas//weight_sites.avsc',
+            'authenticationverifyservercert': 'True',
+            'avroschemasweights': 'fakeavroschema',
             'connectionretry': '3', 'connectionsleepretry': '1',
             'connectiontimeout': '180', 'generalpassextensions': 'True',
             'generalpublishwebapi': 'False', 'generalwriteavro': 'True',
-            'inputstatedays': '3', 'inputstatesavedir':
-            '/var/lib/argo-connectors/states/', 'outputweights':
-            'weights_DATE.avro', 'webapihost': 'api.devel.argo.grnet.gr'
+            'inputstatedays': '3', 'inputstatesavedir': 'fakestate',
+            'outputweights': 'fakeoutput.avro',
+            'webapihost': 'api.devel.argo.grnet.gr'
         }
         async def setsession():
-            self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts, verbose_ret=True)
+            with mock.patch('argo_egi_connectors.io.http.build_ssl_settings'):
+                self.session = SessionWithRetry(logger, 'test_retry.py', self.globopts, verbose_ret=True)
         self.loop.run_until_complete(setsession())
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockHttpGetEmpty)
     @async_test
     async def test_ConnectorEmptyRetry(self, mocked_get):
@@ -113,7 +112,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertEqual(mocked_get.call_count, 3)
         self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockConnectionProblem)
     @async_test
     async def test_ConnectorConnectionRetry(self, mocked_get):
@@ -124,7 +123,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertEqual(mocked_get.call_count, 3)
         self.assertEqual(mocked_get.call_args[0][0], 'http://localhost/url_path')
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockProtocolProblem)
     @async_test
     async def test_ConnectorProtocolError(self, mocked_protocolerror):
@@ -136,7 +135,7 @@ class ConnectorsHttpRetry(unittest.TestCase):
         self.assertTrue(mocked_protocolerror.called)
         self.assertEqual(mocked_protocolerror.call_count, 1)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockHttpAcceptableStatuses)
     @async_test
     async def test_ConnectorHttpAcceptable(self, mocked_httpstatuses):
