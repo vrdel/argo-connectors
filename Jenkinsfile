@@ -48,8 +48,8 @@ pipeline {
                             coverage run -m xmlrunner discover --output-file junit.xml -v tests/
                             coverage xml
                         '''
-                        cobertura coberturaReportFile: 'coverage.xml'
-                        junit 'junit.xml'
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                        junit '**/junit.xml'
                     }
                 }
             }
