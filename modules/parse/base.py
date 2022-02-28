@@ -128,4 +128,3 @@ class ParseHelpers(object):
             msg = '{} Customer:{} : Error parsing CSV feed - empty data'.format(module_class_name(self), self.logger.customer)
             raise ConnectorParseError(msg)
         return results
-

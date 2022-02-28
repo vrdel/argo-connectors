@@ -55,12 +55,40 @@ def get_webapi_opts(cglob, confcust):
     return webapi_opts
 
 
+def find_next_paging_cursor_count(res):
+    cursor, count = None, None
+
+    doc = json.loads(res)
+    total = doc['total']
+    from_index = doc['from']
+    to_index = doc['to']
+
+    return total, from_index, to_index
+
+
 async def fetch_data(feed):
     remote_topo = urlparse(feed)
-    session = SessionWithRetry(logger, custname, globopts)
+    session = SessionWithRetry(logger, custname, globopts, handle_session_close=True)
+
     res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                     remote_topo.netloc,
                                                     remote_topo.path))
+    total, from_index, to_index = find_next_paging_cursor_count(res)
+    num = to_index - from_index
+    from_index = to_index
+
+    while to_index != total:
+        res = await \
+            session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
+                                                                    remote_topo.netloc,
+                                                                    remote_topo.path,
+                                                                    from_index,
+                                                                    num))
+        total, from_index, to_index = find_next_paging_cursor_count(res)
+        num = to_index - from_index
+        from_index = to_index
+
+    session.close()
     return res
 
 
