@@ -42,13 +42,12 @@ class ParseEoscProviderEndpoints(ParseHelpers):
         self.fetchtype = fetchtype
         self.logger = logger
         self.project = project
-        self.is_csv = is_csv
+        self.data = list()
+        self.feedtype = 'EOSCPROVIDER'
         self.scope = scope if scope else project
         try:
-            if is_csv:
-                self.data = self.csv_to_json(data)
-            else:
-                self.data = self.parse_json(data)
+            for fetch in data:
+                self.data.append(self.parse_json(fetch)['results'])
 
         except ConnectorParseError as exc:
             raise exc
@@ -75,8 +74,7 @@ class ParseEoscProviderEndpoints(ParseHelpers):
             return groups
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            feedtype = 'CSV' if self.is_csv else 'JSON'
-            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, self.feedtype, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
     def get_groupendpoints(self):
@@ -106,6 +104,5 @@ class ParseEoscProviderEndpoints(ParseHelpers):
             return groups
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            feedtype = 'CSV' if self.is_csv else 'JSON'
-            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, self.feedtype, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)

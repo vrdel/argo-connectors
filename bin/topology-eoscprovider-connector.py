@@ -65,9 +65,7 @@ async def fetch_data(feed):
     res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                     remote_topo.netloc,
                                                     remote_topo.path))
-    json_data = json.loads(res)['results']
-    for entity in json_data:
-        fetched_data.append(entity)
+    fetched_data.append(res)
     total, from_index, to_index = find_next_paging_cursor_count(res)
     num = to_index - from_index
     from_index = to_index
@@ -79,16 +77,14 @@ async def fetch_data(feed):
                                                                     remote_topo.path,
                                                                     from_index,
                                                                     num))
-        json_data = json.loads(res)['results']
-        for entity in json_data:
-            fetched_data.append(entity)
+        fetched_data.append(res)
 
         total, from_index, to_index = find_next_paging_cursor_count(res)
         num = to_index - from_index
         from_index = to_index
 
-    session.close()
-    return res
+    await session.close()
+    return fetched_data
 
 
 def parse_source_topo(res, uidservtype, fetchtype):
