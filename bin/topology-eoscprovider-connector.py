@@ -67,12 +67,16 @@ def find_next_paging_cursor_count(res):
 
 
 async def fetch_data(feed):
+    fetched_data = list()
     remote_topo = urlparse(feed)
     session = SessionWithRetry(logger, custname, globopts, handle_session_close=True)
 
     res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                     remote_topo.netloc,
                                                     remote_topo.path))
+    json_data = json.loads(res)['results']
+    for entity in json_data:
+        fetched_data.append(entity)
     total, from_index, to_index = find_next_paging_cursor_count(res)
     num = to_index - from_index
     from_index = to_index
@@ -84,6 +88,10 @@ async def fetch_data(feed):
                                                                     remote_topo.path,
                                                                     from_index,
                                                                     num))
+        json_data = json.loads(res)['results']
+        for entity in json_data:
+            fetched_data.append(entity)
+
         total, from_index, to_index = find_next_paging_cursor_count(res)
         num = to_index - from_index
         from_index = to_index
