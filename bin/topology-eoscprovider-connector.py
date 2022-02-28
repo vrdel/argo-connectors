@@ -26,15 +26,6 @@ globopts = {}
 custname = ''
 
 
-def is_feed(feed):
-    data = urlparse(feed)
-
-    if not data.netloc:
-        return False
-    else:
-        return True
-
-
 async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
@@ -186,18 +177,10 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        if is_feed(topofeed):
-            res = loop.run_until_complete(fetch_data(topofeed))
-            group_groups, group_endpoints = parse_source_topo(res, uidservtype, fetchtype)
-            contacts = ParseContacts(logger, res, uidservtype, is_csv=False).get_contacts()
-            attach_contacts_topodata(logger, contacts, group_endpoints)
-        else:
-            try:
-                with open(topofeed) as fp:
-                    js = json.load(fp)
-                    group_groups, group_endpoints = parse_source_topo(js, uidservtype, fetchtype)
-            except IOError as exc:
-                logger.error('Customer:%s : Problem opening %s - %s' % (logger.customer, topofeed, repr(exc)))
+        res = loop.run_until_complete(fetch_data(topofeed))
+        group_groups, group_endpoints = parse_source_topo(res, uidservtype, fetchtype)
+        contacts = ParseContacts(logger, res, uidservtype, is_csv=False).get_contacts()
+        attach_contacts_topodata(logger, contacts, group_endpoints)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
