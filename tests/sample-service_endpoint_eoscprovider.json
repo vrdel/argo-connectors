@@ -1,0 +1,161 @@
+{
+  "total": 210,
+  "from": 0,
+  "to": 10,
+  "results": [
+    {
+      "id": "d4science",
+      "name": "D4Science Infrastructure",
+      "abbreviation": "D4Science",
+      "website": "https://www.d4science.org/",
+      "legalEntity": false,
+      "legalStatus": null,
+      "description": "D4Science is an organisation offering a Data Infrastructure since 2009. D4Science is: connecting +12,000 scientists in 50+ countries, integrating data from +50 heterogeneous providers, executing +50,000 data analysis/month, providing access to over a billion quality records in repositories worldwide, operating with 99,8% service availability. D4Science hosts +150 Virtual Research Environments (VREs) to serve the biological, ecological, environmental, social mining, culture heritage, and statistical communities world-wide.",
+      "logo": "https://www.d4science.org/image/layout_set_logo?img_id=12630&t=1590745332088",
+      "multimedia": [
+        "https://twitter.com/d4science"
+      ],
+      "scientificDomains": [
+        {
+          "scientificDomain": "scientific_domain-engineering_and_technology",
+          "scientificSubdomain": "scientific_subdomain-engineering_and_technology-other_engineering_and_technology_sciences"
+        }
+      ],
+      "tags": [
+        "Data-Infrastructure",
+        "Virtual-Research-Environment",
+        "Computing-Infrastructure",
+        "Software-as-Service",
+        "Open-Science",
+        "Cloud-Computing",
+        "Distributed-Computing",
+        "High-Throughput-Computing"
+      ],
+      "location": {
+        "streetNameAndNumber": "G. Moruzzi 1",
+        "postalCode": "56124 ",
+        "city": "Pisa",
+        "region": null,
+        "country": "IT"
+      },
+      "mainContact": null,
+      "publicContacts": [
+        {
+          "firstName": null,
+          "lastName": null,
+          "email": "info@d4science.org",
+          "phone": null,
+          "position": null
+        },
+        {
+          "firstName": "Pasquale",
+          "lastName": "Pagano",
+          "email": "pasquale.pagano@d4science.org",
+          "phone": "+3903488283174",
+          "position": "Technical Director"
+        }
+      ],
+      "lifeCycleStatus": "provider_life_cycle_status-operational",
+      "certifications": [],
+      "hostingLegalEntity": "Institute for Information Science and Technologies \"Alessandro Faedo\" - ISTI",
+      "participatingCountries": [
+        "IT"
+      ],
+      "affiliations": [
+        "National Research Council of Italy"
+      ],
+      "networks": [
+        "provider_network-other"
+      ],
+      "structureTypes": [
+        "provider_structure_type-distributed"
+      ],
+      "esfriDomains": [
+        "provider_esfri_domain-data_computing_and_digital_research_infrastructures"
+      ],
+      "esfriType": "provider_esfri_type-not_esfri",
+      "merilScientificDomains": [
+        {
+          "merilScientificDomain": "provider_meril_scientific_domain-information_science_and_technology",
+          "merilScientificSubdomain": "provider_meril_scientific_subdomain-information_science_and_technology-distributed_computing_facilities"
+        }
+      ],
+      "areasOfActivity": [
+        "provider_area_of_activity-applied_research"
+      ],
+      "societalGrandChallenges": [
+        "provider_societal_grand_challenge-environment",
+        "provider_societal_grand_challenge-europe_in_a_changing_world",
+        "provider_societal_grand_challenge-wellbeing"
+      ],
+      "nationalRoadmaps": [],
+      "users": null
+    },
+    {
+      "id": "readcoop",
+      "name": "READ-COOP",
+      "abbreviation": "READ-COOP",
+      "website": "https://read.transkribus.eu/",
+      "legalEntity": true,
+      "legalStatus": "provider_legal_status-other",
+      "description": "The READ COOP SCE with limited liability was established on 1st of July 2019 in order to sustain and further develop the Transkribus platform. We are convinced that the legal model of a European Cooperative Society gives us the opportunity to carry out our work in a highly efficient, open and democratic way. READ-COOP is based on the EU directive of a European Cooperative Society (SCE) but it is open to members outside of the European Community as well.",
+      "logo": "https://read.transkribus.eu/wp-content/uploads/2016/01/cropped-read_orig-e1458220185252.png",
+      "multimedia": [],
+      "scientificDomains": [
+        {
+          "scientificDomain": "scientific_domain-other",
+          "scientificSubdomain": "scientific_subdomain-other-other"
+        }
+      ],
+      "tags": [],
+      "location": {
+        "streetNameAndNumber": "-",
+        "postalCode": "-",
+        "city": "-",
+        "region": null,
+        "country": "OT"
+      },
+      "mainContact": null,
+      "publicContacts": [
+        {
+          "firstName": null,
+          "lastName": null,
+          "email": "info@transkribus.eu",
+          "phone": null,
+          "position": null
+        }
+      ],
+      "lifeCycleStatus": "provider_life_cycle_status-other",
+      "certifications": [],
+      "hostingLegalEntity": null,
+      "participatingCountries": [
+        "OT"
+      ],
+      "affiliations": [],
+      "networks": [
+        "provider_network-other"
+      ],
+      "structureTypes": [
+        "provider_structure_type-other"
+      ],
+      "esfriDomains": [
+        "provider_esfri_domain-other"
+      ],
+      "esfriType": "provider_esfri_type-other",
+      "merilScientificDomains": [
+        {
+          "merilScientificDomain": "provider_meril_scientific_domain-other",
+          "merilScientificSubdomain": "provider_meril_scientific_subdomain-other-other"
+        }
+      ],
+      "areasOfActivity": [
+        "provider_area_of_activity-other"
+      ],
+      "societalGrandChallenges": [
+        "provider_societal_grand_challenge-other"
+      ],
+      "nationalRoadmaps": [],
+      "users": null
+    }
+  ]
+}
