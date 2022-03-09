@@ -168,11 +168,23 @@ def main():
     logger.customer = custname
     uidservtype = confcust.get_uidserviceendpoints()
     topofeed = confcust.get_topofeed()
+    topofeedpaging = confcust.get_topofeedpaging()
 
     loop = uvloop.new_event_loop()
     asyncio.set_event_loop(loop)
 
     try:
+        import ipdb; ipdb.set_trace()
+        providers_url = confcust.get_topofeedservicegroups()
+        resources_url = confcust.get_topofeedendpoints()
+        coros = [
+            fetch_data(resources_url), fetch_data(providers_url)
+        ]
+
+        # fetch topology data concurrently in coroutines
+        fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
+
+        # TODO two component data fetch
         res = loop.run_until_complete(fetch_data(topofeed))
         group_groups, group_endpoints = parse_source_topo(res, uidservtype, fetchtype)
         contacts = ParseContacts(logger, res, uidservtype, is_csv=False).get_contacts()
