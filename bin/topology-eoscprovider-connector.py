@@ -26,6 +26,13 @@ globopts = {}
 custname = ''
 
 
+def parse_source_resources():
+    pass
+
+def parse_source_providers():
+    pass
+
+
 async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
     webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
@@ -86,14 +93,6 @@ async def fetch_data(feed):
     await session.close()
     return fetched_data
 
-
-def parse_source_topo(res, uidservtype, fetchtype):
-    # group_groups, group_endpoints = ParseEoscTopo(logger, res, uidservtype, fetchtype).get_data()
-    topo = ParseEoscProviderEndpoints(logger, res, custname, uidservtype, fetchtype, scope=custname)
-    group_groups = topo.get_groupgroups()
-    group_endpoints = topo.get_groupendpoints()
-
-    return group_groups, group_endpoints
 
 
 async def write_state(confcust, fixed_date, state):
@@ -175,20 +174,17 @@ def main():
 
     try:
         import ipdb; ipdb.set_trace()
-        providers_url = confcust.get_topofeedservicegroups()
-        resources_url = confcust.get_topofeedendpoints()
+        topofeedproviders = confcust.get_topofeedsites()
+        topofeedresources = confcust.get_topofeedendpoints()
         coros = [
-            fetch_data(resources_url), fetch_data(providers_url)
+            fetch_data(topofeedresources), fetch_data(topofeedproviders)
         ]
 
         # fetch topology data concurrently in coroutines
-        fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
+        fetched_providers, fetched_resources = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
-        # TODO two component data fetch
-        res = loop.run_until_complete(fetch_data(topofeed))
-        group_groups, group_endpoints = parse_source_topo(res, uidservtype, fetchtype)
-        contacts = ParseContacts(logger, res, uidservtype, is_csv=False).get_contacts()
-        attach_contacts_topodata(logger, contacts, group_endpoints)
+        group_groups = parse_source_providers(fetched_providers)
+        group_endpoints = parse_source_resources(fetched_resources)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
