@@ -3,7 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_egi_connectors.parse.eoscprovider_topology import ParseEoscProviderEndpoints
+from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
 from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -550,45 +550,20 @@ class ParseSitesBiomed(unittest.TestCase):
         )
 
 
-class ParseServiceEndpointsEoscProvider(unittest.TestCase):
+class ParseEoscProvider(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-service_endpoint_eoscprovider.json') as feed_file:
-            self.content = feed_file.read()
+        with open('tests/sample-providerfeed_eoscprovider_eudat.json') as feed_file:
+            self.providers = feed_file.read()
+        with open('tests/sample-resourcefeed_eoscprovider_eudat.json') as feed_file:
+            self.resources = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        parse_service_endpoints = ParseEoscProviderEndpoints(logger, self.content, CUSTOMER_NAME)
-        self.group_endpoints = parse_service_endpoints.get_groupendpoints()
+        parse_providers = ParseTopo(logger, self.providers, self.resources,
+                                    CUSTOMER_NAME)
+        self.group_groups = parse_providers.get_group_groups ()
+        self.group_endpoints = parse_providers.get_group_endpoints()
 
-
-    def test_BiomedEndpoints(self):
-        self.assertEqual(self.group_endpoints,
-            [
-                {
-                    'group': 'HG-02-IASA',
-                    'hostname': 'cream-ce01.marie.hellasgrid.gr',
-                    'service': 'APEL',
-                    'tags': {
-                        'info_ID': '451G0',
-                        'monitored': '1',
-                        'production': '1',
-                        'scope': 'EGI'
-                    },
-                    'type': 'SITES'},
-                {
-                    'group': 'TR-10-ULAKBIM',
-                    'hostname': 'kalkan1.ulakbim.gov.tr',
-                    'service': 'APEL',
-                    'tags': {
-                        'info_HOSTDN': '/C=TR/O=TRGrid/OU=TUBITAK-ULAKBIM/CN=kalkan1.ulakbim.gov.tr',
-                        'info_ID': '375G0',
-                        'monitored': '1',
-                        'production': '1',
-                        'scope': 'EGI, wlcg, tier2, atlas'
-                    },
-                    'type': 'SITES'
-                }
-            ]
-        )
-
+    def test_topology(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()
