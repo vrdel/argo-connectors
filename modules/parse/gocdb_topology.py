@@ -79,7 +79,6 @@ class ParseServiceEndpoints(ParseHelpers):
                  pass_extensions=False):
         super().__init__(logger)
         self.data = data
-        self.__class__.fetched_data = data
         self.uidservtype = uid
         self.custname = custname
         self.pass_extensions = pass_extensions
