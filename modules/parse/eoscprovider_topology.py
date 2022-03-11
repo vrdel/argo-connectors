@@ -47,6 +47,7 @@ class ParseProviders(ParseHelpers):
                 self._providers[provider_id] = {
                     'resources': list(),
                     'website': provider['website'],
+                    'name': provider['name'],
                     'abbr': provider['abbreviation'],
                     'scope': provider['tags']
                 }
