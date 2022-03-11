@@ -14,18 +14,16 @@ class ParseResources(ParseHelpers):
 
     def _parse_data(self):
         json_data = self.parse_json(self.data)
-        import ipdb; ipdb.set_trace()
         for resource in json_data['results']:
             resource_id = resource['id']
             if resource_id not in self._resources:
                 self._resources[resource_id] = {
-                    'resources': list(),
-                    'website': resource['website'],
-                    'abbr': resource['abbreviation'],
-                    'scope': resource['tags']
+                    'name': resource['name'],
+                    'organization': resource['resourceOrganisation'],
+                    'webpage': resource['webpage'],
+                    'scope': resource['tags'],
+                    'description': resource['description']
                 }
-            import ipdb; ipdb.set_trace()
-            pass
 
     def get_group_endpoints(self):
         return self._resources
