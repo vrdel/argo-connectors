@@ -19,7 +19,7 @@ class ParseResources(ParseHelpers):
             if resource_id not in self._resources:
                 self._resources[resource_id] = {
                     'name': resource['name'],
-                    'organization': resource['resourceOrganisation'],
+                    'provider': resource['resourceOrganisation'],
                     'webpage': resource['webpage'],
                     'scope': resource['tags'],
                     'description': resource['description']
