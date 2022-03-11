@@ -39,7 +39,6 @@ class ParseProviders(ParseHelpers):
         for provider in json_data['results']:
             self._providers.append({
                 'id': provider['id'],
-                'resources': list(),
                 'website': provider['website'],
                 'name': provider['name'],
                 'abbr': provider['abbreviation'],
@@ -55,14 +54,20 @@ class ParseTopo(object):
 
     def get_group_groups(self):
         gg = list()
-        for pid, pattr in self.providers.data.items():
-            gge = dict()
-            gge['type'] = 'PROJECT'
-            gge['group'] = pattr['abbr']
-            gge['tags'] = pattr['scope']
-            pass
+        for provider in self.providers.data:
+            resource_from_provider = list(filter(
+                lambda resource: resource['provider'] == provider['id'],
+                self.resources.data
+            ))
+            for resource in resource_from_provider:
+                gge = dict()
+                gge['type'] = 'PROJECT'
+                gge['group'] = provider['abbr']
+                gge['subgroup'] = resource['name']
+                gge['tags'] = provider['scope']
+                gg.append(gge)
 
-        return self.providers.get_group_groups()
+        return gg
 
     def get_group_endpoints(self):
-        return self.resources.get_group_endpoints()
+        pass
