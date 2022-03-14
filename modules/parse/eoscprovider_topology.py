@@ -64,10 +64,21 @@ class ParseTopo(object):
                 gge['type'] = 'PROJECT'
                 gge['group'] = provider['abbr']
                 gge['subgroup'] = resource['name']
+                # TODO: scope=array
                 gge['tags'] = provider['scope']
                 gg.append(gge)
 
         return gg
 
     def get_group_endpoints(self):
-        pass
+        ge = list()
+        for resource in self.resources.data:
+            gee = dict()
+            gee['type'] = 'SERVICGROUPS'
+            gee['service'] = resource['id']
+            gee['group'] = resource['name']
+            gee['hostname'] = resource['webpage']
+            # TODO: scope=array
+            gee['tags'] = resource['scope']
+            ge.append(gee)
+        return ge
