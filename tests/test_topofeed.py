@@ -607,51 +607,42 @@ class ParseEoscProvider(unittest.TestCase):
                 'group': 'B2ACCESS',
                 'hostname': 'https://www.eudat.eu/services/b2access',
                 'service': 'eudat.b2access',
-                'tags': ['single sign-on',
-                    'federated identity management',
-                    'federated AAI proxy'],
+                'tags': {'scope': 'single sign-on, federated identity management, federated AAI proxy'},
                 'type': 'SERVICGROUPS'
             },
             {
                 'group': 'B2NOTE',
                 'hostname': 'https://b2note.eudat.eu',
                 'service': 'eudat.b2note',
-                'tags': ['annotation '],
+                'tags': {'scope': 'annotation'},
                 'type': 'SERVICGROUPS'
             },
             {
                 'group': 'B2SHARE',
                 'hostname': 'https://www.eudat.eu/services/b2share',
                 'service': 'eudat.b2share',
-                'tags': ['data repository', 'data sharing', 'data publishing', 'FAIR'],
+                'tags': {'scope': 'data repository, data sharing, data publishing, FAIR'},
                 'type': 'SERVICGROUPS'
             },
             {
                 'group': 'B2DROP',
                 'hostname': 'https://www.eudat.eu/services/b2drop',
                 'service': 'eudat.b2drop',
-                'tags': ['sync and share'],
+                'tags': {'scope': 'sync and share'},
                 'type': 'SERVICGROUPS'
             },
             {
                 'group': 'B2SAFE',
                 'hostname': 'https://www.eudat.eu/services/b2safe',
                 'service': 'eudat.b2safe',
-                'tags': ['replication',
-                         'Policy-based data management',
-                         'persistent identifiers',
-                         'data archiving'],
+                'tags': {'scope': 'replication, Policy-based data management, persistent identifiers, data archiving'},
                 'type': 'SERVICGROUPS'
             },
             {
                 'group': 'B2FIND',
                 'hostname': 'https://www.eudat.eu/services/b2find',
                 'service': 'eudat.b2find',
-                'tags': ['metadata',
-                         'search',
-                         'harvesting',
-                         'interdisciplinary ',
-                         'discovery'],
+                'tags': {'scope': 'metadata, search, harvesting, interdisciplinary, discovery'},
                 'type': 'SERVICGROUPS'
             }
         ])

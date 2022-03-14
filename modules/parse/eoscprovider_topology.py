@@ -64,7 +64,6 @@ class ParseTopo(object):
                 gge['type'] = 'PROJECT'
                 gge['group'] = provider['abbr']
                 gge['subgroup'] = resource['name']
-                # TODO: scope=array
                 scopes = [scope.strip() for scope in provider['scope']]
                 gge['tags'] = dict(scope=', '.join(scopes))
                 gg.append(gge)
@@ -79,7 +78,7 @@ class ParseTopo(object):
             gee['service'] = resource['id']
             gee['group'] = resource['name']
             gee['hostname'] = resource['webpage']
-            # TODO: scope=array
-            gee['tags'] = resource['scope']
+            scopes = [scope.strip() for scope in resource['scope']]
+            gee['tags'] = dict(scope=', '.join(scopes))
             ge.append(gee)
         return ge
