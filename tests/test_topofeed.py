@@ -560,9 +560,46 @@ class ParseEoscProvider(unittest.TestCase):
         eosc_topo = ParseTopo(logger, providers, resources, CUSTOMER_NAME)
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
+        self.maxDiff = None
 
-    def test_topology(self):
-        pass
+    def test_groupGroups(self):
+        self.assertEqual(self.group_groups, [
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2ACCESS',
+                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2NOTE',
+                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2SHARE',
+                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'type': 'PROJECT'},
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2DROP',
+                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2SAFE',
+                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2FIND',
+                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'type': 'PROJECT'
+            }
+        ])
 
 if __name__ == '__main__':
     unittest.main()
