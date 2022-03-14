@@ -65,7 +65,8 @@ class ParseTopo(object):
                 gge['group'] = provider['abbr']
                 gge['subgroup'] = resource['name']
                 # TODO: scope=array
-                gge['tags'] = provider['scope']
+                scopes = [scope.strip() for scope in provider['scope']]
+                gge['tags'] = dict(scope=', '.join(scopes))
                 gg.append(gge)
 
         return gg

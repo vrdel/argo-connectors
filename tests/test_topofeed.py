@@ -567,36 +567,36 @@ class ParseEoscProvider(unittest.TestCase):
             {
                 'group': 'EUDAT',
                 'subgroup': 'B2ACCESS',
-                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'tags': {'scope': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
                 'subgroup': 'B2NOTE',
-                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'tags': {'scope': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
                 'subgroup': 'B2SHARE',
-                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'tags': {'scope': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'},
             {
                 'group': 'EUDAT',
                 'subgroup': 'B2DROP',
-                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'tags': {'scope': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
                 'subgroup': 'B2SAFE',
-                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'tags': {'scope': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
                 'subgroup': 'B2FIND',
-                'tags': ['Data Infrastructure', ' European Data Initiative'],
+                'tags': {'scope': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             }
         ])
