@@ -552,10 +552,10 @@ class ParseSitesBiomed(unittest.TestCase):
 
 class ParseEoscProvider(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-providerfeed_eoscprovider_eudat.json') as feed_file:
-            providers = feed_file.read()
         with open('tests/sample-resourcefeed_eoscprovider_eudat.json') as feed_file:
             resources = feed_file.read()
+        with open('tests/sample-providerfeed_eoscprovider_eudat.json') as feed_file:
+            providers = feed_file.read()
         logger.customer = CUSTOMER_NAME
         eosc_topo = ParseTopo(logger, providers, resources, CUSTOMER_NAME)
         self.group_groups = eosc_topo.get_group_groups()
