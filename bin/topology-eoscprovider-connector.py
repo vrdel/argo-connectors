@@ -16,7 +16,7 @@ from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, datestamp, date_check
-from argo_egi_connectors.parse.eoscprovider_topology import ParseEoscProviderEndpoints, ParseContacts
+from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
 from urllib.parse import urlparse
@@ -26,11 +26,10 @@ globopts = {}
 custname = ''
 
 
-def parse_source_resources():
-    pass
+def parse_source(resources, providers, custname):
+    topo = ParseTopo(logger, providers, resources, custname)
 
-def parse_source_providers():
-    pass
+    return topo.get_group_groups(), topo.get_group_endpoints()
 
 
 async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
@@ -64,7 +63,7 @@ def find_next_paging_cursor_count(res):
     return total, from_index, to_index
 
 
-async def fetch_data(feed):
+async def fetch_data(feed, paginated):
     fetched_data = list()
     remote_topo = urlparse(feed)
     session = SessionWithRetry(logger, custname, globopts, handle_session_close=True)
@@ -72,12 +71,33 @@ async def fetch_data(feed):
     res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                     remote_topo.netloc,
                                                     remote_topo.path))
-    fetched_data.append(res)
-    total, from_index, to_index = find_next_paging_cursor_count(res)
-    num = to_index - from_index
-    from_index = to_index
+    if paginated:
+        fetched_data.append(res)
+        total, from_index, to_index = find_next_paging_cursor_count(res)
+        num = to_index - from_index
+        from_index = to_index
 
-    while to_index != total:
+        while to_index != total:
+            res = await \
+                session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
+                                                                        remote_topo.netloc,
+                                                                        remote_topo.path,
+                                                                        from_index,
+                                                                        num))
+            fetched_data.append(res)
+
+            total, from_index, to_index = find_next_paging_cursor_count(res)
+            num = to_index - from_index
+            from_index = to_index
+
+        await session.close()
+        return fetched_data
+
+    else:
+        total, from_index, to_index = find_next_paging_cursor_count(res)
+        num = total
+        from_index = 0
+
         res = await \
             session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
                                                                     remote_topo.netloc,
@@ -86,13 +106,8 @@ async def fetch_data(feed):
                                                                     num))
         fetched_data.append(res)
 
-        total, from_index, to_index = find_next_paging_cursor_count(res)
-        num = to_index - from_index
-        from_index = to_index
-
-    await session.close()
-    return fetched_data
-
+        await session.close()
+        return fetched_data
 
 
 async def write_state(confcust, fixed_date, state):
@@ -173,18 +188,16 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        import ipdb; ipdb.set_trace()
         topofeedproviders = confcust.get_topofeedsites()
         topofeedresources = confcust.get_topofeedendpoints()
         coros = [
-            fetch_data(topofeedresources), fetch_data(topofeedproviders)
+            fetch_data(topofeedresources, topofeedpaging), fetch_data(topofeedproviders, topofeedpaging)
         ]
 
         # fetch topology data concurrently in coroutines
         fetched_providers, fetched_resources = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
-        group_groups = parse_source_providers(fetched_providers)
-        group_endpoints = parse_source_resources(fetched_resources)
+        group_groups, group_endpoints = parse_source(fetched_resources, fetched_providers, custname)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
