@@ -13,7 +13,10 @@ class ParseResources(ParseHelpers):
         self._parse_data()
 
     def _parse_data(self):
-        json_data = self.parse_json(self.data)
+        if type(self.data) == str:
+            json_data = self.parse_json(self.data)
+        else:
+            json_data = self.data
         for resource in json_data['results']:
             self._resources.append({
                 'id': resource['id'],
@@ -35,7 +38,10 @@ class ParseProviders(ParseHelpers):
         self._parse_data()
 
     def _parse_data(self):
-        json_data = self.parse_json(self.data)
+        if type(self.data) == str:
+            json_data = self.parse_json(self.data)
+        else:
+            json_data = self.data
         for provider in json_data['results']:
             self._providers.append({
                 'id': provider['id'],

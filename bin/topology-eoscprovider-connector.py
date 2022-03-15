@@ -63,6 +63,11 @@ def find_next_paging_cursor_count(res):
     return total, from_index, to_index
 
 
+def filter_out_results(data):
+    json_data = json.loads(data)['results']
+    return json_data
+
+
 async def fetch_data(feed, paginated):
     fetched_data = list()
     remote_topo = urlparse(feed)
@@ -72,7 +77,7 @@ async def fetch_data(feed, paginated):
                                                     remote_topo.netloc,
                                                     remote_topo.path))
     if paginated:
-        fetched_data.append(res)
+        fetched_results = filter_out_results(res)
         total, from_index, to_index = find_next_paging_cursor_count(res)
         num = to_index - from_index
         from_index = to_index
@@ -84,14 +89,14 @@ async def fetch_data(feed, paginated):
                                                                         remote_topo.path,
                                                                         from_index,
                                                                         num))
-            fetched_data.append(res)
+            fetched_results = fetched_results + filter_out_results(res)
 
             total, from_index, to_index = find_next_paging_cursor_count(res)
             num = to_index - from_index
             from_index = to_index
 
         await session.close()
-        return fetched_data
+        return dict(results=fetched_results)
 
     else:
         total, from_index, to_index = find_next_paging_cursor_count(res)
@@ -195,7 +200,7 @@ def main():
         ]
 
         # fetch topology data concurrently in coroutines
-        fetched_providers, fetched_resources = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
+        fetched_resources, fetched_providers = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
         group_groups, group_endpoints = parse_source(fetched_resources, fetched_providers, custname)
 
@@ -231,4 +236,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
