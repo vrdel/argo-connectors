@@ -17,21 +17,28 @@ class ParseResources(ParseHelpers):
         self._parse_data()
 
     def _parse_data(self):
-        if type(self.data) == str:
-            json_data = self.parse_json(self.data)
-        else:
-            json_data = self.data
-        for resource in json_data['results']:
-            self._resources.append({
-                'id': resource['id'],
-                'name': resource['name'],
-                'provider': resource['resourceOrganisation'],
-                'webpage': resource['webpage'],
-                'scope': resource['tags'],
-                'description': resource['description']
-            })
-        self.data = self._resources
+        try:
+            if type(self.data) == str:
+                json_data = self.parse_json(self.data)
+            else:
+                json_data = self.data
+            for resource in json_data['results']:
+                self._resources.append({
+                    'id': resource['id'],
+                    'name': resource['name'],
+                    'provider': resource['resourceOrganisation'],
+                    'webpage': resource['webpage'],
+                    'scope': resource['tags'],
+                    'description': resource['description']
+                })
+            self.data = self._resources
 
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
 
 class ParseProviders(ParseHelpers):
     def __init__(self, logger, data, custname):
@@ -42,19 +49,27 @@ class ParseProviders(ParseHelpers):
         self._parse_data()
 
     def _parse_data(self):
-        if type(self.data) == str:
-            json_data = self.parse_json(self.data)
-        else:
-            json_data = self.data
-        for provider in json_data['results']:
-            self._providers.append({
-                'id': provider['id'],
-                'website': provider['website'],
-                'name': provider['name'],
-                'abbr': provider['abbreviation'],
-                'scope': provider['tags']
-            })
-        self.data = self._providers
+        try:
+            if type(self.data) == str:
+                json_data = self.parse_json(self.data)
+            else:
+                json_data = self.data
+            for provider in json_data['results']:
+                self._providers.append({
+                    'id': provider['id'],
+                    'website': provider['website'],
+                    'name': provider['name'],
+                    'abbr': provider['abbreviation'],
+                    'scope': provider['tags']
+                })
+            self.data = self._providers
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Providers feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
 
 
 class ParseTopo(object):
