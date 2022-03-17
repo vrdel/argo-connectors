@@ -487,7 +487,6 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
         parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
 
-
     def test_BiomedEndpoints(self):
         self.assertEqual(self.group_endpoints,
             [
@@ -660,6 +659,16 @@ class ParseEoscProvider(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             }
         ])
+
+    def test_FailedEoscProviderTopology(self):
+        logger.customer = CUSTOMER_NAME
+        with self.assertRaises(ConnectorParseError) as cm:
+            eosc_topo = ParseTopo(logger, 'RUBBISH_DATA', 'RUBBISH_DATA', CUSTOMER_NAME)
+            self.group_groups = eosc_topo.get_group_groups()
+            self.group_endpoints = eosc_topo.get_group_endpoints()
+        excep = cm.exception
+        self.assertTrue('JSON feed' in excep.msg)
+        self.assertTrue('JSONDecodeError' in excep.msg)
 
 if __name__ == '__main__':
     unittest.main()
