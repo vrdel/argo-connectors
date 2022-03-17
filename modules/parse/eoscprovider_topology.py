@@ -4,6 +4,10 @@ from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.parse.base import ParseHelpers
 
 
+def construct_fqdn(http_endpoint):
+    return urlparse(http_endpoint).netloc
+
+
 class ParseResources(ParseHelpers):
     def __init__(self, logger, data=None, custname=None):
         super(ParseResources, self).__init__(logger)
@@ -86,12 +90,12 @@ class ParseTopo(object):
             gee['type'] = 'SERVICEGROUPS'
             gee['service'] = resource['id']
             gee['group'] = resource['name']
-            gee['hostname'] = resource['webpage']
+            gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
             if resource.get('scope', False):
                 scopes = [scope.strip() for scope in resource['scope']]
-                gee['tags'] = dict(scope=', '.join(scopes))
+                gee['tags'] = dict(scope=', '.join(scopes), info_URL=resource['webpage'])
             else:
-                gee['tags'] = dict()
+                gee['tags'] = dict(info_URL=resource['webpage'])
             ge.append(gee)
 
         return ge
