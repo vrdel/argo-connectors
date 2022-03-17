@@ -605,45 +605,59 @@ class ParseEoscProvider(unittest.TestCase):
         self.assertEqual(self.group_endpoints, [
             {
                 'group': 'B2ACCESS',
-                'hostname': 'https://www.eudat.eu/services/b2access',
+                'hostname': 'www.eudat.eu_eudat.b2access',
                 'service': 'eudat.b2access',
-                'tags': {'scope': 'single sign-on, federated identity management, federated AAI proxy'},
-                'type': 'SERVICGROUPS'
+                'tags': {
+                    'info_URL': 'https://www.eudat.eu/services/b2access',
+                    'scope': 'single sign-on, federated identity management, federated ' 'AAI proxy'
+                },
+                'type': 'SERVICEGROUPS'
             },
             {
                 'group': 'B2NOTE',
-                'hostname': 'https://b2note.eudat.eu',
+                'hostname': 'b2note.eudat.eu_eudat.b2note',
                 'service': 'eudat.b2note',
-                'tags': {'scope': 'annotation'},
-                'type': 'SERVICGROUPS'
+                'tags': {'info_URL': 'https://b2note.eudat.eu', 'scope': 'annotation'},
+                'type': 'SERVICEGROUPS'
             },
             {
                 'group': 'B2SHARE',
-                'hostname': 'https://www.eudat.eu/services/b2share',
+                'hostname': 'www.eudat.eu_eudat.b2share',
                 'service': 'eudat.b2share',
-                'tags': {'scope': 'data repository, data sharing, data publishing, FAIR'},
-                'type': 'SERVICGROUPS'
+                'tags': {
+                    'info_URL': 'https://www.eudat.eu/services/b2share',
+                    'scope': 'data repository, data sharing, data publishing, FAIR'
+                },
+                'type': 'SERVICEGROUPS'
             },
             {
                 'group': 'B2DROP',
-                'hostname': 'https://www.eudat.eu/services/b2drop',
+                'hostname': 'www.eudat.eu_eudat.b2drop',
                 'service': 'eudat.b2drop',
-                'tags': {'scope': 'sync and share'},
-                'type': 'SERVICGROUPS'
-            },
+                'tags': {
+                    'info_URL': 'https://www.eudat.eu/services/b2drop',
+                    'scope': 'sync and share'
+                },
+                'type': 'SERVICEGROUPS'},
             {
                 'group': 'B2SAFE',
-                'hostname': 'https://www.eudat.eu/services/b2safe',
+                'hostname': 'www.eudat.eu_eudat.b2safe',
                 'service': 'eudat.b2safe',
-                'tags': {'scope': 'replication, Policy-based data management, persistent identifiers, data archiving'},
-                'type': 'SERVICGROUPS'
+                'tags': {
+                    'info_URL': 'https://www.eudat.eu/services/b2safe',
+                    'scope': 'replication, Policy-based data management, persistent identifiers, data archiving'
+                },
+                'type': 'SERVICEGROUPS'
             },
             {
                 'group': 'B2FIND',
-                'hostname': 'https://www.eudat.eu/services/b2find',
+                'hostname': 'www.eudat.eu_eudat.b2find',
                 'service': 'eudat.b2find',
-                'tags': {'scope': 'metadata, search, harvesting, interdisciplinary, discovery'},
-                'type': 'SERVICGROUPS'
+                'tags': {
+                    'info_URL': 'https://www.eudat.eu/services/b2find',
+                    'scope': 'metadata, search, harvesting, interdisciplinary, discovery'
+                },
+                'type': 'SERVICEGROUPS'
             }
         ])
 
