@@ -108,9 +108,9 @@ class ParseTopo(object):
             gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
             if resource.get('scope', False):
                 scopes = [scope.strip() for scope in resource['scope']]
-                gee['tags'] = dict(scope=', '.join(scopes), info_URL=resource['webpage'])
+                gee['tags'] = dict(scope=', '.join(scopes), info_URL=resource['webpage'], info_ID=resource['id'])
             else:
-                gee['tags'] = dict(info_URL=resource['webpage'])
+                gee['tags'] = dict(info_URL=resource['webpage'], info_ID=resource['id'])
             ge.append(gee)
 
         return ge
