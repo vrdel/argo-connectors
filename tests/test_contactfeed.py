@@ -7,7 +7,7 @@ from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSit
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
 from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
 from argo_egi_connectors.parse.flat_contacts import ParseContacts as ParseFlatContacts
-from argo_egi_connectors.parse.eoscprovider_contacts import ParseResourcesContacts
+from argo_egi_connectors.parse.eoscprovider_contacts import ParseResourcesContacts, ParseProvidersContacts
 
 
 logger = Logger('test_contactfeed.py')
@@ -230,11 +230,15 @@ class ParseEoscContacts(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-resourcefeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
             self.resources = feed_file.read()
+        with open('tests/sample-providerfeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
+            self.providers = feed_file.read()
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
 
         self.resources_contacts = ParseResourcesContacts(logger,
                                                          self.resources).get_contacts()
+        self.providers_contacts = ParseProvidersContacts(logger,
+                                                         self.providers).get_contacts()
 
     def test_formatResourcesContacts(self):
         self.assertEqual(self.resources_contacts,
@@ -262,6 +266,16 @@ class ParseEoscContacts(unittest.TestCase):
                 {
                     'contacts': ['eudat-cdi-secretariat@postit.csc.fi'],
                     'name': 'www.eudat.eu+eudat.b2find'
+                }
+            ]
+        )
+
+    def test_formatProvidersContacts(self):
+        self.assertEqual(self.providers_contacts,
+            [
+                {
+                    'contacts': ['eudat-cdi-secretariat@eudat.eu'],
+                    'name': 'EUDAT'
                 }
             ]
         )
