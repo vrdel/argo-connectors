@@ -600,6 +600,32 @@ class ParseEoscProvider(unittest.TestCase):
             }
         ])
 
+    def test_meshContactsProviders(self):
+        sample_resources_contacts = [
+            {
+                'contacts': ['helpdesk@eudat.eu'],
+                'name': 'www.eudat.eu+eudat.b2access'
+            }
+        ]
+        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
+        self.assertEqual(self.group_endpoints[0],
+            {
+                'group': 'B2ACCESS',
+                'hostname': 'www.eudat.eu_eudat.b2access',
+                'notifications': {
+                    'contacts': ['helpdesk@eudat.eu'], 'enabled': True
+                },
+                'service': 'eudat.b2access',
+                'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2access',
+                    'info_URL': 'https://www.eudat.eu/services/b2access',
+                    'scope': 'single sign-on, federated identity management, federated AAI proxy'
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        )
+
     def test_groupEndoints(self):
         self.assertEqual(self.group_endpoints,[
             {
