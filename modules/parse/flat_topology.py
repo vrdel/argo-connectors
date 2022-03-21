@@ -97,8 +97,9 @@ class ParseFlatEndpoints(ParseHelpers):
 
                 tmp_dict['tags'] = {'scope': self.project,
                                     'monitored': '1',
-                                    'info_URL': info_url,
-                                    'hostname': construct_fqdn(entity['URL'])}
+                                    'info_URL': info_url}
+                if self.uidservendp:
+                    tmp_dict['tags'].update({'hostname': construct_fqdn(entity['URL'])})
 
                 tmp_dict['tags'].update({'info_ID': str(entity['Service Unique ID'])})
                 groups.append(tmp_dict)
