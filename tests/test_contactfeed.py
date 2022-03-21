@@ -203,7 +203,7 @@ class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
-        self.contacts = ParseContacts(logger, self.content, uidservtype=True, is_csv=True).get_contacts()
+        self.contacts = ParseContacts(logger, self.content, uidservendp=True, is_csv=True).get_contacts()
 
     def test_FormatContacts(self):
         self.assertEqual(self.contacts,
