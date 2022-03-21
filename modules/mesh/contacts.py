@@ -67,21 +67,21 @@ def attach_contacts_topodata(logger, contacts, topodata):
                 for contact in contacts:
                     fqdn, servtype = contact['name'].split('+')
                     emails = filter_dups_noemails(contact['contacts'])
-                    found_endpoints = list(
-                        filter(lambda endpoint:
-                            endpoint['hostname'] == fqdn \
-                            and endpoint['service'] == servtype,
-                            topodata)
-                    )
-                    # as unique ID for EOSCPROVIDER we use service type
-                    if not found_endpoints:
+                    if emails:
                         found_endpoints = list(
                             filter(lambda endpoint:
-                                endpoint['hostname'] == '{}_{}'.format(fqdn, servtype) \
+                                endpoint['hostname'] == fqdn \
                                 and endpoint['service'] == servtype,
                                 topodata)
                         )
-                    if emails:
+                        # as unique ID for EOSCPROVIDER we use service type
+                        if not found_endpoints:
+                            found_endpoints = list(
+                                filter(lambda endpoint:
+                                    endpoint['hostname'] == '{}_{}'.format(fqdn, servtype) \
+                                    and endpoint['service'] == servtype,
+                                    topodata)
+                            )
                         for endpoint in found_endpoints:
                             endpoint.update(notifications={
                                 'contacts': emails,
