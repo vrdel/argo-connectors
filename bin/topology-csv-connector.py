@@ -43,7 +43,8 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints, ParseContacts
+from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
+from argo_egi_connectors.parse.flat_contacts import ParseContacts
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check

@@ -5,7 +5,7 @@ from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSit
     ParseRocContacts, ParseServiceEndpointContacts, \
     ParseServiceGroupRoles, ParseServiceGroupWithContacts, ConnectorParseError
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
-from argo_egi_connectors.parse.flat_topology import ParseContacts
+from argo_egi_connectors.parse.flat_contacts import ParseContacts
 
 
 logger = Logger('test_contactfeed.py')
