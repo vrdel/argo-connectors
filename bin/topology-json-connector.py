@@ -64,9 +64,9 @@ async def fetch_data(feed):
     return res
 
 
-def parse_source_topo(res, uidservtype, fetchtype):
+def parse_source_topo(res, uidservendp, fetchtype):
     # group_groups, group_endpoints = ParseEoscTopo(logger, res, uidservtype, fetchtype).get_data()
-    topo = ParseFlatEndpoints(logger, res, custname, uidservtype, fetchtype, scope=custname)
+    topo = ParseFlatEndpoints(logger, res, custname, uidservendp, fetchtype, scope=custname)
     group_groups = topo.get_groupgroups()
     group_endpoints = topo.get_groupendpoints()
 
@@ -128,7 +128,7 @@ def main():
     cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
-    confpath = args.custconf[0] if args.custconf else None
+    confpath = args.custconf[1] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
@@ -143,7 +143,7 @@ def main():
 
     state = None
     logger.customer = custname
-    uidservtype = confcust.get_uidserviceendpoints()
+    uidservendp = confcust.get_uidserviceendpoints()
     topofeed = confcust.get_topofeed()
 
     loop = uvloop.new_event_loop()
@@ -152,14 +152,14 @@ def main():
     try:
         if is_feed(topofeed):
             res = loop.run_until_complete(fetch_data(topofeed))
-            group_groups, group_endpoints = parse_source_topo(res, uidservtype, fetchtype)
-            contacts = ParseContacts(logger, res, uidservtype, is_csv=False).get_contacts()
+            group_groups, group_endpoints = parse_source_topo(res, uidservendp, fetchtype)
+            contacts = ParseContacts(logger, res, uidservendp, is_csv=False).get_contacts()
             attach_contacts_topodata(logger, contacts, group_endpoints)
         else:
             try:
                 with open(topofeed) as fp:
                     js = json.load(fp)
-                    group_groups, group_endpoints = parse_source_topo(js, uidservtype, fetchtype)
+                    group_groups, group_endpoints = parse_source_topo(js, uidservendp, fetchtype)
             except IOError as exc:
                 logger.error('Customer:%s : Problem opening %s - %s' % (logger.customer, topofeed, repr(exc)))
 

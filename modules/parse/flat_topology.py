@@ -9,9 +9,9 @@ def construct_fqdn(http_endpoint):
 
 
 class ParseContacts(ParseHelpers):
-    def __init__(self, logger, data, uidservtype=False, is_csv=False):
+    def __init__(self, logger, data, uidservendp=False, is_csv=False):
         self.logger = logger
-        self.uidservtype = uidservtype
+        self.uidservendp = uidservendp
         if is_csv:
             self.data = self.csv_to_json(data)
         else:
@@ -21,7 +21,7 @@ class ParseContacts(ParseHelpers):
         contacts = list()
 
         for entity in self.data:
-            if self.uidservtype:
+            if self.uidservendp:
                 key = '{}_{}+{}'.format(construct_fqdn(entity['URL']), entity['Service Unique ID'], entity['SERVICE_TYPE'])
             else:
                 key = '{}+{}'.format(construct_fqdn(entity['URL']), entity['SERVICE_TYPE'])
@@ -36,9 +36,9 @@ class ParseContacts(ParseHelpers):
 
 
 class ParseFlatEndpoints(ParseHelpers):
-    def __init__(self, logger, data, project, uidservtype=False,
+    def __init__(self, logger, data, project, uidservendp=False,
                  fetchtype='ServiceGroups', is_csv=False, scope=None):
-        self.uidservtype = uidservtype
+        self.uidservendp = uidservendp
         self.fetchtype = fetchtype
         self.logger = logger
         self.project = project
@@ -90,7 +90,7 @@ class ParseFlatEndpoints(ParseHelpers):
                 tmp_dict['group'] = entity['SITENAME-SERVICEGROUP']
                 tmp_dict['service'] = entity['SERVICE_TYPE']
                 info_url = entity['URL']
-                if self.uidservtype:
+                if self.uidservendp:
                     tmp_dict['hostname'] = '{1}_{0}'.format(entity['Service Unique ID'], construct_fqdn(info_url))
                 else:
                     tmp_dict['hostname'] = construct_fqdn(entity['URL'])
