@@ -73,7 +73,8 @@ class ParseProviders(ParseHelpers):
 
 
 class ParseTopo(object):
-    def __init__(self, logger, providers, resources, custname):
+    def __init__(self, logger, providers, resources, uidservendp, custname):
+        self.uidservendp = uidservendp
         self.providers = ParseProviders(logger, providers, custname)
         self.resources = ParseResources(logger, resources, custname)
 
@@ -105,12 +106,17 @@ class ParseTopo(object):
             gee['type'] = 'SERVICEGROUPS'
             gee['service'] = resource['id']
             gee['group'] = resource['name']
-            gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
+            if self.uidservendp:
+                gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
+            else:
+                gee['hostname'] = construct_fqdn(resource['webpage'])
             if resource.get('scope', False):
                 scopes = [scope.strip() for scope in resource['scope']]
                 gee['tags'] = dict(scope=', '.join(scopes), info_URL=resource['webpage'], info_ID=resource['id'])
             else:
                 gee['tags'] = dict(info_URL=resource['webpage'], info_ID=resource['id'])
+            if self.uidservendp:
+                gee['tags'].update(dict(hostname=construct_fqdn(resource['webpage'])))
             ge.append(gee)
 
         return ge

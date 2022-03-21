@@ -26,8 +26,8 @@ globopts = {}
 custname = ''
 
 
-def parse_source(resources, providers, custname):
-    topo = ParseTopo(logger, providers, resources, custname)
+def parse_source(resources, providers, uidservendp, custname):
+    topo = ParseTopo(logger, providers, resources, uidservendp, custname)
 
     return topo.get_group_groups(), topo.get_group_endpoints()
 
@@ -185,7 +185,7 @@ def main():
 
     state = None
     logger.customer = custname
-    uidservtype = confcust.get_uidserviceendpoints()
+    uidservendp = confcust.get_uidserviceendpoints()
     topofeed = confcust.get_topofeed()
     topofeedpaging = confcust.get_topofeedpaging()
 
@@ -202,7 +202,7 @@ def main():
         # fetch topology data concurrently in coroutines
         fetched_resources, fetched_providers = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
-        group_groups, group_endpoints = parse_source(fetched_resources, fetched_providers, custname)
+        group_groups, group_endpoints = parse_source(fetched_resources, fetched_providers, uidservendp, custname)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
