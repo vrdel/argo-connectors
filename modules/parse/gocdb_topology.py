@@ -234,7 +234,7 @@ class ParseServiceGroups(ParseHelpers):
                                 service['monitored'].lower() == 'True'.lower() else '0',
                                 'production': '1' if service['production'].lower() == 'Y'.lower() or
                                 service['production'].lower() == 'True'.lower() else '0'}
-                tmpg['tags'].update({'info_id': str(service['service_id'])})
+                tmpg['tags'].update({'info_ID': str(service['service_id'])})
 
                 if self.pass_extensions:
                     for key, value in service['extensions'].items():
