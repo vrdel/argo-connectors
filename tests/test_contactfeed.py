@@ -5,7 +5,9 @@ from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSit
     ParseRocContacts, ParseServiceEndpointContacts, \
     ParseServiceGroupRoles, ParseServiceGroupWithContacts, ConnectorParseError
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
-from argo_egi_connectors.parse.flat_contacts import ParseContacts
+from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
+from argo_egi_connectors.parse.flat_contacts import ParseContacts as ParseFlatContacts
+from argo_egi_connectors.parse.eoscprovider_contacts import ParseResourcesContacts
 
 
 logger = Logger('test_contactfeed.py')
@@ -203,7 +205,7 @@ class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
-        self.contacts = ParseContacts(logger, self.content, uidservendp=True, is_csv=True).get_contacts()
+        self.contacts = ParseFlatContacts(logger, self.content, uidservendp=True, is_csv=True).get_contacts()
 
     def test_FormatContacts(self):
         self.assertEqual(self.contacts,
@@ -219,6 +221,47 @@ class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
                 {
                     'contacts': ['name.surname@country.com'],
                     'name': 'sso.tenant.eu_tenant_3+aai'
+                }
+            ]
+        )
+
+
+class ParseEoscContacts(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-resourcefeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
+            self.resources = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        self.maxDiff = None
+
+        self.resources_contacts = ParseResourcesContacts(logger,
+                                                         self.resources).get_contacts()
+
+    def test_formatResourcesContacts(self):
+        self.assertEqual(self.resources_contacts,
+            [
+                {
+                    'contacts': ['helpdesk@eudat.eu'],
+                    'name': 'www.eudat.eu+eudat.b2access'
+                },
+                {
+                    'contacts': ['helpdesk@eudat.eu'],
+                    'name': 'b2note.eudat.eu+eudat.b2note'
+                },
+                {
+                    'contacts': ['helpdesk@eudat.eu'],
+                    'name': 'www.eudat.eu+eudat.b2share'
+                },
+                {
+                    'contacts': ['helpdesk@eudat.eu'],
+                    'name': 'www.eudat.eu+eudat.b2drop'
+                },
+                {
+                    'contacts': ['helpdesk@eudat.eu'],
+                    'name': 'www.eudat.eu+eudat.b2safe'
+                },
+                {
+                    'contacts': ['eudat-cdi-secretariat@postit.csc.fi'],
+                    'name': 'www.eudat.eu+eudat.b2find'
                 }
             ]
         )
