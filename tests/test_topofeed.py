@@ -336,7 +336,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
 
         self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
-                                           uidservtype=True,
+                                           uidservendp=True,
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=True)
 
@@ -396,7 +396,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
         with self.assertRaises(ConnectorParseError) as cm:
             self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA',
                                                     CUSTOMER_NAME,
-                                                    uidservtype=True,
+                                                    uidservendp=True,
                                                     fetchtype='ServiceGroups',
                                                     scope=CUSTOMER_NAME,
                                                     is_csv=True)
@@ -411,7 +411,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
 
         self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
-                                           uidservtype=True,
+                                           uidservendp=True,
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=False)
 
@@ -470,7 +470,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def test_FailedJsonTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
             self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA', CUSTOMER_NAME,
-                                                    uidservtype=True,
+                                                    uidservendp=True,
                                                     fetchtype='ServiceGroups',
                                                     scope=CUSTOMER_NAME,
                                                     is_csv=False)
