@@ -556,7 +556,7 @@ class ParseEoscProvider(unittest.TestCase):
         with open('tests/sample-providerfeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        eosc_topo = ParseTopo(logger, providers, resources, CUSTOMER_NAME)
+        eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
         self.maxDiff = None
@@ -601,14 +601,17 @@ class ParseEoscProvider(unittest.TestCase):
         ])
 
     def test_groupEndoints(self):
-        self.assertEqual(self.group_endpoints, [
+        self.assertEqual(self.group_endpoints,[
             {
                 'group': 'B2ACCESS',
                 'hostname': 'www.eudat.eu_eudat.b2access',
                 'service': 'eudat.b2access',
                 'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2access',
                     'info_URL': 'https://www.eudat.eu/services/b2access',
-                    'scope': 'single sign-on, federated identity management, federated ' 'AAI proxy'
+                    'scope': 'single sign-on, federated identity management, federated '
+                                'AAI proxy'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -616,7 +619,12 @@ class ParseEoscProvider(unittest.TestCase):
                 'group': 'B2NOTE',
                 'hostname': 'b2note.eudat.eu_eudat.b2note',
                 'service': 'eudat.b2note',
-                'tags': {'info_URL': 'https://b2note.eudat.eu', 'scope': 'annotation'},
+                'tags': {
+                    'hostname': 'b2note.eudat.eu',
+                    'info_ID': 'eudat.b2note',
+                    'info_URL': 'https://b2note.eudat.eu',
+                    'scope': 'annotation'
+                },
                 'type': 'SERVICEGROUPS'
             },
             {
@@ -624,6 +632,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'hostname': 'www.eudat.eu_eudat.b2share',
                 'service': 'eudat.b2share',
                 'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2share',
                     'info_URL': 'https://www.eudat.eu/services/b2share',
                     'scope': 'data repository, data sharing, data publishing, FAIR'
                 },
@@ -634,15 +644,20 @@ class ParseEoscProvider(unittest.TestCase):
                 'hostname': 'www.eudat.eu_eudat.b2drop',
                 'service': 'eudat.b2drop',
                 'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2drop',
                     'info_URL': 'https://www.eudat.eu/services/b2drop',
                     'scope': 'sync and share'
                 },
-                'type': 'SERVICEGROUPS'},
+                'type': 'SERVICEGROUPS'
+            },
             {
                 'group': 'B2SAFE',
                 'hostname': 'www.eudat.eu_eudat.b2safe',
                 'service': 'eudat.b2safe',
                 'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2safe',
                     'info_URL': 'https://www.eudat.eu/services/b2safe',
                     'scope': 'replication, Policy-based data management, persistent identifiers, data archiving'
                 },
@@ -653,6 +668,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'hostname': 'www.eudat.eu_eudat.b2find',
                 'service': 'eudat.b2find',
                 'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2find',
                     'info_URL': 'https://www.eudat.eu/services/b2find',
                     'scope': 'metadata, search, harvesting, interdisciplinary, discovery'
                 },
@@ -663,7 +680,7 @@ class ParseEoscProvider(unittest.TestCase):
     def test_FailedEoscProviderTopology(self):
         logger.customer = CUSTOMER_NAME
         with self.assertRaises(ConnectorParseError) as cm:
-            eosc_topo = ParseTopo(logger, 'RUBBISH_DATA', 'RUBBISH_DATA', CUSTOMER_NAME)
+            eosc_topo = ParseTopo(logger, 'RUBBISH_DATA', 'RUBBISH_DATA', True, CUSTOMER_NAME)
             self.group_groups = eosc_topo.get_group_groups()
             self.group_endpoints = eosc_topo.get_group_endpoints()
         excep = cm.exception
