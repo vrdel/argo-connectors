@@ -17,6 +17,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, datestamp, date_check
 from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
+from argo_egi_connectors.parse.eoscprovider_contacts import ParseResourcesContacts
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
 from urllib.parse import urlparse
@@ -203,6 +204,9 @@ def main():
         fetched_resources, fetched_providers = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
 
         group_groups, group_endpoints = parse_source(fetched_resources, fetched_providers, uidservendp, custname)
+        endpoints_contacts = ParseResourcesContacts(logger, fetched_resources).get_contacts()
+
+        attach_contacts_topodata(logger, endpoints_contacts, group_endpoints)
 
         loop.run_until_complete(
             write_state(confcust, fixed_date, True)
