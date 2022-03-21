@@ -9,7 +9,7 @@ class ParseSites(ParseHelpers):
         super().__init__(logger)
         self.logger = logger
         self.data = data
-        self.uidservtype = uid
+        self.uidservendp = uid
         self.custname = custname
         self.pass_extensions = pass_extensions
         self._sites = dict()
@@ -79,7 +79,7 @@ class ParseServiceEndpoints(ParseHelpers):
                  pass_extensions=False):
         super().__init__(logger)
         self.data = data
-        self.uidservtype = uid
+        self.uidservendp = uid
         self.custname = custname
         self.pass_extensions = pass_extensions
         self._service_endpoints = dict()
@@ -130,7 +130,7 @@ class ParseServiceEndpoints(ParseHelpers):
             tmpg['type'] = 'SITES'
             tmpg['group'] = group['site']
             tmpg['service'] = group['type']
-            if self.uidservtype:
+            if self.uidservendp:
                 tmpg['hostname'] = '{1}_{0}'.format(group['service_id'], group['hostname'])
             else:
                 tmpg['hostname'] = group['hostname']
@@ -168,7 +168,7 @@ class ParseServiceGroups(ParseHelpers):
                  pass_extensions=False):
         super().__init__(logger)
         self.data = data
-        self.uidservtype = uid
+        self.uidservendp = uid
         self.custname = custname
         self.pass_extensions = pass_extensions
         # group_groups and group_endpoints components for ServiceGroup topology
@@ -225,7 +225,7 @@ class ParseServiceGroups(ParseHelpers):
                 tmpg['type'] = 'SERVICEGROUPS'
                 tmpg['group'] = group['name']
                 tmpg['service'] = service['type']
-                if self.uidservtype:
+                if self.uidservendp:
                     tmpg['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
                     tmpg['hostname'] = service['hostname']
