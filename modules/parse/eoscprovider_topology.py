@@ -40,6 +40,7 @@ class ParseResources(ParseHelpers):
         except ConnectorParseError as exc:
             raise exc
 
+
 class ParseProviders(ParseHelpers):
     def __init__(self, logger, data, custname):
         super(ParseProviders, self).__init__(logger)

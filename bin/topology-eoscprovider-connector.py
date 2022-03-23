@@ -110,10 +110,8 @@ async def fetch_data(feed, paginated):
                                                                     remote_topo.path,
                                                                     from_index,
                                                                     num))
-        fetched_data.append(res)
-
         await session.close()
-        return fetched_data
+        return res
 
 
 async def write_state(confcust, fixed_date, state):
@@ -194,7 +192,7 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        topofeedproviders = confcust.get_topofeedsites()
+        topofeedproviders = confcust.get_topofeedservicegroups()
         topofeedresources = confcust.get_topofeedendpoints()
         coros = [
             fetch_data(topofeedresources, topofeedpaging), fetch_data(topofeedproviders, topofeedpaging)
