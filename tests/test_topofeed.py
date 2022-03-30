@@ -620,7 +620,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2access',
                     'info_URL': 'https://www.eudat.eu/services/b2access',
-                    'scope': 'single sign-on, federated identity management, federated AAI proxy'
+                    'resource_tag': 'single sign-on, federated identity management, federated AAI proxy'
                 },
                 'type': 'SERVICEGROUPS'
             }
@@ -636,7 +636,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2access',
                     'info_URL': 'https://www.eudat.eu/services/b2access',
-                    'scope': 'single sign-on, federated identity management, federated '
+                    'resource_tag': 'single sign-on, federated identity management, federated '
                                 'AAI proxy'
                 },
                 'type': 'SERVICEGROUPS'
@@ -649,7 +649,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'b2note.eudat.eu',
                     'info_ID': 'eudat.b2note',
                     'info_URL': 'https://b2note.eudat.eu',
-                    'scope': 'annotation'
+                    'resource_tag': 'annotation'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -661,7 +661,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2share',
                     'info_URL': 'https://www.eudat.eu/services/b2share',
-                    'scope': 'data repository, data sharing, data publishing, FAIR'
+                    'resource_tag': 'data repository, data sharing, data publishing, FAIR'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -673,7 +673,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2drop',
                     'info_URL': 'https://www.eudat.eu/services/b2drop',
-                    'scope': 'sync and share'
+                    'resource_tag': 'sync and share'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -685,7 +685,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2safe',
                     'info_URL': 'https://www.eudat.eu/services/b2safe',
-                    'scope': 'replication, Policy-based data management, persistent identifiers, data archiving'
+                    'resource_tag': 'replication, Policy-based data management, persistent identifiers, data archiving'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -697,7 +697,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2find',
                     'info_URL': 'https://www.eudat.eu/services/b2find',
-                    'scope': 'metadata, search, harvesting, interdisciplinary, discovery'
+                    'resource_tag': 'metadata, search, harvesting, interdisciplinary, discovery'
                 },
                 'type': 'SERVICEGROUPS'
             }

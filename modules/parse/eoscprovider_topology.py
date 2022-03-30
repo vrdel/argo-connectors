@@ -28,7 +28,7 @@ class ParseResources(ParseHelpers):
                     'name': resource['name'],
                     'provider': resource['resourceOrganisation'],
                     'webpage': resource['webpage'],
-                    'scope': resource['tags'],
+                    'resource_tag': resource['tags'],
                     'description': resource['description']
                 })
             self.data = self._resources
@@ -111,9 +111,9 @@ class ParseTopo(object):
                 gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
             else:
                 gee['hostname'] = construct_fqdn(resource['webpage'])
-            if resource.get('scope', False):
-                scopes = [scope.strip() for scope in resource['scope']]
-                gee['tags'] = dict(scope=', '.join(scopes), info_URL=resource['webpage'], info_ID=resource['id'])
+            if resource.get('resource_tag', False):
+                resource_tags = [tag.strip() for tag in resource['resource_tag']]
+                gee['tags'] = dict(resource_tag=', '.join(resource_tags), info_URL=resource['webpage'], info_ID=resource['id'])
             else:
                 gee['tags'] = dict(info_URL=resource['webpage'], info_ID=resource['id'])
             if self.uidservendp:
