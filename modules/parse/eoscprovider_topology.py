@@ -61,7 +61,7 @@ class ParseProviders(ParseHelpers):
                     'website': provider['website'],
                     'name': provider['name'],
                     'abbr': provider['abbreviation'],
-                    'scope': provider['tags']
+                    'provider_tag': provider['tags']
                 })
             self.data = self._providers
 
@@ -91,9 +91,9 @@ class ParseTopo(object):
                 gge['type'] = 'PROJECT'
                 gge['group'] = provider['abbr']
                 gge['subgroup'] = resource['name']
-                if provider.get('scope', False):
-                    scopes = [scope.strip() for scope in provider['scope']]
-                    gge['tags'] = dict(scope=', '.join(scopes))
+                if provider.get('provider_tag', False):
+                    provider_tags = [tag.strip() for tag in provider['provider_tag']]
+                    gge['tags'] = dict(provider_tags=', '.join(provider_tags))
                 else:
                     gge['tags'] = dict()
                 gg.append(gge)
