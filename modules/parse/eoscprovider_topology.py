@@ -113,7 +113,7 @@ class ParseTopo(object):
                 gee['hostname'] = construct_fqdn(resource['webpage'])
             if resource.get('resource_tag', False):
                 resource_tags = [tag.strip() for tag in resource['resource_tag']]
-                gee['tags'] = dict(service_tag=', '.join(resource_tags), info_URL=resource['webpage'], info_ID=resource['id'])
+                gee['tags'] = dict(service_tags=', '.join(resource_tags), info_URL=resource['webpage'], info_ID=resource['id'])
             else:
                 gee['tags'] = dict(info_URL=resource['webpage'], info_ID=resource['id'])
             if self.uidservendp:
