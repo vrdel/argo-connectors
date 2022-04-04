@@ -75,24 +75,24 @@ custname = ''
 isok = True
 
 
-def parse_source_servicegroups(res, custname, uidservtype, pass_extensions):
-    group_groups = ParseServiceGroups(logger, res, custname, uidservtype,
+def parse_source_servicegroups(res, custname, uidservendp, pass_extensions):
+    group_groups = ParseServiceGroups(logger, res, custname, uidservendp,
                                       pass_extensions).get_group_groups()
-    group_endpoints = ParseServiceGroups(logger, res, custname, uidservtype,
+    group_endpoints = ParseServiceGroups(logger, res, custname, uidservendp,
                                          pass_extensions).get_group_endpoints()
 
     return group_groups, group_endpoints
 
 
-def parse_source_endpoints(res, custname, uidservtype, pass_extensions):
-    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservtype,
+def parse_source_endpoints(res, custname, uidservendp, pass_extensions):
+    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservendp,
                                             pass_extensions).get_group_endpoints()
 
     return group_endpoints
 
 
-def parse_source_sites(res, custname, uidservtype, pass_extensions):
-    group_groups = ParseSites(logger, res, custname, uidservtype,
+def parse_source_sites(res, custname, uidservendp, pass_extensions):
+    group_groups = ParseSites(logger, res, custname, uidservendp,
                               pass_extensions).get_group_groups()
 
     return group_groups
@@ -299,7 +299,7 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     topofeed = confcust.get_topofeed()
     topofeedpaging = confcust.get_topofeedpaging()
-    uidservtype = confcust.get_uidserviceendpoints()
+    uidservendp = confcust.get_uidserviceendpoints()
     topofetchtype = confcust.get_topofetchtype()
     custname = confcust.get_custname()
     logger.customer = custname
@@ -406,13 +406,13 @@ def main():
         parse_workers = list()
         exe_parse_source_endpoints = partial(parse_source_endpoints,
                                              fetched_endpoints, custname,
-                                             uidservtype, pass_extensions)
+                                             uidservendp, pass_extensions)
         exe_parse_source_servicegroups = partial(parse_source_servicegroups,
                                                  fetched_servicegroups,
-                                                 custname, uidservtype,
+                                                 custname, uidservendp,
                                                  pass_extensions)
         exe_parse_source_sites = partial(parse_source_sites, fetched_sites,
-                                         custname, uidservtype,
+                                         custname, uidservendp,
                                          pass_extensions)
 
         # parse topology depend on configured components fetch. we can fetch

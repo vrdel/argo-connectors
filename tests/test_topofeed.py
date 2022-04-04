@@ -3,6 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
+from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
 from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -335,7 +336,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
 
         self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
-                                           uidservtype=True,
+                                           uidservendp=True,
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=True)
 
@@ -395,7 +396,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
         with self.assertRaises(ConnectorParseError) as cm:
             self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA',
                                                     CUSTOMER_NAME,
-                                                    uidservtype=True,
+                                                    uidservendp=True,
                                                     fetchtype='ServiceGroups',
                                                     scope=CUSTOMER_NAME,
                                                     is_csv=True)
@@ -410,7 +411,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
 
         self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
-                                           uidservtype=True,
+                                           uidservendp=True,
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=False)
 
@@ -469,7 +470,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def test_FailedJsonTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
             self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA', CUSTOMER_NAME,
-                                                    uidservtype=True,
+                                                    uidservendp=True,
                                                     fetchtype='ServiceGroups',
                                                     scope=CUSTOMER_NAME,
                                                     is_csv=False)
@@ -485,7 +486,6 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
         parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
-
 
     def test_BiomedEndpoints(self):
         self.assertEqual(self.group_endpoints,
@@ -547,6 +547,171 @@ class ParseSitesBiomed(unittest.TestCase):
                 }
             ]
         )
+
+
+class ParseEoscProvider(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-resourcefeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
+            resources = feed_file.read()
+        with open('tests/sample-providerfeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
+            providers = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
+        self.group_groups = eosc_topo.get_group_groups()
+        self.group_endpoints = eosc_topo.get_group_endpoints()
+        self.maxDiff = None
+
+    def test_groupGroups(self):
+        self.assertEqual(self.group_groups, [
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2ACCESS',
+                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2NOTE',
+                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2SHARE',
+                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'type': 'PROJECT'},
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2DROP',
+                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2SAFE',
+                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'EUDAT',
+                'subgroup': 'B2FIND',
+                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'type': 'PROJECT'
+            }
+        ])
+
+    def test_meshContactsProviders(self):
+        sample_resources_contacts = [
+            {
+                'contacts': ['helpdesk@eudat.eu'],
+                'name': 'www.eudat.eu+eudat.b2access'
+            }
+        ]
+        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
+        self.assertEqual(self.group_endpoints[0],
+            {
+                'group': 'B2ACCESS',
+                'hostname': 'www.eudat.eu_eudat.b2access',
+                'notifications': {
+                    'contacts': ['helpdesk@eudat.eu'], 'enabled': True
+                },
+                'service': 'eudat.b2access',
+                'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2access',
+                    'info_URL': 'https://www.eudat.eu/services/b2access',
+                    'service_tags': 'single sign-on, federated identity management, federated AAI proxy'
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        )
+
+    def test_groupEndoints(self):
+        self.assertEqual(self.group_endpoints,[
+            {
+                'group': 'B2ACCESS',
+                'hostname': 'www.eudat.eu_eudat.b2access',
+                'service': 'eudat.b2access',
+                'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2access',
+                    'info_URL': 'https://www.eudat.eu/services/b2access',
+                    'service_tags': 'single sign-on, federated identity management, federated '
+                                'AAI proxy'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'B2NOTE',
+                'hostname': 'b2note.eudat.eu_eudat.b2note',
+                'service': 'eudat.b2note',
+                'tags': {
+                    'hostname': 'b2note.eudat.eu',
+                    'info_ID': 'eudat.b2note',
+                    'info_URL': 'https://b2note.eudat.eu',
+                    'service_tags': 'annotation'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'B2SHARE',
+                'hostname': 'www.eudat.eu_eudat.b2share',
+                'service': 'eudat.b2share',
+                'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2share',
+                    'info_URL': 'https://www.eudat.eu/services/b2share',
+                    'service_tags': 'data repository, data sharing, data publishing, FAIR'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'B2DROP',
+                'hostname': 'www.eudat.eu_eudat.b2drop',
+                'service': 'eudat.b2drop',
+                'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2drop',
+                    'info_URL': 'https://www.eudat.eu/services/b2drop',
+                    'service_tags': 'sync and share'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'B2SAFE',
+                'hostname': 'www.eudat.eu_eudat.b2safe',
+                'service': 'eudat.b2safe',
+                'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2safe',
+                    'info_URL': 'https://www.eudat.eu/services/b2safe',
+                    'service_tags': 'replication, Policy-based data management, persistent identifiers, data archiving'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'B2FIND',
+                'hostname': 'www.eudat.eu_eudat.b2find',
+                'service': 'eudat.b2find',
+                'tags': {
+                    'hostname': 'www.eudat.eu',
+                    'info_ID': 'eudat.b2find',
+                    'info_URL': 'https://www.eudat.eu/services/b2find',
+                    'service_tags': 'metadata, search, harvesting, interdisciplinary, discovery'
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        ])
+
+    def test_FailedEoscProviderTopology(self):
+        logger.customer = CUSTOMER_NAME
+        with self.assertRaises(ConnectorParseError) as cm:
+            eosc_topo = ParseTopo(logger, 'RUBBISH_DATA', 'RUBBISH_DATA', True, CUSTOMER_NAME)
+            self.group_groups = eosc_topo.get_group_groups()
+            self.group_endpoints = eosc_topo.get_group_endpoints()
+        excep = cm.exception
+        self.assertTrue('JSON feed' in excep.msg)
+        self.assertTrue('JSONDecodeError' in excep.msg)
 
 if __name__ == '__main__':
     unittest.main()

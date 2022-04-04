@@ -43,7 +43,8 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints, ParseContacts
+from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
+from argo_egi_connectors.parse.flat_contacts import ParseContacts
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
@@ -57,8 +58,8 @@ custname = ''
 isok = True
 
 
-def parse_source_topo(res, custname, uidservtype):
-    topo = ParseFlatEndpoints(logger, res, custname, uidservtype, is_csv=True)
+def parse_source_topo(res, custname, uidservendp):
+    topo = ParseFlatEndpoints(logger, res, custname, uidservendp, is_csv=True)
     group_groups = topo.get_groupgroups()
     group_endpoints = topo.get_groupendpoints()
     return group_groups, group_endpoints
@@ -158,7 +159,7 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     topofeed = confcust.get_topofeed()
-    uidservtype = confcust.get_uidserviceendpoints()
+    uidservendp = confcust.get_uidserviceendpoints()
     topofetchtype = confcust.get_topofetchtype()
     custname = confcust.get_custname()
     logger.customer = custname
@@ -181,8 +182,8 @@ def main():
 
         group_groups, group_endpoints = parse_source_topo(fetched_topology,
                                                             custname,
-                                                            uidservtype)
-        contacts = ParseContacts(logger, fetched_topology, uidservtype, is_csv=True).get_contacts()
+                                                            uidservendp)
+        contacts = ParseContacts(logger, fetched_topology, uidservendp, is_csv=True).get_contacts()
         attach_contacts_topodata(logger, contacts, group_endpoints)
 
 

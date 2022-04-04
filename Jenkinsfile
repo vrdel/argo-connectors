@@ -37,7 +37,7 @@ pipeline {
                     agent {
                         docker {
                             image 'argo.registry:5000/epel-7-ams'
-                            args '-u jenkins:jenkins'
+                            args '-u jenkins:jenkins -v /dev/log:/dev/log'
                         }
                     }
                     steps {
