@@ -25,7 +25,7 @@ def filter_dups_noemails(contact_list):
     return only_emails
 
 
-def attach_contacts_topodata(logger, contacts, topodata):
+def attach_contacts_topodata(logger, contacts, topodata, service_name=None):
     updated_topodata = list()
     found_contacts = None
 
@@ -79,7 +79,7 @@ def attach_contacts_topodata(logger, contacts, topodata):
                             found_endpoints = list(
                                 filter(lambda endpoint:
                                     endpoint['hostname'] == '{}_{}'.format(fqdn, servtype) \
-                                    and endpoint['service'] == servtype,
+                                    and endpoint['service'] == service_name if service_name else servtype,
                                     topodata)
                             )
                         for endpoint in found_endpoints:

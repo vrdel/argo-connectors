@@ -82,6 +82,7 @@ class ParseTopo(object):
         self.uidservendp = uidservendp
         self.providers = ParseProviders(logger, providers, custname)
         self.resources = ParseResources(logger, resources, custname)
+        self.maxDiff = None
 
     def get_group_groups(self):
         gg = list()

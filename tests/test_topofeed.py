@@ -607,7 +607,7 @@ class ParseEoscProvider(unittest.TestCase):
                 'name': 'www.eudat.eu+eudat.b2access'
             }
         ]
-        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
+        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints, service_name='eu.eosc.portal.services.url')
         self.assertEqual(self.group_endpoints[0],
             {
                 'group': 'B2ACCESS',
