@@ -4,6 +4,9 @@ from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.parse.base import ParseHelpers
 
 
+SERVICE_NAME_WEBPAGE='eu.eosc.portal.services.url'
+
+
 def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
@@ -25,6 +28,7 @@ class ParseResources(ParseHelpers):
             for resource in json_data['results']:
                 self._resources.append({
                     'id': resource['id'],
+                    'hardcoded_service': SERVICE_NAME_WEBPAGE,
                     'name': resource['name'],
                     'provider': resource['resourceOrganisation'],
                     'webpage': resource['webpage'],
@@ -105,7 +109,7 @@ class ParseTopo(object):
         for resource in self.resources.data:
             gee = dict()
             gee['type'] = 'SERVICEGROUPS'
-            gee['service'] = resource['id']
+            gee['service'] = resource['hardcoded_service']
             gee['group'] = resource['name']
             if self.uidservendp:
                 gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
