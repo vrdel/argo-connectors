@@ -11,7 +11,7 @@ class WebAPI(object):
         'downtimes-gocdb-connector.py': 'downtimes',
         'topology-gocdb-connector.py': 'topology',
         'topology-csv-connector.py': 'topology',
-        'topology-eoscprovider-connector.py': 'topology',
+        'topology-provider-connector.py': 'topology',
         'topology-json-connector.py': 'topology',
         'weights-vapor-connector.py': 'weights'
     }

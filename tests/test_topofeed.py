@@ -3,7 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
+from argo_egi_connectors.parse.provider_topology import ParseTopo
 from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 

@@ -5,9 +5,9 @@ from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseSit
     ParseRocContacts, ParseServiceEndpointContacts, \
     ParseServiceGroupRoles, ParseServiceGroupWithContacts, ConnectorParseError
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
-from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
+from argo_egi_connectors.parse.provider_topology import ParseTopo
 from argo_egi_connectors.parse.flat_contacts import ParseContacts as ParseFlatContacts
-from argo_egi_connectors.parse.eoscprovider_contacts import ParseResourcesContacts, ParseProvidersContacts
+from argo_egi_connectors.parse.provider_contacts import ParseResourcesContacts, ParseProvidersContacts
 
 
 logger = Logger('test_contactfeed.py')
