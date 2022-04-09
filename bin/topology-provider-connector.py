@@ -16,8 +16,8 @@ from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, datestamp, date_check
-from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
-from argo_egi_connectors.parse.eoscprovider_contacts import ParseResourcesContacts
+from argo_egi_connectors.parse.provider_topology import ParseTopo
+from argo_egi_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
 from urllib.parse import urlparse

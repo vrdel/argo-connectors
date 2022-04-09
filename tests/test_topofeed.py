@@ -3,7 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_egi_connectors.parse.eoscprovider_topology import ParseTopo
+from argo_egi_connectors.parse.provider_topology import ParseTopo
 from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -607,7 +607,7 @@ class ParseEoscProvider(unittest.TestCase):
                 'name': 'www.eudat.eu+eudat.b2access'
             }
         ]
-        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
+        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints, service_name='eu.eosc.portal.services.url')
         self.assertEqual(self.group_endpoints[0],
             {
                 'group': 'B2ACCESS',
@@ -615,7 +615,7 @@ class ParseEoscProvider(unittest.TestCase):
                 'notifications': {
                     'contacts': ['helpdesk@eudat.eu'], 'enabled': True
                 },
-                'service': 'eudat.b2access',
+                'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2access',
@@ -631,7 +631,7 @@ class ParseEoscProvider(unittest.TestCase):
             {
                 'group': 'B2ACCESS',
                 'hostname': 'www.eudat.eu_eudat.b2access',
-                'service': 'eudat.b2access',
+                'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2access',
@@ -644,7 +644,7 @@ class ParseEoscProvider(unittest.TestCase):
             {
                 'group': 'B2NOTE',
                 'hostname': 'b2note.eudat.eu_eudat.b2note',
-                'service': 'eudat.b2note',
+                'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'b2note.eudat.eu',
                     'info_ID': 'eudat.b2note',
@@ -656,7 +656,7 @@ class ParseEoscProvider(unittest.TestCase):
             {
                 'group': 'B2SHARE',
                 'hostname': 'www.eudat.eu_eudat.b2share',
-                'service': 'eudat.b2share',
+                'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2share',
@@ -668,7 +668,7 @@ class ParseEoscProvider(unittest.TestCase):
             {
                 'group': 'B2DROP',
                 'hostname': 'www.eudat.eu_eudat.b2drop',
-                'service': 'eudat.b2drop',
+                'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2drop',
@@ -680,7 +680,7 @@ class ParseEoscProvider(unittest.TestCase):
             {
                 'group': 'B2SAFE',
                 'hostname': 'www.eudat.eu_eudat.b2safe',
-                'service': 'eudat.b2safe',
+                'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2safe',
@@ -692,7 +692,7 @@ class ParseEoscProvider(unittest.TestCase):
             {
                 'group': 'B2FIND',
                 'hostname': 'www.eudat.eu_eudat.b2find',
-                'service': 'eudat.b2find',
+                'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2find',
@@ -712,6 +712,7 @@ class ParseEoscProvider(unittest.TestCase):
         excep = cm.exception
         self.assertTrue('JSON feed' in excep.msg)
         self.assertTrue('JSONDecodeError' in excep.msg)
+
 
 if __name__ == '__main__':
     unittest.main()
