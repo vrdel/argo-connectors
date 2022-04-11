@@ -12,14 +12,13 @@ from argo_egi_connectors.utils import date_check
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.tasks.flat_topo import run
+from argo_egi_connectors.tasks.common import write_state
 
 from urllib.parse import urlparse
 
 logger = None
 globopts = {}
 custname = ''
-
-
 
 
 def get_webapi_opts(cglob, confcust):
@@ -84,7 +83,7 @@ def main():
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
-            write_state(confcust, fixed_date, False )
+            write_state(sys.argv[0], globopts, confcust, fixed_date, False)
         )
 
 
