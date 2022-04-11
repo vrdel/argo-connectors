@@ -4,17 +4,16 @@ import argparse
 import os
 import sys
 
-import uvloop
 import asyncio
+import uvloop
 
-from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.utils import date_check
-from argo_egi_connectors.log import Logger
+
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.tasks.flat_topo import run
+from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_egi_connectors.log import Logger
 from argo_egi_connectors.tasks.common import write_state
-
-from urllib.parse import urlparse
+from argo_egi_connectors.tasks.flat_topo import run
+from argo_egi_connectors.utils import date_check
 
 logger = None
 globopts = {}

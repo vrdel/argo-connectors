@@ -1,55 +1,18 @@
 #!/usr/bin/python3
 
-# Copyright (c) 2013 GRNET S.A., SRCE, IN2P3 CNRS Computing Centre
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the
-# License. You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an "AS
-# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language
-# governing permissions and limitations under the License.
-#
-# The views and conclusions contained in the software and
-# documentation are those of the authors and should not be
-# interpreted as representing official policies, either expressed
-# or implied, of either GRNET S.A., SRCE or IN2P3 CNRS Computing
-# Centre
-#
-# The work represented by this source file is partially funded by
-# the EGI-InSPIRE project through the European Commission's 7th
-# Framework Programme (contract # INFSO-RI-261323)
-
 import argparse
-import copy
 import os
 import sys
-import re
-import xml.dom.minidom
 
-import uvloop
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
-from functools import partial
-
-from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.io.webapi import WebAPI
-from argo_egi_connectors.io.avrowrite import AvroWriter
-from argo_egi_connectors.io.statewrite import state_write
-from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
-from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_egi_connectors.parse.flat_contacts import ParseContacts
-from argo_egi_connectors.tasks.flat_topo import run
+import uvloop
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
-from urllib.parse import urlparse
+from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_egi_connectors.log import Logger
+from argo_egi_connectors.tasks.common import write_state
+from argo_egi_connectors.tasks.flat_topo import run
+from argo_egi_connectors.utils import date_check
 
 logger = None
 
@@ -78,7 +41,6 @@ def main():
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
     args = parser.parse_args()
-    group_endpoints, group_groups = [], []
     logger = Logger(os.path.basename(sys.argv[0]))
 
     fixed_date = None
@@ -123,7 +85,7 @@ def main():
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
-            write_state(confcust, fixed_date, False )
+            write_state(sys.argv[0], globopts, confcust, fixed_date, False)
         )
 
     finally:
