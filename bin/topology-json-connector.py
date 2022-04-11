@@ -12,7 +12,7 @@ from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.tasks.common import write_state
-from argo_egi_connectors.tasks.flat_topo import run
+from argo_egi_connectors.tasks.flat_topology import run
 from argo_egi_connectors.utils import date_check
 
 logger = None
