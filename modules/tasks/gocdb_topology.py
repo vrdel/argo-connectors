@@ -1,16 +1,22 @@
-rt os
+import os
 import asyncio
 import xml.dom.minidom
+
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
 
+from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
-from argo_egi_connectors.io.webapi import WebAPI
-from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
-from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_egi_connectors.io.webapi import WebAPI
+from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
+from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
+from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
 
 from urllib.parse import urlparse
 
@@ -108,6 +114,15 @@ def parse_source_serviceendpoints_contacts(logger, res, custname):
     return contacts.get_contacts()
 
 
+# Fetches data from LDAP, connection parameters are set in customer.conf
+async def fetch_ldap_data(logger, globopts, host, port, base, filter, attributes):
+    ldap_session = LDAPSessionWithRetry(logger, int(globopts['ConnectionRetry'.lower()]),
+        int(globopts['ConnectionSleepRetry'.lower()]), int(globopts['ConnectionTimeout'.lower()]))
+
+    res = await ldap_session.search(host, port, base, filter, attributes)
+    return res
+
+
 async def fetch_data(logger, connector_name, globopts, api, auth_opts,
                      paginated):
     feed_parts = urlparse(api)
@@ -148,7 +163,7 @@ def contains_exception(list):
     return (False, None)
 
 
-async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
+async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts, bdii_opts,
               confcust, custname, topofetchtype, topofeed, fixed_date,
               uidservendp):
     fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
@@ -169,18 +184,18 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
             raise ConnectorHttpError(repr(exc))
 
         parsed_site_contacts = parse_source_sitescontacts(logger, contacts[0], custname)
-        parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
+        parsed_servicegroups_contacts = parse_source_servicegroupsroles(logger, contacts[1], custname)
 
 
     except (ConnectorHttpError, ConnectorParseError) as exc:
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
 
-    coros = [fetch_data(SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
+    coros = [fetch_data(logger, connector_name, globopts, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
     if 'servicegroups' in topofetchtype:
-        coros.append(fetch_data(SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
+        coros.append(fetch_data(logger, connector_name, globopts, SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
     if 'sites' in topofetchtype:
-        coros.append(fetch_data(SITES_PI, auth_opts, topofeedpaging))
+        coros.append(fetch_data(logger, connector_name, globopts, SITES_PI, auth_opts, topofeedpaging))
 
     if bdii_opts and eval(bdii_opts['bdii']):
         host = bdii_opts['bdiihost']
@@ -273,12 +288,12 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
 
     # parse contacts from fetched service endpoints topology, if there are
     # any
-    parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(fetched_endpoints, custname)
+    parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(logger, fetched_endpoints, custname)
 
     if not parsed_site_contacts and fetched_sites:
         # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
         # sites topology entities
-        parsed_site_contacts = parse_source_siteswithcontacts(fetched_sites, custname)
+        parsed_site_contacts = parse_source_siteswithcontacts(logger, fetched_sites, custname)
 
     attach_contacts_workers = [
         loop.run_in_executor(executor, partial(attach_contacts_topodata,
@@ -299,7 +314,7 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
     elif fetched_servicegroups:
         # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
         # servicegroups topology entities
-        parsed_servicegroups_contacts = parse_source_servicegroupscontacts(fetched_servicegroups, custname)
+        parsed_servicegroups_contacts = parse_source_servicegroupscontacts(logger, fetched_servicegroups, custname)
         attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
 
     loop.run_until_complete(
@@ -315,8 +330,8 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
     if eval(globopts['GeneralPublishWebAPI'.lower()]):
         loop.run_until_complete(
             asyncio.gather(
-                send_webapi(webapi_opts, group_groups, 'groups', fixed_date),
-                send_webapi(webapi_opts, group_endpoints,'endpoints', fixed_date)
+                send_webapi(logger, connector_name, webapi_opts, group_groups, 'groups', fixed_date),
+                send_webapi(logger, connector_name, webapi_opts, group_endpoints,'endpoints', fixed_date)
             )
         )
 

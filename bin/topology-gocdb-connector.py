@@ -111,13 +111,6 @@ def get_bdii_opts(confcust):
         return None
 
 
-# Fetches data from LDAP, connection parameters are set in customer.conf
-async def fetch_ldap_data(host, port, base, filter, attributes):
-    ldap_session = LDAPSessionWithRetry(logger, int(globopts['ConnectionRetry'.lower()]),
-        int(globopts['ConnectionSleepRetry'.lower()]), int(globopts['ConnectionTimeout'.lower()]))
-
-    res = await ldap_session.search(host, port, base, filter, attributes)
-    return res
 
 
 def main():
