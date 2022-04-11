@@ -45,6 +45,7 @@ from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
 from argo_egi_connectors.parse.flat_contacts import ParseContacts
+from argo_egi_connectors.tasks.flat_topo import run
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
@@ -58,13 +59,6 @@ custname = ''
 isok = True
 
 
-def parse_source_topo(res, custname, uidservendp):
-    topo = ParseFlatEndpoints(logger, res, custname, uidservendp, is_csv=True)
-    group_groups = topo.get_groupgroups()
-    group_endpoints = topo.get_groupendpoints()
-    return group_groups, group_endpoints
-
-
 def get_webapi_opts(cglob, confcust):
     webapi_custopts = confcust.get_webapiopts()
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
@@ -73,64 +67,6 @@ def get_webapi_opts(cglob, confcust):
         logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
     return webapi_opts
-
-
-async def write_state(confcust, fixed_date, state):
-    # safely assume here one customer defined in customer file
-    cust = list(confcust.get_customers())[0]
-    statedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-    if fixed_date:
-        await state_write(sys.argv[0], statedir, state,
-                          globopts['InputStateDays'.lower()],
-                          fixed_date.replace('-', '_'))
-    else:
-        await state_write(sys.argv[0], statedir, state,
-                          globopts['InputStateDays'.lower()])
-
-
-async def fetch_data(feed, auth_opts):
-    feed_parts = urlparse(feed)
-    session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
-                                globopts, custauth=auth_opts)
-    res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
-                                                       feed_parts.netloc,
-                                                       feed_parts.path,
-                                                       feed_parts.query))
-    return res
-
-
-
-async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
-    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                    webapi_opts['webapitoken'], logger,
-                    int(globopts['ConnectionRetry'.lower()]),
-                    int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]),
-                    date=fixed_date)
-    await webapi.send(data, topotype)
-
-
-def write_avro(confcust, group_groups, group_endpoints, fixed_date):
-    custdir = confcust.get_custdir()
-    if fixed_date:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
-    else:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
-    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
-    ret, excep = avro.write(group_groups)
-    if not ret:
-        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
-        raise SystemExit(1)
-
-    if fixed_date:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
-    else:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
-    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
-    ret, excep = avro.write(group_endpoints)
-    if not ret:
-        logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
-        raise SystemExit(1)
 
 
 def main():
@@ -160,9 +96,11 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     topofeed = confcust.get_topofeed()
     uidservendp = confcust.get_uidserviceendpoints()
-    topofetchtype = confcust.get_topofetchtype()
+    topofetchtype = confcust.get_topofetchtype()[0]
     custname = confcust.get_custname()
     logger.customer = custname
+
+    webapi_opts = get_webapi_opts(cglob, confcust)
 
     auth_custopts = confcust.get_authopts()
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
@@ -175,40 +113,12 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        group_endpoints, group_groups = list(), list()
-
-        # fetch topology data concurrently in coroutines
-        fetched_topology = loop.run_until_complete(fetch_data(topofeed, auth_opts))
-
-        group_groups, group_endpoints = parse_source_topo(fetched_topology,
-                                                            custname,
-                                                            uidservendp)
-        contacts = ParseContacts(logger, fetched_topology, uidservendp, is_csv=True).get_contacts()
-        attach_contacts_topodata(logger, contacts, group_endpoints)
-
-
         loop.run_until_complete(
-            write_state(confcust, fixed_date, True)
-        )
-
-        webapi_opts = get_webapi_opts(cglob, confcust)
-
-        numgg = len(group_groups)
-        numge = len(group_endpoints)
-
-        # send concurrently to WEB-API in coroutines
-        if eval(globopts['GeneralPublishWebAPI'.lower()]):
-            loop.run_until_complete(
-                asyncio.gather(
-                    send_webapi(webapi_opts, group_groups, 'groups', fixed_date),
-                    send_webapi(webapi_opts, group_endpoints,'endpoints', fixed_date)
-                )
+            run(loop, logger, sys.argv[0], globopts, webapi_opts, confcust,
+                custname, topofeed, topofetchtype, fixed_date, uidservendp,
+                is_csv=True
             )
-
-        if eval(globopts['GeneralWriteAvro'.lower()]):
-            write_avro(confcust, group_groups, group_endpoints, fixed_date)
-
-        logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
+        )
 
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))

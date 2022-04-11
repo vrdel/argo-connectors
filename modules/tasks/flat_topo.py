@@ -23,15 +23,21 @@ def is_feed(feed):
 async def fetch_data(logger, custname, globopts, feed):
     remote_topo = urlparse(feed)
     session = SessionWithRetry(logger, custname, globopts)
-    res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
-                                                    remote_topo.netloc,
-                                                    remote_topo.path))
+    if remote_topo.query:
+        res = await session.http_get('{}://{}{}?{}'.format(remote_topo.scheme,
+                                                        remote_topo.netloc,
+                                                        remote_topo.path,
+                                                        remote_topo.query))
+    else:
+        res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
+                                                        remote_topo.netloc,
+                                                        remote_topo.path))
     return res
 
 
-def parse_source_topo(logger, custname, res, uidservendp, fetchtype):
+def parse_source_topo(logger, custname, res, uidservendp, fetchtype, is_csv=False):
     # group_groups, group_endpoints = ParseEoscTopo(logger, res, uidservtype, fetchtype).get_data()
-    topo = ParseFlatEndpoints(logger, res, custname, uidservendp, fetchtype, scope=custname)
+    topo = ParseFlatEndpoints(logger, res, custname, uidservendp, fetchtype, is_csv, scope=custname)
     group_groups = topo.get_groupgroups()
     group_endpoints = topo.get_groupendpoints()
 
@@ -49,13 +55,14 @@ async def send_webapi(logger, connector_name, globopts, webapi_opts, data, topot
 
 
 async def run(loop, logger, connector_name, globopts, webapi_opts, confcust,
-              custname, topofeed, fetchtype, fixed_date, uidservendp):
+              custname, topofeed, fetchtype, fixed_date, uidservendp, is_csv=False):
     if is_feed(topofeed):
         res = await(fetch_data(logger, custname, globopts, topofeed))
-        group_groups, group_endpoints = parse_source_topo(logger, custname, res, uidservendp, fetchtype)
-        contacts = ParseContacts(logger, res, uidservendp, is_csv=False).get_contacts()
+        group_groups, group_endpoints = parse_source_topo(logger, custname, res, uidservendp, fetchtype, is_csv)
+        contacts = ParseContacts(logger, res, uidservendp, is_csv).get_contacts()
         attach_contacts_topodata(logger, contacts, group_endpoints)
-    else:
+
+    elif not is_feed(topofeed) and not is_csv:
         try:
             with open(topofeed) as fp:
                 js = json.load(fp)
