@@ -51,7 +51,6 @@ def main():
     cglob = Global(sys.argv[0], confpath)
     globopts = cglob.parse()
 
-    import ipdb; ipdb.set_trace()
     confpath = args.custconf[0] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
     confcust.parse()
