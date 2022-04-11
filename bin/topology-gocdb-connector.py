@@ -30,7 +30,6 @@ import sys
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
-from urllib.parse import urlparse
 
 import asyncio
 import uvloop
@@ -119,14 +118,6 @@ async def fetch_ldap_data(host, port, base, filter, attributes):
 
     res = await ldap_session.search(host, port, base, filter, attributes)
     return res
-
-
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
 
 
 def main():

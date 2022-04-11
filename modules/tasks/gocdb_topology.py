@@ -1,3 +1,5 @@
+rt os
+import asyncio
 import xml.dom.minidom
 
 from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
@@ -8,6 +10,9 @@ from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
+from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+
+from urllib.parse import urlparse
 
 
 def filter_multiple_tags(data):
@@ -93,7 +98,7 @@ def parse_source_servicegroupscontacts(logger, res, custname):
     return contacts.get_contacts()
 
 
-def parse_source_servicegroupsroles(res, custname):
+def parse_source_servicegroupsroles(logger, res, custname):
     contacts = ParseServiceGroupRoles(logger, res)
     return contacts.get_contacts()
 
@@ -103,7 +108,8 @@ def parse_source_serviceendpoints_contacts(logger, res, custname):
     return contacts.get_contacts()
 
 
-async def fetch_data(logger, connector_name, api, auth_opts, paginated):
+async def fetch_data(logger, connector_name, globopts, api, auth_opts,
+                     paginated):
     feed_parts = urlparse(api)
     fetched_data = list()
     if paginated:
@@ -118,14 +124,14 @@ async def fetch_data(logger, connector_name, api, auth_opts, paginated):
         return filter_multiple_tags(''.join(fetched_data))
 
     else:
-        session = SessionWithRetry(logger, os.path.basename(sys.argv[0]),
+        session = SessionWithRetry(logger, os.path.basename(connector_name),
                                    globopts, custauth=auth_opts)
         res = await session.http_get(api)
         return res
 
 
-async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
-    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
+async def send_webapi(logger, connector_name, globopts, webapi_opts, data, topotype, fixed_date=None):
+    webapi = WebAPI(connector_name, webapi_opts['webapihost'],
                     webapi_opts['webapitoken'], logger,
                     int(globopts['ConnectionRetry'.lower()]),
                     int(globopts['ConnectionTimeout'.lower()]),
@@ -134,8 +140,17 @@ async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
     await webapi.send(data, topotype)
 
 
+def contains_exception(list):
+    for a in list:
+        if isinstance(a, Exception):
+            return (True, a)
+
+    return (False, None)
+
+
 async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
-              confcust, custname, topofetchtype, fixed_date, uidservendp):
+              confcust, custname, topofetchtype, topofeed, fixed_date,
+              uidservendp):
     fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
     fetched_bdii = None
 
@@ -144,8 +159,8 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
 
     try:
         contact_coros = [
-            fetch_data(logger, connector_name, topofeed + SITE_CONTACTS, auth_opts, False),
-            fetch_data(logger, connector_name, topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
+            fetch_data(logger, connector_name, globopts, topofeed + SITE_CONTACTS, auth_opts, False),
+            fetch_data(logger, connector_name, globopts, topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
         ]
         contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
 
@@ -153,7 +168,7 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts,
         if exc_raised:
             raise ConnectorHttpError(repr(exc))
 
-        parsed_site_contacts = parse_source_sitescontacts(contacts[0], custname)
+        parsed_site_contacts = parse_source_sitescontacts(logger, contacts[0], custname)
         parsed_servicegroups_contacts = parse_source_servicegroupsroles(contacts[1], custname)
 
 
