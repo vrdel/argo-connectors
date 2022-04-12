@@ -57,7 +57,7 @@ async def send_webapi(logger, connector_name, globopts, webapi_opts, data, topot
 async def run(loop, logger, connector_name, globopts, webapi_opts, confcust,
               custname, topofeed, fetchtype, fixed_date, uidservendp, is_csv=False):
     if is_feed(topofeed):
-        res = await(fetch_data(logger, custname, globopts, topofeed))
+        res = await fetch_data(logger, custname, globopts, topofeed)
         group_groups, group_endpoints = parse_source_topo(logger, custname, res, uidservendp, fetchtype, is_csv)
         contacts = ParseContacts(logger, res, uidservendp, is_csv).get_contacts()
         attach_contacts_topodata(logger, contacts, group_endpoints)

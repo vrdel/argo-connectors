@@ -176,59 +176,67 @@ async def run(loop, logger, connector_name, SITE_CONTACTS,
     parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
 
     try:
-        contact_coros = [
+        task_site_contacts = loop.create_task(
             fetch_data(logger, connector_name, globopts, topofeed + SITE_CONTACTS, auth_opts, False),
+        )
+        task_servicegroup_contacts = loop.create_task(
             fetch_data(logger, connector_name, globopts, topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
-        ]
-        contacts = loop.run_until_complete(asyncio.gather(*contact_coros, return_exceptions=True))
+        )
+        await task_site_contacts, task_servicegroup_contacts
+        contacts = [task_site_contacts.result(), task_servicegroup_contacts.result()]
 
         exc_raised, exc = contains_exception(contacts)
         if exc_raised:
             raise ConnectorHttpError(repr(exc))
 
-        parsed_site_contacts = parse_source_sitescontacts(logger, contacts[0], custname)
+
         parsed_servicegroups_contacts = parse_source_servicegroupsroles(logger, contacts[1], custname)
 
     except (ConnectorHttpError, ConnectorParseError) as exc:
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
-    coros = [fetch_data(logger, connector_name, globopts, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
+    task_serviceendpoint = loop.create_task(fetch_data(logger, connector_name, globopts, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging))
     if 'servicegroups' in topofetchtype:
-        coros.append(fetch_data(logger, connector_name, globopts, SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
+        task_servicegroups = loop.create_task(fetch_data(logger, connector_name, globopts, SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
     if 'sites' in topofetchtype:
-        coros.append(fetch_data(logger, connector_name, globopts, SITES_PI, auth_opts, topofeedpaging))
+        task_sites = loop.create_task(fetch_data(logger, connector_name, globopts, SITES_PI, auth_opts, topofeedpaging))
+
+    await task_serviceendpoint
+    if task_servicegroups:
+        await task_servicegroups
+    if task_sites:
+        await task_sites
 
     if bdii_opts and eval(bdii_opts['bdii']):
         host = bdii_opts['bdiihost']
         port = bdii_opts['bdiiport']
         base = bdii_opts['bdiiquerybase']
 
-        coros.append(fetch_ldap_data(logger, globopts, host, port, base,
-                                     bdii_opts['bdiiqueryfiltersrm'],
-                                     bdii_opts['bdiiqueryattributessrm'].split(' ')))
+        task_ldap_srm = loop.create_task(
+            fetch_ldap_data(logger, globopts, host, port, base,
+                            bdii_opts['bdiiqueryfiltersrm'],
+                            bdii_opts['bdiiqueryattributessrm'].split(' '))
+        )
 
-        coros.append(fetch_ldap_data(logger, globopts, host, port, base,
-                                     bdii_opts['bdiiqueryfiltersepath'],
-                                     bdii_opts['bdiiqueryattributessepath'].split(' ')))
+        task_ldap_sepath = loop.create_task(
+            fetch_ldap_data(logger, globopts, host, port, base,
+                            bdii_opts['bdiiqueryfiltersepath'],
+                            bdii_opts['bdiiqueryattributessepath'].split(' '))
+        )
+        await task_ldap_srm
+        await task_ldap_sepath
 
-    # fetch topology data concurrently in coroutines
-    fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
-
-    fetched_endpoints = fetched_topology[0]
+    fetched_endpoints = task_serviceendpoint.result()
     if bdii_opts and eval(bdii_opts['bdii']):
         fetched_bdii = list()
-        fetched_bdii.append(fetched_topology[-2])
-        fetched_bdii.append(fetched_topology[-1])
+        fetched_bdii.append(task_ldap_srm.result())
+        fetched_bdii.append(task_ldap_sepath.result())
     if 'sites' in topofetchtype and 'servicegroups' in topofetchtype:
-        fetched_servicegroups, fetched_sites = (fetched_topology[1], fetched_topology[2])
+        fetched_servicegroups, fetched_sites = (task_servicegroups.result(), task_sites.result())
     elif 'sites' in topofetchtype:
-        fetched_sites = fetched_topology[1]
+        fetched_sites = task_sites.result()
     elif 'servicegroups' in topofetchtype:
-        fetched_servicegroups = fetched_topology[1]
-
-    exc_raised, exc = contains_exception(fetched_topology)
-    if exc_raised:
-        raise ConnectorHttpError(repr(exc))
+        fetched_servicegroups = task_servicegroups.result()
 
     # proces data in parallel using multiprocessing
     executor = ProcessPoolExecutor(max_workers=3)
@@ -245,28 +253,32 @@ async def run(loop, logger, connector_name, SITE_CONTACTS,
     # parse topology depend on configured components fetch. we can fetch
     # only sites, only servicegroups or both.
     if fetched_servicegroups and fetched_sites:
-        parse_workers.append(
+        task_parse_endpoints = loop.create_task(
             loop.run_in_executor(executor, exe_parse_source_endpoints)
         )
-        parse_workers.append(
+        task_parse_servicegroups = loop.create_task(
             loop.run_in_executor(executor, exe_parse_source_servicegroups)
         )
-        parse_workers.append(
+        task_parse_sites = loop.create_task(
             loop.run_in_executor(executor, exe_parse_source_sites)
         )
     elif fetched_servicegroups and not fetched_sites:
-        parse_workers.append(
+        task_parse_servicegroups = loop.create_task(
             loop.run_in_executor(executor, exe_parse_source_servicegroups)
         )
     elif fetched_sites and not fetched_servicegroups:
-        parse_workers.append(
+        task_parse_endpoints = loop.create_task(
             loop.run_in_executor(executor, exe_parse_source_endpoints)
         )
-        parse_workers.append(
+        task_parse_sites = loop.create_task(
             loop.run_in_executor(executor, exe_parse_source_sites)
         )
-
-    parsed_topology = loop.run_until_complete(asyncio.gather(*parse_workers))
+    if task_parse_endpoints:
+        await task_parse_endpoints
+    if task_parse_sites:
+        await task_parse_sites
+    if task_parse_servicegroups:
+        await task_parse_servicegroups
 
     if fetched_servicegroups and fetched_sites:
         group_endpoints = parsed_topology[0]
