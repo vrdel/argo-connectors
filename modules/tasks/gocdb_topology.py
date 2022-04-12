@@ -182,7 +182,8 @@ async def run(loop, logger, connector_name, SITE_CONTACTS,
         task_servicegroup_contacts = loop.create_task(
             fetch_data(logger, connector_name, globopts, topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
         )
-        await task_site_contacts, task_servicegroup_contacts
+        await task_site_contacts
+        await task_servicegroup_contacts
         contacts = [task_site_contacts.result(), task_servicegroup_contacts.result()]
 
         exc_raised, exc = contains_exception(contacts)
@@ -241,44 +242,42 @@ async def run(loop, logger, connector_name, SITE_CONTACTS,
     # proces data in parallel using multiprocessing
     executor = ProcessPoolExecutor(max_workers=3)
     parse_workers = list()
-    exe_parse_source_endpoints = partial(parse_source_endpoints,
+    exe_parse_source_endpoints = partial(parse_source_endpoints, logger,
                                          fetched_endpoints, custname,
                                          uidservendp, pass_extensions)
-    exe_parse_source_servicegroups = partial(parse_source_servicegroups,
+    exe_parse_source_servicegroups = partial(parse_source_servicegroups, logger,
                                              fetched_servicegroups, custname,
                                              uidservendp, pass_extensions)
-    exe_parse_source_sites = partial(parse_source_sites, fetched_sites,
+    exe_parse_source_sites = partial(parse_source_sites, logger, fetched_sites,
                                      custname, uidservendp, pass_extensions)
 
     # parse topology depend on configured components fetch. we can fetch
     # only sites, only servicegroups or both.
     if fetched_servicegroups and fetched_sites:
-        task_parse_endpoints = loop.create_task(
+        parse_workers.append(
             loop.run_in_executor(executor, exe_parse_source_endpoints)
         )
-        task_parse_servicegroups = loop.create_task(
+        parse_workers.append(
             loop.run_in_executor(executor, exe_parse_source_servicegroups)
         )
-        task_parse_sites = loop.create_task(
+        parse_workers.append(
             loop.run_in_executor(executor, exe_parse_source_sites)
         )
     elif fetched_servicegroups and not fetched_sites:
-        task_parse_servicegroups = loop.create_task(
+        parse_workers.append(
             loop.run_in_executor(executor, exe_parse_source_servicegroups)
         )
     elif fetched_sites and not fetched_servicegroups:
-        task_parse_endpoints = loop.create_task(
+        parse_workers.append(
             loop.run_in_executor(executor, exe_parse_source_endpoints)
         )
-        task_parse_sites = loop.create_task(
+        parse_workers.append(
             loop.run_in_executor(executor, exe_parse_source_sites)
         )
-    if task_parse_endpoints:
-        await task_parse_endpoints
-    if task_parse_sites:
-        await task_parse_sites
-    if task_parse_servicegroups:
-        await task_parse_servicegroups
+
+    completed, pending = await asyncio.wait(parse_workers)
+    parsed_topology = [t.result() for t in completed]
+
 
     if fetched_servicegroups and fetched_sites:
         group_endpoints = parsed_topology[0]
