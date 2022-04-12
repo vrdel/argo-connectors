@@ -74,12 +74,10 @@ def attach_contacts_topodata(logger, contacts, topodata, service_name=None):
                                 and endpoint['service'] == servtype,
                                 topodata)
                         )
-                        # as unique ID for EOSCPROVIDER we use service type
                         if not found_endpoints:
                             found_endpoints = list(
                                 filter(lambda endpoint:
-                                    endpoint['hostname'] == '{}_{}'.format(fqdn, servtype) \
-                                    and endpoint['service'] == service_name if service_name else servtype,
+                                    endpoint['hostname'] == '{}_{}'.format(fqdn, servtype),
                                     topodata)
                             )
                         for endpoint in found_endpoints:
