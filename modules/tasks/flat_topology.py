@@ -77,12 +77,10 @@ async def run(loop, logger, connector_name, globopts, webapi_opts, confcust,
 
     # send concurrently to WEB-API in coroutines
     if eval(globopts['GeneralPublishWebAPI'.lower()]):
-        loop.run_until_complete(
-            asyncio.gather(
-                send_webapi(logger, connector_name, globopts, webapi_opts, group_groups, 'groups', fixed_date),
-                send_webapi(logger, connector_name, globopts, webapi_opts, group_endpoints,'endpoints', fixed_date)
-            )
-        )
+        task_groups = loop.create_task(send_webapi(logger, connector_name, globopts, webapi_opts, group_groups, 'groups', fixed_date))
+        task_endpoints = loop.create_task(send_webapi(logger, connector_name, globopts, webapi_opts, group_endpoints,'endpoints', fixed_date))
+        await task_groups
+        await task_endpoints
 
     if eval(globopts['GeneralWriteAvro'.lower()]):
         write_avro(logger, globopts, confcust, group_groups, group_endpoints, fixed_date)
