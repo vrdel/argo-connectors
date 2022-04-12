@@ -1,44 +1,16 @@
 #!/usr/bin/python3
 
-# Copyright (c) 2013 GRNET S.A., SRCE, IN2P3 CNRS Computing Centre
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the
-# License. You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an "AS
-# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language
-# governing permissions and limitations under the License.
-#
-# The views and conclusions contained in the software and
-# documentation are those of the authors and should not be
-# interpreted as representing official policies, either expressed
-# or implied, of either GRNET S.A., SRCE or IN2P3 CNRS Computing
-# Centre
-#
-# The work represented by this source file is partially funded by
-# the EGI-InSPIRE project through the European Commission's 7th
-# Framework Programme (contract # INFSO-RI-261323)
-
 import argparse
 import os
 import sys
-
-from concurrent.futures import ProcessPoolExecutor
-from functools import partial
 
 import asyncio
 import uvloop
 
 from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_egi_connectors.tasks.gocdb_topology import run
+from argo_egi_connectors.tasks.common import write_state
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
-from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
-from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 
 from argo_egi_connectors.config import Global, CustomerConf
 
@@ -76,29 +48,6 @@ def get_webapi_opts(cglob, confcust):
     return webapi_opts
 
 
-def write_avro(confcust, group_groups, group_endpoints, fixed_date):
-    custdir = confcust.get_custdir()
-    if fixed_date:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
-    else:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
-    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
-    ret, excep = avro.write(group_groups)
-    if not ret:
-        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
-        raise SystemExit(1)
-
-    if fixed_date:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
-    else:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
-    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
-    ret, excep = avro.write(group_endpoints)
-    if not ret:
-        logger.error('Customer:%s: %s' % (logger.customer, repr(excep)))
-        raise SystemExit(1)
-
-
 def get_bdii_opts(confcust):
     bdii_custopts = confcust._get_cust_options('BDIIOpts')
     if bdii_custopts:
@@ -109,8 +58,6 @@ def get_bdii_opts(confcust):
         return bdii_custopts
     else:
         return None
-
-
 
 
 def main():
@@ -154,37 +101,47 @@ def main():
         raise SystemExit(1)
 
     bdii_opts = get_bdii_opts(confcust)
+    webapi_opts = get_webapi_opts(cglob, confcust)
+
+    toposcope = confcust.get_toposcope()
+    topofeedendpoints = confcust.get_topofeedendpoints()
+    topofeedservicegroups = confcust.get_topofeedservicegroups()
+    topofeedsites = confcust.get_topofeedsites()
+    global SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI
+    if toposcope:
+        SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI + toposcope
+        SERVICE_GROUPS_PI = SERVICE_GROUPS_PI + toposcope
+        SITES_PI = SITES_PI + toposcope
+    if topofeedendpoints:
+        SERVICE_ENDPOINTS_PI = topofeedendpoints
+    else:
+        SERVICE_ENDPOINTS_PI = topofeed + SERVICE_ENDPOINTS_PI
+    if topofeedservicegroups:
+        SERVICE_GROUPS_PI = topofeedservicegroups
+    else:
+        SERVICE_GROUPS_PI = topofeed + SERVICE_GROUPS_PI
+    if topofeedsites:
+        SITES_PI = topofeedsites
+    else:
+        SITES_PI = topofeed + SITES_PI
 
     loop = uvloop.new_event_loop()
     asyncio.set_event_loop(loop)
 
     try:
-        toposcope = confcust.get_toposcope()
-        topofeedendpoints = confcust.get_topofeedendpoints()
-        topofeedservicegroups = confcust.get_topofeedservicegroups()
-        topofeedsites = confcust.get_topofeedsites()
-        global SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI
-        if toposcope:
-            SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI + toposcope
-            SERVICE_GROUPS_PI = SERVICE_GROUPS_PI + toposcope
-            SITES_PI = SITES_PI + toposcope
-        if topofeedendpoints:
-            SERVICE_ENDPOINTS_PI = topofeedendpoints
-        else:
-            SERVICE_ENDPOINTS_PI = topofeed + SERVICE_ENDPOINTS_PI
-        if topofeedservicegroups:
-            SERVICE_GROUPS_PI = topofeedservicegroups
-        else:
-            SERVICE_GROUPS_PI = topofeed + SERVICE_GROUPS_PI
-        if topofeedsites:
-            SITES_PI = topofeedsites
-        else:
-            SITES_PI = topofeed + SITES_PI
+        loop.run_until_complete(
+            run(loop, logger, sys.argv[0], SITE_CONTACTS,
+                SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
+                SITES_PI, globopts, auth_opts, webapi_opts, bdii_opts,
+                confcust, custname, topofeed, topofetchtype, fixed_date,
+                uidservendp, pass_extensions, topofeedpaging
+            )
+        )
 
     except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
-            write_state(confcust, fixed_date, False)
+            write_state(sys.argv[0], globopts, confcust, fixed_date, False)
         )
 
     finally:

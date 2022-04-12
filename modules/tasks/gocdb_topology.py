@@ -17,6 +17,7 @@ from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
+from argo_egi_connectors.tasks.common import write_state, write_avro
 
 from urllib.parse import urlparse
 
@@ -163,9 +164,11 @@ def contains_exception(list):
     return (False, None)
 
 
-async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts, bdii_opts,
-              confcust, custname, topofetchtype, topofeed, fixed_date,
-              uidservendp):
+async def run(loop, logger, connector_name, SITE_CONTACTS,
+              SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
+              SITES_PI, globopts, auth_opts, webapi_opts,
+              bdii_opts, confcust, custname, topofeed, topofetchtype,
+              fixed_date, uidservendp, pass_extensions, topofeedpaging):
     fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
     fetched_bdii = None
 
@@ -186,10 +189,8 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts, bd
         parsed_site_contacts = parse_source_sitescontacts(logger, contacts[0], custname)
         parsed_servicegroups_contacts = parse_source_servicegroupsroles(logger, contacts[1], custname)
 
-
     except (ConnectorHttpError, ConnectorParseError) as exc:
         logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
-
 
     coros = [fetch_data(logger, connector_name, globopts, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
     if 'servicegroups' in topofetchtype:
@@ -202,13 +203,13 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts, bd
         port = bdii_opts['bdiiport']
         base = bdii_opts['bdiiquerybase']
 
-        coros.append(fetch_ldap_data(host, port, base,
-                                        bdii_opts['bdiiqueryfiltersrm'],
-                                        bdii_opts['bdiiqueryattributessrm'].split(' ')))
+        coros.append(fetch_ldap_data(logger, globopts, host, port, base,
+                                     bdii_opts['bdiiqueryfiltersrm'],
+                                     bdii_opts['bdiiqueryattributessrm'].split(' ')))
 
-        coros.append(fetch_ldap_data(host, port, base,
-                                        bdii_opts['bdiiqueryfiltersepath'],
-                                        bdii_opts['bdiiqueryattributessepath'].split(' ')))
+        coros.append(fetch_ldap_data(logger, globopts, host, port, base,
+                                     bdii_opts['bdiiqueryfiltersepath'],
+                                     bdii_opts['bdiiqueryattributessepath'].split(' ')))
 
     # fetch topology data concurrently in coroutines
     fetched_topology = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
@@ -233,15 +234,13 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts, bd
     executor = ProcessPoolExecutor(max_workers=3)
     parse_workers = list()
     exe_parse_source_endpoints = partial(parse_source_endpoints,
-                                            fetched_endpoints, custname,
-                                            uidservendp, pass_extensions)
+                                         fetched_endpoints, custname,
+                                         uidservendp, pass_extensions)
     exe_parse_source_servicegroups = partial(parse_source_servicegroups,
-                                                fetched_servicegroups,
-                                                custname, uidservendp,
-                                                pass_extensions)
+                                             fetched_servicegroups, custname,
+                                             uidservendp, pass_extensions)
     exe_parse_source_sites = partial(parse_source_sites, fetched_sites,
-                                        custname, uidservendp,
-                                        pass_extensions)
+                                     custname, uidservendp, pass_extensions)
 
     # parse topology depend on configured components fetch. we can fetch
     # only sites, only servicegroups or both.
@@ -317,11 +316,7 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts, bd
         parsed_servicegroups_contacts = parse_source_servicegroupscontacts(logger, fetched_servicegroups, custname)
         attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
 
-    loop.run_until_complete(
-        write_state(confcust, fixed_date, True)
-    )
-
-    webapi_opts = get_webapi_opts(cglob, confcust)
+    await write_state(connector_name, globopts, confcust, fixed_date, True)
 
     numge = len(group_endpoints)
     numgg = len(group_groups)
@@ -336,7 +331,6 @@ async def run(loop, logger, connector_name, globopts, auth_opts, webapi_opts, bd
         )
 
     if eval(globopts['GeneralWriteAvro'.lower()]):
-        write_avro(confcust, group_groups, group_endpoints, fixed_date)
+        write_avro(logger, globopts, confcust, group_groups, group_endpoints, fixed_date)
 
     logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
-
