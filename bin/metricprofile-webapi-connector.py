@@ -8,12 +8,9 @@ import asyncio
 import uvloop
 
 from argo_egi_connectors.config import CustomerConf, Global
-from argo_egi_connectors.io.avrowrite import AvroWriter
-from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.tasks.common import write_weights_metricprofile_state as write_state
 from argo_egi_connectors.tasks.webapi_metricprofile import TaskWebApiMetricProfile
-from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
+from argo_egi_connectors.utils import date_check
 
 logger = None
 
@@ -50,7 +47,6 @@ def main():
 
     for cust in confcust.get_customers():
         try:
-            custname = confcust.get_custname(cust)
             task = TaskWebApiMetricProfile(
                 loop, logger, sys.argv[0], globopts, cglob, confcust, cust, fixed_date
             )
