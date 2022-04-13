@@ -6,7 +6,6 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 async def write_state(connector_name, globopts, confcust, fixed_date, state):
     cust = list(confcust.get_customers())[0]
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-    fetchtype = confcust.get_topofetchtype()
     if fixed_date:
         await state_write(connector_name, jobstatedir, state,
                           globopts['InputStateDays'.lower()],
@@ -14,6 +13,7 @@ async def write_state(connector_name, globopts, confcust, fixed_date, state):
     else:
         await state_write(connector_name, jobstatedir, state,
                           globopts['InputStateDays'.lower()])
+
 
 async def write_weights_state(connector_name, globopts, cust, job, confcust, fixed_date, state):
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
@@ -24,6 +24,19 @@ async def write_weights_state(connector_name, globopts, cust, job, confcust, fix
     else:
         await state_write(connector_name, jobstatedir, state,
                           globopts['InputStateDays'.lower()])
+
+
+def write_metricprofile_avro(cust, job, confcust, fixed_date, fetched_profiles):
+    jobdir = confcust.get_fulldir(cust, job)
+    if fixed_date:
+        filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir, fixed_date.replace('-', '_'))
+    else:
+        filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir)
+    avro = AvroWriter(globopts['AvroSchemasMetricProfile'.lower()], filename)
+    ret, excep = avro.write(fetched_profiles)
+    if not ret:
+        logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
+        raise SystemExit(1)
 
 
 def write_downtimes_avro(logger, globopts, confcust, dts, timestamp):
