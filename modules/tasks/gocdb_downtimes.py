@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.parse.gocdb_downtimes import ParseDowntimes
 from argo_egi_connectors.io.webapi import WebAPI
+from argo_egi_connectors.tasks.common import write_state, write_downtimes_avro as write_avro
 
 
 class TaskGocdbDowntimes(object):
@@ -66,7 +67,7 @@ class TaskGocdbDowntimes(object):
         else:
             dts = []
 
-        await write_state(self.confcust, self.timestamp, True)
+        await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
             await self.send_webapi(dts)
@@ -77,4 +78,4 @@ class TaskGocdbDowntimes(object):
                         (self.confcust.get_custname(cust), self.targetdate, len(dts)))
 
         if eval(self.globopts['GeneralWriteAvro'.lower()]):
-            write_avro(self.confcust, dts, self.timestamp)
+            write_avro(self.logger, self.globopts, self.confcust, dts, self.timestamp)

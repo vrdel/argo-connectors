@@ -16,7 +16,17 @@ async def write_state(connector_name, globopts, confcust, fixed_date, state):
                           globopts['InputStateDays'.lower()])
 
 
-def write_avro(logger, globopts, confcust, group_groups, group_endpoints, fixed_date):
+def write_downtimes_avro(logger, globopts, confcust, dts, timestamp):
+    custdir = confcust.get_custdir()
+    filename = filename_date(logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
+    avro = AvroWriter(globopts['AvroSchemasDowntimes'.lower()], filename)
+    ret, excep = avro.write(dts)
+    if not ret:
+        logger.error('Customer:{} {}'.format(logger.customer, repr(excep)))
+        raise SystemExit(1)
+
+
+def write_topo_avro(logger, globopts, confcust, group_groups, group_endpoints, fixed_date):
     custdir = confcust.get_custdir()
     if fixed_date:
         filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))

@@ -13,6 +13,7 @@ from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.tasks.gocdb_downtimes import TaskGocdbDowntimes
+from argo_egi_connectors.tasks.common import write_state
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, module_class_name
@@ -78,13 +79,16 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        task = TaskGocdbDowntimes(loop, logger, connector_name, globopts,
-                                  webapi_opts, confcust, custname, feed,
-                                  DOWNTIMEPI, start, end, uidservtype, targetdate, timestamp)
+        cust = list(confcust.get_customers())[0]
+        task = TaskGocdbDowntimes(loop, logger, sys.argv[0], globopts,
+                                  webapi_opts, confcust, confcust.get_custname(cust), feed,
+                                  DOWNTIMEPI, start, end, uidservtype, args.date[0], timestamp)
+        loop.run_until_complete(task.run())
 
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
-            write_state(confcust, timestamp, False)
+        loop.run_until_complete(
+            write_state(sys.argv[0], globopts, confcust, timestamp, False)
         )
 
     loop.close()

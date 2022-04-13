@@ -17,7 +17,7 @@ from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
 from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
-from argo_egi_connectors.tasks.common import write_state, write_avro
+from argo_egi_connectors.tasks.common import write_state, write_topo_avro as write_avro
 
 from urllib.parse import urlparse
 

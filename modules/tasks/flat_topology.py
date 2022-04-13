@@ -8,7 +8,7 @@ from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
 from argo_egi_connectors.parse.flat_contacts import ParseContacts
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
-from argo_egi_connectors.tasks.common import write_state, write_avro
+from argo_egi_connectors.tasks.common import write_state, write_topo_avro as write_avro
 
 
 class TaskFlatTopology(object):
