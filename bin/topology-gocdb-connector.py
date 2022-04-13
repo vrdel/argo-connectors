@@ -12,7 +12,7 @@ from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpErr
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.tasks.common import write_state
 from argo_egi_connectors.tasks.gocdb_topology import TaskGocdbTopology
-from argo_egi_connectors.utils import filename_date, date_check
+from argo_egi_connectors.utils import date_check
 
 logger = None
 
