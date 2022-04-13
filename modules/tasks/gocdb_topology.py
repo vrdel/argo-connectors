@@ -98,38 +98,38 @@ def parse_source_sites(logger, res, custname, uidservendp, pass_extensions):
     return group_groups
 
 
-def parse_source_sitescontacts(logger, res, custname):
-    contacts = ParseSiteContacts(logger, res)
-    return contacts.get_contacts()
+class TaskParseContacts(object):
+    def __init__(self, logger):
+        self.logger = logger
+
+    def parse_sites_contacts(self, res):
+        contacts = ParseSiteContacts(self.logger, res)
+        return contacts.get_contacts()
+
+    def parse_siteswith_contacts(self, res):
+        contacts = ParseSitesWithContacts(self.logger, res)
+        return contacts.get_contacts()
+
+    def parse_servicegroups_contacts(self, res):
+        contacts = ParseServiceGroupWithContacts(self.logger, res)
+        return contacts.get_contacts()
+
+    def parse_servicegroups_roles(self, res):
+        contacts = ParseServiceGroupRoles(self.logger, res)
+        return contacts.get_contacts()
+
+    def parse_serviceendpoints_contacts(self, res):
+        contacts = ParseServiceEndpointContacts(self.logger, res)
+        return contacts.get_contacts()
 
 
-def parse_source_siteswithcontacts(logger, res, custname):
-    contacts = ParseSitesWithContacts(logger, res)
-    return contacts.get_contacts()
-
-
-def parse_source_servicegroupscontacts(logger, res, custname):
-    contacts = ParseServiceGroupWithContacts(logger, res)
-    return contacts.get_contacts()
-
-
-def parse_source_servicegroupsroles(logger, res, custname):
-    contacts = ParseServiceGroupRoles(logger, res)
-    return contacts.get_contacts()
-
-
-def parse_source_serviceendpoints_contacts(logger, res, custname):
-    contacts = ParseServiceEndpointContacts(logger, res)
-    return contacts.get_contacts()
-
-
-
-class TaskGocdbTopology(object):
+class TaskGocdbTopology(TaskParseContacts):
     def __init__(self, loop, logger, connector_name, SITE_CONTACTS,
                  SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI,
                  SERVICE_GROUPS_PI, SITES_PI, globopts, auth_opts, webapi_opts,
                  bdii_opts, confcust, custname, topofeed, topofetchtype,
                  fixed_date, uidservendp, pass_extensions, topofeedpaging):
+        super(TaskGocdbTopology, self).__init__(logger=logger)
         self.loop = loop
         self.logger = logger
         self.connector_name = connector_name
@@ -208,8 +208,8 @@ class TaskGocdbTopology(object):
             if exc_raised:
                 raise ConnectorHttpError(repr(exc))
 
-            parsed_site_contacts = parse_source_sitescontacts(self.logger, contacts[0], self.custname)
-            parsed_servicegroups_contacts = parse_source_servicegroupsroles(self.logger, contacts[1], self.custname)
+            parsed_site_contacts = self.parse_sites_contacts(contacts[0])
+            parsed_servicegroups_contacts = self.parse_servicegroups_roles(contacts[1])
 
         except (ConnectorHttpError, ConnectorParseError) as exc:
             self.logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
@@ -313,12 +313,12 @@ class TaskGocdbTopology(object):
 
         # parse contacts from fetched service endpoints topology, if there are
         # any
-        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(self.logger, fetched_endpoints, self.custname)
+        parsed_serviceendpoint_contacts = self.parse_serviceendpoints_contacts(fetched_endpoints)
 
         if not parsed_site_contacts and fetched_sites:
             # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
             # sites topology entities
-            parsed_site_contacts = parse_source_siteswithcontacts(self.logger, fetched_sites, self.custname)
+            parsed_site_contacts = self.parse_siteswith_contacts(fetched_sites)
 
         attach_contacts_workers = [
             self.loop.run_in_executor(executor,
@@ -339,7 +339,7 @@ class TaskGocdbTopology(object):
         elif fetched_servicegroups:
             # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
             # servicegroups topology entities
-            parsed_servicegroups_contacts = parse_source_servicegroupscontacts(self.logger, fetched_servicegroups, self.custname)
+            parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
             attach_contacts_topodata(self.logger, parsed_servicegroups_contacts, group_groups)
 
         await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
