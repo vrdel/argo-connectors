@@ -5,18 +5,15 @@ import datetime
 import os
 import sys
 
-import uvloop
 import asyncio
+import uvloop
 
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.io.avrowrite import AvroWriter
-from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.tasks.gocdb_downtimes import TaskGocdbDowntimes
 from argo_egi_connectors.tasks.common import write_state
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.utils import filename_date, module_class_name
 
 logger = None
 globopts = {}
