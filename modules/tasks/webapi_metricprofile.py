@@ -27,8 +27,8 @@ class TaskWebApiMetricProfile(object):
         res = await session.http_get('{}://{}{}'.format('https', host, API_PATH))
         return res
 
-    def parse_source(self, res, profiles, namespace):
-        metric_profiles = ParseMetricProfiles(self.logger, res, profiles, namespace).get_data()
+    def parse_source(self, res, profiles):
+        metric_profiles = ParseMetricProfiles(self.logger, res, profiles).get_data()
         return metric_profiles
 
     async def run(self):
@@ -48,7 +48,7 @@ class TaskWebApiMetricProfile(object):
             try:
                 res = await self.fetch_data(webapi_opts['webapihost'], webapi_opts['webapitoken'])
 
-                fetched_profiles = self.parse_source(res, profiles, self.confcust.get_namespace(job))
+                fetched_profiles = self.parse_source(res, profiles)
 
                 await write_state(self.connector_name, self.globopts, self.cust, job, self.confcust, self.fixed_date, True)
 
