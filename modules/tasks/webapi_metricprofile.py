@@ -15,8 +15,8 @@ class TaskWebApiMetricProfile(object):
         self.logger = logger
         self.connector_name = connector_name
         self.globopts = globopts
-        self.confcust = confcust
         self.cust = cust
+        self.confcust = confcust
         self.cglob = cglob
         self.fixed_date = fixed_date
 

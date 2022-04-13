@@ -8,39 +8,19 @@ import json
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, datestamp, date_check
-from argo_egi_connectors.parse.provider_topology import ParseTopo
-from argo_egi_connectors.parse.provider_contacts import ParseResourcesContacts
-from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
+from argo_egi_connectors.tasks.provider_topology import TaskProviderTopology
+from argo_egi_connectors.tasks.common import write_state
 
-from urllib.parse import urlparse
 
 logger = None
 globopts = {}
 custname = ''
-
-
-def parse_source(resources, providers, uidservendp, custname):
-    topo = ParseTopo(logger, providers, resources, uidservendp, custname)
-
-    return topo.get_group_groups(), topo.get_group_endpoints()
-
-
-async def send_webapi(webapi_opts, data, topotype, fixed_date=None):
-    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                    webapi_opts['webapitoken'], logger,
-                    int(globopts['ConnectionRetry'.lower()]),
-                    int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]),
-                    date=fixed_date)
-    await webapi.send(data, topotype)
 
 
 def get_webapi_opts(cglob, confcust):
@@ -51,103 +31,6 @@ def get_webapi_opts(cglob, confcust):
         logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
     return webapi_opts
-
-
-def find_next_paging_cursor_count(res):
-    cursor, count = None, None
-
-    doc = json.loads(res)
-    total = doc['total']
-    from_index = doc['from']
-    to_index = doc['to']
-
-    return total, from_index, to_index
-
-
-def filter_out_results(data):
-    json_data = json.loads(data)['results']
-    return json_data
-
-
-async def fetch_data(feed, paginated):
-    fetched_data = list()
-    remote_topo = urlparse(feed)
-    session = SessionWithRetry(logger, custname, globopts, handle_session_close=True)
-
-    res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
-                                                    remote_topo.netloc,
-                                                    remote_topo.path))
-    if paginated:
-        fetched_results = filter_out_results(res)
-        total, from_index, to_index = find_next_paging_cursor_count(res)
-        num = to_index - from_index
-        from_index = to_index
-
-        while to_index != total:
-            res = await \
-                session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
-                                                                        remote_topo.netloc,
-                                                                        remote_topo.path,
-                                                                        from_index,
-                                                                        num))
-            fetched_results = fetched_results + filter_out_results(res)
-
-            total, from_index, to_index = find_next_paging_cursor_count(res)
-            num = to_index - from_index
-            from_index = to_index
-
-        await session.close()
-        return dict(results=fetched_results)
-
-    else:
-        total, from_index, to_index = find_next_paging_cursor_count(res)
-        num = total
-        from_index = 0
-
-        res = await \
-            session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
-                                                                    remote_topo.netloc,
-                                                                    remote_topo.path,
-                                                                    from_index,
-                                                                    num))
-        await session.close()
-        return res
-
-
-async def write_state(confcust, fixed_date, state):
-    cust = list(confcust.get_customers())[0]
-    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
-    fetchtype = confcust.get_topofetchtype()
-    if fixed_date:
-        await state_write(sys.argv[0], jobstatedir, state,
-                          globopts['InputStateDays'.lower()],
-                          fixed_date.replace('-', '_'))
-    else:
-        await state_write(sys.argv[0], jobstatedir, state,
-                          globopts['InputStateDays'.lower()])
-
-
-def write_avro(confcust, group_groups, group_endpoints, fixed_date):
-    custdir = confcust.get_custdir()
-    if fixed_date:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir, fixed_date.replace('-', '_'))
-    else:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfGroups'.lower()], custdir)
-    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfGroups'.lower()], filename)
-    ret, excep = avro.write(group_groups)
-    if not ret:
-        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
-        raise SystemExit(1)
-
-    if fixed_date:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir, fixed_date.replace('-', '_'))
-    else:
-        filename = filename_date(logger, globopts['OutputTopologyGroupOfEndpoints'.lower()], custdir)
-    avro = AvroWriter(globopts['AvroSchemasTopologyGroupOfEndpoints'.lower()], filename)
-    ret, excep = avro.write(group_endpoints)
-    if not ret:
-        logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
-        raise SystemExit(1)
 
 
 def main():
@@ -182,6 +65,8 @@ def main():
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust)
     fetchtype = confcust.get_topofetchtype()[0]
 
+    webapi_opts = get_webapi_opts(cglob, confcust)
+
     state = None
     logger.customer = custname
     uidservendp = confcust.get_uidserviceendpoints()
@@ -192,49 +77,17 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        topofeedproviders = confcust.get_topofeedservicegroups()
-        topofeedresources = confcust.get_topofeedendpoints()
-        coros = [
-            fetch_data(topofeedresources, topofeedpaging), fetch_data(topofeedproviders, topofeedpaging)
-        ]
-
-        # fetch topology data concurrently in coroutines
-        fetched_resources, fetched_providers = loop.run_until_complete(asyncio.gather(*coros, return_exceptions=True))
-
-        group_groups, group_endpoints = parse_source(fetched_resources, fetched_providers, uidservendp, custname)
-        endpoints_contacts = ParseResourcesContacts(logger, fetched_resources).get_contacts()
-
-        attach_contacts_topodata(logger, endpoints_contacts, group_endpoints)
-
-        loop.run_until_complete(
-            write_state(confcust, fixed_date, True)
+        task = TaskProviderTopology(
+            loop, logger, sys.argv[0], globopts, webapi_opts, confcust,
+            topofeedpaging, uidservendp, fetchtype, fixed_date
         )
-
-        webapi_opts = get_webapi_opts(cglob, confcust)
-
-        numge = len(group_endpoints)
-        numgg = len(group_groups)
-
-        # send concurrently to WEB-API in coroutines
-        if eval(globopts['GeneralPublishWebAPI'.lower()]):
-            loop.run_until_complete(
-                asyncio.gather(
-                    send_webapi(webapi_opts, group_groups, 'groups', fixed_date),
-                    send_webapi(webapi_opts, group_endpoints,'endpoints', fixed_date)
-                )
-            )
-
-        if eval(globopts['GeneralWriteAvro'.lower()]):
-            write_avro(confcust, group_groups, group_endpoints, fixed_date)
-
-        logger.info('Customer:' + custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (fetchtype, numgg))
+        loop.run_until_complete(task.run())
 
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
-            write_state(confcust, fixed_date, False )
+            write_state(sys.argv[0], globopts, confcust, fixed_date, False)
         )
-
 
 if __name__ == '__main__':
     main()
