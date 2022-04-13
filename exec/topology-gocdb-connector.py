@@ -22,9 +22,6 @@ SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
 SITES_PI = '/gocdbpi/private/?method=get_site&scope='
 SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
 
-# SITES_PI = '/vapor/downloadLavoisier/option/xml/view/vapor_sites/param/vo=biomed'
-# SERVICE_ENDPOINTS_PI = '/vapor/downloadLavoisier/option/xml/view/vapor_endpoints'
-
 ROC_CONTACTS = '/gocdbpi/private/?method=get_roc_contacts'
 SITE_CONTACTS = '/gocdbpi/private/?method=get_site_contacts'
 PROJECT_CONTACTS = '/gocdbpi/private/?method=get_project_contacts'
