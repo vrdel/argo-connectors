@@ -31,36 +31,18 @@ import sys
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.io.webapi import WebAPI
-from argo_egi_connectors.io.avrowrite import AvroWriter
-from argo_egi_connectors.io.statewrite import state_write
+from argo_egi_connectors.task.common import state_write
+from argo_egi_connectors.task.weights import TaskVaporWeights
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.vapor import ParseWeights
 
 from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.utils import filename_date, module_class_name, date_check
-from urllib.parse import urlparse
 
 globopts = {}
 logger = None
 
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
-
-
-async def fetch_data(feed):
-    feed_parts = urlparse(feed)
-    session = SessionWithRetry(logger, os.path.basename(sys.argv[0]), globopts)
-    res = await session.http_get('{}://{}{}'.format(feed_parts.scheme,
-                                                    feed_parts.netloc,
-                                                    feed_parts.path))
-    return res
-
-
-def parse_source(res):
-    weights = ParseWeights(logger, res).get_data()
-    return weights
 
 
 def get_webapi_opts(cust, job, cglob, confcust):
@@ -70,41 +52,6 @@ def get_webapi_opts(cust, job, cglob, confcust):
     if not webapi_complete:
         logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
     return webapi_opts
-
-
-async def send_webapi(job, confcust, webapi_opts, fixed_date, weights):
-    webapi = WebAPI(sys.argv[0], webapi_opts['webapihost'],
-                    webapi_opts['webapitoken'], logger,
-                    int(globopts['ConnectionRetry'.lower()]),
-                    int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]),
-                    report=confcust.get_jobdir(job), endpoints_group='SITES',
-                    date=fixed_date)
-    await webapi.send(weights)
-
-
-async def write_state(cust, job, confcust, fixed_date, state):
-    jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
-    if fixed_date:
-        await state_write(sys.argv[0], jobstatedir, state,
-                          globopts['InputStateDays'.lower()],
-                          fixed_date.replace('-', '_'))
-    else:
-        await state_write(sys.argv[0], jobstatedir, state,
-                          globopts['InputStateDays'.lower()])
-
-
-def write_avro(cust, job, confcust, fixed_date, weights):
-    jobdir = confcust.get_fulldir(cust, job)
-    if fixed_date:
-        filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
-    else:
-        filename = filename_date(logger, globopts['OutputWeights'.lower()], jobdir)
-    avro = AvroWriter(globopts['AvroSchemasWeights'.lower()], filename)
-    ret, excep = avro.write(weights)
-    if not ret:
-        logger.error('Customer:%s Job:%s %s' % (logger.customer, logger.job, repr(excep)))
-        raise SystemExit(1)
 
 
 def main():
@@ -143,49 +90,20 @@ def main():
         jobs = list(sjobs)[0] if len(sjobs) == 1 else '({0})'.format(','.join(sjobs))
         logger.job = jobs
         logger.customer = customers
+        webapi_opts = get_webapi_opts(cust, job, cglob, confcust)
 
         try:
-            res = loop.run_until_complete(
-                fetch_data(feed)
-            )
-            weights = parse_source(res)
-
-            for job, cust in jobcust:
-                logger.customer = confcust.get_custname(cust)
-                logger.job = job
-
-                write_empty = confcust.send_empty(sys.argv[0], cust)
-
-                if write_empty:
-                    weights = []
-
-                webapi_opts = get_webapi_opts(cust, job, cglob, confcust)
-
-                if eval(globopts['GeneralPublishWebAPI'.lower()]):
-                    loop.run_until_complete(
-                        send_webapi(job, confcust, webapi_opts, fixed_date, weights)
-                    )
-
-                if eval(globopts['GeneralWriteAvro'.lower()]):
-                    write_avro(cust, job, confcust, fixed_date, weights)
-
-                loop.run_until_complete(
-                    write_state(cust, job, confcust, fixed_date, True)
-                )
-
-                if weights or write_empty:
-                    custs = set([cust for job, cust in jobcust])
-                    for cust in custs:
-                        jobs = [job for job, lcust in jobcust if cust == lcust]
-                        logger.info('Customer:%s Jobs:%s Sites:%d' % (confcust.get_custname(cust),
-                                                                      jobs[0] if len(jobs) == 1 else '({0})'.format(','.join(jobs)),
-                                                                      len(weights)))
+            task = TaskVaporWeights(loop, logger, sys.argv[0], globopts,
+                                    webapi_opts, confcust, VAPORPI, jobcust,
+                                    fixed_date)
+            loop.run_until_complete(task.run())
 
         except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             logger.error(repr(exc))
             for job, cust in jobcust:
                 loop.run_until_complete(
-                    write_state(cust, job, confcust, fixed_date, False)
+                    write_state(sys.argv[0], globopts, confcust, fixed_date, False)
+                    # write_state(cust, job, confcust, fixed_date, False)
                 )
 
 
