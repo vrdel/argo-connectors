@@ -2,18 +2,17 @@
 
 import argparse
 import os
-import re
 import sys
 
-import uvloop
 import asyncio
-
-from argo_egi_connectors.io.avrowrite import AvroWriter
-from argo_egi_connectors.io.statewrite import state_write
-from argo_egi_connectors.tasks.webapi_metricprofile import TaskWebApiMetricProfile
-from argo_egi_connectors.log import Logger
+import uvloop
 
 from argo_egi_connectors.config import CustomerConf, Global
+from argo_egi_connectors.io.avrowrite import AvroWriter
+from argo_egi_connectors.io.statewrite import state_write
+from argo_egi_connectors.log import Logger
+from argo_egi_connectors.tasks.common import write_weights_metricprofile_state as write_state
+from argo_egi_connectors.tasks.webapi_metricprofile import TaskWebApiMetricProfile
 from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
 
 logger = None
@@ -50,11 +49,18 @@ def main():
     asyncio.set_event_loop(loop)
 
     for cust in confcust.get_customers():
-        custname = confcust.get_custname(cust)
-        task = TaskWebApiMetricProfile(
-            loop, logger, sys.argv[0], globopts, cglob, confcust, cust, fixed_date
-        )
-        loop.run_until_complete(task.run())
+        try:
+            custname = confcust.get_custname(cust)
+            task = TaskWebApiMetricProfile(
+                loop, logger, sys.argv[0], globopts, cglob, confcust, cust, fixed_date
+            )
+            loop.run_until_complete(task.run())
+
+        except (KeyboardInterrupt) as exc:
+            logger.error(repr(exc))
+
+        finally:
+            loop.close()
 
 
 if __name__ == '__main__':

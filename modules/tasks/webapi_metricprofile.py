@@ -7,6 +7,7 @@ from argo_egi_connectors.parse.webapi_metricprofile import ParseMetricProfiles
 
 API_PATH = '/api/v2/metric_profiles'
 
+
 class TaskWebApiMetricProfile(object):
     def __init__(self, loop, logger, connector_name, globopts, cglob, confcust,
                  cust, fixed_date):
