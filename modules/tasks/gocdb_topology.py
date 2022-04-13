@@ -22,6 +22,14 @@ from argo_egi_connectors.tasks.common import write_state, write_avro
 from urllib.parse import urlparse
 
 
+def contains_exception(list):
+    for a in list:
+        if isinstance(a, Exception):
+            return (True, a)
+
+    return (False, None)
+
+
 def filter_multiple_tags(data):
     """
         Paginated content is represented with multiple XML enclosing tags
@@ -115,221 +123,238 @@ def parse_source_serviceendpoints_contacts(logger, res, custname):
     return contacts.get_contacts()
 
 
-# Fetches data from LDAP, connection parameters are set in customer.conf
-async def fetch_ldap_data(logger, globopts, host, port, base, filter, attributes):
-    ldap_session = LDAPSessionWithRetry(logger, int(globopts['ConnectionRetry'.lower()]),
-        int(globopts['ConnectionSleepRetry'.lower()]), int(globopts['ConnectionTimeout'.lower()]))
 
-    res = await ldap_session.search(host, port, base, filter, attributes)
-    return res
+class TaskGocdbTopology(object):
+    def __init__(self, loop, logger, connector_name, SITE_CONTACTS,
+                 SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI,
+                 SERVICE_GROUPS_PI, SITES_PI, globopts, auth_opts, webapi_opts,
+                 bdii_opts, confcust, custname, topofeed, topofetchtype,
+                 fixed_date, uidservendp, pass_extensions, topofeedpaging):
+        self.loop = loop
+        self.logger = logger
+        self.connector_name = connector_name
+        self.SITE_CONTACTS = SITE_CONTACTS
+        self.SERVICEGROUP_CONTACTS = SERVICEGROUP_CONTACTS
+        self.SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI
+        self.SERVICE_GROUPS_PI = SERVICE_GROUPS_PI
+        self.SITES_PI = SITES_PI
+        self.globopts = globopts
+        self.auth_opts = auth_opts
+        self.webapi_opts = webapi_opts
+        self.bdii_opts = bdii_opts
+        self.confcust = confcust
+        self.custname = custname
+        self.topofeed = topofeed
+        self.topofetchtype = topofetchtype
+        self.fixed_date = fixed_date
+        self.uidservendp = uidservendp
+        self.pass_extensions = pass_extensions
+        self.topofeedpaging = topofeedpaging
 
+    async def fetch_ldap_data(self, host, port, base, filter, attributes):
+        ldap_session = LDAPSessionWithRetry(self.logger, int(self.globopts['ConnectionRetry'.lower()]),
+            int(self.globopts['ConnectionSleepRetry'.lower()]), int(self.globopts['ConnectionTimeout'.lower()]))
 
-async def fetch_data(logger, connector_name, globopts, api, auth_opts,
-                     paginated):
-    feed_parts = urlparse(api)
-    fetched_data = list()
-    if paginated:
-        count, cursor = 1, 0
-        while count != 0:
-            session = SessionWithRetry(logger, os.path.basename(connector_name),
-                                       globopts, custauth=auth_opts)
-            res = await session.http_get('{}&next_cursor={}'.format(api,
-                                                                    cursor))
-            count, cursor = find_next_paging_cursor_count(res)
-            fetched_data.append(res)
-        return filter_multiple_tags(''.join(fetched_data))
-
-    else:
-        session = SessionWithRetry(logger, os.path.basename(connector_name),
-                                   globopts, custauth=auth_opts)
-        res = await session.http_get(api)
+        res = await ldap_session.search(host, port, base, filter, attributes)
         return res
 
+    async def fetch_data(self, api):
+        feed_parts = urlparse(api)
+        fetched_data = list()
+        if self.topofeedpaging:
+            count, cursor = 1, 0
+            while count != 0:
+                session = SessionWithRetry(self.logger,
+                                           os.path.basename(self.connector_name),
+                                           self.globopts,
+                                           custauth=self.auth_opts)
+                res = await session.http_get('{}&next_cursor={}'.format(api,
+                                                                        cursor))
+                count, cursor = find_next_paging_cursor_count(res)
+                fetched_data.append(res)
+            return filter_multiple_tags(''.join(fetched_data))
 
-async def send_webapi(logger, connector_name, globopts, webapi_opts, data, topotype, fixed_date=None):
-    webapi = WebAPI(connector_name, webapi_opts['webapihost'],
-                    webapi_opts['webapitoken'], logger,
-                    int(globopts['ConnectionRetry'.lower()]),
-                    int(globopts['ConnectionTimeout'.lower()]),
-                    int(globopts['ConnectionSleepRetry'.lower()]),
-                    date=fixed_date)
-    await webapi.send(data, topotype)
+        else:
+            session = SessionWithRetry(self.logger,
+                                       os.path.basename(self.connector_name),
+                                       self.globopts, custauth=self.auth_opts)
+            res = await session.http_get(api)
+            return res
 
+    async def send_webapi(self, data, topotype):
+        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
+                        self.webapi_opts['webapitoken'], self.logger,
+                        int(self.globopts['ConnectionRetry'.lower()]),
+                        int(self.globopts['ConnectionTimeout'.lower()]),
+                        int(self.globopts['ConnectionSleepRetry'.lower()]),
+                        date=self.fixed_date)
+        await webapi.send(data, topotype)
 
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
+    async def run(self):
+        fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
+        fetched_bdii = None
 
-    return (False, None)
+        group_endpoints, group_groups = list(), list()
+        parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
 
+        try:
+            contact_coros = [
+                self.fetch_data(self.topofeed + self.SITE_CONTACTS),
+                self.fetch_data(self.topofeed + self.SERVICEGROUP_CONTACTS)
+            ]
+            contacts = await asyncio.gather(*contact_coros, loop=self.loop, return_exceptions=True)
 
-async def run(loop, logger, connector_name, SITE_CONTACTS,
-              SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
-              SITES_PI, globopts, auth_opts, webapi_opts,
-              bdii_opts, confcust, custname, topofeed, topofetchtype,
-              fixed_date, uidservendp, pass_extensions, topofeedpaging):
-    fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
-    fetched_bdii = None
+            exc_raised, exc = contains_exception(contacts)
+            if exc_raised:
+                raise ConnectorHttpError(repr(exc))
 
-    group_endpoints, group_groups = list(), list()
-    parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
+            parsed_site_contacts = parse_source_sitescontacts(self.logger, contacts[0], self.custname)
+            parsed_servicegroups_contacts = parse_source_servicegroupsroles(self.logger, contacts[1], self.custname)
 
-    try:
-        contact_coros = [
-            fetch_data(logger, connector_name, globopts, topofeed + SITE_CONTACTS, auth_opts, False),
-            fetch_data(logger, connector_name, globopts, topofeed + SERVICEGROUP_CONTACTS, auth_opts, False)
-        ]
-        contacts = await asyncio.gather(*contact_coros, loop=loop, return_exceptions=True)
+        except (ConnectorHttpError, ConnectorParseError) as exc:
+            self.logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
-        exc_raised, exc = contains_exception(contacts)
+        coros = [self.fetch_data(self.SERVICE_ENDPOINTS_PI)]
+        if 'servicegroups' in self.topofetchtype:
+            coros.append(self.fetch_data(self.SERVICE_GROUPS_PI))
+        if 'sites' in self.topofetchtype:
+            coros.append(self.fetch_data(self.SITES_PI))
+
+        if self.bdii_opts and eval(self.bdii_opts['bdii']):
+            host = self.bdii_opts['bdiihost']
+            port = self.bdii_opts['bdiiport']
+            base = self.bdii_opts['bdiiquerybase']
+
+            coros.append(
+                self.fetch_ldap_data(host, port, base,
+                                     self.bdii_opts['bdiiqueryfiltersrm'],
+                                     self.bdii_opts['bdiiqueryattributessrm'].split(' '))
+            )
+
+            coros.append(
+                self.fetch_ldap_data(host, port, base,
+                                     self.bdii_opts['bdiiqueryfiltersepath'],
+                                     self.bdii_opts['bdiiqueryattributessepath'].split(' '))
+            )
+
+        # fetch topology data concurrently in coroutines
+        fetched_topology = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
+
+        fetched_endpoints = fetched_topology[0]
+        if self.bdii_opts and eval(self.bdii_opts['bdii']):
+            fetched_bdii = list()
+            fetched_bdii.append(fetched_topology[-2])
+            fetched_bdii.append(fetched_topology[-1])
+        if 'sites' in self.topofetchtype and 'servicegroups' in self.topofetchtype:
+            fetched_servicegroups, fetched_sites = (fetched_topology[1], fetched_topology[2])
+        elif 'sites' in self.topofetchtype:
+            fetched_sites = fetched_topology[1]
+        elif 'servicegroups' in self.topofetchtype:
+            fetched_servicegroups = fetched_topology[1]
+
+        exc_raised, exc = contains_exception(fetched_topology)
         if exc_raised:
             raise ConnectorHttpError(repr(exc))
 
-        parsed_site_contacts = parse_source_sitescontacts(logger, contacts[0], custname)
-        parsed_servicegroups_contacts = parse_source_servicegroupsroles(logger, contacts[1], custname)
+        # proces data in parallel using multiprocessing
+        executor = ProcessPoolExecutor(max_workers=3)
+        parse_workers = list()
+        exe_parse_source_endpoints = partial(parse_source_endpoints, self.logger,
+                                            fetched_endpoints, self.custname,
+                                            self.uidservendp, self.pass_extensions)
+        exe_parse_source_servicegroups = partial(parse_source_servicegroups, self.logger,
+                                                fetched_servicegroups, self.custname,
+                                                self.uidservendp, self.pass_extensions)
+        exe_parse_source_sites = partial(parse_source_sites, self.logger, fetched_sites,
+                                        self.custname, self.uidservendp, self.pass_extensions)
 
-    except (ConnectorHttpError, ConnectorParseError) as exc:
-        logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
+        # parse topology depend on configured components fetch. we can fetch
+        # only sites, only servicegroups or both.
+        if fetched_servicegroups and fetched_sites:
+            parse_workers.append(
+                self.loop.run_in_executor(executor, exe_parse_source_endpoints)
+            )
+            parse_workers.append(
+                self.loop.run_in_executor(executor, exe_parse_source_servicegroups)
+            )
+            parse_workers.append(
+                self.loop.run_in_executor(executor, exe_parse_source_sites)
+            )
+        elif fetched_servicegroups and not fetched_sites:
+            parse_workers.append(
+                self.loop.run_in_executor(executor, exe_parse_source_servicegroups)
+            )
+        elif fetched_sites and not fetched_servicegroups:
+            parse_workers.append(
+                self.loop.run_in_executor(executor, exe_parse_source_endpoints)
+            )
+            parse_workers.append(
+                self.loop.run_in_executor(executor, exe_parse_source_sites)
+            )
 
-    coros = [fetch_data(logger, connector_name, globopts, SERVICE_ENDPOINTS_PI, auth_opts, topofeedpaging)]
-    if 'servicegroups' in topofetchtype:
-        coros.append(fetch_data(logger, connector_name, globopts, SERVICE_GROUPS_PI, auth_opts, topofeedpaging))
-    if 'sites' in topofetchtype:
-        coros.append(fetch_data(logger, connector_name, globopts, SITES_PI, auth_opts, topofeedpaging))
+        parsed_topology = await asyncio.gather(*parse_workers, loop=self.loop)
 
-    if bdii_opts and eval(bdii_opts['bdii']):
-        host = bdii_opts['bdiihost']
-        port = bdii_opts['bdiiport']
-        base = bdii_opts['bdiiquerybase']
+        if fetched_servicegroups and fetched_sites:
+            group_endpoints = parsed_topology[0]
+            group_groups, group_endpoints_sg = parsed_topology[1]
+            group_endpoints += group_endpoints_sg
+            group_groups += parsed_topology[2]
+        elif fetched_servicegroups and not fetched_sites:
+            group_groups, group_endpoints = parsed_topology[0]
+        elif fetched_sites and not fetched_servicegroups:
+            group_endpoints = parsed_topology[0]
+            group_groups = parsed_topology[1]
 
-        coros.append(fetch_ldap_data(logger, globopts, host, port, base,
-                                     bdii_opts['bdiiqueryfiltersrm'],
-                                     bdii_opts['bdiiqueryattributessrm'].split(' ')))
+        # check if we fetched SRM port info and attach it appropriate endpoint
+        # data
+        if self.bdii_opts and eval(self.bdii_opts['bdii']):
+            attach_srmport_topodata(self.logger, self.bdii_opts['bdiiqueryattributessrm'].split(' ')[0], fetched_bdii[0], group_endpoints)
+            attach_sepath_topodata(self.logger, self.bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_bdii[1], group_endpoints)
 
-        coros.append(fetch_ldap_data(logger, globopts, host, port, base,
-                                     bdii_opts['bdiiqueryfiltersepath'],
-                                     bdii_opts['bdiiqueryattributessepath'].split(' ')))
+        # parse contacts from fetched service endpoints topology, if there are
+        # any
+        parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(self.logger, fetched_endpoints, self.custname)
 
-    # fetch topology data concurrently in coroutines
-    fetched_topology = await asyncio.gather(*coros, loop=loop, return_exceptions=True)
+        if not parsed_site_contacts and fetched_sites:
+            # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
+            # sites topology entities
+            parsed_site_contacts = parse_source_siteswithcontacts(self.logger, fetched_sites, self.custname)
 
-    fetched_endpoints = fetched_topology[0]
-    if bdii_opts and eval(bdii_opts['bdii']):
-        fetched_bdii = list()
-        fetched_bdii.append(fetched_topology[-2])
-        fetched_bdii.append(fetched_topology[-1])
-    if 'sites' in topofetchtype and 'servicegroups' in topofetchtype:
-        fetched_servicegroups, fetched_sites = (fetched_topology[1], fetched_topology[2])
-    elif 'sites' in topofetchtype:
-        fetched_sites = fetched_topology[1]
-    elif 'servicegroups' in topofetchtype:
-        fetched_servicegroups = fetched_topology[1]
+        attach_contacts_workers = [
+            self.loop.run_in_executor(executor,
+                                      partial(attach_contacts_topodata, self.logger,
+                                              parsed_site_contacts,
+                                              group_groups)),
+            self.loop.run_in_executor(executor,
+                                      partial(attach_contacts_topodata, self.logger,
+                                              parsed_serviceendpoint_contacts,
+                                              group_endpoints))
+        ]
 
-    exc_raised, exc = contains_exception(fetched_topology)
-    if exc_raised:
-        raise ConnectorHttpError(repr(exc))
+        executor = ProcessPoolExecutor(max_workers=2)
+        group_groups, group_endpoints = await asyncio.gather(*attach_contacts_workers, loop=self.loop)
 
-    # proces data in parallel using multiprocessing
-    executor = ProcessPoolExecutor(max_workers=3)
-    parse_workers = list()
-    exe_parse_source_endpoints = partial(parse_source_endpoints, logger,
-                                         fetched_endpoints, custname,
-                                         uidservendp, pass_extensions)
-    exe_parse_source_servicegroups = partial(parse_source_servicegroups, logger,
-                                             fetched_servicegroups, custname,
-                                             uidservendp, pass_extensions)
-    exe_parse_source_sites = partial(parse_source_sites, logger, fetched_sites,
-                                     custname, uidservendp, pass_extensions)
+        if parsed_servicegroups_contacts:
+            attach_contacts_topodata(self.logger, parsed_servicegroups_contacts, group_groups)
+        elif fetched_servicegroups:
+            # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
+            # servicegroups topology entities
+            parsed_servicegroups_contacts = parse_source_servicegroupscontacts(self.logger, fetched_servicegroups, self.custname)
+            attach_contacts_topodata(self.logger, parsed_servicegroups_contacts, group_groups)
 
-    # parse topology depend on configured components fetch. we can fetch
-    # only sites, only servicegroups or both.
-    if fetched_servicegroups and fetched_sites:
-        parse_workers.append(
-            loop.run_in_executor(executor, exe_parse_source_endpoints)
-        )
-        parse_workers.append(
-            loop.run_in_executor(executor, exe_parse_source_servicegroups)
-        )
-        parse_workers.append(
-            loop.run_in_executor(executor, exe_parse_source_sites)
-        )
-    elif fetched_servicegroups and not fetched_sites:
-        parse_workers.append(
-            loop.run_in_executor(executor, exe_parse_source_servicegroups)
-        )
-    elif fetched_sites and not fetched_servicegroups:
-        parse_workers.append(
-            loop.run_in_executor(executor, exe_parse_source_endpoints)
-        )
-        parse_workers.append(
-            loop.run_in_executor(executor, exe_parse_source_sites)
-        )
+        await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
 
-    parsed_topology = await asyncio.gather(*parse_workers, loop=loop)
+        numge = len(group_endpoints)
+        numgg = len(group_groups)
 
-    if fetched_servicegroups and fetched_sites:
-        group_endpoints = parsed_topology[0]
-        group_groups, group_endpoints_sg = parsed_topology[1]
-        group_endpoints += group_endpoints_sg
-        group_groups += parsed_topology[2]
-    elif fetched_servicegroups and not fetched_sites:
-        group_groups, group_endpoints = parsed_topology[0]
-    elif fetched_sites and not fetched_servicegroups:
-        group_endpoints = parsed_topology[0]
-        group_groups = parsed_topology[1]
+        # send concurrently to WEB-API in coroutines
+        if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+            await asyncio.gather(
+                self.send_webapi(group_groups, 'groups' ),
+                self.send_webapi(group_endpoints,'endpoints')
+            )
 
+        if eval(self.globopts['GeneralWriteAvro'.lower()]):
+            write_avro(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
 
-    # check if we fetched SRM port info and attach it appropriate endpoint
-    # data
-    if bdii_opts and eval(bdii_opts['bdii']):
-        attach_srmport_topodata(logger, bdii_opts['bdiiqueryattributessrm'].split(' ')[0], fetched_bdii[0], group_endpoints)
-        attach_sepath_topodata(logger, bdii_opts['bdiiqueryattributessepath'].split(' ')[0], fetched_bdii[1], group_endpoints)
-
-    # parse contacts from fetched service endpoints topology, if there are
-    # any
-    parsed_serviceendpoint_contacts = parse_source_serviceendpoints_contacts(logger, fetched_endpoints, custname)
-
-    if not parsed_site_contacts and fetched_sites:
-        # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
-        # sites topology entities
-        parsed_site_contacts = parse_source_siteswithcontacts(logger, fetched_sites, custname)
-
-    attach_contacts_workers = [
-        loop.run_in_executor(executor, partial(attach_contacts_topodata,
-                                                logger,
-                                                parsed_site_contacts,
-                                                group_groups)),
-        loop.run_in_executor(executor, partial(attach_contacts_topodata,
-                                                logger,
-                                                parsed_serviceendpoint_contacts,
-                                                group_endpoints))
-    ]
-
-    executor = ProcessPoolExecutor(max_workers=2)
-    group_groups, group_endpoints = await asyncio.gather(*attach_contacts_workers, loop=loop)
-
-    if parsed_servicegroups_contacts:
-        attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
-    elif fetched_servicegroups:
-        # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
-        # servicegroups topology entities
-        parsed_servicegroups_contacts = parse_source_servicegroupscontacts(logger, fetched_servicegroups, custname)
-        attach_contacts_topodata(logger, parsed_servicegroups_contacts, group_groups)
-
-    await write_state(connector_name, globopts, confcust, fixed_date, True)
-
-    numge = len(group_endpoints)
-    numgg = len(group_groups)
-
-    # send concurrently to WEB-API in coroutines
-    if eval(globopts['GeneralPublishWebAPI'.lower()]):
-        await asyncio.gather(
-            send_webapi(logger, connector_name, globopts, webapi_opts, group_groups, 'groups', fixed_date),
-            send_webapi(logger, connector_name, globopts, webapi_opts, group_endpoints,'endpoints', fixed_date)
-        )
-
-    if eval(globopts['GeneralWriteAvro'.lower()]):
-        write_avro(logger, globopts, confcust, group_groups, group_endpoints, fixed_date)
-
-    logger.info('Customer:' + custname + ' Type:%s ' % (','.join(topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
+        self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))

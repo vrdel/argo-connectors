@@ -7,13 +7,11 @@ import sys
 import asyncio
 import uvloop
 
-from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
-from argo_egi_connectors.tasks.gocdb_topology import run
-from argo_egi_connectors.tasks.common import write_state
-from argo_egi_connectors.log import Logger
-
 from argo_egi_connectors.config import Global, CustomerConf
-
+from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_egi_connectors.log import Logger
+from argo_egi_connectors.tasks.common import write_state
+from argo_egi_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_egi_connectors.utils import filename_date, date_check
 
 logger = None
@@ -129,14 +127,14 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        loop.run_until_complete(
-            run(loop, logger, sys.argv[0], SITE_CONTACTS,
-                SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
-                SITES_PI, globopts, auth_opts, webapi_opts, bdii_opts,
-                confcust, custname, topofeed, topofetchtype, fixed_date,
-                uidservendp, pass_extensions, topofeedpaging
-            )
+        task = TaskGocdbTopology(
+            loop, logger, sys.argv[0], SITE_CONTACTS, SERVICEGROUP_CONTACTS,
+            SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI, globopts,
+            auth_opts, webapi_opts, bdii_opts, confcust, custname, topofeed,
+            topofetchtype, fixed_date, uidservendp, pass_extensions,
+            topofeedpaging
         )
+        loop.run_until_complete(task.run())
 
     except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
