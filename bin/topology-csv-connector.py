@@ -11,7 +11,7 @@ from argo_egi_connectors.config import Global, CustomerConf
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.tasks.common import write_state
-from argo_egi_connectors.tasks.flat_topology import run
+from argo_egi_connectors.tasks.flat_topology import TaskFlatTopology
 from argo_egi_connectors.utils import date_check
 
 logger = None
@@ -75,12 +75,12 @@ def main():
     asyncio.set_event_loop(loop)
 
     try:
-        loop.run_until_complete(
-            run(loop, logger, sys.argv[0], globopts, webapi_opts, confcust,
-                custname, topofeed, topofetchtype, fixed_date, uidservendp,
-                is_csv=True
-            )
+        task = TaskFlatTopology(
+            loop, logger, sys.argv[0], globopts, webapi_opts, confcust,
+            custname, topofeed, topofetchtype, fixed_date, uidservendp,
+            is_csv=True
         )
+        loop.run_until_complete(task.run())
 
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
