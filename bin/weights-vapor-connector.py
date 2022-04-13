@@ -9,7 +9,7 @@ import uvloop
 
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_egi_connectors.tasks.vapor_weights import TaskVaporWeights
-from argo_egi_connectors.tasks.common import write_weights_state as write_state
+from argo_egi_connectors.tasks.common import write_weights_metricprofile_state as write_state
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf

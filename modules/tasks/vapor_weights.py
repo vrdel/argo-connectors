@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.parse.vapor import ParseWeights
-from argo_egi_connectors.tasks.common import write_weights_state as write_state, write_weights_avro as write_avro
+from argo_egi_connectors.tasks.common import write_weights_metricprofile_state as write_state, write_weights_avro as write_avro
 
 
 class TaskVaporWeights(object):
