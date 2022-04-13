@@ -8,8 +8,6 @@ from argo_egi_connectors.parse.vapor import ParseWeights
 from argo_egi_connectors.tasks.common import write_weights_state as write_state, write_weights_avro as write_avro
 
 
-
-
 class TaskVaporWeights(object):
     def __init__(self, loop, logger, connector_name, globopts, confcust, feed,
                  jobcust, cglob, fixed_date):
@@ -77,12 +75,12 @@ class TaskVaporWeights(object):
 
             await write_state(self.connector_name, self.globopts, cust, job, self.confcust, self.fixed_date, True)
 
-            if weights or write_empty:
-                custs = set([cust for job, cust in self.jobcust])
-                for cust in custs:
-                    jobs = [job for job, lcust in self.jobcust if cust == lcust]
-                    self.logger.info('Customer:%s Jobs:%s Sites:%d' %
-                                     (self.confcust.get_custname(cust), jobs[0]
-                                      if len(jobs) == 1 else
-                                      '({0})'.format(','.join(jobs)),
-                                      len(weights)))
+        if weights or write_empty:
+            custs = set([cust for job, cust in self.jobcust])
+            for cust in custs:
+                jobs = [job for job, lcust in self.jobcust if cust == lcust]
+                self.logger.info('Customer:%s Jobs:%s Sites:%d' %
+                                    (self.confcust.get_custname(cust), jobs[0]
+                                    if len(jobs) == 1 else
+                                    '({0})'.format(','.join(jobs)),
+                                    len(weights)))

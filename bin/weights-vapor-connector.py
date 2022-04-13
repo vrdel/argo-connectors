@@ -4,8 +4,8 @@ import argparse
 import os
 import sys
 
-import uvloop
 import asyncio
+import uvloop
 
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_egi_connectors.tasks.vapor_weights import TaskVaporWeights
@@ -13,14 +13,12 @@ from argo_egi_connectors.tasks.common import write_weights_state as write_state
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
-from argo_egi_connectors.utils import filename_date, module_class_name, date_check
+from argo_egi_connectors.utils import date_check
 
 globopts = {}
 logger = None
 
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
-
-
 
 
 def main():
