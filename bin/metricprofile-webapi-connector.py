@@ -8,8 +8,6 @@ import sys
 import uvloop
 import asyncio
 
-from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_egi_connectors.io.avrowrite import AvroWriter
 from argo_egi_connectors.io.statewrite import state_write
 from argo_egi_connectors.tasks.webapi_metricprofile import TaskWebApiMetricProfile
@@ -17,25 +15,11 @@ from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import CustomerConf, Global
 from argo_egi_connectors.utils import filename_date, module_class_name, datestamp, date_check
-from argo_egi_connectors.parse.webapi_metricprofile import ParseMetricProfiles
 
 logger = None
 
 globopts = dict()
 custname = ''
-API_PATH = '/api/v2/metric_profiles'
-
-
-async def fetch_data(host, token):
-    session = SessionWithRetry(logger, os.path.basename(sys.argv[0]), globopts,
-                               token=token)
-    res = await session.http_get('{}://{}{}'.format('https', host, API_PATH))
-    return res
-
-
-def parse_source(res, profiles, namespace):
-    metric_profiles = ParseMetricProfiles(logger, res, profiles, namespace).get_data()
-    return metric_profiles
 
 
 def main():
@@ -68,6 +52,7 @@ def main():
     for cust in confcust.get_customers():
         custname = confcust.get_custname(cust)
         task = TaskWebApiMetricProfile(
+            loop, logger, sys.argv[0], globopts, cglob, confcust, cust, fixed_date
         )
         loop.run_until_complete(task.run())
 

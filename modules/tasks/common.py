@@ -26,7 +26,7 @@ async def write_weights_metricprofile_state(connector_name, globopts, cust, job,
                           globopts['InputStateDays'.lower()])
 
 
-def write_metricprofile_avro(cust, job, confcust, fixed_date, fetched_profiles):
+def write_metricprofile_avro(logger, globopts, cust, job, confcust, fixed_date, fetched_profiles):
     jobdir = confcust.get_fulldir(cust, job)
     if fixed_date:
         filename = filename_date(logger, globopts['OutputMetricProfile'.lower()], jobdir, fixed_date.replace('-', '_'))
