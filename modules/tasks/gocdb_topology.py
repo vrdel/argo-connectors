@@ -75,27 +75,50 @@ def find_next_paging_cursor_count(res):
     return count, cursor
 
 
-def parse_source_servicegroups(logger, res, custname, uidservendp, pass_extensions):
-    group_groups = ParseServiceGroups(logger, res, custname, uidservendp,
-                                      pass_extensions).get_group_groups()
-    group_endpoints = ParseServiceGroups(logger, res, custname, uidservendp,
-                                         pass_extensions).get_group_endpoints()
+class TaskParseTopology(object):
+    def __init__(self, logger, custname, uidservendp, pass_extensions):
+        self.logger = logger
+        self.custname = custname
+        self.uidservendp = uidservendp
+        self.pass_extensions = pass_extensions
 
-    return group_groups, group_endpoints
+    def parse_source_servicegroups(self, res):
+        group_groups = ParseServiceGroups(self.logger, res, self.custname,
+                                          self.uidservendp,
+                                          self.pass_extensions).get_group_groups()
+        group_endpoints = ParseServiceGroups(self.logger, res, self.custname,
+                                             self.uidservendp,
+                                             self.pass_extensions).get_group_endpoints()
+
+        return group_groups, group_endpoints
+
+    def parse_source_endpoints(self, res):
+        group_endpoints = ParseServiceEndpoints(self.logger, res, self.custname, self.uidservendp,
+                                                self.pass_extensions).get_group_endpoints()
+
+        return group_endpoints
+
+    def parse_source_sites(self, res):
+        group_groups = ParseSites(self.logger, res, self.custname,
+                                  self.uidservendp,
+                                  self.pass_extensions).get_group_groups()
+
+        return group_groups
 
 
-def parse_source_endpoints(logger, res, custname, uidservendp, pass_extensions):
-    group_endpoints = ParseServiceEndpoints(logger, res, custname, uidservendp,
-                                            pass_extensions).get_group_endpoints()
+# basic function wrappers used because to avoid class TaskParseTopology pickle
+# in ProcessPoolExecutor
+def parse_endpoints(logger, custname, uidservendp, pass_extensions, data):
+    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions)
+    return task.parse_source_endpoints(data)
 
-    return group_endpoints
+def parse_sites(logger, custname, uidservendp, pass_extensions, data):
+    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions)
+    return task.parse_source_sites(data)
 
-
-def parse_source_sites(logger, res, custname, uidservendp, pass_extensions):
-    group_groups = ParseSites(logger, res, custname, uidservendp,
-                              pass_extensions).get_group_groups()
-
-    return group_groups
+def parse_servicegroups(logger, custname, uidservendp, pass_extensions, data):
+    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions)
+    return task.parse_source_servicegroups(data)
 
 
 class TaskParseContacts(object):
@@ -123,13 +146,14 @@ class TaskParseContacts(object):
         return contacts.get_contacts()
 
 
-class TaskGocdbTopology(TaskParseContacts):
+class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
     def __init__(self, loop, logger, connector_name, SITE_CONTACTS,
                  SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI,
                  SERVICE_GROUPS_PI, SITES_PI, globopts, auth_opts, webapi_opts,
                  bdii_opts, confcust, custname, topofeed, topofetchtype,
                  fixed_date, uidservendp, pass_extensions, topofeedpaging):
-        super(TaskGocdbTopology, self).__init__(logger=logger)
+        TaskParseTopology.__init__(self, logger, custname, uidservendp, pass_extensions)
+        super(TaskGocdbTopology, self).__init__(logger)
         self.loop = loop
         self.logger = logger
         self.connector_name = connector_name
@@ -259,14 +283,18 @@ class TaskGocdbTopology(TaskParseContacts):
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
         parse_workers = list()
-        exe_parse_source_endpoints = partial(parse_source_endpoints, self.logger,
-                                            fetched_endpoints, self.custname,
-                                            self.uidservendp, self.pass_extensions)
-        exe_parse_source_servicegroups = partial(parse_source_servicegroups, self.logger,
-                                                fetched_servicegroups, self.custname,
-                                                self.uidservendp, self.pass_extensions)
-        exe_parse_source_sites = partial(parse_source_sites, self.logger, fetched_sites,
-                                        self.custname, self.uidservendp, self.pass_extensions)
+        exe_parse_source_endpoints = partial(parse_endpoints, self.logger,
+                                             self.custname, self.uidservendp,
+                                             self.pass_extensions,
+                                             fetched_endpoints)
+        exe_parse_source_servicegroups = partial(parse_servicegroups,
+                                                 self.logger, self.custname,
+                                                 self.uidservendp,
+                                                 self.pass_extensions,
+                                                 fetched_servicegroups)
+        exe_parse_source_sites = partial(parse_sites, self.logger,
+                                         self.custname, self.uidservendp,
+                                         self.pass_extensions, fetched_sites)
 
         # parse topology depend on configured components fetch. we can fetch
         # only sites, only servicegroups or both.
