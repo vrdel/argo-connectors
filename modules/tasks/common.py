@@ -15,7 +15,6 @@ async def write_state(connector_name, globopts, confcust, fixed_date, state):
         await state_write(connector_name, jobstatedir, state,
                           globopts['InputStateDays'.lower()])
 
-
 async def write_weights_state(connector_name, globopts, cust, job, confcust, fixed_date, state):
     jobstatedir = confcust.get_fullstatedir(globopts['InputStateSaveDir'.lower()], cust, job)
     if fixed_date:

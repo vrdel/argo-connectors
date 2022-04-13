@@ -5,20 +5,22 @@ from urllib.parse import urlparse
 from argo_egi_connectors.io.http import SessionWithRetry
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.parse.vapor import ParseWeights
-from argo_egi_connectors.tasks.common import write_state, write_weights_avro as write_avro
+from argo_egi_connectors.tasks.common import write_weights_state as write_state, write_weights_avro as write_avro
+
+
 
 
 class TaskVaporWeights(object):
-    def __init__(self, loop, logger, connector_name, globopts, webapi_opts,
-                 confcust, feed, jobcust, fixed_date):
+    def __init__(self, loop, logger, connector_name, globopts, confcust, feed,
+                 jobcust, cglob, fixed_date):
         self.event_loop = loop
         self.logger = logger
         self.connector_name = connector_name
         self.globopts = globopts
-        self.webapi_opts = webapi_opts
         self.confcust = confcust
         self.feed = feed
         self.jobcust = jobcust
+        self.cglob = cglob
         self.fixed_date = fixed_date
 
     async def fetch_data(self):
@@ -29,13 +31,21 @@ class TaskVaporWeights(object):
                                                         feed_parts.path))
         return res
 
+    def get_webapi_opts(self, cust, job):
+        webapi_custopts = self.confcust.get_webapiopts(cust)
+        webapi_opts = self.cglob.merge_opts(webapi_custopts, 'webapi')
+        webapi_complete, missopt = self.cglob.is_complete(webapi_opts, 'webapi')
+        if not webapi_complete:
+            self.logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (self.logger.customer, job, 'webapi', ' '.join(missopt)))
+        return webapi_opts
+
     def parse_source(self, res):
         weights = ParseWeights(self.logger, res).get_data()
         return weights
 
-    async def send_webapi(self, weights, job):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
+    async def send_webapi(self, weights, webapi_opts, job):
+        webapi = WebAPI(self.connector_name, webapi_opts['webapihost'],
+                        webapi_opts['webapitoken'], self.logger,
                         int(self.globopts['ConnectionRetry'.lower()]),
                         int(self.globopts['ConnectionTimeout'.lower()]),
                         int(self.globopts['ConnectionSleepRetry'.lower()]),
@@ -56,14 +66,16 @@ class TaskVaporWeights(object):
                 res = await self.fetch_data()
                 weights = self.parse_source(res)
 
+            webapi_opts = self.get_webapi_opts(cust, job)
+
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-                await self.send_webapi(weights, job)
+                await self.send_webapi(weights, webapi_opts, job)
 
             if eval(self.globopts['GeneralWriteAvro'.lower()]):
                 write_avro(self.logger, self.globopts, cust, job,
                            self.confcust, self.fixed_date, weights)
 
-            await write_state(cust, job, self.confcust, self.fixed_date, True)
+            await write_state(self.connector_name, self.globopts, cust, job, self.confcust, self.fixed_date, True)
 
             if weights or write_empty:
                 custs = set([cust for job, cust in self.jobcust])

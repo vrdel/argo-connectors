@@ -1,29 +1,5 @@
 #!/usr/bin/python3
 
-# Copyright (c) 2013 GRNET S.A., SRCE, IN2P3 CNRS Computing Centre
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the
-# License. You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an "AS
-# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language
-# governing permissions and limitations under the License.
-#
-# The views and conclusions contained in the software and
-# documentation are those of the authors and should not be
-# interpreted as representing official policies, either expressed
-# or implied, of either GRNET S.A., SRCE or IN2P3 CNRS Computing
-# Centre
-#
-# The work represented by this source file is partially funded by
-# the EGI-InSPIRE project through the European Commission's 7th
-# Framework Programme (contract # INFSO-RI-261323)
-
 import argparse
 import os
 import sys
@@ -32,8 +8,8 @@ import uvloop
 import asyncio
 
 from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.task.common import state_write
-from argo_egi_connectors.task.weights import TaskVaporWeights
+from argo_egi_connectors.tasks.vapor_weights import TaskVaporWeights
+from argo_egi_connectors.tasks.common import write_weights_state as write_state
 from argo_egi_connectors.log import Logger
 
 from argo_egi_connectors.config import Global, CustomerConf
@@ -45,13 +21,6 @@ logger = None
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
 
 
-def get_webapi_opts(cust, job, cglob, confcust):
-    webapi_custopts = confcust.get_webapiopts(cust)
-    webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
-    webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
-    if not webapi_complete:
-        logger.error('Customer:%s Job:%s %s options incomplete, missing %s' % (logger.customer, job, 'webapi', ' '.join(missopt)))
-    return webapi_opts
 
 
 def main():
@@ -90,11 +59,10 @@ def main():
         jobs = list(sjobs)[0] if len(sjobs) == 1 else '({0})'.format(','.join(sjobs))
         logger.job = jobs
         logger.customer = customers
-        webapi_opts = get_webapi_opts(cust, job, cglob, confcust)
 
         try:
             task = TaskVaporWeights(loop, logger, sys.argv[0], globopts,
-                                    webapi_opts, confcust, VAPORPI, jobcust,
+                                    confcust, VAPORPI, jobcust, cglob,
                                     fixed_date)
             loop.run_until_complete(task.run())
 
@@ -102,8 +70,7 @@ def main():
             logger.error(repr(exc))
             for job, cust in jobcust:
                 loop.run_until_complete(
-                    write_state(sys.argv[0], globopts, confcust, fixed_date, False)
-                    # write_state(cust, job, confcust, fixed_date, False)
+                    write_state(sys.argv[0], globopts, cust, job, confcust, fixed_date, True)
                 )
 
 
