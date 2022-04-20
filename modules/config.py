@@ -621,6 +621,8 @@ class CustomerConf(object):
         return namespace
 
     def get_servicesfeed(self):
-        feed = self._get_cust_options('ServiceTypeFeed')
-        if not feed:
+        feed = self._get_cust_options('ServiceTypesFeed')
+        if feed:
+            return feed
+        else:
             return self._get_cust_options('TopoFeed')
