@@ -612,3 +612,6 @@ class CustomerConf(object):
             pass
 
         return namespace
+
+    def get_servicesfeed(self):
+        return self._get_cust_options('ServiceTypeFeed')

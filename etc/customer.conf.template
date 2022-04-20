@@ -7,6 +7,7 @@ AuthenticationHttpUser = xxxx
 AuthenticationHttpPass = xxxx
 WebAPIToken = xxxx
 TopoFeed = https://goc.egi.eu/gocdbpi/
+ServiceTypesFeed = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
 TopoFetchType = Sites, ServiceGroups
 TopoType = GOCDB
 TopoFeedPaging = True
