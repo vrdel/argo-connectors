@@ -3,7 +3,7 @@ import os
 from urllib.parse import urlparse
 
 from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.parse.gocdb_downtimes import ParseDowntimes
+from argo_egi_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
 from argo_egi_connectors.io.webapi import WebAPI
 from argo_egi_connectors.tasks.common import write_state, write_downtimes_avro as write_avro
 
@@ -31,6 +31,10 @@ class TaskGocdbServiceTypes(object):
                                                          feed_parts.query))
 
         return res
+
+    def parse_source(self, res):
+        gocdb = ParseGocdbServiceTypes(self.logger, res)
+        return gocdb.get_data()
 
     async def run(self):
         res = await self.fetch_data()
