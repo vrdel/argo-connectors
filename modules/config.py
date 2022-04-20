@@ -621,6 +621,6 @@ class CustomerConf(object):
         return namespace
 
     def get_servicesfeed(self):
-        import ipdb; ipdb.set_trace()
-
-        return self._get_cust_options('ServiceTypeFeed')
+        feed = self._get_cust_options('ServiceTypeFeed')
+        if not feed:
+            return self._get_cust_options('TopoFeed')
