@@ -15,5 +15,23 @@ class ParseGocdb(unittest.TestCase):
         self.services_gocdb = ParseGocdbServiceTypes(logger, service_types)
         self.maxDiff = None
 
-    def test_feedParse(self):
-        self.services_gocdb.get_data()
+    def test_GocdbFeedParse(self):
+        service_types = self.services_gocdb.get_data()
+        self.assertEqual(service_types, [
+            {
+                'description': 'Horizon is the canonical implementation of OpenStack’s '
+                    'Dashboard, which provides a web based user interface to '
+                    'OpenStack services',
+                'name': 'org.openstack.horizon'
+            },
+            {
+                'description': 'The primary endpoint for an OpenStack Cloud. Provides '
+                    'identity and an endpoint catalog for other OpenStack '
+                    'services',
+                'name': 'org.openstack.keystone'
+            },
+            {
+                'description': 'OpenStack Nova provides VM management services',
+                'name': 'org.openstack.nova'
+            }
+        ])
