@@ -11,6 +11,7 @@ class ParseGocdb(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-service_types_gocdb.xml', encoding='utf-8') as feed_file:
             service_types = feed_file.read()
+        logger.customer = CUSTOMER_NAME
         self.services_gocdb = ParseGocdbServiceTypes(logger, service_types)
         self.maxDiff = None
 
