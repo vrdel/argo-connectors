@@ -26,9 +26,9 @@ class TaskGocdbServiceTypes(object):
                                    os.path.basename(self.connector_name),
                                    self.globopts)
         res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
-                                                         feed_parts.netloc,
-                                                         feed_parts.path,
-                                                         feed_parts.query))
+                                                           feed_parts.netloc,
+                                                           feed_parts.path,
+                                                           feed_parts.query))
 
         return res
 
@@ -38,3 +38,5 @@ class TaskGocdbServiceTypes(object):
 
     async def run(self):
         res = await self.fetch_data()
+        service_types = self.parse_source(res)
+
