@@ -19,8 +19,6 @@ from argo_egi_connectors.config import Global, CustomerConf
 logger = None
 globopts = {}
 
-DOWNTIMEPI = '/gocdbpi/private/?method=get_service_types'
-
 
 def get_webapi_opts(cglob, confcust):
     webapi_custopts = confcust.get_webapiopts()
@@ -66,7 +64,7 @@ def main():
     try:
         task = TaskGocdbServiceTypes(
             loop, logger, sys.argv[0], globopts, webapi_opts, confcust,
-            custname, feed
+            custname, feed, fixed_date
         )
         loop.run_until_complete(task.run())
 

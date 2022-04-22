@@ -10,7 +10,7 @@ from argo_egi_connectors.tasks.common import write_state, write_downtimes_avro a
 
 class TaskGocdbServiceTypes(object):
     def __init__(self, loop, logger, connector_name, globopts, webapi_opts, confcust,
-                 custname, feed):
+                 custname, feed, timestamp):
         self.logger = logger
         self.loop = loop
         self.connector_name = connector_name
@@ -19,6 +19,7 @@ class TaskGocdbServiceTypes(object):
         self.confcust = confcust
         self.custname = custname
         self.feed = feed
+        self.timestamp = timestamp
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
@@ -40,3 +41,4 @@ class TaskGocdbServiceTypes(object):
         res = await self.fetch_data()
         service_types = self.parse_source(res)
 
+        await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
