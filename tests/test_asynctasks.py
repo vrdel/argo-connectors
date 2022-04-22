@@ -7,7 +7,7 @@ import datetime
 import mock
 
 from argo_egi_connectors.log import Logger
-from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
 from argo_egi_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
 
 logger = Logger('test_asynctasks.py')
@@ -51,14 +51,27 @@ class ServiceTypesGocdb(unittest.TestCase):
 
     @mock.patch('argo_egi_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
-    async def test_StepsRun(self, mock_writestate):
+    async def test_StepsSuccessRun(self, mock_writestate):
         self.services_gocdb.fetch_data = mock.AsyncMock()
-        self.services_gocdb.parse_source = mock.Mock()
         self.services_gocdb.fetch_data.side_effect = ['data_servicetypes']
+        self.services_gocdb.parse_source = mock.Mock()
         await self.services_gocdb.run()
-        self.assertEqual(self.services_gocdb.fetch_data.called, True)
-        self.assertEqual(self.services_gocdb.parse_source.called, True)
+        self.assertTrue(self.services_gocdb.fetch_data.called)
+        self.assertTrue(self.services_gocdb.parse_source.called)
         self.services_gocdb.parse_source.assert_called_with('data_servicetypes')
         self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks')
         self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
-        self.assertEqual(mock_writestate.call_args[0][4], True)
+        self.assertTrue(mock_writestate.call_args[0][4])
+
+    @mock.patch('argo_egi_connectors.tasks.gocdb_servicetypes.write_state')
+    @async_test
+    async def test_StepsFailedRun(self, mock_writestate):
+        self.services_gocdb.fetch_data = mock.AsyncMock()
+        self.services_gocdb.fetch_data.side_effect = [ConnectorHttpError('fetch_data failed')]
+        self.services_gocdb.parse_source = mock.Mock()
+        await self.services_gocdb.run()
+        self.assertTrue(self.services_gocdb.fetch_data.called)
+        self.assertFalse(self.services_gocdb.parse_source.called)
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks')
+        self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
+        self.assertEqual(mock_writestate.call_args[0][4], False)
