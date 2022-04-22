@@ -68,13 +68,14 @@ def main():
         )
         loop.run_until_complete(task.run())
 
-    except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
+    except (KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
             write_state(sys.argv[0], globopts, confcust, fixed_date, False)
         )
 
-    loop.close()
+    finally:
+        loop.close()
 
 if __name__ == '__main__':
     main()
