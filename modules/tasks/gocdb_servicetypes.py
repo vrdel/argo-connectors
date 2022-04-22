@@ -45,6 +45,6 @@ class TaskGocdbServiceTypes(object):
 
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 
-        except (ConnectorHttpError, ConnectorParseError) as exc:
+        except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, False)
