@@ -6,11 +6,9 @@ import datetime
 
 import mock
 
-from argo_egi_connectors.log import Logger
 from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
 from argo_egi_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
 
-logger = Logger('test_asynctasks.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
 
@@ -28,6 +26,7 @@ class async_test(object):
 
 class ServiceTypesGocdb(unittest.TestCase):
     def setUp(self):
+        logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
         globopts = mock.Mock()
@@ -74,4 +73,6 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertFalse(self.services_gocdb.parse_source.called)
         self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks')
         self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
-        self.assertEqual(mock_writestate.call_args[0][4], False)
+        self.assertFalse(mock_writestate.call_args[0][4])
+        self.assertTrue(self.services_gocdb.logger.error.called)
+        self.assertTrue(self.services_gocdb.logger.error.call_args[0][0], repr(ConnectorHttpError('fetch_data failed')))
