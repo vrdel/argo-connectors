@@ -56,6 +56,13 @@ def main():
     custname = confcust.get_custname()
     logger.customer = confcust.get_custname()
 
+    auth_custopts = confcust.get_authopts()
+    auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
+    auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
+    if not auth_complete:
+        logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
+        raise SystemExit(1)
+
     webapi_opts = get_webapi_opts(cglob, confcust)
 
     loop = uvloop.new_event_loop()
@@ -79,4 +86,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
