@@ -2,6 +2,7 @@ import unittest
 
 import unittest
 import asyncio
+import datetime
 
 import mock
 
@@ -34,6 +35,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         confcust = mock.Mock()
         custname = CUSTOMER_NAME
         feed = 'https://service-types.com/api/fetch'
+        timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
         self.services_gocdb = TaskGocdbServiceTypes(
             self.loop,
             logger,
@@ -42,22 +44,21 @@ class ServiceTypesGocdb(unittest.TestCase):
             webapiopts,
             confcust,
             custname,
-            feed
+            feed,
+            timestamp
         )
         self.maxDiff = None
 
-    @mock.patch('argo_egi_connectors.io.http')
+    @mock.patch('argo_egi_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
-    async def test_StepsRun(self, mocked_http):
+    async def test_StepsRun(self, mock_writestate):
         self.services_gocdb.fetch_data = mock.AsyncMock()
         self.services_gocdb.parse_source = mock.Mock()
         self.services_gocdb.fetch_data.side_effect = ['data_servicetypes']
         await self.services_gocdb.run()
-        self.assertEqual(
-            self.services_gocdb.fetch_data.called, True
-        )
-        self.assertEqual(
-            self.services_gocdb.parse_source.called, True
-        )
+        self.assertEqual(self.services_gocdb.fetch_data.called, True)
+        self.assertEqual(self.services_gocdb.parse_source.called, True)
         self.services_gocdb.parse_source.assert_called_with('data_servicetypes')
-
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks')
+        self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
+        self.assertEqual(mock_writestate.call_args[0][4], True)

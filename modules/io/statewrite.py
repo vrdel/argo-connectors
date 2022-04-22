@@ -18,6 +18,8 @@ async def state_write(caller, statedir, state, savedays, date=None):
         filenamebase = 'weights-ok'
     elif 'downtimes' in caller:
         filenamebase = 'downtimes-ok'
+    elif 'service-types' in caller:
+        filenamebase = 'services-ok'
 
     if date:
         datebackstamp = date
