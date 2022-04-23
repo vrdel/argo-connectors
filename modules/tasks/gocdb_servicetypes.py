@@ -10,11 +10,12 @@ from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseErr
 
 
 class TaskGocdbServiceTypes(object):
-    def __init__(self, loop, logger, connector_name, globopts, webapi_opts, confcust,
-                 custname, feed, timestamp):
+    def __init__(self, loop, logger, connector_name, globopts, auth_opts,
+                 webapi_opts, confcust, custname, feed, timestamp):
         self.logger = logger
         self.loop = loop
         self.connector_name = connector_name
+        self.auth_opts = auth_opts
         self.globopts = globopts
         self.webapi_opts = webapi_opts
         self.confcust = confcust

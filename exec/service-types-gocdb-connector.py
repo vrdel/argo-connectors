@@ -70,8 +70,8 @@ def main():
 
     try:
         task = TaskGocdbServiceTypes(
-            loop, logger, sys.argv[0], globopts, webapi_opts, confcust,
-            custname, feed, fixed_date
+            loop, logger, sys.argv[0], globopts, auth_opts, webapi_opts,
+            confcust, custname, feed, fixed_date
         )
         loop.run_until_complete(task.run())
 

@@ -31,6 +31,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.loop = asyncio.get_event_loop()
         globopts = mock.Mock()
         webapiopts = mock.Mock()
+        authopts = mock.Mock()
         confcust = mock.Mock()
         custname = CUSTOMER_NAME
         feed = 'https://service-types.com/api/fetch'
@@ -39,6 +40,7 @@ class ServiceTypesGocdb(unittest.TestCase):
             self.loop,
             logger,
             'test_asynctasks',
+            authopts,
             globopts,
             webapiopts,
             confcust,
