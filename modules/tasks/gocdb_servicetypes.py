@@ -27,7 +27,7 @@ class TaskGocdbServiceTypes(object):
         feed_parts = urlparse(self.feed)
         session = SessionWithRetry(self.logger,
                                    os.path.basename(self.connector_name),
-                                   self.globopts)
+                                   self.globopts, custauth=self.auth_opts)
         res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
                                                            feed_parts.netloc,
                                                            feed_parts.path,
