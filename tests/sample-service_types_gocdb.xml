@@ -12,4 +12,8 @@
     <SERVICE_TYPE_NAME>org.openstack.nova</SERVICE_TYPE_NAME>
     <SERVICE_TYPE_DESC>OpenStack Nova provides VM management services</SERVICE_TYPE_DESC>
   </SERVICE_TYPE>
+  <SERVICE_TYPE TYPE_ID="343G1" PRIMARY_KEY="343G0">
+    <SERVICE_TYPE_NAME>service.type.empty.desc</SERVICE_TYPE_NAME>
+    <SERVICE_TYPE_DESC></SERVICE_TYPE_DESC>
+  </SERVICE_TYPE>
 </results>

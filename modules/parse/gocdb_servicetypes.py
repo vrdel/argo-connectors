@@ -20,12 +20,13 @@ class ParseGocdbServiceTypes(ParseHelpers):
                     for child in st.childNodes:
                         if child.nodeName == 'SERVICE_TYPE_NAME':
                             name = child.childNodes[0].nodeValue
-                        if child.nodeName == 'SERVICE_TYPE_DESC':
+                        if child.nodeName == 'SERVICE_TYPE_DESC' and child.childNodes:
                             desc = child.childNodes[0].nodeValue
-                    all_service_type.append({
-                        "name": name,
-                        "description": desc
-                    })
+                    if name:
+                        all_service_type.append({
+                            "name": name,
+                            "description": desc if desc else ''
+                        })
 
             return all_service_type
 

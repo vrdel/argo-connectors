@@ -33,5 +33,9 @@ class ParseGocdb(unittest.TestCase):
             {
                 'description': 'OpenStack Nova provides VM management services',
                 'name': 'org.openstack.nova'
+            },
+            {
+                'description': '',
+                'name': 'service.type.empty.desc'
             }
         ])
