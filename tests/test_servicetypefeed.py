@@ -52,4 +52,13 @@ class ParseFlat(unittest.TestCase):
 
     def test_FlatFeedParse(self):
         service_types = self.services_flat.get_data()
-        pass
+        self.assertEqual(service_types, [
+            {
+                'description': 'tenant project Data sharing service',
+                'name': 'nextcloud'
+            },
+            {
+                'description': 'tenant project SSO service',
+                'name': 'aai'
+            }
+        ])
