@@ -3,6 +3,7 @@ import unittest
 from argo_egi_connectors.log import Logger
 from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
+from argo_egi_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
 
 logger = Logger('test_servicetypefeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -39,3 +40,16 @@ class ParseGocdb(unittest.TestCase):
                 'name': 'service.type.empty.desc'
             }
         ])
+
+
+class ParseFlat(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-topo.csv', encoding='utf-8') as feed_file:
+            service_types = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        self.services_flat = ParseFlatServiceTypes(logger, service_types, is_csv=True)
+        self.maxDiff = None
+
+    def test_FlatFeedParse(self):
+        service_types = self.services_flat.get_data()
+        pass

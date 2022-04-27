@@ -5,10 +5,18 @@ from argo_egi_connectors.parse.base import ParseHelpers
 
 
 class ParseFlatServiceTypes(ParseHelpers):
-    def __init__(self, logger, data):
+    def __init__(self, logger, data, is_csv=False):
         self.data = data
         self.logger = logger
-        pass
+        self.is_csv = is_csv
+        try:
+            if is_csv:
+                self.data = self.csv_to_json(data)
+            else:
+                self.data = self.parse_json(data)
+
+        except ConnectorParseError as exc:
+            raise exc
 
     def get_data(self):
-        pass
+        import ipdb; ipdb.set_trace()
