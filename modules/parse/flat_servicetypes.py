@@ -19,4 +19,29 @@ class ParseFlatServiceTypes(ParseHelpers):
             raise exc
 
     def get_data(self):
-        import ipdb; ipdb.set_trace()
+        try:
+            services = list()
+            already_added = list()
+
+            for entity in self.data:
+                target_key = None
+                tmp_dict = dict()
+
+                tmp_dict['name'] = entity['SERVICE_TYPE']
+                for key in entity.keys():
+                    if key.lower().startswith('Service Description'.lower()):
+                        target_key = key
+                tmp_dict['description'] = entity[target_key]
+
+                if tmp_dict['name'] in already_added:
+                    continue
+                else:
+                    services.append(tmp_dict)
+                already_added.append(tmp_dict['name'])
+
+            return services
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            feedtype = 'CSV' if self.is_csv else 'JSON'
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
