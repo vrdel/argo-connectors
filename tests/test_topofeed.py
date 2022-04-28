@@ -394,7 +394,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
 
     def test_FailedCsvTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA',
+            self.failed_topology = ParseFlatEndpoints(logger, 'FAILED_DATA',
                                                     CUSTOMER_NAME,
                                                     uidservendp=True,
                                                     fetchtype='ServiceGroups',
@@ -469,7 +469,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
 
     def test_FailedJsonTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_topology = ParseFlatEndpoints(logger, 'RUBBISH_DATA', CUSTOMER_NAME,
+            self.failed_topology = ParseFlatEndpoints(logger, 'FAILED_DATA', CUSTOMER_NAME,
                                                     uidservendp=True,
                                                     fetchtype='ServiceGroups',
                                                     scope=CUSTOMER_NAME,
@@ -731,7 +731,7 @@ class ParseEoscProvider(unittest.TestCase):
     def test_FailedEoscProviderTopology(self):
         logger.customer = CUSTOMER_NAME
         with self.assertRaises(ConnectorParseError) as cm:
-            eosc_topo = ParseTopo(logger, 'RUBBISH_DATA', 'RUBBISH_DATA', True, CUSTOMER_NAME)
+            eosc_topo = ParseTopo(logger, 'FAILED_DATA', 'FAILED_DATA', True, CUSTOMER_NAME)
             self.group_groups = eosc_topo.get_group_groups()
             self.group_endpoints = eosc_topo.get_group_endpoints()
         excep = cm.exception

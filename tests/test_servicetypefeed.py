@@ -6,6 +6,7 @@ from argo_egi_connectors.log import Logger
 from argo_egi_connectors.exceptions import ConnectorParseError
 from argo_egi_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
 from argo_egi_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
+from argo_egi_connectors.parse.base import ParseHelpers
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
@@ -68,19 +69,10 @@ class ParseFlat(unittest.TestCase):
             }
         ])
 
-    def test_FailedFeedParse(self):
-        with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_services = ParseFlatServiceTypes(self.logger,
-                                                         'RUBBISH_DATA',
-                                                         is_csv=True)
-            self.failed_services.get_data()
-        excep = cm.exception
-        self.assertTrue('CSV feed' in excep.msg)
-        self.assertTrue(CUSTOMER_NAME in excep.msg)
-
-    def test_FailedFeedParse2(self):
+    @mock.patch.object(ParseHelpers, 'csv_to_json')
+    def test_FailedFeedParse(self, mocked_csv2json):
+        mocked_csv2json.return_value = ['FAILED_DATA1', 'FAILED_DATA2']
         services_flat = ParseFlatServiceTypes(self.logger, self.service_types, is_csv=True)
-        services_flat.data = ['RUBBISH_DATA1', 'RUBBISH_DATA2']
         with self.assertRaises(ConnectorParseError) as cm:
             data = services_flat.get_data()
         excep = cm.exception
