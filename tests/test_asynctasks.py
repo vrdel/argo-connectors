@@ -29,7 +29,8 @@ class ServiceTypesGocdb(unittest.TestCase):
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        globopts = mock.Mock()
+        mocked_globopts = dict(generalpublishwebapi='True')
+        globopts = mocked_globopts
         webapiopts = mock.Mock()
         authopts = mock.Mock()
         confcust = mock.Mock()
@@ -40,8 +41,8 @@ class ServiceTypesGocdb(unittest.TestCase):
             self.loop,
             logger,
             'test_asynctasks',
-            authopts,
             globopts,
+            authopts,
             webapiopts,
             confcust,
             custname,
@@ -55,6 +56,7 @@ class ServiceTypesGocdb(unittest.TestCase):
     async def test_StepsSuccessRun(self, mock_writestate):
         self.services_gocdb.fetch_data = mock.AsyncMock()
         self.services_gocdb.fetch_data.side_effect = ['data_servicetypes']
+        self.services_gocdb.send_webapi = mock.AsyncMock()
         self.services_gocdb.parse_source = mock.Mock()
         await self.services_gocdb.run()
         self.assertTrue(self.services_gocdb.fetch_data.called)
@@ -63,6 +65,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks')
         self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
         self.assertTrue(mock_writestate.call_args[0][4])
+        self.assertTrue(self.services_gocdb.send_webapi.called)
 
     @mock.patch('argo_egi_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
