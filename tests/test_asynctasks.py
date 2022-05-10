@@ -72,6 +72,7 @@ class ServiceTypesGocdb(unittest.TestCase):
     async def test_StepsFailedRun(self, mock_writestate):
         self.services_gocdb.fetch_data = mock.AsyncMock()
         self.services_gocdb.fetch_data.side_effect = [ConnectorHttpError('fetch_data failed')]
+        self.services_gocdb.send_webapi = mock.AsyncMock()
         self.services_gocdb.parse_source = mock.Mock()
         await self.services_gocdb.run()
         self.assertTrue(self.services_gocdb.fetch_data.called)
@@ -81,3 +82,4 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertFalse(mock_writestate.call_args[0][4])
         self.assertTrue(self.services_gocdb.logger.error.called)
         self.assertTrue(self.services_gocdb.logger.error.call_args[0][0], repr(ConnectorHttpError('fetch_data failed')))
+        self.assertFalse(self.services_gocdb.send_webapi.called)
