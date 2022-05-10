@@ -35,6 +35,15 @@ class TaskGocdbServiceTypes(object):
 
         return res
 
+    async def send_webapi(self, data):
+        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
+                        self.webapi_opts['webapitoken'], self.logger,
+                        int(self.globopts['ConnectionRetry'.lower()]),
+                        int(self.globopts['ConnectionTimeout'.lower()]),
+                        int(self.globopts['ConnectionSleepRetry'.lower()]),
+                        date=self.timestamp)
+        await webapi.send(data, 'service-types')
+
     def parse_source(self, res):
         gocdb = ParseGocdbServiceTypes(self.logger, res)
         return gocdb.get_data()
@@ -45,6 +54,9 @@ class TaskGocdbServiceTypes(object):
             service_types = self.parse_source(res)
 
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
+
+            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                await self.send_webapi(service_types)
 
         except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))
