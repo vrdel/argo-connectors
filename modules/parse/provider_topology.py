@@ -111,7 +111,8 @@ class ParseTopo(object):
             gee = dict()
             gee['type'] = 'SERVICEGROUPS'
             gee['service'] = resource['hardcoded_service']
-            gee['group'] = resource['name']
+            import ipdb; ipdb.set_trace()
+            gee['group'] = resource['id']
             if self.uidservendp:
                 gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
             else:
