@@ -95,7 +95,7 @@ class ParseTopo(object):
                 gge = dict()
                 gge['type'] = 'PROJECT'
                 gge['group'] = provider['abbr']
-                gge['subgroup'] = resource['name']
+                gge['subgroup'] = resource['id']
                 if provider.get('provider_tag', False):
                     provider_tags = [tag.strip() for tag in provider['provider_tag']]
                     gge['tags'] = dict(provider_tags=', '.join(provider_tags))
@@ -111,16 +111,21 @@ class ParseTopo(object):
             gee = dict()
             gee['type'] = 'SERVICEGROUPS'
             gee['service'] = resource['hardcoded_service']
-            gee['group'] = resource['name']
+            gee['group'] = resource['id']
             if self.uidservendp:
                 gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), resource['id'])
             else:
                 gee['hostname'] = construct_fqdn(resource['webpage'])
             if resource.get('resource_tag', False):
                 resource_tags = [tag.strip() for tag in resource['resource_tag']]
-                gee['tags'] = dict(service_tags=', '.join(resource_tags), info_URL=resource['webpage'], info_ID=resource['id'])
+                gee['tags'] = dict(service_tags=', '.join(resource_tags),
+                                   info_URL=resource['webpage'],
+                                   info_ID=resource['id'],
+                                   info_groupname=resource['name'])
             else:
-                gee['tags'] = dict(info_URL=resource['webpage'], info_ID=resource['id'])
+                gee['tags'] = dict(info_URL=resource['webpage'],
+                                   info_ID=resource['id'],
+                                   info_groupname=resource['name'])
             if self.uidservendp:
                 gee['tags'].update(dict(hostname=construct_fqdn(resource['webpage'])))
             ge.append(gee)

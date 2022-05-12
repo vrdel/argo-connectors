@@ -565,36 +565,36 @@ class ParseEoscProvider(unittest.TestCase):
         self.assertEqual(self.group_groups, [
             {
                 'group': 'EUDAT',
-                'subgroup': 'B2ACCESS',
+                'subgroup': 'eudat.b2access',
                 'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
-                'subgroup': 'B2NOTE',
+                'subgroup': 'eudat.b2note',
                 'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
-                'subgroup': 'B2SHARE',
+                'subgroup': 'eudat.b2share',
                 'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'},
             {
                 'group': 'EUDAT',
-                'subgroup': 'B2DROP',
+                'subgroup': 'eudat.b2drop',
                 'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
-                'subgroup': 'B2SAFE',
+                'subgroup': 'eudat.b2safe',
                 'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             },
             {
                 'group': 'EUDAT',
-                'subgroup': 'B2FIND',
+                'subgroup': 'eudat.b2find',
                 'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
                 'type': 'PROJECT'
             }
@@ -610,7 +610,7 @@ class ParseEoscProvider(unittest.TestCase):
         attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
         self.assertEqual(self.group_endpoints[0],
             {
-                'group': 'B2ACCESS',
+                'group': 'eudat.b2access',
                 'hostname': 'www.eudat.eu_eudat.b2access',
                 'notifications': {
                     'contacts': ['helpdesk@eudat.eu'], 'enabled': True
@@ -619,6 +619,7 @@ class ParseEoscProvider(unittest.TestCase):
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2access',
+                    'info_groupname': 'B2ACCESS',
                     'info_URL': 'https://www.eudat.eu/services/b2access',
                     'service_tags': 'single sign-on, federated identity management, federated AAI proxy'
                 },
@@ -629,12 +630,13 @@ class ParseEoscProvider(unittest.TestCase):
     def test_groupEndoints(self):
         self.assertEqual(self.group_endpoints,[
             {
-                'group': 'B2ACCESS',
+                'group': 'eudat.b2access',
                 'hostname': 'www.eudat.eu_eudat.b2access',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2access',
+                    'info_groupname': 'B2ACCESS',
                     'info_URL': 'https://www.eudat.eu/services/b2access',
                     'service_tags': 'single sign-on, federated identity management, federated '
                                 'AAI proxy'
@@ -642,60 +644,65 @@ class ParseEoscProvider(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'B2NOTE',
+                'group': 'eudat.b2note',
                 'hostname': 'b2note.eudat.eu_eudat.b2note',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'b2note.eudat.eu',
                     'info_ID': 'eudat.b2note',
+                    'info_groupname': 'B2NOTE',
                     'info_URL': 'https://b2note.eudat.eu',
                     'service_tags': 'annotation'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'B2SHARE',
+                'group': 'eudat.b2share',
                 'hostname': 'www.eudat.eu_eudat.b2share',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2share',
+                    'info_groupname': 'B2SHARE',
                     'info_URL': 'https://www.eudat.eu/services/b2share',
                     'service_tags': 'data repository, data sharing, data publishing, FAIR'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'B2DROP',
+                'group': 'eudat.b2drop',
                 'hostname': 'www.eudat.eu_eudat.b2drop',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2drop',
+                    'info_groupname': 'B2DROP',
                     'info_URL': 'https://www.eudat.eu/services/b2drop',
                     'service_tags': 'sync and share'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'B2SAFE',
+                'group': 'eudat.b2safe',
                 'hostname': 'www.eudat.eu_eudat.b2safe',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2safe',
+                    'info_groupname': 'B2SAFE',
                     'info_URL': 'https://www.eudat.eu/services/b2safe',
                     'service_tags': 'replication, Policy-based data management, persistent identifiers, data archiving'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'B2FIND',
+                'group': 'eudat.b2find',
                 'hostname': 'www.eudat.eu_eudat.b2find',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.eudat.eu',
                     'info_ID': 'eudat.b2find',
+                    'info_groupname': 'B2FIND',
                     'info_URL': 'https://www.eudat.eu/services/b2find',
                     'service_tags': 'metadata, search, harvesting, interdisciplinary, discovery'
                 },
