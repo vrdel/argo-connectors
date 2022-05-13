@@ -15,8 +15,8 @@ class TaskGocdbServiceTypes(object):
         self.logger = logger
         self.loop = loop
         self.connector_name = connector_name
-        self.auth_opts = auth_opts
         self.globopts = globopts
+        self.auth_opts = auth_opts
         self.webapi_opts = webapi_opts
         self.confcust = confcust
         self.custname = custname
