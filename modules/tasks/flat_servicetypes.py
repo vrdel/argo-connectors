@@ -58,6 +58,8 @@ class TaskFlatServiceTypes(object):
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
                 await self.send_webapi(service_types)
 
+            self.logger.info('Customer:' + self.custname + ' Fetched Flat ServiceTypes:%d' % (len(service_types)))
+
         except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, False)
