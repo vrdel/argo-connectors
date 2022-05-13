@@ -564,38 +564,56 @@ class ParseEoscProvider(unittest.TestCase):
     def test_groupGroups(self):
         self.assertEqual(self.group_groups, [
             {
-                'group': 'EUDAT',
+                'group': 'eudat',
                 'subgroup': 'eudat.b2access',
-                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'tags': {
+                    'info_projectname': 'EUDAT',
+                    'provider_tags': 'Data Infrastructure, European Data Initiative'
+                },
                 'type': 'PROJECT'
             },
             {
-                'group': 'EUDAT',
+                'group': 'eudat',
                 'subgroup': 'eudat.b2note',
-                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'tags': {
+                    'info_projectname': 'EUDAT',
+                    'provider_tags': 'Data Infrastructure, European Data Initiative'
+                },
                 'type': 'PROJECT'
             },
             {
-                'group': 'EUDAT',
+                'group': 'eudat',
                 'subgroup': 'eudat.b2share',
-                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'tags': {
+                    'info_projectname': 'EUDAT',
+                    'provider_tags': 'Data Infrastructure, European Data Initiative'
+                },
                 'type': 'PROJECT'},
             {
-                'group': 'EUDAT',
+                'group': 'eudat',
                 'subgroup': 'eudat.b2drop',
-                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'tags': {
+                    'info_projectname': 'EUDAT',
+                    'provider_tags': 'Data Infrastructure, European Data Initiative'
+                },
                 'type': 'PROJECT'
             },
             {
-                'group': 'EUDAT',
+                'group': 'eudat',
                 'subgroup': 'eudat.b2safe',
-                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'tags': {
+                    'info_projectname': 'EUDAT',
+                    'provider_tags': 'Data Infrastructure, European Data Initiative'
+                },
                 'type': 'PROJECT'
             },
             {
-                'group': 'EUDAT',
+                'group': 'eudat',
                 'subgroup': 'eudat.b2find',
-                'tags': {'provider_tags': 'Data Infrastructure, European Data Initiative'},
+                'tags': {
+                    'info_projectname': 'EUDAT',
+                    'provider_tags': 'Data Infrastructure, European Data Initiative'
+                },
                 'type': 'PROJECT'
             }
         ])
