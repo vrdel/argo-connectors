@@ -8,6 +8,7 @@ import mock
 
 from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
 from argo_egi_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
+from argo_egi_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
@@ -40,9 +41,9 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.services_gocdb = TaskGocdbServiceTypes(
             self.loop,
             logger,
-            'test_asynctasks',
-            globopts,
+            'test_asynctasks_servicetypesgocdb',
             authopts,
+            globopts,
             webapiopts,
             confcust,
             custname,
@@ -62,7 +63,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertTrue(self.services_gocdb.fetch_data.called)
         self.assertTrue(self.services_gocdb.parse_source.called)
         self.services_gocdb.parse_source.assert_called_with('data_servicetypes')
-        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks')
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesgocdb')
         self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
         self.assertTrue(mock_writestate.call_args[0][4])
         self.assertTrue(self.services_gocdb.send_webapi.called)
@@ -77,9 +78,70 @@ class ServiceTypesGocdb(unittest.TestCase):
         await self.services_gocdb.run()
         self.assertTrue(self.services_gocdb.fetch_data.called)
         self.assertFalse(self.services_gocdb.parse_source.called)
-        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks')
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesgocdb')
         self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
         self.assertFalse(mock_writestate.call_args[0][4])
         self.assertTrue(self.services_gocdb.logger.error.called)
         self.assertTrue(self.services_gocdb.logger.error.call_args[0][0], repr(ConnectorHttpError('fetch_data failed')))
         self.assertFalse(self.services_gocdb.send_webapi.called)
+
+
+class ServiceTypesFlat(unittest.TestCase):
+    def setUp(self):
+        logger = mock.Mock()
+        logger.customer = CUSTOMER_NAME
+        self.loop = asyncio.get_event_loop()
+        mocked_globopts = dict(generalpublishwebapi='True')
+        globopts = mocked_globopts
+        webapiopts = mock.Mock()
+        authopts = mock.Mock()
+        confcust = mock.Mock()
+        custname = CUSTOMER_NAME
+        feed = 'https://service-types.com/api/fetch'
+        timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
+        self.services_flat = TaskFlatServiceTypes(
+            self.loop,
+            logger,
+            'test_asynctasks_servicetypesflat',
+            globopts,
+            authopts,
+            webapiopts,
+            confcust,
+            custname,
+            feed,
+            timestamp
+        )
+        self.maxDiff = None
+
+    @mock.patch('argo_egi_connectors.tasks.flat_servicetypes.write_state')
+    @async_test
+    async def test_StepsSuccessRun(self, mock_writestate):
+        self.services_flat.fetch_data = mock.AsyncMock()
+        self.services_flat.fetch_data.side_effect = ['data_servicetypes']
+        self.services_flat.send_webapi = mock.AsyncMock()
+        self.services_flat.parse_source = mock.Mock()
+        await self.services_flat.run()
+        self.assertTrue(self.services_flat.fetch_data.called)
+        self.assertTrue(self.services_flat.parse_source.called)
+        self.services_flat.parse_source.assert_called_with('data_servicetypes')
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesflat')
+        self.assertEqual(mock_writestate.call_args[0][3], self.services_flat.timestamp)
+        self.assertTrue(mock_writestate.call_args[0][4])
+        self.assertTrue(self.services_flat.send_webapi.called)
+
+    @mock.patch('argo_egi_connectors.tasks.flat_servicetypes.write_state')
+    @async_test
+    async def test_StepsFailedRun(self, mock_writestate):
+        self.services_flat.fetch_data = mock.AsyncMock()
+        self.services_flat.fetch_data.side_effect = [ConnectorHttpError('fetch_data failed')]
+        self.services_flat.send_webapi = mock.AsyncMock()
+        self.services_flat.parse_source = mock.Mock()
+        await self.services_flat.run()
+        self.assertTrue(self.services_flat.fetch_data.called)
+        self.assertFalse(self.services_flat.parse_source.called)
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesflat')
+        self.assertEqual(mock_writestate.call_args[0][3], self.services_flat.timestamp)
+        self.assertFalse(mock_writestate.call_args[0][4])
+        self.assertTrue(self.services_flat.logger.error.called)
+        self.assertTrue(self.services_flat.logger.error.call_args[0][0], repr(ConnectorHttpError('fetch_data failed')))
+        self.assertFalse(self.services_flat.send_webapi.called)

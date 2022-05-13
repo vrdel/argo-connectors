@@ -45,8 +45,8 @@ class TaskFlatServiceTypes(object):
         await webapi.send(data, 'service-types')
 
     def parse_source(self, res):
-        gocdb = ParseFlatServiceTypes(self.logger, res)
-        return gocdb.get_data()
+        flat_servtypes = ParseFlatServiceTypes(self.logger, res)
+        return flat_servtypes.get_data()
 
     async def run(self):
         try:
