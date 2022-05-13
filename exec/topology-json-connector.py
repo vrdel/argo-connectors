@@ -32,7 +32,9 @@ def get_webapi_opts(cglob, confcust):
 def main():
     global logger, globopts, confcust
 
-    parser = argparse.ArgumentParser(description="""Fetch and construct entities from EOSC-PORTAL feed""")
+    parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
+                                                    from JSON topology feed for every customer and job listed in customer.conf and write them
+                                                    in an appropriate place""")
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
     parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
