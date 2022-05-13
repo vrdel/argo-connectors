@@ -58,7 +58,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.services_gocdb.fetch_data = mock.AsyncMock()
         self.services_gocdb.fetch_data.side_effect = ['data_servicetypes']
         self.services_gocdb.send_webapi = mock.AsyncMock()
-        self.services_gocdb.parse_source = mock.Mock()
+        self.services_gocdb.parse_source = mock.MagicMock()
         await self.services_gocdb.run()
         self.assertTrue(self.services_gocdb.fetch_data.called)
         self.assertTrue(self.services_gocdb.parse_source.called)
@@ -67,6 +67,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
         self.assertTrue(mock_writestate.call_args[0][4])
         self.assertTrue(self.services_gocdb.send_webapi.called)
+        self.assertTrue(self.services_gocdb.logger.info.called)
 
     @mock.patch('argo_egi_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
@@ -74,7 +75,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.services_gocdb.fetch_data = mock.AsyncMock()
         self.services_gocdb.fetch_data.side_effect = [ConnectorHttpError('fetch_data failed')]
         self.services_gocdb.send_webapi = mock.AsyncMock()
-        self.services_gocdb.parse_source = mock.Mock()
+        self.services_gocdb.parse_source = mock.MagicMock()
         await self.services_gocdb.run()
         self.assertTrue(self.services_gocdb.fetch_data.called)
         self.assertFalse(self.services_gocdb.parse_source.called)
@@ -119,7 +120,7 @@ class ServiceTypesFlat(unittest.TestCase):
         self.services_flat.fetch_data = mock.AsyncMock()
         self.services_flat.fetch_data.side_effect = ['data_servicetypes']
         self.services_flat.send_webapi = mock.AsyncMock()
-        self.services_flat.parse_source = mock.Mock()
+        self.services_flat.parse_source = mock.MagicMock()
         await self.services_flat.run()
         self.assertTrue(self.services_flat.fetch_data.called)
         self.assertTrue(self.services_flat.parse_source.called)
@@ -128,6 +129,7 @@ class ServiceTypesFlat(unittest.TestCase):
         self.assertEqual(mock_writestate.call_args[0][3], self.services_flat.timestamp)
         self.assertTrue(mock_writestate.call_args[0][4])
         self.assertTrue(self.services_flat.send_webapi.called)
+        self.assertTrue(self.services_flat.logger.info.called)
 
     @mock.patch('argo_egi_connectors.tasks.flat_servicetypes.write_state')
     @async_test
@@ -135,7 +137,7 @@ class ServiceTypesFlat(unittest.TestCase):
         self.services_flat.fetch_data = mock.AsyncMock()
         self.services_flat.fetch_data.side_effect = [ConnectorHttpError('fetch_data failed')]
         self.services_flat.send_webapi = mock.AsyncMock()
-        self.services_flat.parse_source = mock.Mock()
+        self.services_flat.parse_source = mock.MagicMock()
         await self.services_flat.run()
         self.assertTrue(self.services_flat.fetch_data.called)
         self.assertFalse(self.services_flat.parse_source.called)
