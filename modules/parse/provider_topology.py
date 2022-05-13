@@ -94,7 +94,7 @@ class ParseTopo(object):
             for resource in resource_from_provider:
                 gge = dict()
                 gge['type'] = 'PROJECT'
-                gge['group'] = provider['abbr']
+                gge['group'] = provider['id']
                 gge['subgroup'] = resource['id']
                 if provider.get('provider_tag', False):
                     provider_tags = [tag.strip() for tag in provider['provider_tag']]
