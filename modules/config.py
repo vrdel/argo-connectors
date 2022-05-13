@@ -75,7 +75,10 @@ class Global(object):
                                 self.conf_metricprofile_schemas,
                                 self.conf_metricprofile_output),
             'service-types-gocdb-connector.py':
-            self._merge_dict(self.shared_secopts)
+            self._merge_dict(self.shared_secopts),
+            'service-types-flat-connector.py':
+            self._merge_dict(self.shared_secopts),
+
         }
 
         if caller:
@@ -206,7 +209,8 @@ class CustomerConf(object):
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
                     'weights-vapor-connector.py': ['WeightsFeed',
                                                    'TopoFetchType'],
-                    'service-types-gocdb-connector.py': ['ServiceTypesFeed']
+                    'service-types-gocdb-connector.py': ['ServiceTypesFeed'],
+                    'service-types-flat-connector.py': ['ServiceTypesFeed']
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AuthenticationUsePlainHttpAuth',
