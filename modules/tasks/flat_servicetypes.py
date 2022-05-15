@@ -11,7 +11,7 @@ from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseErr
 
 class TaskFlatServiceTypes(object):
     def __init__(self, loop, logger, connector_name, globopts, auth_opts,
-                 webapi_opts, confcust, custname, feed, timestamp):
+                 webapi_opts, confcust, custname, feed, timestamp, is_csv=False):
         self.logger = logger
         self.loop = loop
         self.connector_name = connector_name
@@ -22,6 +22,7 @@ class TaskFlatServiceTypes(object):
         self.custname = custname
         self.feed = feed
         self.timestamp = timestamp
+        self.is_csv = is_csv
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
@@ -45,7 +46,7 @@ class TaskFlatServiceTypes(object):
         await webapi.send(data, 'service-types')
 
     def parse_source(self, res):
-        flat_servtypes = ParseFlatServiceTypes(self.logger, res)
+        flat_servtypes = ParseFlatServiceTypes(self.logger, res, self.is_csv)
         return flat_servtypes.get_data()
 
     async def run(self):

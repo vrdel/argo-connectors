@@ -76,7 +76,9 @@ class Global(object):
                                 self.conf_metricprofile_output),
             'service-types-gocdb-connector.py':
             self._merge_dict(self.shared_secopts),
-            'service-types-flat-connector.py':
+            'service-types-csv-connector.py':
+            self._merge_dict(self.shared_secopts),
+            'service-types-json-connector.py':
             self._merge_dict(self.shared_secopts),
 
         }
@@ -210,7 +212,8 @@ class CustomerConf(object):
                     'weights-vapor-connector.py': ['WeightsFeed',
                                                    'TopoFetchType'],
                     'service-types-gocdb-connector.py': ['ServiceTypesFeed'],
-                    'service-types-flat-connector.py': ['ServiceTypesFeed']
+                    'service-types-csv-connector.py': ['ServiceTypesFeed'],
+                    'service-types-json-connector.py': ['ServiceTypesFeed']
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AuthenticationUsePlainHttpAuth',

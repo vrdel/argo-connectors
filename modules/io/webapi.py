@@ -14,7 +14,9 @@ class WebAPI(object):
         'topology-provider-connector.py': 'topology',
         'topology-json-connector.py': 'topology',
         'weights-vapor-connector.py': 'weights',
-        'service-types-gocdb-connector.py': 'topology'
+        'service-types-gocdb-connector.py': 'topology',
+        'service-types-csv-connector.py': 'topology',
+        'service-types-json-connector.py': 'topology',
     }
 
     def __init__(self, connector, host, token, logger, retry,
