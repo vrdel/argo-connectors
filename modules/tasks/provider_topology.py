@@ -130,25 +130,26 @@ class TaskProviderTopology(object):
         # fetch topology data concurrently in coroutines
         fetched_resources, fetched_providers = await asyncio.gather(*coros, return_exceptions=True)
 
-        group_groups, group_endpoints = self.parse_source(fetched_resources, fetched_providers)
-        endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
+        if fetched_resources and fetched_providers:
+            group_groups, group_endpoints = self.parse_source(fetched_resources, fetched_providers)
+            endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
-        attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
+            attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
 
-        await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
+            await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
 
-        numge = len(group_endpoints)
-        numgg = len(group_groups)
+            numge = len(group_endpoints)
+            numgg = len(group_groups)
 
-        # send concurrently to WEB-API in coroutines
-        if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-            await asyncio.gather(
-                    self.send_webapi(self.webapi_opts, group_groups, 'groups', self.fixed_date),
-                    self.send_webapi(self.webapi_opts, group_endpoints,'endpoints', self.fixed_date),
-                    loop=self.loop
-            )
+            # send concurrently to WEB-API in coroutines
+            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                await asyncio.gather(
+                        self.send_webapi(self.webapi_opts, group_groups, 'groups', self.fixed_date),
+                        self.send_webapi(self.webapi_opts, group_endpoints,'endpoints', self.fixed_date),
+                        loop=self.loop
+                )
 
-        if eval(self.globopts['GeneralWriteAvro'.lower()]):
-            write_avro(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
+            if eval(self.globopts['GeneralWriteAvro'.lower()]):
+                write_avro(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
 
-        self.logger.info('Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+            self.logger.info('Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
