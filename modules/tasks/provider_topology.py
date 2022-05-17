@@ -3,12 +3,12 @@ import json
 
 from urllib.parse import urlparse
 
-from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.io.webapi import WebAPI
-from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
-from argo_egi_connectors.parse.provider_contacts import ParseResourcesContacts
-from argo_egi_connectors.parse.provider_topology import ParseTopo
-from argo_egi_connectors.tasks.common import write_topo_avro as write_avro, write_state
+from argo_connectors.io.http import SessionWithRetry
+from argo_connectors.io.webapi import WebAPI
+from argo_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.parse.provider_contacts import ParseResourcesContacts
+from argo_connectors.parse.provider_topology import ParseTopo
+from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
 
 
 def find_next_paging_cursor_count(res):

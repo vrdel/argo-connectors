@@ -43,8 +43,8 @@ pipeline {
                     steps {
                         sh '''
                             cd $WORKSPACE/$PROJECT_DIR/
-                            rm -f tests/argo_egi_connectors
-                            ln -s $PWD/modules/ tests/argo_egi_connectors
+                            rm -f tests/argo_connectors
+                            ln -s $PWD/modules/ tests/argo_connectors
                             coverage run -m xmlrunner discover --output-file junit.xml -v tests/
                             coverage xml
                         '''

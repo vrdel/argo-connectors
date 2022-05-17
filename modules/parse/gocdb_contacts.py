@@ -1,10 +1,10 @@
 import xml.dom.minidom
 from xml.parsers.expat import ExpatError
 
-from argo_egi_connectors.parse.base import ParseHelpers
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceEndpoints
-from argo_egi_connectors.utils import filename_date, module_class_name
-from argo_egi_connectors.exceptions import ConnectorParseError
+from argo_connectors.parse.base import ParseHelpers
+from argo_connectors.parse.gocdb_topology import ParseServiceEndpoints
+from argo_connectors.utils import filename_date, module_class_name
+from argo_connectors.exceptions import ConnectorParseError
 
 
 class ParseContacts(ParseHelpers):

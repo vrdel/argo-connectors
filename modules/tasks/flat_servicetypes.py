@@ -2,11 +2,11 @@ import os
 
 from urllib.parse import urlparse
 
-from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
-from argo_egi_connectors.io.webapi import WebAPI
-from argo_egi_connectors.tasks.common import write_state, write_downtimes_avro as write_avro
-from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_connectors.io.http import SessionWithRetry
+from argo_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
+from argo_connectors.io.webapi import WebAPI
+from argo_connectors.tasks.common import write_state, write_downtimes_avro as write_avro
+from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 
 
 class TaskFlatServiceTypes(object):

@@ -6,9 +6,9 @@ import datetime
 
 import mock
 
-from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
-from argo_egi_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
-from argo_egi_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
+from argo_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
+from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
@@ -52,7 +52,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         )
         self.maxDiff = None
 
-    @mock.patch('argo_egi_connectors.tasks.gocdb_servicetypes.write_state')
+    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
     async def test_StepsSuccessRun(self, mock_writestate):
         self.services_gocdb.fetch_data = mock.AsyncMock()
@@ -69,7 +69,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertTrue(self.services_gocdb.send_webapi.called)
         self.assertTrue(self.services_gocdb.logger.info.called)
 
-    @mock.patch('argo_egi_connectors.tasks.gocdb_servicetypes.write_state')
+    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
     async def test_StepsFailedRun(self, mock_writestate):
         self.services_gocdb.fetch_data = mock.AsyncMock()
@@ -114,7 +114,7 @@ class ServiceTypesFlat(unittest.TestCase):
         )
         self.maxDiff = None
 
-    @mock.patch('argo_egi_connectors.tasks.flat_servicetypes.write_state')
+    @mock.patch('argo_connectors.tasks.flat_servicetypes.write_state')
     @async_test
     async def test_StepsSuccessRun(self, mock_writestate):
         self.services_flat.fetch_data = mock.AsyncMock()
@@ -131,7 +131,7 @@ class ServiceTypesFlat(unittest.TestCase):
         self.assertTrue(self.services_flat.send_webapi.called)
         self.assertTrue(self.services_flat.logger.info.called)
 
-    @mock.patch('argo_egi_connectors.tasks.flat_servicetypes.write_state')
+    @mock.patch('argo_connectors.tasks.flat_servicetypes.write_state')
     @async_test
     async def test_StepsFailedRun(self, mock_writestate):
         self.services_flat.fetch_data = mock.AsyncMock()

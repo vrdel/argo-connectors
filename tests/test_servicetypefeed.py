@@ -2,11 +2,11 @@ import unittest
 
 import mock
 
-from argo_egi_connectors.log import Logger
-from argo_egi_connectors.exceptions import ConnectorParseError
-from argo_egi_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
-from argo_egi_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
-from argo_egi_connectors.parse.base import ParseHelpers
+from argo_connectors.log import Logger
+from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
+from argo_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
+from argo_connectors.parse.base import ParseHelpers
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
 

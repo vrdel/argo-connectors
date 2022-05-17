@@ -8,13 +8,13 @@ import sys
 import asyncio
 import uvloop
 
-from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.log import Logger
-from argo_egi_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
-from argo_egi_connectors.tasks.common import write_state
-from argo_egi_connectors.utils import date_check
+from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_connectors.log import Logger
+from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
+from argo_connectors.tasks.common import write_state
+from argo_connectors.utils import date_check
 
-from argo_egi_connectors.config import Global, CustomerConf
+from argo_connectors.config import Global, CustomerConf
 
 logger = None
 globopts = {}

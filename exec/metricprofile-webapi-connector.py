@@ -7,10 +7,10 @@ import sys
 import asyncio
 import uvloop
 
-from argo_egi_connectors.config import CustomerConf, Global
-from argo_egi_connectors.log import Logger
-from argo_egi_connectors.tasks.webapi_metricprofile import TaskWebApiMetricProfile
-from argo_egi_connectors.utils import date_check
+from argo_connectors.config import CustomerConf, Global
+from argo_connectors.log import Logger
+from argo_connectors.tasks.webapi_metricprofile import TaskWebApiMetricProfile
+from argo_connectors.utils import date_check
 
 logger = None
 

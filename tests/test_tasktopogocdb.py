@@ -3,8 +3,8 @@ import asyncio
 
 import mock
 
-from argo_egi_connectors.log import Logger
-from argo_egi_connectors.tasks.gocdb_topology import TaskGocdbTopology
+from argo_connectors.log import Logger
+from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 
 logger = Logger('test_tasktopogocdb.py')
 
@@ -25,7 +25,7 @@ class TaskGocdbTopo(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
 
-    @mock.patch('argo_egi_connectors.io.http')
+    @mock.patch('argo_connectors.io.http')
     @async_test
     async def test_stepCalled(self, mocked_http):
         globopts = dict()

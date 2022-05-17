@@ -2,8 +2,8 @@ import datetime
 import os
 import json
 
-from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.io.http import SessionWithRetry
+from argo_connectors.utils import module_class_name
+from argo_connectors.io.http import SessionWithRetry
 
 
 class WebAPI(object):

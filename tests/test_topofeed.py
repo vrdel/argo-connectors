@@ -1,11 +1,11 @@
 import unittest
 
-from argo_egi_connectors.log import Logger
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_egi_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_egi_connectors.parse.provider_topology import ParseTopo
-from argo_egi_connectors.exceptions import ConnectorParseError
-from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.log import Logger
+from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_connectors.parse.flat_topology import ParseFlatEndpoints
+from argo_connectors.parse.provider_topology import ParseTopo
+from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.mesh.contacts import attach_contacts_topodata
 
 logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
