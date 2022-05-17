@@ -59,7 +59,7 @@ class TaskProviderTopology(object):
     async def fetch_data(self, feed, paginated):
         fetched_data = list()
         remote_topo = urlparse(feed)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts)
+        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
 
         res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                         remote_topo.netloc,
