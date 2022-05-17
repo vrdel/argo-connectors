@@ -5,19 +5,19 @@ import xml.dom.minidom
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from argo_egi_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_egi_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
+from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
 
-from argo_egi_connectors.exceptions import ConnectorParseError, ConnectorHttpError
-from argo_egi_connectors.io.avrowrite import AvroWriter
-from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.io.ldap import LDAPSessionWithRetry
-from argo_egi_connectors.io.statewrite import state_write
-from argo_egi_connectors.io.webapi import WebAPI
-from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
-from argo_egi_connectors.mesh.srm_port import attach_srmport_topodata
-from argo_egi_connectors.mesh.storage_element_path import attach_sepath_topodata
-from argo_egi_connectors.tasks.common import write_state, write_topo_avro as write_avro
+from argo_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_connectors.io.avrowrite import AvroWriter
+from argo_connectors.io.http import SessionWithRetry
+from argo_connectors.io.ldap import LDAPSessionWithRetry
+from argo_connectors.io.statewrite import state_write
+from argo_connectors.io.webapi import WebAPI
+from argo_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.mesh.srm_port import attach_srmport_topodata
+from argo_connectors.mesh.storage_element_path import attach_sepath_topodata
+from argo_connectors.tasks.common import write_state, write_topo_avro as write_avro
 
 from urllib.parse import urlparse
 

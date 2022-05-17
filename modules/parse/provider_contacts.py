@@ -1,4 +1,4 @@
-from argo_egi_connectors.parse.base import ParseHelpers
+from argo_connectors.parse.base import ParseHelpers
 from urllib.parse import urlparse
 
 

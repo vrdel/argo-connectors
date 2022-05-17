@@ -1,6 +1,6 @@
-from argo_egi_connectors.io.statewrite import state_write
-from argo_egi_connectors.utils import filename_date, datestamp, date_check
-from argo_egi_connectors.io.avrowrite import AvroWriter
+from argo_connectors.io.statewrite import state_write
+from argo_connectors.utils import filename_date, datestamp, date_check
+from argo_connectors.io.avrowrite import AvroWriter
 
 
 async def write_state(connector_name, globopts, confcust, fixed_date, state):

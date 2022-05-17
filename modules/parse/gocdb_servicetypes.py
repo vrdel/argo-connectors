@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
-from argo_egi_connectors.utils import filename_date, module_class_name
-from argo_egi_connectors.exceptions import ConnectorParseError
-from argo_egi_connectors.parse.base import ParseHelpers
+from argo_connectors.utils import filename_date, module_class_name
+from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.parse.base import ParseHelpers
 
 
 class ParseGocdbServiceTypes(ParseHelpers):

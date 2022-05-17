@@ -2,7 +2,7 @@ import datetime
 import os
 import aiofiles
 
-from argo_egi_connectors.utils import datestamp
+from argo_connectors.utils import datestamp
 
 
 daysback = 1

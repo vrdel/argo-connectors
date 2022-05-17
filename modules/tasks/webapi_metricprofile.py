@@ -1,9 +1,9 @@
 import os
 
-from argo_egi_connectors.exceptions import ConnectorHttpError, ConnectorParseError
-from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.tasks.common import write_weights_metricprofile_state as write_state, write_metricprofile_avro as write_avro
-from argo_egi_connectors.parse.webapi_metricprofile import ParseMetricProfiles
+from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_connectors.io.http import SessionWithRetry
+from argo_connectors.tasks.common import write_weights_metricprofile_state as write_state, write_metricprofile_avro as write_avro
+from argo_connectors.parse.webapi_metricprofile import ParseMetricProfiles
 
 API_PATH = '/api/v2/metric_profiles'
 

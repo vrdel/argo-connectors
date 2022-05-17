@@ -3,8 +3,8 @@ import asyncio
 import aiohttp
 
 from aiohttp import client_exceptions, http_exceptions, ClientSession
-from argo_egi_connectors.utils import module_class_name
-from argo_egi_connectors.exceptions import ConnectorHttpError
+from argo_connectors.utils import module_class_name
+from argo_connectors.exceptions import ConnectorHttpError
 
 
 def build_ssl_settings(globopts):

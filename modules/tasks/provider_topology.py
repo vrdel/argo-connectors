@@ -3,12 +3,12 @@ import json
 
 from urllib.parse import urlparse
 
-from argo_egi_connectors.io.http import SessionWithRetry
-from argo_egi_connectors.io.webapi import WebAPI
-from argo_egi_connectors.mesh.contacts import attach_contacts_topodata
-from argo_egi_connectors.parse.provider_contacts import ParseResourcesContacts
-from argo_egi_connectors.parse.provider_topology import ParseTopo
-from argo_egi_connectors.tasks.common import write_topo_avro as write_avro, write_state
+from argo_connectors.io.http import SessionWithRetry
+from argo_connectors.io.webapi import WebAPI
+from argo_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.parse.provider_contacts import ParseResourcesContacts
+from argo_connectors.parse.provider_topology import ParseTopo
+from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
 
 
 def find_next_paging_cursor_count(res):
@@ -59,7 +59,7 @@ class TaskProviderTopology(object):
     async def fetch_data(self, feed, paginated):
         fetched_data = list()
         remote_topo = urlparse(feed)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts)
+        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
 
         res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                         remote_topo.netloc,
