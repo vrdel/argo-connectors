@@ -7,7 +7,7 @@ Release: 1%{?dist}
 Group:   EGI/SA4
 License: ASL 2.0
 Summary: Components fetch and transform data that represents input for ARGO Compute Engine
-Url:     http://argoeu.github.io/guides/sync/
+Url:     https://github.com/ARGOeu/argo-connectors/
 Vendor:  SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
 
 Obsoletes: argo-egi-connectors
