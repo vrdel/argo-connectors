@@ -13,7 +13,10 @@ class WebAPI(object):
         'topology-csv-connector.py': 'topology',
         'topology-provider-connector.py': 'topology',
         'topology-json-connector.py': 'topology',
-        'weights-vapor-connector.py': 'weights'
+        'weights-vapor-connector.py': 'weights',
+        'service-types-gocdb-connector.py': 'topology',
+        'service-types-csv-connector.py': 'topology',
+        'service-types-json-connector.py': 'topology',
     }
 
     def __init__(self, connector, host, token, logger, retry,
@@ -76,7 +79,9 @@ class WebAPI(object):
                                                                 data=json.dumps(data_send),
                                                                 headers=self.headers)
         if status != 201:
-            if connector.startswith('topology') or connector.startswith('downtimes'):
+            if (connector.startswith('topology')
+                or connector.startswith('downtimes')
+                or connector.startswith('service-types')):
                 jsonret = json.loads(content)
                 msg = None
                 statusmsg = jsonret.get('status', False)

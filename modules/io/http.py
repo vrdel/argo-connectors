@@ -97,10 +97,10 @@ class SessionWithRetry(object):
 
                         if getattr(self.logger, 'job', False):
                             self.logger.warn("{} Customer:{} Job:{} : HTTP Empty response".format(module_class_name(self),
-                                                                                                    self.logger.customer, self.logger.job))
+                                                                                                  self.logger.customer, self.logger.job))
                         else:
                             self.logger.warn("{} Customer:{} : HTTP Empty response".format(module_class_name(self),
-                                                                                            self.logger.customer))
+                                                                                           self.logger.customer))
 
                 # do not retry on SSL errors
                 # raise exc that will be handled in outer try/except clause
@@ -140,7 +140,7 @@ class SessionWithRetry(object):
             else:
                 if getattr(self.logger, 'job', False):
                     self.logger.info("{} Customer:{} Job:{} : HTTP Connection retry exhausted".format(module_class_name(self),
-                                                                                                       self.logger.customer, self.logger.job))
+                                                                                                      self.logger.customer, self.logger.job))
                 else:
                     self.logger.info("{} Customer:{} : HTTP Connection retry exhausted".format(module_class_name(self),
                                                                                                self.logger.customer))
@@ -172,7 +172,7 @@ class SessionWithRetry(object):
     async def http_put(self, url, data, headers=None):
         try:
             content = await self._http_method('put', url, data=data,
-                                                headers=headers)
+                                              headers=headers)
             return content
 
         except Exception as exc:
@@ -181,7 +181,7 @@ class SessionWithRetry(object):
     async def http_post(self, url, data, headers=None):
         try:
             content = await self._http_method('post', url, data=data,
-                                                headers=headers)
+                                              headers=headers)
             return content
 
         except Exception as exc:

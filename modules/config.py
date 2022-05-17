@@ -45,35 +45,43 @@ class Global(object):
                                                self.conf_auth, self.conf_conn,
                                                self.conf_state,
                                                self.conf_webapi)
-        self.secopts = {'topology-gocdb-connector.py':
-                        self._merge_dict(self.shared_secopts,
-                                         self.conf_topo_schemas,
-                                         self.conf_topo_output),
-                        'topology-json-connector.py':
-                        self._merge_dict(self.shared_secopts,
-                                         self.conf_topo_schemas,
-                                         self.conf_topo_output),
-                        'topology-provider-connector.py':
-                        self._merge_dict(self.shared_secopts,
-                                         self.conf_topo_schemas,
-                                         self.conf_topo_output),
-                        'downtimes-gocdb-connector.py':
-                        self._merge_dict(self.shared_secopts,
-                                         self.conf_downtimes_schemas,
-                                         self.conf_downtimes_output),
-                        'weights-vapor-connector.py':
-                        self._merge_dict(self.shared_secopts,
-                                         self.conf_weights_schemas,
-                                         self.conf_weights_output),
-                        'topology-csv-connector.py':
-                        self._merge_dict(self.shared_secopts,
-                                         self.conf_topo_schemas,
-                                         self.conf_topo_output),
-                        'metricprofile-webapi-connector.py':
-                        self._merge_dict(self.shared_secopts,
-                                         self.conf_metricprofile_schemas,
-                                         self.conf_metricprofile_output)
-                        }
+        self.secopts = {
+            'topology-gocdb-connector.py':
+            self._merge_dict(self.shared_secopts,
+                                self.conf_topo_schemas,
+                                self.conf_topo_output),
+            'topology-json-connector.py':
+            self._merge_dict(self.shared_secopts,
+                                self.conf_topo_schemas,
+                                self.conf_topo_output),
+            'topology-provider-connector.py':
+            self._merge_dict(self.shared_secopts,
+                                self.conf_topo_schemas,
+                                self.conf_topo_output),
+            'downtimes-gocdb-connector.py':
+            self._merge_dict(self.shared_secopts,
+                                self.conf_downtimes_schemas,
+                                self.conf_downtimes_output),
+            'weights-vapor-connector.py':
+            self._merge_dict(self.shared_secopts,
+                                self.conf_weights_schemas,
+                                self.conf_weights_output),
+            'topology-csv-connector.py':
+            self._merge_dict(self.shared_secopts,
+                                self.conf_topo_schemas,
+                                self.conf_topo_output),
+            'metricprofile-webapi-connector.py':
+            self._merge_dict(self.shared_secopts,
+                                self.conf_metricprofile_schemas,
+                                self.conf_metricprofile_output),
+            'service-types-gocdb-connector.py':
+            self._merge_dict(self.shared_secopts),
+            'service-types-csv-connector.py':
+            self._merge_dict(self.shared_secopts),
+            'service-types-json-connector.py':
+            self._merge_dict(self.shared_secopts),
+
+        }
 
         if caller:
             self.caller_secopts = self.secopts[os.path.basename(caller)]
@@ -202,7 +210,10 @@ class CustomerConf(object):
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
                     'weights-vapor-connector.py': ['WeightsFeed',
-                                                   'TopoFetchType']
+                                                   'TopoFetchType'],
+                    'service-types-gocdb-connector.py': ['ServiceTypesFeed'],
+                    'service-types-csv-connector.py': ['ServiceTypesFeed'],
+                    'service-types-json-connector.py': ['ServiceTypesFeed']
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AuthenticationUsePlainHttpAuth',
@@ -211,7 +222,7 @@ class CustomerConf(object):
                       'BDIIQueryBase', 'BDIIQueryFilterSRM',
                       'BDIIQueryAttributesSRM', 'BDIIQueryFilterSEPATH',
                       'BDIIQueryAttributesSEPATH', 'WebAPIToken',
-                      'WeightsEmpty', 'DowntimesEmpty']
+                      'WeightsEmpty', 'DowntimesEmpty', 'ServiceTypesFeed']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -253,6 +264,7 @@ class CustomerConf(object):
                     topofeedendpoints = config.get(section, 'TopoFeedServiceEndpoints', fallback=None)
                     topofeedservicegroups = config.get(section, 'TopoFeedServiceGroups', fallback=None)
                     topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
+                    servicetypesfeed = config.get(section, 'ServiceTypesFeed', fallback=None)
 
                     if not custdir.endswith('/'):
                         custdir = '{}/'.format(custdir)
@@ -281,7 +293,9 @@ class CustomerConf(object):
                                              'TopoFeedServiceGroups': topofeedservicegroups,
                                              'TopoFeedEndpoints': topofeedendpoints,
                                              'TopoUIDServiceEnpoints': topouidservendpoints,
-                                             'TopoType': topotype}})
+                                             'TopoType': topotype,
+                                             'ServiceTypesFeed': servicetypesfeed
+                                             }})
                 if optopts:
                     auth, webapi, empty_data, bdii = {}, {}, {}, {}
                     for k, v in optopts.items():
@@ -612,3 +626,10 @@ class CustomerConf(object):
             pass
 
         return namespace
+
+    def get_servicesfeed(self):
+        feed = self._get_cust_options('ServiceTypesFeed')
+        if feed:
+            return feed
+        else:
+            return self._get_cust_options('TopoFeed')
