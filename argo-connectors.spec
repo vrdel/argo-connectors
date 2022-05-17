@@ -10,7 +10,7 @@ Summary: Components fetch and transform data that represents input for ARGO Comp
 Url:     http://argoeu.github.io/guides/sync/
 Vendor:  SRCE <dvrcic@srce.hr>, SRCE <kzailac@srce.hr>
 
-Obsoletes: ar-sync
+Obsoletes: argo-egi-connectors
 Prefix:    %{_prefix}
 
 Requires: python3-aiofiles
