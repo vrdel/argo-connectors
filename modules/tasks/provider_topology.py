@@ -81,27 +81,30 @@ class TaskProviderTopology(object):
                                                         remote_topo.netloc,
                                                         remote_topo.path))
         if paginated:
-            fetched_results = filter_out_results(res)
             next_cursor = find_next_paging_cursor_count(self.logger, res)
             total, from_index, to_index = next_cursor()
-            num = to_index - from_index
-            from_index = to_index
-
-            while to_index != total:
-                res = await \
-                    session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
-                                                                            remote_topo.netloc,
-                                                                            remote_topo.path,
-                                                                            from_index,
-                                                                            num))
-                fetched_results = fetched_results + filter_out_results(res)
-                next_cursor = find_next_paging_cursor_count(self.logger, res)
-                total, from_index, to_index = next_cursor()
+            if to_index:
+                fetched_results = filter_out_results(res)
                 num = to_index - from_index
                 from_index = to_index
 
-            await session.close()
-            return dict(results=fetched_results)
+                while to_index != total:
+                    res = await \
+                        session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
+                                                                                remote_topo.netloc,
+                                                                                remote_topo.path,
+                                                                                from_index,
+                                                                                num))
+                    fetched_results = fetched_results + filter_out_results(res)
+                    next_cursor = find_next_paging_cursor_count(self.logger, res)
+                    total, from_index, to_index = next_cursor()
+                    num = to_index - from_index
+                    from_index = to_index
+
+                await session.close()
+                return dict(results=fetched_results)
+            else:
+                await session.close()
 
         else:
             next_cursor = find_next_paging_cursor_count(self.logger, res)
