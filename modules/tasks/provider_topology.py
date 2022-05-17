@@ -24,6 +24,7 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
             return self._parse()
         except ConnectorParseError as exc:
             self.logger.error(repr(exc))
+            return [0, 0, 0]
 
     def _parse(self):
         cursor, count = None, None
@@ -104,17 +105,20 @@ class TaskProviderTopology(object):
         else:
             next_cursor = find_next_paging_cursor_count(self.logger, res)
             total, from_index, to_index = next_cursor()
-            num = total
-            from_index = 0
+            if to_index:
+                num = total
+                from_index = 0
 
-            res = await \
-                session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
-                                                                        remote_topo.netloc,
-                                                                        remote_topo.path,
-                                                                        from_index,
-                                                                        num))
-            await session.close()
-            return res
+                res = await \
+                    session.http_get('{}://{}{}?from={}&quantity={}'.format(remote_topo.scheme,
+                                                                            remote_topo.netloc,
+                                                                            remote_topo.path,
+                                                                            from_index,
+                                                                            num))
+                await session.close()
+                return res
+            else:
+                await session.close()
 
     async def run(self):
         topofeedproviders = self.confcust.get_topofeedservicegroups()
