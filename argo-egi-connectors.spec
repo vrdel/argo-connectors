@@ -1,7 +1,7 @@
 # override so that bytecode compiling is called with python3
 %global __python /usr/bin/python3
 
-Name:    argo-egi-connectors
+Name:    argo-connectors
 Version: 2.0.0
 Release: 1%{?dist}
 Group:   EGI/SA4
@@ -43,16 +43,16 @@ with GOCDB, VAPOR and POEM definitions per day.
 %{py3_install "--record=INSTALLED_FILES" }
 install --directory %{buildroot}/%{_sharedstatedir}/argo-connectors/
 install --directory %{buildroot}/%{_localstatedir}/log/argo-connectors/
-install --directory %{buildroot}/%{_libexecdir}/argo-egi-connectors/
+install --directory %{buildroot}/%{_libexecdir}/argo-connectors/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
-%config(noreplace) /etc/argo-egi-connectors/*
-%attr(0755,root,root) %dir %{_libexecdir}/argo-egi-connectors/
-%attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/*.py
-%attr(0755,root,root) %{_libexecdir}/argo-egi-connectors/__pycache__/*
+%config(noreplace) /etc/argo-connectors/*
+%attr(0755,root,root) %dir %{_libexecdir}/argo-connectors/
+%attr(0755,root,root) %{_libexecdir}/argo-connectors/*.py
+%attr(0755,root,root) %{_libexecdir}/argo-connectors/__pycache__/*
 
 %attr(0755,root,root) %dir %{_sharedstatedir}/argo-connectors/
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
