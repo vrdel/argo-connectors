@@ -1,25 +1,39 @@
 import asyncio
 import json
 
+from collections import Callable
 from urllib.parse import urlparse
 
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo
 from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
+from argo_connectors.exceptions import ConnectorParseError
 
 
-def find_next_paging_cursor_count(res):
-    cursor, count = None, None
+class find_next_paging_cursor_count(ParseHelpers, Callable):
+    def __init__(self, logger, res):
+        self.res = res
+        self.logger = logger
 
-    doc = json.loads(res)
-    total = doc['total']
-    from_index = doc['from']
-    to_index = doc['to']
+    def __call__(self):
+        try:
+            return self._parse()
+        except ConnectorParseError as exc:
+            self.logger.error(repr(exc))
 
-    return total, from_index, to_index
+    def _parse(self):
+        cursor, count = None, None
+
+        doc = self.parse_json(self.res)
+        total = doc['total']
+        from_index = doc['from']
+        to_index = doc['to']
+
+        return total, from_index, to_index
 
 
 def filter_out_results(data):
@@ -66,7 +80,8 @@ class TaskProviderTopology(object):
                                                         remote_topo.path))
         if paginated:
             fetched_results = filter_out_results(res)
-            total, from_index, to_index = find_next_paging_cursor_count(res)
+            next_cursor = find_next_paging_cursor_count(self.logger, res)
+            total, from_index, to_index = next_cursor()
             num = to_index - from_index
             from_index = to_index
 
@@ -78,8 +93,8 @@ class TaskProviderTopology(object):
                                                                             from_index,
                                                                             num))
                 fetched_results = fetched_results + filter_out_results(res)
-
-                total, from_index, to_index = find_next_paging_cursor_count(res)
+                next_cursor = find_next_paging_cursor_count(self.logger, res)
+                total, from_index, to_index = next_cursor()
                 num = to_index - from_index
                 from_index = to_index
 
@@ -87,7 +102,8 @@ class TaskProviderTopology(object):
             return dict(results=fetched_results)
 
         else:
-            total, from_index, to_index = find_next_paging_cursor_count(res)
+            next_cursor = find_next_paging_cursor_count(self.logger, res)
+            total, from_index, to_index = next_cursor()
             num = total
             from_index = 0
 
