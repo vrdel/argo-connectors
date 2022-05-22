@@ -262,7 +262,11 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             )
 
         # fetch topology data concurrently in coroutines
+        import time
+        start = time.time()
         fetched_topology = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
+        end = time.time()
+        self.logger.warn(f'FETCH LASTED {end - start} seconds')
 
         fetched_endpoints = fetched_topology[0]
         if self.bdii_opts and eval(self.bdii_opts['bdii']):
@@ -320,7 +324,11 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                 self.loop.run_in_executor(executor, exe_parse_source_sites)
             )
 
+        import time
+        start = time.time()
         parsed_topology = await asyncio.gather(*parse_workers, loop=self.loop)
+        end = time.time()
+        self.logger.warn(f'PARSE LASTED {end - start} seconds')
 
         if fetched_servicegroups and fetched_sites:
             group_endpoints = parsed_topology[0]
@@ -360,8 +368,14 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         ]
 
         executor = ProcessPoolExecutor(max_workers=2)
+        import time
+        start = time.time()
         group_groups, group_endpoints = await asyncio.gather(*attach_contacts_workers, loop=self.loop)
+        end = time.time()
+        self.logger.warn(f'ATTACH CONTACTS LASTED {end - start} seconds')
 
+        import time
+        start = time.time()
         if parsed_servicegroups_contacts:
             attach_contacts_topodata(self.logger, parsed_servicegroups_contacts, group_groups)
         elif fetched_servicegroups:
@@ -369,18 +383,24 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             # servicegroups topology entities
             parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
             attach_contacts_topodata(self.logger, parsed_servicegroups_contacts, group_groups)
+        end = time.time()
+        self.logger.warn(f'ATTACH CONTACTS SERVICEGROUPS LASTED {end - start} seconds')
 
         await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
+        import time
+        start = time.time()
         # send concurrently to WEB-API in coroutines
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
             await asyncio.gather(
                 self.send_webapi(group_groups, 'groups' ),
                 self.send_webapi(group_endpoints,'endpoints')
             )
+        end = time.time()
+        self.logger.warn(f'SEND WEBAPI LASTED {end - start} seconds')
 
         if eval(self.globopts['GeneralWriteAvro'.lower()]):
             write_avro(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
