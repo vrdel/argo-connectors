@@ -24,7 +24,7 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
             return self._parse()
         except ConnectorParseError as exc:
             self.logger.error(repr(exc))
-            self.logger.error("Tried to parse (512 chars): %.512s" % self.res)
+            self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(self.res.replace('\r\n', '').replace('\n', '')))
             return [0, 0, 0]
 
     def _parse(self):
