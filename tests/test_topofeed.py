@@ -279,16 +279,10 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             }
         ]
-        self.sample_serviceendpoints_contacts = [
-            {
-                'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
-                'name': 'fqdn1.com+service1'
-            },
-            {
-                'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
-                'name': 'fqdn2.com+service2'
-            }
-        ]
+        self.sample_serviceendpoints_contacts = {
+            'fqdn1.com+service1': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+            'fqdn2.com+service2': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com']
+        }
 
     def test_ServiceEndpointsAndContacts(self):
         attach_contacts_topodata(logger, self.sample_serviceendpoints_contacts,
@@ -619,12 +613,10 @@ class ParseEoscProvider(unittest.TestCase):
         ])
 
     def test_meshContactsProviders(self):
-        sample_resources_contacts = [
-            {
-                'contacts': ['helpdesk@eudat.eu'],
-                'name': 'www.eudat.eu+eudat.b2access'
-            }
-        ]
+        sample_resources_contacts = {
+            'www.eudat.eu+eudat.b2access': ['helpdesk@eudat.eu']
+        }
+
         attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
         self.assertEqual(self.group_endpoints[0],
             {

@@ -64,9 +64,18 @@ def attach_contacts_topodata(logger, contacts, topodata):
 
             # group_endpoints topotype
             else:
+                contact_key = None
+
                 lookup_key = entity['hostname'].replace('_', '+', 1)
                 if lookup_key in contacts:
-                    contact = contacts[lookup_key]
+                    contact_key = lookup_key
+                else:
+                    lookup_key = '{}+{}'.format(entity['hostname'], entity['service'])
+                    if lookup_key in contacts:
+                        contact_key = lookup_key
+
+                if contact_key:
+                    contact = contacts[contact_key]
                     entity.update(notifications={
                         'contacts': contact,
                         'enabled': True
