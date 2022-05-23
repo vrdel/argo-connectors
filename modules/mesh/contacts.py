@@ -36,16 +36,11 @@ def attach_contacts_topodata(logger, contacts, topodata):
         for entity in topodata:
             # group_groups topotype
             if 'subgroup' in entity:
-                found_contacts = list(
-                    filter(lambda contact:
-                        contact['name'] == entity['subgroup'],
-                        contacts)
-                )
-                if found_contacts:
+                if entity['subgroup'] in contacts:
                     emails = list()
-                    for contact in found_contacts[0]['contacts']:
+                    for contact in contacts[entity['subgroup']]:
                         if isinstance(contact, str):
-                            filtered_emails = filter_dups_noemails(found_contacts[0]['contacts'])
+                            filtered_emails = filter_dups_noemails(contacts[entity['subgroup']])
                             if filtered_emails:
                                 entity.update(notifications={
                                     'contacts': filtered_emails,
