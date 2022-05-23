@@ -132,25 +132,13 @@ class TaskProviderTopology(object):
         ]
 
         # fetch topology data concurrently in coroutines
-        import time
-        start = time.time()
         fetched_resources, fetched_providers = await asyncio.gather(*coros, return_exceptions=True)
-        end = time.time()
-        self.logger.warn(f'FETCH LASTED {end - start} seconds')
 
         if fetched_resources and fetched_providers:
-            import time
-            start = time.time()
             group_groups, group_endpoints = self.parse_source(fetched_resources, fetched_providers)
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
-            end = time.time()
-            self.logger.warn(f'PARSE LASTED {end - start} seconds')
 
-            import time
-            start = time.time()
             attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
-            end = time.time()
-            self.logger.warn(f'ATTACH CONTACTS LASTED {end - start} seconds')
 
             await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
 
