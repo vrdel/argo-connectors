@@ -64,27 +64,13 @@ def attach_contacts_topodata(logger, contacts, topodata):
 
             # group_endpoints topotype
             else:
-                for contact in contacts:
-                    fqdn, servtype = contact['name'].split('+')
-                    emails = filter_dups_noemails(contact['contacts'])
-                    if emails:
-                        found_endpoints = list(
-                            filter(lambda endpoint:
-                                endpoint['hostname'] == fqdn \
-                                and endpoint['service'] == servtype,
-                                topodata)
-                        )
-                        if not found_endpoints:
-                            found_endpoints = list(
-                                filter(lambda endpoint:
-                                    endpoint['hostname'] == '{}_{}'.format(fqdn, servtype),
-                                    topodata)
-                            )
-                        for endpoint in found_endpoints:
-                            endpoint.update(notifications={
-                                'contacts': emails,
-                                'enabled': True
-                            })
+                lookup_key = entity['hostname'].replace('_', '+', 1)
+                if lookup_key in contacts:
+                    contact = contacts[lookup_key]
+                    entity.update(notifications={
+                        'contacts': contact,
+                        'enabled': True
+                    })
 
             updated_topodata.append(entity)
 
