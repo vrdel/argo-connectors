@@ -215,20 +215,11 @@ class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
 
     def test_FormatContacts(self):
         self.assertEqual(self.contacts,
-            [
-                {
-                    'contacts': ['name.surname@country.com'],
-                    'name': 'files.dev.tenant.eu_tenant_1+nextcloud'
-                },
-                {
-                    'contacts': ['name.surname@country.com'],
-                    'name': 'files.tenant.eu_tenant_2+nextcloud'
-                },
-                {
-                    'contacts': ['name.surname@country.com'],
-                    'name': 'sso.tenant.eu_tenant_3+aai'
-                }
-            ]
+            {
+                'files.dev.tenant.eu_tenant_1+nextcloud': ['name.surname@country.com'],
+                'files.tenant.eu_tenant_2+nextcloud': ['name.surname@country.com'],
+                'sso.tenant.eu_tenant_3+aai': ['name.surname@country.com'],
+            }
         )
 
 
