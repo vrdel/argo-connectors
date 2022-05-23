@@ -126,46 +126,40 @@ class MeshSitesAndContacts(unittest.TestCase):
                 'type': 'NGI'
             },
         ]
-        self.sample_sites_contacts = [
-            {
-                'contacts': [
-                    {
-                        'certdn': 'certdn1-dirac-durham',
-                        'email': 'name1.surname1@durham.ac.uk',
-                        'forename': 'Name1',
-                        'role': 'Site Administrator',
-                        'surname': 'Surname1'
-                    },
-                    {
-                        'certdn': 'certdn2-dirac-durham',
-                        'email': 'name2.surname2@durham.ac.uk',
-                        'forename': 'Name2',
-                        'role': 'Site Operations Manager',
-                        'surname': 'Surname2'
-                    }
-                ],
-                'name': 'dirac-durham'
-            },
-            {
-                'contacts': [
-                    {
-                        'certdn': 'certdn1-ru-sarfti',
-                        'email': 'name1.surname1@gmail.com',
-                        'forename': 'Name1',
-                        'role': 'Site Administrator',
-                        'surname': 'Surname1'
-                    },
-                    {
-                        'certdn': 'certdn2-ru-sarfti',
-                        'email': 'name2.surname2@gmail.com',
-                        'forename': 'Name2',
-                        'role': 'Site Administrator',
-                        'surname': 'Surname2'
-                    },
-                ],
-                'name': 'RU-SARFTI'
-            },
-        ]
+        self.sample_sites_contacts = {
+            'dirac-durham': [
+                {
+                    'certdn': 'certdn1-dirac-durham',
+                    'email': 'name1.surname1@durham.ac.uk',
+                    'forename': 'Name1',
+                    'role': 'Site Administrator',
+                    'surname': 'Surname1'
+                },
+                {
+                    'certdn': 'certdn2-dirac-durham',
+                    'email': 'name2.surname2@durham.ac.uk',
+                    'forename': 'Name2',
+                    'role': 'Site Operations Manager',
+                    'surname': 'Surname2'
+                }
+            ],
+            'RU-SARFTI': [
+                {
+                    'certdn': 'certdn1-ru-sarfti',
+                    'email': 'name1.surname1@gmail.com',
+                    'forename': 'Name1',
+                    'role': 'Site Administrator',
+                    'surname': 'Surname1'
+                },
+                {
+                    'certdn': 'certdn2-ru-sarfti',
+                    'email': 'name2.surname2@gmail.com',
+                    'forename': 'Name2',
+                    'role': 'Site Administrator',
+                    'surname': 'Surname2'
+                }
+            ]
+        }
 
     def test_SitesAndContacts(self):
         attach_contacts_topodata(logger, self.sample_sites_contacts, self.sample_sites_data)
@@ -219,17 +213,10 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
                 'type': 'PROJECT'
             },
         ]
-        self.sample_servicegroup_contacts = [
-            {
-                'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
-                'name': 'NGI_ARMGRID_SERVICES'
-            },
-            {
-                'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
-                'name': 'NGI_CYGRID_SERVICES'
-            },
-
-        ]
+        self.sample_servicegroup_contacts = {
+            'NGI_ARMGRID_SERVICES': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+            'NGI_CYGRID_SERVICES': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
+        }
 
     def test_ServiceGroupsAndContacts(self):
         attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
@@ -279,16 +266,10 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             }
         ]
-        self.sample_serviceendpoints_contacts = [
-            {
-                'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
-                'name': 'fqdn1.com+service1'
-            },
-            {
-                'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
-                'name': 'fqdn2.com+service2'
-            }
-        ]
+        self.sample_serviceendpoints_contacts = {
+            'fqdn1.com+service1': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+            'fqdn2.com+service2': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com']
+        }
 
     def test_ServiceEndpointsAndContacts(self):
         attach_contacts_topodata(logger, self.sample_serviceendpoints_contacts,
@@ -619,12 +600,10 @@ class ParseEoscProvider(unittest.TestCase):
         ])
 
     def test_meshContactsProviders(self):
-        sample_resources_contacts = [
-            {
-                'contacts': ['helpdesk@eudat.eu'],
-                'name': 'www.eudat.eu+eudat.b2access'
-            }
-        ]
+        sample_resources_contacts = {
+            'www.eudat.eu+eudat.b2access': ['helpdesk@eudat.eu']
+        }
+
         attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
         self.assertEqual(self.group_endpoints[0],
             {

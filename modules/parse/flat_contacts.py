@@ -16,7 +16,7 @@ class ParseContacts(ParseHelpers):
             self.data = self.parse_json(data)
 
     def get_contacts(self):
-        contacts = list()
+        contacts = dict()
 
         for entity in self.data:
             if self.uidservendp:
@@ -25,9 +25,6 @@ class ParseContacts(ParseHelpers):
                 key = '{}+{}'.format(construct_fqdn(entity['URL']), entity['SERVICE_TYPE'])
 
             value = entity['CONTACT_EMAIL']
-            contacts.append({
-                'name': key,
-                'contacts': [value] if not type(value) == list else value
-            })
+            contacts[key] = [value] if not type(value) == list else value
 
         return contacts

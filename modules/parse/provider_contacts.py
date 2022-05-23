@@ -37,7 +37,7 @@ class ParseResourcesContacts(ParseHelpers):
         self.logger = logger
         self.data = data
 
-        self._resource_contacts = list()
+        self._resource_contacts = dict()
         self._parse_data()
 
     def _parse_data(self):
@@ -50,10 +50,7 @@ class ParseResourcesContacts(ParseHelpers):
                                  resource['id'])
             contacts = [contact['email'] for contact in resource['publicContacts']]
             if contacts:
-                self._resource_contacts.append({
-                    'name': key,
-                    'contacts': contacts
-                })
+                self._resource_contacts[key] = contacts
 
     def get_contacts(self):
         return self._resource_contacts
