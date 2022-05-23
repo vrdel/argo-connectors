@@ -50,13 +50,7 @@ class ParseResourcesContacts(ParseHelpers):
                                  resource['id'])
             contacts = [contact['email'] for contact in resource['publicContacts']]
             if contacts:
-                # self._resource_contacts.append({
-                    # 'name': key,
-                    # 'contacts': contacts
-                # })
-                self.logger.warn('{}, {}'.format(key, contacts))
                 self._resource_contacts[key] = contacts
-                self.logger.warn('RESOURCE CONTACTS: %d' % len(self._resource_contacts))
 
     def get_contacts(self):
         return self._resource_contacts

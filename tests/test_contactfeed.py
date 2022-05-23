@@ -242,32 +242,14 @@ class ParseEoscContacts(unittest.TestCase):
 
     def test_formatResourcesContacts(self):
         self.assertEqual(self.resources_contacts,
-            [
-                {
-                    'contacts': ['helpdesk@eudat.eu'],
-                    'name': 'www.eudat.eu+eudat.b2access'
-                },
-                {
-                    'contacts': ['helpdesk@eudat.eu'],
-                    'name': 'b2note.eudat.eu+eudat.b2note'
-                },
-                {
-                    'contacts': ['helpdesk@eudat.eu'],
-                    'name': 'www.eudat.eu+eudat.b2share'
-                },
-                {
-                    'contacts': ['helpdesk@eudat.eu'],
-                    'name': 'www.eudat.eu+eudat.b2drop'
-                },
-                {
-                    'contacts': ['helpdesk@eudat.eu'],
-                    'name': 'www.eudat.eu+eudat.b2safe'
-                },
-                {
-                    'contacts': ['eudat-cdi-secretariat@postit.csc.fi'],
-                    'name': 'www.eudat.eu+eudat.b2find'
-                }
-            ]
+            {
+                'www.eudat.eu+eudat.b2access': ['helpdesk@eudat.eu'],
+                'b2note.eudat.eu+eudat.b2note': ['helpdesk@eudat.eu'],
+                'www.eudat.eu+eudat.b2share': ['helpdesk@eudat.eu'],
+                'www.eudat.eu+eudat.b2drop': ['helpdesk@eudat.eu'],
+                'www.eudat.eu+eudat.b2safe': ['helpdesk@eudat.eu'],
+                'www.eudat.eu+eudat.b2find': ['eudat-cdi-secretariat@postit.csc.fi']
+            }
         )
 
     def test_formatProvidersContacts(self):
