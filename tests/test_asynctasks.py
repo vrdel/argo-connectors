@@ -34,6 +34,8 @@ class TopologyProvider(unittest.TestCase):
         globopts = mock.Mock()
         webapiopts = mock.Mock()
         confcust = mock.Mock()
+        confcust.get_topofeedservicegroups.return_value = 'http://topo.feed.providers.com'
+        confcust.get_topofeedendpoints.return_value = 'http://topo.feed.resources.com'
         topofeedpaging = False
         uidservendp = False
         fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
@@ -51,10 +53,17 @@ class TopologyProvider(unittest.TestCase):
             fetchtype
         )
 
-    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
+    @mock.patch('argo_connectors.tasks.provider_topology.find_next_paging_cursor_count')
+    @mock.patch('argo_connectors.io.http.build_connection_retry_settings')
+    @mock.patch('argo_connectors.io.http.build_ssl_settings')
+    @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_get')
     @async_test
-    async def test_StepsFailedRun(self, mock_writestate):
-        pass
+    async def test_StepsFailedRun(self, mock_httpget, mock_buildsslsettings,
+                                  mock_buildconnretry, mock_findpagingcursor):
+        mock_buildsslsettings.return_value = 'ssl settings'
+        mock_buildconnretry.return_value = (1, 2)
+        mock_findpagingcursor.return_value = lambda: [0, 0, 0]
+        await self.topo_provider.run()
 
 
 class ServiceTypesGocdb(unittest.TestCase):
