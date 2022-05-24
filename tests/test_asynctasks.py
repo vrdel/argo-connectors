@@ -8,6 +8,7 @@ import mock
 
 from argo_connectors.exceptions import ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
+from argo_connectors.tasks.provider_topology import TaskProviderTopology
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -23,6 +24,37 @@ class async_test(object):
     def __call__(self, *args, **kwargs):
         test_obj = args[0]
         test_obj.loop.run_until_complete(self.test_method(*args, **kwargs))
+
+
+class TopologyProvider(unittest.TestCase):
+    def setUp(self):
+        logger = mock.Mock()
+        logger.customer = CUSTOMER_NAME
+        self.loop = asyncio.get_event_loop()
+        globopts = mock.Mock()
+        webapiopts = mock.Mock()
+        confcust = mock.Mock()
+        topofeedpaging = False
+        uidservendp = False
+        fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
+        fetchtype = 'ServiceGroups'
+        self.topo_provider = TaskProviderTopology(
+            self.loop,
+            logger,
+            'test_asynctasks_topologyprovider',
+            globopts,
+            webapiopts,
+            confcust,
+            topofeedpaging,
+            uidservendp,
+            fixed_date,
+            fetchtype
+        )
+
+    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
+    @async_test
+    async def test_StepsFailedRun(self, mock_writestate):
+        pass
 
 
 class ServiceTypesGocdb(unittest.TestCase):
