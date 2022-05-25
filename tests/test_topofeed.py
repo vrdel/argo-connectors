@@ -536,10 +536,14 @@ class ParseEoscProvider(unittest.TestCase):
             resources = feed_file.read()
         with open('tests/sample-providerfeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
+        with open('tests/sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
+            resource_extensions = feed_file.read()
         logger.customer = CUSTOMER_NAME
         eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
+        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, True, CUSTOMER_NAME)
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
+        self.extensions = eosc_topo_extensions.get_extensions()
         self.maxDiff = None
 
     def test_groupGroups(self):
@@ -717,17 +721,7 @@ class ParseEoscProvider(unittest.TestCase):
         self.assertTrue('JSON feed' in excep.msg)
         self.assertTrue('JSONDecodeError' in excep.msg)
 
-
-class ParseEoscResourcesExtensions(unittest.TestCase):
-    def setUp(self):
-        with open('tests/sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
-            resource_extensions = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, True, CUSTOMER_NAME)
-        self.extensions = eosc_topo_extensions.get_extensions()
-        self.maxDiff = None
-
-    def test_getExtensions(self):
+    def test_serviceExtensions(self):
         self.assertEqual(self.extensions, [
             {
                 'group': 'grnet.grnet-test',
