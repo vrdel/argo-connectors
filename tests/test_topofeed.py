@@ -798,17 +798,6 @@ class ParseEoscProvider(unittest.TestCase):
                     'info_URL': 'https://hpc.grnet.gr/',
                     'info_groupname': 'HPC | National HPC Infrastructure'
                 },
-                'type': 'SERVICEGROUPS'},
-            {
-                'group': 'mantesat_test.mantesat_1st_service',
-                'hostname': 'www.naftemporiki.gr_3b66ac60-014b-4c9e-8c79-98878479887d',
-                'service': 'eu.eosc.ckan',
-                'tags': {
-                    'hostname': 'www.naftemporiki.gr',
-                    'info_ID': '3b66ac60-014b-4c9e-8c79-98878479887d',
-                    'info_URL': 'https://www.naftemporiki.gr',
-                    'info_groupname': 'UNKNOWN'
-                },
                 'type': 'SERVICEGROUPS'
             }
         ])

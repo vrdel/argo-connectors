@@ -100,7 +100,11 @@ class ParseExtensions(ParseHelpers):
                 json_data = self.parse_json(self.data)
             else:
                 json_data = self.data
+
             for extension in json_data['results']:
+                if extension['serviceId'] not in self.groupnames:
+                    continue
+
                 gee = dict()
                 for group in extension['monitoringGroups']:
                     gee['type'] = 'SERVICEGROUPS'
