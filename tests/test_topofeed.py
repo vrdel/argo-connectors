@@ -789,7 +789,8 @@ class ParseEoscResourcesExtensions(unittest.TestCase):
                 'tags': {
                     'hostname': 'www.naftemporiki.gr',
                     'info_ID': '3b66ac60-014b-4c9e-8c79-98878479887d',
-                    'info_URL': 'https://www.naftemporiki.gr'},
+                    'info_URL': 'https://www.naftemporiki.gr'
+                },
                 'type': 'SERVICEGROUPS'
             }
         ])
