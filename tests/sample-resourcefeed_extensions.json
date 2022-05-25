@@ -34,7 +34,7 @@
       "monitoringGroups": [
         {
           "serviceType": "eu.eosc.ckan",
-          "endpoint": "",
+          "endpoint": "some.endpoint.zenodo.com",
           "metrics": null
         }
       ]
