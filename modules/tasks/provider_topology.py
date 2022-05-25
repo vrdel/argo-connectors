@@ -125,16 +125,19 @@ class TaskProviderTopology(object):
                 await session.close()
 
     async def run(self):
+        topofeedextensions = self.confcust.get_topofeedendpointsextensions()
         topofeedproviders = self.confcust.get_topofeedservicegroups()
         topofeedresources = self.confcust.get_topofeedendpoints()
         coros = [
-            self.fetch_data(topofeedresources, self.topofeedpaging), self.fetch_data(topofeedproviders, self.topofeedpaging)
+            self.fetch_data(topofeedresources, self.topofeedpaging),
+            self.fetch_data(topofeedproviders, self.topofeedpaging),
+            self.fetch_data(topofeedextensions, False)
         ]
 
         # fetch topology data concurrently in coroutines
-        fetched_resources, fetched_providers = await asyncio.gather(*coros, return_exceptions=True)
+        fetched_resources, fetched_providers, fetched_extensions = await asyncio.gather(*coros, return_exceptions=True)
 
-        if fetched_resources and fetched_providers:
+        if fetched_resources and fetched_providers and fetched_extensions:
             group_groups, group_endpoints = self.parse_source(fetched_resources, fetched_providers)
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
