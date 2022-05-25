@@ -748,7 +748,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'tags': {
                     'hostname': 'argo.grnet.gr',
                     'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                    'info_URL': 'argo.grnet.gr'
+                    'info_URL': 'argo.grnet.gr',
+                    'info_groupname': 'grnet-test'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -759,7 +760,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'tags': {
                     'hostname': 'argo.grnet.gr',
                     'info_ID': '4429aede-129a-4a2d-9788-198a96912bc1',
-                    'info_URL': 'argo.grnet.gr'
+                    'info_URL': 'argo.grnet.gr',
+                    'info_groupname': 'OpenAIRE Validator'
                 },
                 'type': 'SERVICEGROUPS'},
             {
@@ -769,7 +771,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'tags': {
                     'hostname': 'some.endpoint.zenodo.com',
                     'info_ID': '5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
-                    'info_URL': 'some.endpoint.zenodo.com'
+                    'info_URL': 'some.endpoint.zenodo.com',
+                    'info_groupname': 'Zenodo'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -780,7 +783,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'tags': {
                     'hostname': 'argo.grnet.gr',
                     'info_ID': '0920c959-ea0c-412b-a282-dd97e7c594fc',
-                    'info_URL': 'argo.grnet.gr'
+                    'info_URL': 'argo.grnet.gr',
+                    'info_groupname': 'AMNESIA'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -791,7 +795,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'tags': {
                     'hostname': 'hpc.grnet.gr',
                     'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7',
-                    'info_URL': 'https://hpc.grnet.gr/'
+                    'info_URL': 'https://hpc.grnet.gr/',
+                    'info_groupname': 'UNKNOWN'
                 },
                 'type': 'SERVICEGROUPS'},
             {
@@ -801,7 +806,8 @@ class ParseEoscProvider(unittest.TestCase):
                 'tags': {
                     'hostname': 'www.naftemporiki.gr',
                     'info_ID': '3b66ac60-014b-4c9e-8c79-98878479887d',
-                    'info_URL': 'https://www.naftemporiki.gr'
+                    'info_URL': 'https://www.naftemporiki.gr',
+                    'info_groupname': 'UNKNOWN'
                 },
                 'type': 'SERVICEGROUPS'
             }
