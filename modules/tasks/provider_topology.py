@@ -9,7 +9,7 @@ from argo_connectors.io.webapi import WebAPI
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
-from argo_connectors.parse.provider_topology import ParseTopo
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions
 from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
 from argo_connectors.exceptions import ConnectorParseError
 
@@ -57,7 +57,10 @@ class TaskProviderTopology(object):
         self.fixed_date = fixed_date
         self.fetchtype = fetchtype
 
-    def parse_source(self, resources, providers):
+    def parse_source_extensions(self, extensions):
+        resources_extended = ParseExtensions(self.logger, extensions, self.uidservendp, self.logger.customer)
+
+    def parse_source_topo(self, resources, providers):
         topo = ParseTopo(self.logger, providers, resources, self.uidservendp, self.logger.customer)
 
         return topo.get_group_groups(), topo.get_group_endpoints()
@@ -131,14 +134,15 @@ class TaskProviderTopology(object):
         coros = [
             self.fetch_data(topofeedresources, self.topofeedpaging),
             self.fetch_data(topofeedproviders, self.topofeedpaging),
-            self.fetch_data(topofeedextensions, False)
+            self.fetch_data(topofeedextensions, self.topofeedpaging)
         ]
 
         # fetch topology data concurrently in coroutines
         fetched_resources, fetched_providers, fetched_extensions = await asyncio.gather(*coros, return_exceptions=True)
 
         if fetched_resources and fetched_providers and fetched_extensions:
-            group_groups, group_endpoints = self.parse_source(fetched_resources, fetched_providers)
+            group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
+            # group_endpoints_extended = self.parse_source_extensions(fetched_extensions).get_extensions()
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
             attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
