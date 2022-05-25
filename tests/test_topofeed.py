@@ -729,6 +729,69 @@ class ParseEoscResourcesExtensions(unittest.TestCase):
 
     def test_getExtensions(self):
         self.assertEqual(self.extensions, [
+            {
+                'group': 'grnet.grnet-test',
+                'hostname': 'argo.grnet.gr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'argo.grnet.gr',
+                    'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                    'info_URL': 'argo.grnet.gr'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'openaire.validator',
+                'hostname': 'argo.grnet.gr_4429aede-129a-4a2d-9788-198a96912bc1',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'argo.grnet.gr',
+                    'info_ID': '4429aede-129a-4a2d-9788-198a96912bc1',
+                    'info_URL': 'argo.grnet.gr'
+                },
+                'type': 'SERVICEGROUPS'},
+            {
+                'group': 'openaire.zenodo',
+                'hostname': 'some.endpoint.zenodo.com_5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
+                'service': 'eu.eosc.ckan',
+                'tags': {
+                    'hostname': 'some.endpoint.zenodo.com',
+                    'info_ID': '5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
+                    'info_URL': 'some.endpoint.zenodo.com'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'openaire.amnesia',
+                'hostname': 'argo.grnet.gr_0920c959-ea0c-412b-a282-dd97e7c594fc',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'argo.grnet.gr',
+                    'info_ID': '0920c959-ea0c-412b-a282-dd97e7c594fc',
+                    'info_URL': 'argo.grnet.gr'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'grnet.hpc__national_hpc_infrastructure',
+                'hostname': 'hpc.grnet.gr_18afc30d-2f78-4417-8b11-315ea1611ad7',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'hpc.grnet.gr',
+                    'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7',
+                    'info_URL': 'https://hpc.grnet.gr/'
+                },
+                'type': 'SERVICEGROUPS'},
+            {
+                'group': 'mantesat_test.mantesat_1st_service',
+                'hostname': 'www.naftemporiki.gr_3b66ac60-014b-4c9e-8c79-98878479887d',
+                'service': 'eu.eosc.ckan',
+                'tags': {
+                    'hostname': 'www.naftemporiki.gr',
+                    'info_ID': '3b66ac60-014b-4c9e-8c79-98878479887d',
+                    'info_URL': 'https://www.naftemporiki.gr'},
+                'type': 'SERVICEGROUPS'
+            }
         ])
 
 
