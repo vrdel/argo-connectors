@@ -513,6 +513,9 @@ class CustomerConf(object):
     def get_topofeedendpoints(self):
         return self._get_cust_options('TopoFeedEndpoints')
 
+    def get_topofeedendpointsextensions(self):
+        return self._get_cust_options('TopoFeedEndpointsExtensions')
+
     def get_topofeedservicegroups(self):
         return self._get_cust_options('TopoFeedServiceGroups')
 
