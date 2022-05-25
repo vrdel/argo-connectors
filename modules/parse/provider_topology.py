@@ -111,27 +111,25 @@ class ParseExtensions(ParseHelpers):
                     gee['service'] = group['serviceType']
                     gee['group'] = extension['serviceId']
                     if self.uidservendp:
-                        hostname = None
-                        if 'http' in group['endpoint']:
-                            hostname = construct_fqdn(group['endpoint'])
-                        else:
+                        hostname = construct_fqdn(group['endpoint'])
+                        if not hostname:
                             hostname = group['endpoint']
                         gee['hostname'] = '{}_{}'.format(hostname, extension['id'])
                     else:
-                        if 'http' in group['endpoint']:
-                            gee['hostname'] = construct_fqdn(group['endpoint'])
-                        else:
-                            gee['hostname'] = group['endpoint']
+                        hostname = construct_fqdn(group['endpoint'])
+                        if not hostname:
+                            hostname = group['endpoint']
+                        gee['hostname'] = hostname
                     gee['tags'] = dict(
                         info_URL=group['endpoint'],
                         info_ID=extension['id'],
-                        info_groupname=self.groupnames.get(extension['serviceId'], 'UNKNOWN')
+                        info_groupname=self.groupnames[extension['serviceId']]
                     )
                     if self.uidservendp:
-                        if 'http' in group['endpoint']:
-                            gee['tags'].update(dict(hostname=construct_fqdn(group['endpoint'])))
-                        else:
-                            gee['tags'].update(dict(hostname=group['endpoint']))
+                        hostname = construct_fqdn(group['endpoint'])
+                        if not hostname:
+                            hostname = group['endpoint']
+                        gee['tags'].update(dict(hostname=hostname))
                     self._extensions.append(gee)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:

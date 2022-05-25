@@ -141,10 +141,9 @@ class TaskProviderTopology(object):
 
         if fetched_resources and fetched_providers and fetched_extensions:
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
-            import ipdb; ipdb.set_trace()
-            group_endpoints_extended = self.parse_source_extensions(
-                fetched_extensions, buildmap_id2groupname(group_endpoints)
-            ).get_extensions()
+            # group_endpoints_extended = self.parse_source_extensions(
+            #     fetched_extensions, buildmap_id2groupname(group_endpoints)
+            # ).get_extensions()
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
             attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
