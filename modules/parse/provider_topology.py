@@ -7,6 +7,13 @@ from argo_connectors.parse.base import ParseHelpers
 SERVICE_NAME_WEBPAGE='eu.eosc.portal.services.url'
 
 
+def buildmap_id2groupname(resources):
+    id2name = dict()
+    for resource in resources:
+        id2name[resource['group']] = resource['tags']['info_groupname']
+    return id2name
+
+
 def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
@@ -78,12 +85,13 @@ class ParseProviders(ParseHelpers):
 
 
 class ParseExtensions(ParseHelpers):
-    def __init__(self, logger, data=None, uidservendp=True, custname=None):
+    def __init__(self, logger, data=None, groupnames=None, uidservendp=True, custname=None):
         super(ParseExtensions, self).__init__(logger)
         self.data = data
         self.custname = custname
         self.uidservendp = uidservendp
         self._extensions = list()
+        self.groupnames = groupnames
         self._parse_data()
 
     def _parse_data(self):

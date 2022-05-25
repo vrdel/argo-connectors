@@ -3,7 +3,7 @@ import unittest
 from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -544,6 +544,7 @@ class ParseEoscProvider(unittest.TestCase):
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
         self.extensions = eosc_topo_extensions.get_extensions()
+        self.id_groupname = buildmap_id2groupname(self.group_endpoints)
         self.maxDiff = None
 
     def test_groupGroups(self):
@@ -710,6 +711,16 @@ class ParseEoscProvider(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             }
         ])
+
+    def test_idGroupname(self):
+        self.assertEqual(self.id_groupname, {
+            'eudat.b2access': 'B2ACCESS',
+            'eudat.b2drop': 'B2DROP',
+            'eudat.b2find': 'B2FIND',
+            'eudat.b2note': 'B2NOTE',
+            'eudat.b2safe': 'B2SAFE',
+            'eudat.b2share': 'B2SHARE'
+        })
 
     def test_FailedEoscProviderTopology(self):
         logger.customer = CUSTOMER_NAME
