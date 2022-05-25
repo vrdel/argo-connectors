@@ -78,16 +78,45 @@ class ParseProviders(ParseHelpers):
 
 
 class ParseExtensions(ParseHelpers):
-    def __init__(self, logger, data=None, custname=None):
+    def __init__(self, logger, data=None, uidservendp=True, custname=None):
         super(ParseExtensions, self).__init__(logger)
         self.data = data
         self.custname = custname
-        self._resources = list()
+        self.uidservendp = uidservendp
+        self._extensions = list()
         self._parse_data()
 
     def _parse_data(self):
         try:
-            pass
+            if type(self.data) == str:
+                json_data = self.parse_json(self.data)
+            else:
+                json_data = self.data
+            for extension in json_data['results']:
+                gee = dict()
+                for group in extension['monitoringGroups']:
+                    gee['type'] = 'SERVICEGROUPS'
+                    gee['service'] = group['serviceType']
+                    gee['group'] = extension['serviceId']
+                    if self.uidservendp:
+                        hostname = None
+                        if 'http' in group['endpoint']:
+                            hostname = construct_fqdn(group['endpoint'])
+                        else:
+                            hostname = group['endpoint']
+                        gee['hostname'] = '{}_{}'.format(hostname, extension['id'])
+                    else:
+                        if 'http' in group['endpoint']:
+                            gee['hostname'] = construct_fqdn(group['endpoint'])
+                        else:
+                            gee['hostname'] = group['endpoint']
+                    gee['tags'] = dict(
+                        info_URL=group['endpoint'],
+                        info_ID=extension['id']
+                    )
+                    if self.uidservendp:
+                        gee['tags'].update(dict(hostname=construct_fqdn(group['endpoint'])))
+                    self._extensions.append(gee)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources Extensions feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
@@ -95,6 +124,9 @@ class ParseExtensions(ParseHelpers):
 
         except ConnectorParseError as exc:
             raise exc
+
+    def get_extensions(self):
+        return self._extensions
 
 
 class ParseTopo(object):
