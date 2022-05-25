@@ -9,7 +9,7 @@ from argo_connectors.io.webapi import WebAPI
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
-from argo_connectors.parse.provider_topology import ParseTopo
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
 from argo_connectors.exceptions import ConnectorParseError
 
@@ -57,11 +57,15 @@ class TaskProviderTopology(object):
         self.fixed_date = fixed_date
         self.fetchtype = fetchtype
 
-    def parse_source(self, resources, providers):
+    def parse_source_extensions(self, extensions, groupnames):
+        resources_extended = ParseExtensions(self.logger, extensions, groupnames, self.uidservendp, self.logger.customer)
+
+        return resources_extended.get_extensions()
+
+    def parse_source_topo(self, resources, providers):
         topo = ParseTopo(self.logger, providers, resources, self.uidservendp, self.logger.customer)
 
         return topo.get_group_groups(), topo.get_group_endpoints()
-
 
     async def send_webapi(self, webapi_opts, data, topotype, fixed_date=None):
         webapi = WebAPI(self.connector_name, webapi_opts['webapihost'],
@@ -125,18 +129,33 @@ class TaskProviderTopology(object):
                 await session.close()
 
     async def run(self):
+        topofeedextensions = self.confcust.get_topofeedendpointsextensions()
         topofeedproviders = self.confcust.get_topofeedservicegroups()
         topofeedresources = self.confcust.get_topofeedendpoints()
         coros = [
-            self.fetch_data(topofeedresources, self.topofeedpaging), self.fetch_data(topofeedproviders, self.topofeedpaging)
+            self.fetch_data(topofeedresources, self.topofeedpaging),
+            self.fetch_data(topofeedproviders, self.topofeedpaging),
         ]
+        if topofeedextensions:
+            coros.append(self.fetch_data(topofeedextensions, self.topofeedpaging))
 
         # fetch topology data concurrently in coroutines
-        fetched_resources, fetched_providers = await asyncio.gather(*coros, return_exceptions=True)
+        fetched_data = await asyncio.gather(*coros, return_exceptions=True)
+
+        if topofeedextensions:
+            fetched_resources, fetched_providers, fetched_extensions = fetched_data
+        else:
+            fetched_resources, fetched_providers = fetched_data
 
         if fetched_resources and fetched_providers:
-            group_groups, group_endpoints = self.parse_source(fetched_resources, fetched_providers)
+            group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
+
+            if topofeedextensions:
+                group_endpoints_extended = self.parse_source_extensions(
+                    fetched_extensions, buildmap_id2groupname(group_endpoints)
+                )
+                group_endpoints = group_endpoints + group_endpoints_extended
 
             attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
 

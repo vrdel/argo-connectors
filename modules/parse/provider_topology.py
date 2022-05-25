@@ -7,6 +7,13 @@ from argo_connectors.parse.base import ParseHelpers
 SERVICE_NAME_WEBPAGE='eu.eosc.portal.services.url'
 
 
+def buildmap_id2groupname(resources):
+    id2name = dict()
+    for resource in resources:
+        id2name[resource['group']] = resource['tags']['info_groupname']
+    return id2name
+
+
 def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
@@ -75,6 +82,66 @@ class ParseProviders(ParseHelpers):
 
         except ConnectorParseError as exc:
             raise exc
+
+
+class ParseExtensions(ParseHelpers):
+    def __init__(self, logger, data=None, groupnames=None, uidservendp=True, custname=None):
+        super(ParseExtensions, self).__init__(logger)
+        self.data = data
+        self.custname = custname
+        self.uidservendp = uidservendp
+        self._extensions = list()
+        self.groupnames = groupnames
+        self._parse_data()
+
+    def _parse_data(self):
+        try:
+            if type(self.data) == str:
+                json_data = self.parse_json(self.data)
+            else:
+                json_data = self.data
+
+            for extension in json_data['results']:
+                if extension['serviceId'] not in self.groupnames:
+                    continue
+
+                gee = dict()
+                for group in extension['monitoringGroups']:
+                    gee['type'] = 'SERVICEGROUPS'
+                    gee['service'] = group['serviceType']
+                    gee['group'] = extension['serviceId']
+                    if self.uidservendp:
+                        hostname = construct_fqdn(group['endpoint'])
+                        if not hostname:
+                            hostname = group['endpoint']
+                        gee['hostname'] = '{}_{}'.format(hostname, extension['id'])
+                    else:
+                        hostname = construct_fqdn(group['endpoint'])
+                        if not hostname:
+                            hostname = group['endpoint']
+                        gee['hostname'] = hostname
+                    gee['tags'] = dict(
+                        info_URL=group['endpoint'],
+                        info_ID=extension['id'],
+                        info_monitored_by=extension['monitoredBy'],
+                        info_groupname=self.groupnames[extension['serviceId']]
+                    )
+                    if self.uidservendp:
+                        hostname = construct_fqdn(group['endpoint'])
+                        if not hostname:
+                            hostname = group['endpoint']
+                        gee['tags'].update(dict(hostname=hostname))
+                    self._extensions.append(gee)
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources Extensions feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
+
+    def get_extensions(self):
+        return self._extensions
 
 
 class ParseTopo(object):

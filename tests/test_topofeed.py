@@ -3,7 +3,7 @@ import unittest
 from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.provider_topology import ParseTopo
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -536,10 +536,22 @@ class ParseEoscProvider(unittest.TestCase):
             resources = feed_file.read()
         with open('tests/sample-providerfeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
+        with open('tests/sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
+            resource_extensions = feed_file.read()
         logger.customer = CUSTOMER_NAME
         eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
+        self.id_groupname = buildmap_id2groupname(self.group_endpoints)
+        fakemap_idgroupnames = {
+            'grnet.grnet-test': 'grnet-test',
+            'openaire.validator': 'OpenAIRE Validator',
+            'openaire.zenodo': 'Zenodo',
+            'openaire.amnesia': 'AMNESIA',
+            'grnet.hpc__national_hpc_infrastructure': 'HPC | National HPC Infrastructure'
+        }
+        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, fakemap_idgroupnames, True, CUSTOMER_NAME)
+        self.extensions = eosc_topo_extensions.get_extensions()
         self.maxDiff = None
 
     def test_groupGroups(self):
@@ -707,6 +719,16 @@ class ParseEoscProvider(unittest.TestCase):
             }
         ])
 
+    def test_idGroupname(self):
+        self.assertEqual(self.id_groupname, {
+            'eudat.b2access': 'B2ACCESS',
+            'eudat.b2drop': 'B2DROP',
+            'eudat.b2find': 'B2FIND',
+            'eudat.b2note': 'B2NOTE',
+            'eudat.b2safe': 'B2SAFE',
+            'eudat.b2share': 'B2SHARE'
+        })
+
     def test_FailedEoscProviderTopology(self):
         logger.customer = CUSTOMER_NAME
         with self.assertRaises(ConnectorParseError) as cm:
@@ -716,6 +738,74 @@ class ParseEoscProvider(unittest.TestCase):
         excep = cm.exception
         self.assertTrue('JSON feed' in excep.msg)
         self.assertTrue('JSONDecodeError' in excep.msg)
+
+    def test_serviceExtensions(self):
+        self.assertEqual(self.extensions, [
+            {
+                'group': 'grnet.grnet-test',
+                'hostname': 'argo.grnet.gr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'argo.grnet.gr',
+                    'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                    'info_URL': 'argo.grnet.gr',
+                    'info_groupname': 'grnet-test',
+                    'info_monitored_by': 'eosc'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'openaire.validator',
+                'hostname': 'argo.grnet.gr_4429aede-129a-4a2d-9788-198a96912bc1',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'argo.grnet.gr',
+                    'info_ID': '4429aede-129a-4a2d-9788-198a96912bc1',
+                    'info_URL': 'argo.grnet.gr',
+                    'info_groupname': 'OpenAIRE Validator',
+                    'info_monitored_by': 'asdf'
+                },
+                'type': 'SERVICEGROUPS'},
+            {
+                'group': 'openaire.zenodo',
+                'hostname': 'some.endpoint.zenodo.com_5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
+                'service': 'eu.eosc.ckan',
+                'tags': {
+                    'hostname': 'some.endpoint.zenodo.com',
+                    'info_ID': '5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
+                    'info_URL': 'some.endpoint.zenodo.com',
+                    'info_groupname': 'Zenodo',
+                    'info_monitored_by': 'string'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'openaire.amnesia',
+                'hostname': 'argo.grnet.gr_0920c959-ea0c-412b-a282-dd97e7c594fc',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'argo.grnet.gr',
+                    'info_ID': '0920c959-ea0c-412b-a282-dd97e7c594fc',
+                    'info_URL': 'argo.grnet.gr',
+                    'info_groupname': 'AMNESIA',
+                    'info_monitored_by': 'asdf'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'grnet.hpc__national_hpc_infrastructure',
+                'hostname': 'hpc.grnet.gr_18afc30d-2f78-4417-8b11-315ea1611ad7',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'hpc.grnet.gr',
+                    'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7',
+                    'info_URL': 'https://hpc.grnet.gr/',
+                    'info_groupname': 'HPC | National HPC Infrastructure',
+                    'info_monitored_by': 'monitored_by-eosc'
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        ])
 
 
 if __name__ == '__main__':

@@ -262,6 +262,7 @@ class CustomerConf(object):
                     toposcope = config.get(section, 'TopoScope', fallback=None)
                     topofeedsites = config.get(section, 'TopoFeedSites', fallback=None)
                     topofeedendpoints = config.get(section, 'TopoFeedServiceEndpoints', fallback=None)
+                    topofeedendpointsextensions = config.get(section, 'TopoFeedServiceEndpointsExtensions', fallback=None)
                     topofeedservicegroups = config.get(section, 'TopoFeedServiceGroups', fallback=None)
                     topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
                     servicetypesfeed = config.get(section, 'ServiceTypesFeed', fallback=None)
@@ -292,6 +293,7 @@ class CustomerConf(object):
                                              'TopoFeedSites': topofeedsites,
                                              'TopoFeedServiceGroups': topofeedservicegroups,
                                              'TopoFeedEndpoints': topofeedendpoints,
+                                             'TopoFeedEndpointsExtensions': topofeedendpointsextensions,
                                              'TopoUIDServiceEnpoints': topouidservendpoints,
                                              'TopoType': topotype,
                                              'ServiceTypesFeed': servicetypesfeed
@@ -510,6 +512,9 @@ class CustomerConf(object):
 
     def get_topofeedendpoints(self):
         return self._get_cust_options('TopoFeedEndpoints')
+
+    def get_topofeedendpointsextensions(self):
+        return self._get_cust_options('TopoFeedEndpointsExtensions')
 
     def get_topofeedservicegroups(self):
         return self._get_cust_options('TopoFeedServiceGroups')
