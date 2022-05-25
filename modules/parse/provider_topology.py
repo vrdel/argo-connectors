@@ -115,7 +115,10 @@ class ParseExtensions(ParseHelpers):
                         info_ID=extension['id']
                     )
                     if self.uidservendp:
-                        gee['tags'].update(dict(hostname=construct_fqdn(group['endpoint'])))
+                        if 'http' in group['endpoint']:
+                            gee['tags'].update(dict(hostname=construct_fqdn(group['endpoint'])))
+                        else:
+                            gee['tags'].update(dict(hostname=group['endpoint']))
                     self._extensions.append(gee)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
