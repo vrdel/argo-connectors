@@ -749,7 +749,8 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'argo.grnet.gr',
                     'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
                     'info_URL': 'argo.grnet.gr',
-                    'info_groupname': 'grnet-test'
+                    'info_groupname': 'grnet-test',
+                    'info_monitored_by': 'eosc'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -761,7 +762,8 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'argo.grnet.gr',
                     'info_ID': '4429aede-129a-4a2d-9788-198a96912bc1',
                     'info_URL': 'argo.grnet.gr',
-                    'info_groupname': 'OpenAIRE Validator'
+                    'info_groupname': 'OpenAIRE Validator',
+                    'info_monitored_by': 'asdf'
                 },
                 'type': 'SERVICEGROUPS'},
             {
@@ -772,7 +774,8 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'some.endpoint.zenodo.com',
                     'info_ID': '5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
                     'info_URL': 'some.endpoint.zenodo.com',
-                    'info_groupname': 'Zenodo'
+                    'info_groupname': 'Zenodo',
+                    'info_monitored_by': 'string'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -784,7 +787,8 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'argo.grnet.gr',
                     'info_ID': '0920c959-ea0c-412b-a282-dd97e7c594fc',
                     'info_URL': 'argo.grnet.gr',
-                    'info_groupname': 'AMNESIA'
+                    'info_groupname': 'AMNESIA',
+                    'info_monitored_by': 'asdf'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -796,7 +800,8 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'hpc.grnet.gr',
                     'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7',
                     'info_URL': 'https://hpc.grnet.gr/',
-                    'info_groupname': 'HPC | National HPC Infrastructure'
+                    'info_groupname': 'HPC | National HPC Infrastructure',
+                    'info_monitored_by': 'monitored_by-eosc'
                 },
                 'type': 'SERVICEGROUPS'
             }

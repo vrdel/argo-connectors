@@ -123,6 +123,7 @@ class ParseExtensions(ParseHelpers):
                     gee['tags'] = dict(
                         info_URL=group['endpoint'],
                         info_ID=extension['id'],
+                        info_monitored_by=extension['monitoredBy'],
                         info_groupname=self.groupnames[extension['serviceId']]
                     )
                     if self.uidservendp:
