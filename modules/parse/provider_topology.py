@@ -77,6 +77,26 @@ class ParseProviders(ParseHelpers):
             raise exc
 
 
+class ParseExtensions(ParseHelpers):
+    def __init__(self, logger, data=None, custname=None):
+        super(ParseExtensions, self).__init__(logger)
+        self.data = data
+        self.custname = custname
+        self._resources = list()
+        self._parse_data()
+
+    def _parse_data(self):
+        try:
+            pass
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources Extensions feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
+
+
 class ParseTopo(object):
     def __init__(self, logger, providers, resources, uidservendp, custname):
         self.uidservendp = uidservendp
