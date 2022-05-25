@@ -60,6 +60,8 @@ class TaskProviderTopology(object):
     def parse_source_extensions(self, extensions, groupnames):
         resources_extended = ParseExtensions(self.logger, extensions, groupnames, self.uidservendp, self.logger.customer)
 
+        return resources_extended.get_extensions()
+
     def parse_source_topo(self, resources, providers):
         topo = ParseTopo(self.logger, providers, resources, self.uidservendp, self.logger.customer)
 
@@ -141,9 +143,10 @@ class TaskProviderTopology(object):
 
         if fetched_resources and fetched_providers and fetched_extensions:
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
-            # group_endpoints_extended = self.parse_source_extensions(
-            #     fetched_extensions, buildmap_id2groupname(group_endpoints)
-            # ).get_extensions()
+            group_endpoints_extended = self.parse_source_extensions(
+                fetched_extensions, buildmap_id2groupname(group_endpoints)
+            )
+            group_endpoints = group_endpoints + group_endpoints_extended
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
             attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
