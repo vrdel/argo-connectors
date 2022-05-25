@@ -135,19 +135,27 @@ class TaskProviderTopology(object):
         coros = [
             self.fetch_data(topofeedresources, self.topofeedpaging),
             self.fetch_data(topofeedproviders, self.topofeedpaging),
-            self.fetch_data(topofeedextensions, self.topofeedpaging)
         ]
+        if topofeedextensions:
+            coros.append(self.fetch_data(topofeedextensions, self.topofeedpaging))
 
         # fetch topology data concurrently in coroutines
-        fetched_resources, fetched_providers, fetched_extensions = await asyncio.gather(*coros, return_exceptions=True)
+        fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
-        if fetched_resources and fetched_providers and fetched_extensions:
+        if topofeedextensions:
+            fetched_resources, fetched_providers, fetched_extensions = fetched_data
+        else:
+            fetched_resources, fetched_providers = fetched_data
+
+        if fetched_resources and fetched_providers:
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
-            group_endpoints_extended = self.parse_source_extensions(
-                fetched_extensions, buildmap_id2groupname(group_endpoints)
-            )
-            group_endpoints = group_endpoints + group_endpoints_extended
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
+
+            if topofeedextensions:
+                group_endpoints_extended = self.parse_source_extensions(
+                    fetched_extensions, buildmap_id2groupname(group_endpoints)
+                )
+                group_endpoints = group_endpoints + group_endpoints_extended
 
             attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
 
