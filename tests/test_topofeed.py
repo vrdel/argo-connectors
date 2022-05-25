@@ -548,7 +548,7 @@ class ParseEoscProvider(unittest.TestCase):
             'openaire.validator': 'OpenAIRE Validator',
             'openaire.zenodo': 'Zenodo',
             'openaire.amnesia': 'AMNESIA',
-            'grnet.hpc_national_hpc_infrastructure': 'HPC | National HPC Infrastructure'
+            'grnet.hpc__national_hpc_infrastructure': 'HPC | National HPC Infrastructure'
         }
         eosc_topo_extensions = ParseExtensions(logger, resource_extensions, fakemap_idgroupnames, True, CUSTOMER_NAME)
         self.extensions = eosc_topo_extensions.get_extensions()
@@ -796,7 +796,7 @@ class ParseEoscProvider(unittest.TestCase):
                     'hostname': 'hpc.grnet.gr',
                     'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7',
                     'info_URL': 'https://hpc.grnet.gr/',
-                    'info_groupname': 'UNKNOWN'
+                    'info_groupname': 'HPC | National HPC Infrastructure'
                 },
                 'type': 'SERVICEGROUPS'},
             {
