@@ -3,7 +3,7 @@ import unittest
 from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.provider_topology import ParseTopo
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -716,6 +716,20 @@ class ParseEoscProvider(unittest.TestCase):
         excep = cm.exception
         self.assertTrue('JSON feed' in excep.msg)
         self.assertTrue('JSONDecodeError' in excep.msg)
+
+
+class ParseEoscResourcesExtensions(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
+            resource_extensions = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, True, CUSTOMER_NAME)
+        self.extensions = eosc_topo_extensions.get_extensions()
+        self.maxDiff = None
+
+    def test_getExtensions(self):
+        self.assertEqual(self.extensions, [
+        ])
 
 
 if __name__ == '__main__':
