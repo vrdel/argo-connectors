@@ -540,11 +540,18 @@ class ParseEoscProvider(unittest.TestCase):
             resource_extensions = feed_file.read()
         logger.customer = CUSTOMER_NAME
         eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
-        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, True, CUSTOMER_NAME)
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
-        self.extensions = eosc_topo_extensions.get_extensions()
         self.id_groupname = buildmap_id2groupname(self.group_endpoints)
+        fakemap_idgroupnames = {
+            'grnet.grnet-test': 'grnet-test',
+            'openaire.validator': 'OpenAIRE Validator',
+            'openaire.zenodo': 'Zenodo',
+            'openaire.amnesia': 'AMNESIA',
+            'grnet.hpc_national_hpc_infrastructure': 'HPC | National HPC Infrastructure'
+        }
+        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, fakemap_idgroupnames, True, CUSTOMER_NAME)
+        self.extensions = eosc_topo_extensions.get_extensions()
         self.maxDiff = None
 
     def test_groupGroups(self):

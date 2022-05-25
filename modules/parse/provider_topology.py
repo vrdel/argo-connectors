@@ -120,7 +120,8 @@ class ParseExtensions(ParseHelpers):
                             gee['hostname'] = group['endpoint']
                     gee['tags'] = dict(
                         info_URL=group['endpoint'],
-                        info_ID=extension['id']
+                        info_ID=extension['id'],
+                        info_groupname=self.groupnames.get(extension['serviceId'], 'UNKNOWN')
                     )
                     if self.uidservendp:
                         if 'http' in group['endpoint']:
