@@ -105,8 +105,8 @@ class ParseExtensions(ParseHelpers):
                 if extension['serviceId'] not in self.groupnames:
                     continue
 
-                gee = dict()
                 for group in extension['monitoringGroups']:
+                    gee = dict()
                     gee['type'] = 'SERVICEGROUPS'
                     gee['service'] = group['serviceType']
                     gee['group'] = extension['serviceId']
