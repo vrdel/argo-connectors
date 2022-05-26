@@ -9,6 +9,7 @@ import mock
 from argo_connectors.exceptions import ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
+from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -24,6 +25,56 @@ class async_test(object):
     def __call__(self, *args, **kwargs):
         test_obj = args[0]
         test_obj.loop.run_until_complete(self.test_method(*args, **kwargs))
+
+
+class TopologyGocdb(unittest.TestCase):
+    def setUp(self):
+        logger = mock.Mock()
+        logger.customer = CUSTOMER_NAME
+        self.loop = asyncio.get_event_loop()
+        globopts = mock.Mock()
+        webapiopts = mock.Mock()
+        authopts = mock.Mock()
+        bdiiopts = mock.Mock()
+        confcust = mock.Mock()
+        confcust.get_topofeedservicegroups.return_value = 'http://topo.feed.providers.com'
+        confcust.get_topofeedendpoints.return_value = 'http://topo.feed.resources.com'
+        topofeedpaging = False
+        uidservendp = False
+        fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
+        fetchtype = 'ServiceGroups'
+        self.topo_gocdb = TaskGocdbTopology(
+            self.loop,
+            logger,
+            'test_asynctasks_topologygocdb',
+            'https://gocdb.com/site-contacts',
+            'https://gocdb.com/servicegroups-contacts',
+            'https://gocdb.com/serviceendpoints_api',
+            'https://gocdb.com/serviceegroups_api',
+            'https://gocdb.com/sites_api',
+            globopts,
+            authopts,
+            webapiopts,
+            bdiiopts,
+            confcust,
+            CUSTOMER_NAME
+            topofeedpaging,
+            uidservendp,
+            fixed_date,
+            fetchtype
+        )
+
+    @mock.patch('argo_connectors.tasks.gocdb_topology.find_next_paging_cursor_count')
+    @mock.patch('argo_connectors.io.http.build_connection_retry_settings')
+    @mock.patch('argo_connectors.io.http.build_ssl_settings')
+    @mock.patch('argo_connectors.tasks.gocdb_topology.SessionWithRetry.http_get')
+    @async_test
+    async def test_StepsFailedRun(self, mock_httpget, mock_buildsslsettings,
+                                  mock_buildconnretry, mock_findpagingcursor):
+        mock_buildsslsettings.return_value = 'ssl settings'
+        mock_buildconnretry.return_value = (1, 2)
+        mock_findpagingcursor.return_value = lambda: [0, 0, 0]
+        await self.topo_gocdb.run()
 
 
 class TopologyProvider(unittest.TestCase):
