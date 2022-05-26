@@ -32,12 +32,13 @@ class TopologyGocdb(unittest.TestCase):
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        globopts = mock.Mock()
-        webapiopts = mock.Mock()
-        authopts = mock.Mock()
-        bdiiopts = mock.Mock()
+        globopts = mock.MagicMock()
+        webapiopts = mock.MagicMock()
+        authopts = mock.MagicMock()
+        bdiiopts = mock.MagicMock()
+        bdiiopts.__getitem__.return_value = 'True'
         confcust = mock.Mock()
-        topofeedpaging = False
+        topofeedpaging = True
         uidservendp = False
         passext = True
         fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
@@ -68,13 +69,15 @@ class TopologyGocdb(unittest.TestCase):
     @mock.patch('argo_connectors.tasks.gocdb_topology.find_next_paging_cursor_count')
     @mock.patch('argo_connectors.io.http.build_connection_retry_settings')
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
+    @mock.patch('argo_connectors.tasks.gocdb_topology.TaskGocdbTopology.fetch_ldap_data')
     @mock.patch('argo_connectors.tasks.gocdb_topology.SessionWithRetry.http_get')
     @async_test
-    async def test_StepsFailedRun(self, mock_httpget, mock_buildsslsettings,
-                                  mock_buildconnretry, mock_findpagingcursor):
+    async def test_StepsFailedRun(self, mock_httpget, mock_fetchldap,
+                                  mock_buildsslsettings, mock_buildconnretry,
+                                  mock_findpagingcursor):
         mock_buildsslsettings.return_value = 'ssl settings'
         mock_buildconnretry.return_value = (1, 2)
-        mock_findpagingcursor.return_value = lambda: [0, 0, 0]
+        mock_findpagingcursor.return_value = [999, 999]
         await self.topo_gocdb.run()
 
 
