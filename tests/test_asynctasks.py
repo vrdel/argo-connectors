@@ -37,10 +37,9 @@ class TopologyGocdb(unittest.TestCase):
         authopts = mock.Mock()
         bdiiopts = mock.Mock()
         confcust = mock.Mock()
-        confcust.get_topofeedservicegroups.return_value = 'http://topo.feed.providers.com'
-        confcust.get_topofeedendpoints.return_value = 'http://topo.feed.resources.com'
         topofeedpaging = False
         uidservendp = False
+        passext = True
         fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
         fetchtype = 'ServiceGroups'
         self.topo_gocdb = TaskGocdbTopology(
@@ -57,11 +56,13 @@ class TopologyGocdb(unittest.TestCase):
             webapiopts,
             bdiiopts,
             confcust,
-            CUSTOMER_NAME
-            topofeedpaging,
-            uidservendp,
+            CUSTOMER_NAME,
+            'https://gocdb.com/',
+            fetchtype,
             fixed_date,
-            fetchtype
+            uidservendp,
+            passext,
+            topofeedpaging
         )
 
     @mock.patch('argo_connectors.tasks.gocdb_topology.find_next_paging_cursor_count')
