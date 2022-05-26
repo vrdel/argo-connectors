@@ -9,8 +9,18 @@
       "monitoredBy": "eosc",
       "monitoringGroups": [
         {
-          "serviceType": "eu.eosc.portal",
-          "endpoint": "argo.grnet.gr",
+          "serviceType": "eu.eosc.generic.https",
+          "endpoint": "https://srce.hr",
+          "metrics": null
+        },
+        {
+          "serviceType": "eu.eosc.generic.https",
+          "endpoint": "https://grnet.gr",
+          "metrics": null
+        },
+        {
+          "serviceType": "eu.eosc.generic.https",
+          "endpoint": "https://kathimerini.gr",
           "metrics": null
         }
       ]
