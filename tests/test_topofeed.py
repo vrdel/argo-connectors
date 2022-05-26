@@ -743,12 +743,38 @@ class ParseEoscProvider(unittest.TestCase):
         self.assertEqual(self.extensions, [
             {
                 'group': 'grnet.grnet-test',
-                'hostname': 'argo.grnet.gr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                'service': 'eu.eosc.portal',
+                'hostname': 'srce.hr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                'service': 'eu.eosc.generic.https',
                 'tags': {
-                    'hostname': 'argo.grnet.gr',
+                    'hostname': 'srce.hr',
                     'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                    'info_URL': 'argo.grnet.gr',
+                    'info_URL': 'https://srce.hr',
+                    'info_groupname': 'grnet-test',
+                    'info_monitored_by': 'eosc'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'grnet.grnet-test',
+                'hostname': 'grnet.gr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                'service': 'eu.eosc.generic.https',
+                'tags': {
+                    'hostname': 'grnet.gr',
+                    'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                    'info_URL': 'https://grnet.gr',
+                    'info_groupname': 'grnet-test',
+                    'info_monitored_by': 'eosc'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'grnet.grnet-test',
+                'hostname': 'kathimerini.gr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                'service': 'eu.eosc.generic.https',
+                'tags': {
+                    'hostname': 'kathimerini.gr',
+                    'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
+                    'info_URL': 'https://kathimerini.gr',
                     'info_groupname': 'grnet-test',
                     'info_monitored_by': 'eosc'
                 },
@@ -765,7 +791,8 @@ class ParseEoscProvider(unittest.TestCase):
                     'info_groupname': 'OpenAIRE Validator',
                     'info_monitored_by': 'asdf'
                 },
-                'type': 'SERVICEGROUPS'},
+                'type': 'SERVICEGROUPS'
+            },
             {
                 'group': 'openaire.zenodo',
                 'hostname': 'some.endpoint.zenodo.com_5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
