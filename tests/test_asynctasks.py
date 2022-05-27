@@ -6,11 +6,13 @@ import datetime
 
 import mock
 
-from argo_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
+from argo_connectors.parse.base import ParseHelpers
+
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
@@ -66,19 +68,28 @@ class TopologyGocdb(unittest.TestCase):
             topofeedpaging
         )
 
-    @mock.patch('argo_connectors.tasks.gocdb_topology.find_next_paging_cursor_count')
+    @mock.patch.object(ParseHelpers, 'parse_xml')
     @mock.patch('argo_connectors.io.http.build_connection_retry_settings')
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.gocdb_topology.TaskGocdbTopology.fetch_ldap_data')
     @mock.patch('argo_connectors.tasks.gocdb_topology.SessionWithRetry.http_get')
     @async_test
-    async def test_StepsFailedRun(self, mock_httpget, mock_fetchldap,
-                                  mock_buildsslsettings, mock_buildconnretry,
-                                  mock_findpagingcursor):
-        mock_buildsslsettings.return_value = 'ssl settings'
+    async def test_StepFailedNextCursor(self, mock_httpget, mock_fetchldap,
+                                        mock_buildsslsettings,
+                                        mock_buildconnretry, mock_parsexml):
+        mock_httpget.return_value = 'garbled XML data'
+        mock_buildsslsettings.return_value = 'SSL settings'
+        mock_parsexml.side_effect = [
+            ConnectorParseError('failed GOCDB find_next_paging_cursor_count'),
+            ConnectorParseError('failed GOCDB find_next_paging_cursor_count'),
+            ConnectorParseError('failed GOCDB find_next_paging_cursor_count')
+        ]
         mock_buildconnretry.return_value = (1, 2)
-        mock_findpagingcursor.return_value = [999, 999]
-        await self.topo_gocdb.run()
+        with self.assertRaises(ConnectorError) as cm:
+            await self.topo_gocdb.run()
+        excep = cm.exception
+        self.assertTrue('ConnectorParseError' in excep.msg)
+        self.assertTrue('failed GOCDB' in excep.msg)
 
 
 class TopologyProvider(unittest.TestCase):
@@ -115,7 +126,7 @@ class TopologyProvider(unittest.TestCase):
     @async_test
     async def test_StepsFailedRun(self, mock_httpget, mock_buildsslsettings,
                                   mock_buildconnretry, mock_findpagingcursor):
-        mock_buildsslsettings.return_value = 'ssl settings'
+        mock_buildsslsettings.return_value = 'SSL settings'
         mock_buildconnretry.return_value = (1, 2)
         mock_findpagingcursor.return_value = lambda: [0, 0, 0]
         await self.topo_provider.run()
