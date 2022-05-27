@@ -2,13 +2,16 @@ import os
 import asyncio
 import xml.dom.minidom
 
+from collections import Callable
+from urllib.parse import urlparse
+
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
 
-from argo_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.io.avrowrite import AvroWriter
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.ldap import LDAPSessionWithRetry
@@ -18,8 +21,7 @@ from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_connectors.mesh.storage_element_path import attach_sepath_topodata
 from argo_connectors.tasks.common import write_state, write_topo_avro as write_avro
-
-from urllib.parse import urlparse
+from argo_connectors.parse.base import ParseHelpers
 
 
 def contains_exception(list):
@@ -59,20 +61,33 @@ def filter_multiple_tags(data):
     return '\n'.join(data_lines)
 
 
-def find_next_paging_cursor_count(res):
-    cursor, count = None, None
+class find_next_paging_cursor_count(ParseHelpers, Callable):
+    def __init__(self, logger, res):
+        self.res = res
+        self.logger = logger
 
-    doc = xml.dom.minidom.parseString(res)
-    count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-    links = doc.getElementsByTagName('link')
-    for link in links:
-        if link.getAttribute('rel') == 'next':
-            href = link.getAttribute('href')
-            for query in href.split('&'):
-                if 'next_cursor' in query:
-                    cursor = query.split('=')[1]
+    def __call__(self):
+        try:
+            return self._parse()
+        except ConnectorParseError as exc:
+            self.logger.error(repr(exc))
+            self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(self.res.replace('\r\n', '').replace('\n', '')))
+            raise exc
 
-    return count, cursor
+    def _parse(self):
+        cursor, count = None, None
+
+        doc = self.parse_xml(self.res)
+        count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
+        links = doc.getElementsByTagName('link')
+        for link in links:
+            if link.getAttribute('rel') == 'next':
+                href = link.getAttribute('href')
+                for query in href.split('&'):
+                    if 'next_cursor' in query:
+                        cursor = query.split('=')[1]
+
+        return count, cursor
 
 
 class TaskParseTopology(object):
@@ -194,8 +209,16 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                                            custauth=self.auth_opts)
                 res = await session.http_get('{}&next_cursor={}'.format(api,
                                                                         cursor))
-                count, cursor = find_next_paging_cursor_count(res)
-                fetched_data.append(res)
+
+                try:
+                    next_cursor = find_next_paging_cursor_count(self.logger, res)
+                    count, cursor = next_cursor()
+                    fetched_data.append(res)
+
+                except ConnectorParseError as exc:
+                    await session.close()
+                    raise exc
+
             return filter_multiple_tags(''.join(fetched_data))
 
         else:
@@ -230,12 +253,12 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
             exc_raised, exc = contains_exception(contacts)
             if exc_raised:
-                raise ConnectorHttpError(repr(exc))
+                raise ConnectorError(repr(exc))
 
             parsed_site_contacts = self.parse_sites_contacts(contacts[0])
             parsed_servicegroups_contacts = self.parse_servicegroups_roles(contacts[1])
 
-        except (ConnectorHttpError, ConnectorParseError) as exc:
+        except (ConnectorError, ConnectorHttpError, ConnectorParseError) as exc:
             self.logger.warn('SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
         coros = [self.fetch_data(self.SERVICE_ENDPOINTS_PI)]
@@ -278,7 +301,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         exc_raised, exc = contains_exception(fetched_topology)
         if exc_raised:
-            raise ConnectorHttpError(repr(exc))
+            raise ConnectorError(repr(exc))
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
