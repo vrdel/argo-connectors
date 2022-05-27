@@ -74,7 +74,7 @@ class TopologyGocdb(unittest.TestCase):
     @mock.patch('argo_connectors.tasks.gocdb_topology.TaskGocdbTopology.fetch_ldap_data')
     @mock.patch('argo_connectors.tasks.gocdb_topology.SessionWithRetry.http_get')
     @async_test
-    async def test_StepFailedNextCursor(self, mock_httpget, mock_fetchldap,
+    async def test_failedNextCursor(self, mock_httpget, mock_fetchldap,
                                         mock_buildsslsettings,
                                         mock_buildconnretry, mock_parsexml):
         mock_httpget.return_value = 'garbled XML data'
@@ -119,16 +119,21 @@ class TopologyProvider(unittest.TestCase):
             fetchtype
         )
 
-    @mock.patch('argo_connectors.tasks.provider_topology.find_next_paging_cursor_count')
+    @mock.patch.object(ParseHelpers, 'parse_json')
     @mock.patch('argo_connectors.io.http.build_connection_retry_settings')
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_get')
     @async_test
-    async def test_StepsFailedRun(self, mock_httpget, mock_buildsslsettings,
-                                  mock_buildconnretry, mock_findpagingcursor):
+    async def test_failedNextCursor(self, mock_httpget, mock_buildsslsettings,
+                                  mock_buildconnretry, mock_parsejson):
+        mock_httpget.return_value = 'garbled JSON data'
         mock_buildsslsettings.return_value = 'SSL settings'
+        mock_parsejson.side_effect = [
+            ConnectorParseError('failed PROVIDER find_next_paging_cursor_count'),
+            ConnectorParseError('failed PROVIDER find_next_paging_cursor_count'),
+            ConnectorParseError('failed PROVIDER find_next_paging_cursor_count')
+        ]
         mock_buildconnretry.return_value = (1, 2)
-        mock_findpagingcursor.return_value = lambda: [0, 0, 0]
         await self.topo_provider.run()
 
 
