@@ -14,6 +14,14 @@ from argo_connectors.tasks.common import write_topo_avro as write_avro, write_st
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError
 
 
+def contains_exception(list):
+    for a in list:
+        if isinstance(a, Exception):
+            return (True, a)
+
+    return (False, None)
+
+
 class find_next_paging_cursor_count(ParseHelpers, Callable):
     def __init__(self, logger, res):
         self.res = res
@@ -145,6 +153,10 @@ class TaskProviderTopology(object):
 
         # fetch topology data concurrently in coroutines
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
+
+        exc_raised, exc = contains_exception(fetched_data)
+        if exc_raised:
+            raise ConnectorError(repr(exc))
 
         if topofeedextensions:
             fetched_resources, fetched_providers, fetched_extensions = fetched_data
