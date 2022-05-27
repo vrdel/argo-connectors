@@ -11,7 +11,7 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
-from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError
 
 
 class find_next_paging_cursor_count(ParseHelpers, Callable):
@@ -25,7 +25,7 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
         except ConnectorParseError as exc:
             self.logger.error(repr(exc))
             self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(self.res.replace('\r\n', '').replace('\n', '')))
-            return [0, 0, 0]
+            raise exc
 
     def _parse(self):
         cursor, count = None, None
@@ -85,9 +85,9 @@ class TaskProviderTopology(object):
                                                         remote_topo.netloc,
                                                         remote_topo.path))
         if paginated:
-            next_cursor = find_next_paging_cursor_count(self.logger, res)
-            total, from_index, to_index = next_cursor()
-            if to_index:
+            try:
+                next_cursor = find_next_paging_cursor_count(self.logger, res)
+                total, from_index, to_index = next_cursor()
                 fetched_results = filter_out_results(res)
                 num = to_index - from_index
                 from_index = to_index
@@ -107,13 +107,15 @@ class TaskProviderTopology(object):
 
                 await session.close()
                 return dict(results=fetched_results)
-            else:
+
+            except ConnectorParseError as exc:
                 await session.close()
+                raise exc
 
         else:
-            next_cursor = find_next_paging_cursor_count(self.logger, res)
-            total, from_index, to_index = next_cursor()
-            if to_index:
+            try:
+                next_cursor = find_next_paging_cursor_count(self.logger, res)
+                total, from_index, to_index = next_cursor()
                 num = total
                 from_index = 0
 
@@ -125,8 +127,10 @@ class TaskProviderTopology(object):
                                                                             num))
                 await session.close()
                 return res
-            else:
+
+            except ConnectorParseError as exc:
                 await session.close()
+                raise exc
 
     async def run(self):
         topofeedextensions = self.confcust.get_topofeedendpointsextensions()
