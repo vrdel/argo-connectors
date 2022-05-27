@@ -8,7 +8,7 @@ import asyncio
 import uvloop
 
 from argo_connectors.config import Global, CustomerConf
-from argo_connectors.exceptions import ConnectorParseError, ConnectorHttpError
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.log import Logger
 from argo_connectors.tasks.common import write_state
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
@@ -133,7 +133,7 @@ def main():
         )
         loop.run_until_complete(task.run())
 
-    except (ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
+    except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
             write_state(sys.argv[0], globopts, confcust, fixed_date, False)
