@@ -134,7 +134,11 @@ class TopologyProvider(unittest.TestCase):
             ConnectorParseError('failed PROVIDER find_next_paging_cursor_count')
         ]
         mock_buildconnretry.return_value = (1, 2)
-        await self.topo_provider.run()
+        with self.assertRaises(ConnectorError) as cm:
+            await self.topo_provider.run()
+        excep = cm.exception
+        self.assertTrue('ConnectorParseError' in excep.msg)
+        self.assertTrue('failed PROVIDER' in excep.msg)
 
 
 class ServiceTypesGocdb(unittest.TestCase):
