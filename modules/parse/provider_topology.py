@@ -19,7 +19,8 @@ def buildmap_id2groupname(resources):
 def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
-def extract_urlpath(http_endpoint):
+
+def build_urlpath_id(http_endpoint):
     path = urlparse(http_endpoint).path.replace('/', '')
     if path and path != http_endpoint:
         return uuid.uuid3(uuid.NAMESPACE_URL, path)
@@ -121,7 +122,7 @@ class ParseExtensions(ParseHelpers):
                     gee['group'] = extension['serviceId']
                     if self.uidservendp:
                         hostname = construct_fqdn(group['endpoint'])
-                        urlpath_id = extract_urlpath(group['endpoint'])
+                        urlpath_id = build_urlpath_id(group['endpoint'])
                         if not hostname:
                             hostname = group['endpoint']
                         if urlpath_id:
