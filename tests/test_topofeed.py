@@ -831,6 +831,32 @@ class ParseEoscProvider(unittest.TestCase):
                     'info_monitored_by': 'monitored_by-eosc'
                 },
                 'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'grnet.hpc__national_hpc_infrastructure',
+                'hostname': 'hpc.grnet.gr_18afc30d-2f78-4417-8b11-315ea1611ad7-d59ff23a-1ed8-39a3-949f-b1b1b82547d0',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'hpc.grnet.gr',
+                    'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7-d59ff23a-1ed8-39a3-949f-b1b1b82547d0',
+                    'info_URL': 'https://hpc.grnet.gr/some/path',
+                    'info_groupname': 'HPC | National HPC Infrastructure',
+                    'info_monitored_by': 'monitored_by-eosc'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'grnet.hpc__national_hpc_infrastructure',
+                'hostname': 'hpc.grnet.gr_18afc30d-2f78-4417-8b11-315ea1611ad7-d002662b-7924-3906-b845-c3c2ebf33e5a',
+                'service': 'eu.eosc.portal',
+                'tags': {
+                    'hostname': 'hpc.grnet.gr',
+                    'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7-d002662b-7924-3906-b845-c3c2ebf33e5a',
+                    'info_URL': 'https://hpc.grnet.gr/some/path/another',
+                    'info_groupname': 'HPC | National HPC Infrastructure',
+                    'info_monitored_by': 'monitored_by-eosc'
+                },
+                'type': 'SERVICEGROUPS'
             }
         ])
 

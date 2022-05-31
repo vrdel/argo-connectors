@@ -70,6 +70,16 @@
           "serviceType": "eu.eosc.portal",
           "endpoint": "https://hpc.grnet.gr/",
           "metrics": null
+        },
+        {
+          "serviceType": "eu.eosc.portal",
+          "endpoint": "https://hpc.grnet.gr/some/path",
+          "metrics": null
+        },
+        {
+          "serviceType": "eu.eosc.portal",
+          "endpoint": "https://hpc.grnet.gr/some/path/another",
+          "metrics": null
         }
       ]
     },
