@@ -20,12 +20,9 @@ def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
 
 def extract_urlpath(http_endpoint):
-    if 'http' in http_endpoint:
-        path = urlparse(http_endpoint).path.replace('/', '')
-        if path:
-            return uuid.uuid3(uuid.NAMESPACE_URL, path)
-        else:
-            return None
+    path = urlparse(http_endpoint).path.replace('/', '')
+    if path and path != http_endpoint:
+        return uuid.uuid3(uuid.NAMESPACE_URL, path)
     else:
         return None
 
