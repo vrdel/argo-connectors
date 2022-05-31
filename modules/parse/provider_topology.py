@@ -126,7 +126,7 @@ class ParseExtensions(ParseHelpers):
                         if not hostname:
                             hostname = group['endpoint']
                         if urlpath_id:
-                            gee['hostname'] = '{}_{}-{}'.format(hostname, extension['id'], urlpath_id)
+                            gee['hostname'] = '{}_{}_{}'.format(hostname, extension['id'], urlpath_id)
                         else:
                             gee['hostname'] = '{}_{}'.format(hostname, extension['id'])
                     else:
@@ -136,7 +136,7 @@ class ParseExtensions(ParseHelpers):
                         gee['hostname'] = hostname
                     gee['tags'] = dict(
                         info_URL=group['endpoint'],
-                        info_ID='{}-{}'.format(extension['id'], urlpath_id) if urlpath_id else extension['id'],
+                        info_ID='{}_{}'.format(extension['id'], urlpath_id) if urlpath_id else extension['id'],
                         info_monitored_by=extension['monitoredBy'],
                         info_groupname=self.groupnames[extension['serviceId']]
                     )
