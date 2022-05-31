@@ -3,6 +3,8 @@ from argo_connectors.utils import filename_date, module_class_name
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.parse.base import ParseHelpers
 
+import uuid
+
 
 SERVICE_NAME_WEBPAGE='eu.eosc.portal.services.url'
 
@@ -16,6 +18,14 @@ def buildmap_id2groupname(resources):
 
 def construct_fqdn(http_endpoint):
     return urlparse(http_endpoint).netloc
+
+
+def build_urlpath_id(http_endpoint):
+    path = urlparse(http_endpoint).path.replace('/', '')
+    if path and path != http_endpoint:
+        return uuid.uuid3(uuid.NAMESPACE_URL, path)
+    else:
+        return None
 
 
 class ParseResources(ParseHelpers):
@@ -112,9 +122,13 @@ class ParseExtensions(ParseHelpers):
                     gee['group'] = extension['serviceId']
                     if self.uidservendp:
                         hostname = construct_fqdn(group['endpoint'])
+                        urlpath_id = build_urlpath_id(group['endpoint'])
                         if not hostname:
                             hostname = group['endpoint']
-                        gee['hostname'] = '{}_{}'.format(hostname, extension['id'])
+                        if urlpath_id:
+                            gee['hostname'] = '{}_{}_{}'.format(hostname, extension['id'], urlpath_id)
+                        else:
+                            gee['hostname'] = '{}_{}'.format(hostname, extension['id'])
                     else:
                         hostname = construct_fqdn(group['endpoint'])
                         if not hostname:
@@ -122,7 +136,7 @@ class ParseExtensions(ParseHelpers):
                         gee['hostname'] = hostname
                     gee['tags'] = dict(
                         info_URL=group['endpoint'],
-                        info_ID=extension['id'],
+                        info_ID='{}_{}'.format(extension['id'], urlpath_id) if urlpath_id else extension['id'],
                         info_monitored_by=extension['monitoredBy'],
                         info_groupname=self.groupnames[extension['serviceId']]
                     )
