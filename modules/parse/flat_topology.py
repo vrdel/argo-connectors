@@ -1,11 +1,6 @@
-from urllib.parse import urlparse
-from argo_connectors.utils import filename_date, module_class_name
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.parse.base import ParseHelpers
-
-
-def construct_fqdn(http_endpoint):
-    return urlparse(http_endpoint).netloc
+from argo_connectors.utils import  construct_fqdn
 
 
 class ParseFlatEndpoints(ParseHelpers):

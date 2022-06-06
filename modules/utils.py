@@ -1,5 +1,6 @@
 import datetime
 import re
+from urllib.parse import urlparse
 
 strerr = ''
 num_excp_expand = 0
@@ -11,6 +12,10 @@ def date_check(arg):
         return True
     else:
         return False
+
+
+def construct_fqdn(http_endpoint):
+    return urlparse(http_endpoint).netloc
 
 
 def datestamp(daysback=None):

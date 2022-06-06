@@ -1,9 +1,6 @@
 from argo_connectors.parse.base import ParseHelpers
+from argo_connectors.utils import construct_fqdn
 from urllib.parse import urlparse
-
-
-def construct_fqdn(http_endpoint):
-    return urlparse(http_endpoint).netloc
 
 
 class ParseContacts(ParseHelpers):

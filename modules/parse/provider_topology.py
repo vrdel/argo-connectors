@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
-from argo_connectors.utils import filename_date, module_class_name
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.parse.base import ParseHelpers
+from argo_connectors.utils import filename_date, module_class_name, construct_fqdn
 
 import uuid
 
@@ -14,10 +14,6 @@ def buildmap_id2groupname(resources):
     for resource in resources:
         id2name[resource['group']] = resource['tags']['info_groupname']
     return id2name
-
-
-def construct_fqdn(http_endpoint):
-    return urlparse(http_endpoint).netloc
 
 
 def build_urlpath_id(http_endpoint):
