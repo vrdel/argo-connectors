@@ -219,6 +219,7 @@ class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
                 'files.dev.tenant.eu_tenant_1+nextcloud': ['name.surname@country.com'],
                 'files.tenant.eu_tenant_2+nextcloud': ['name.surname@country.com'],
                 'sso.tenant.eu_tenant_3+aai': ['name.surname@country.com'],
+                'ia2-vialactea.oats.inaf.it_neanias_4+WebService': ['name.surname@garr.it']
             }
         )
 

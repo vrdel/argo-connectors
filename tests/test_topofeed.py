@@ -320,6 +320,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
                                            uidservendp=True,
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=True)
+        self.maxDiff = None
 
     def test_CsvTopology(self):
         group_groups = self.topology.get_groupgroups()
@@ -334,6 +335,12 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
                 {
                     'group': 'CUSTOMERFOO',
                     'subgroup': 'AAI',
+                    'tags': {'monitored': '1', 'scope': 'CUSTOMERFOO'},
+                    'type': 'PROJECT'
+                },
+                {
+                    'group': 'CUSTOMERFOO',
+                    'subgroup': 'NEANIAS-Space',
                     'tags': {'monitored': '1', 'scope': 'CUSTOMERFOO'},
                     'type': 'PROJECT'
                 }
@@ -368,6 +375,16 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
                     'tags': {'hostname': 'sso.tenant.eu', 'info_ID': 'tenant_3',
                             'info_URL': 'https://sso.tenant.eu', 'monitored': '1',
                             'scope': 'CUSTOMERFOO'},
+                    'type': 'SERVICEGROUPS'
+                },
+                {
+                    'group': 'NEANIAS-Space',
+                    'hostname': 'ia2-vialactea.oats.inaf.it_neanias_4',
+                    'service': 'WebService',
+                    'tags': {'hostname': 'ia2-vialactea.oats.inaf.it',
+                             'info_ID': 'neanias_4', 'info_URL':
+                             'http://ia2-vialactea.oats.inaf.it:8080/vlkb/availability',
+                             'monitored': '1', 'scope': 'CUSTOMERFOO'},
                     'type': 'SERVICEGROUPS'
                 }
             ]

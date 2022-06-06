@@ -66,7 +66,11 @@ class ParseFlat(unittest.TestCase):
             {
                 'description': 'tenant project SSO service',
                 'name': 'aai'
-            }
+            },
+            {
+                'description': 'NEANIAS project SPACE-VIS ViaLactea service',
+                'name': 'WebService'
+            },
         ])
 
     @mock.patch.object(ParseHelpers, 'csv_to_json')
