@@ -379,9 +379,9 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
                 },
                 {
                     'group': 'NEANIAS-Space',
-                    'hostname': 'ia2-vialactea.oats.inaf.it:8080_neanias_4',
+                    'hostname': 'ia2-vialactea.oats.inaf.it_neanias_4',
                     'service': 'WebService',
-                    'tags': {'hostname': 'ia2-vialactea.oats.inaf.it:8080',
+                    'tags': {'hostname': 'ia2-vialactea.oats.inaf.it',
                              'info_ID': 'neanias_4', 'info_URL':
                              'http://ia2-vialactea.oats.inaf.it:8080/vlkb/availability',
                              'monitored': '1', 'scope': 'CUSTOMERFOO'},
