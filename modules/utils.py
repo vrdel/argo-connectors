@@ -15,7 +15,10 @@ def date_check(arg):
 
 
 def construct_fqdn(http_endpoint):
-    return urlparse(http_endpoint).netloc
+    hostname = urlparse(http_endpoint).netloc
+    if ':' in hostname:
+        hostname = hostname.split(':')[0]
+    return hostname
 
 
 def datestamp(daysback=None):
