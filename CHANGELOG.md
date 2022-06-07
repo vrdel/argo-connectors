@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.1.0] - 2022-06-07
+
+### Added
+
+* ARGO-2862 Introduce topo, weights, downtimes and metricprofile individual async tasks
+* ARGO-3583 Add support in Connectors for EOSC Providers Portal API
+* ARGO-3666 Introduce service type and descriptions fetch
+* ARGO-3700 EOSC topology service endpoints with only one hardcoded service for start
+* ARGO-3803 Use id as a service group name for EOSC PROVIDER topology
+* ARGO-3818 Use id as a project name for EOSC PROVIDER topology instead of abbreviation
+* ARGO-3849 Fetch monitoring extensions
+
+### Fixed
+
+* ARGO-3708 EOSCPROVIDER contacs is wrongly populated with one contact for every different endpoint
+* ARGO-3858 Slow performance with mesh of contacts data for EOSCPROVIDER topo
+* ARGO-3861 Some of endpoints are skipped if multiple endpoints are defined for the same resource on service-extensions
+* ARGO-3866 EOSC topology issue when defining two endpoints with the same hostname/service-type through monitoring extensions
+* ARGO-3869 Strip port from extracted hostname in group endpoints
+
+### Changed
+
+* ARGO-3842 Rename py modules and pkg to argo-connectors
+* ARGO-3846 Do not assume first fetch with paginated indexes succesfull
+* ARGO-3855 Join error lines for PROVIDER topology
+* ARGO-3856 find_next_paging_cursor_count for GOCDB topo task implies succesfull parse
+
 ## [2.0.0] - 2022-02-10
 
 ### Added
