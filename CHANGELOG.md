@@ -2,17 +2,6 @@
 
 ## [2.0.0] - 2022-02-10
 
-* ARGO-3375 Pass contacts for each topology entity
-* ARGO-3427 Fetch HOSTDN service attribute from GOCDB
-* ARGO-3428 Fetch SE_PATH from BDII
-* ARGO-3448 NEANIAS dulpicates in group topology
-* ARGO-3503 Support multiple VO SE_PATHs for host
-* ARGO-3521 Retry on empty responses
-* ARGO-3522 Introduce optional scope key for topology fetch and BIOMED feed parse
-* ARGO-3524 Improve exception handling
-* ARGO-3528 Verbose retry log messages
-* ARGO-3540 Tests for retry logic
-
 ### Added
 
 * ARGO-2620 Update connectors configuration templates
@@ -24,6 +13,11 @@
 * ARGO-3335 Retry on LDAP queries
 * ARGO-3340 Unit testing of parsing of GOCDB service endpoint
 * ARGO-3341 Pass date argument to WEB-API methods
+* ARGO-3375 Pass contacts for each topology entity
+* ARGO-3427 Fetch HOSTDN service attribute from GOCDB
+* ARGO-3428 Fetch SE_PATH from BDII
+* ARGO-3522 Introduce optional scope key for topology fetch and BIOMED feed parse
+* ARGO-3540 Tests for retry logic
 
 ### Fixed
 
@@ -32,6 +26,8 @@
 * ARGO-2681 Weights use HTTP PUT to write new daily entries
 * ARGO-2771 Weight connector issues investigated
 * ARGO-3268 Downtimes DELETE with explicit date passed
+* ARGO-3448 NEANIAS dulpicates in group topology
+* ARGO-3503 Support multiple VO SE_PATHs for host
 
 ### Changed
 
@@ -41,3 +37,6 @@
 * ARGO-2656 Downtimes as global tenant resource
 * ARGO-2860 Separate connection, parsing and file handling
 * ARGO-2861 Switch to async IO operations
+* ARGO-3521 Retry on empty responses
+* ARGO-3524 Improve exception handling
+* ARGO-3528 Verbose retry log messages
