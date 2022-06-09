@@ -2,7 +2,7 @@
 %global __python /usr/bin/python3
 
 Name:    argo-connectors
-Version: 2.0.0
+Version: 2.1.0
 Release: 1%{?dist}
 Group:   EGI/SA4
 License: ASL 2.0
@@ -58,5 +58,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir %{_localstatedir}/log/argo-connectors/
 
 %changelog
+* Tue Jun  7 2022 Daniel Vrcic <dvrcic@srce.hr> - 2.1.0-1%{dist}
+- spec changes to reflect new pkg and py module argo-connectors name
 * Thu Feb 10 2022 Daniel Vrcic <dvrcic@srce.hr> - 2.0.0-1%{dist}
 - release of async-enabled connectors with additional CSV and JSON topologies
