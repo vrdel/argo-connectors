@@ -11,6 +11,7 @@ from argo_connectors.utils import module_class_name
 
 class ParseDowntimes(ParseHelpers):
     def __init__(self, logger, data, start, end, uid=False):
+        self.logger = logger
         self.data = self.csv_to_json(data)
         self.start = start
         self.end = end
