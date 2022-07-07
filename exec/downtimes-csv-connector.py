@@ -10,7 +10,7 @@ import uvloop
 
 from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_connectors.log import Logger
-from argo_connectors.tasks.gocdb_downtimes import TaskGocdbDowntimes
+from argo_connectors.tasks.flat_downtimes import TaskCsvDowntimes
 from argo_connectors.tasks.common import write_state
 
 from argo_connectors.config import Global, CustomerConf
@@ -77,9 +77,11 @@ def main():
 
     try:
         cust = list(confcust.get_customers())[0]
-        task = TaskGocdbDowntimes(loop, logger, sys.argv[0], globopts,
-                                  webapi_opts, confcust, confcust.get_custname(cust), feed,
-                                  DOWNTIMEPI, start, end, uidservtype, args.date[0], timestamp)
+        task = TaskCsvDowntimes(loop, logger, sys.argv[0], globopts,
+                                webapi_opts, confcust,
+                                confcust.get_custname(cust), feed, DOWNTIMEPI,
+                                start, end, uidservtype, args.date[0],
+                                timestamp)
         loop.run_until_complete(task.run())
 
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
