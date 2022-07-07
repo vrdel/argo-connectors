@@ -28,9 +28,6 @@ class TaskCsvDowntimes(object):
         self.timestamp = timestamp
 
     async def fetch_data(self):
-        feed_parts = urlparse(self.feed)
-        start_fmt = self.start.strftime("%Y-%m-%d")
-        end_fmt = self.end.strftime("%Y-%m-%d")
         session = SessionWithRetry(self.logger,
                                    os.path.basename(self.connector_name),
                                    self.globopts)
