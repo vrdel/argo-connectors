@@ -269,7 +269,7 @@ class DowntimesCsv(unittest.TestCase):
         await self.downtimes_flat.run()
         self.assertTrue(self.downtimes_flat.fetch_data.called)
         self.assertFalse(self.downtimes_flat.parse_source.called)
-        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesflat')
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_downtimesflat')
         self.assertEqual(mock_writestate.call_args[0][3], self.downtimes_flat.timestamp)
         self.assertFalse(mock_writestate.call_args[0][4])
         self.assertTrue(self.downtimes_flat.logger.error.called)
