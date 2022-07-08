@@ -46,10 +46,10 @@ class ParseDowntimes(ParseHelpers):
                 if end_time > self.end:
                     end_time = self.end
 
-            downtime['service'] = service_type
-            downtime['start_time'] = start_time.strftime('%Y-%m-%dT%H:%M:00Z')
-            downtime['end_time'] = end_time.strftime('%Y-%m-%dT%H:%M:00Z')
+                entry['service'] = service_type
+                entry['start_time'] = start_time.strftime('%Y-%m-%dT%H:%M:00Z')
+                entry['end_time'] = end_time.strftime('%Y-%m-%dT%H:%M:00Z')
 
-            downtimes.append(downtime)
+                downtimes.append(entry)
 
         return downtimes
