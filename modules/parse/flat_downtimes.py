@@ -24,14 +24,14 @@ class ParseDowntimes(ParseHelpers):
             entry = dict()
 
             service_id = downtime['unique_id']
-            if not service_id:
+            classification = downtime['Severity']
+            if not service_id or classification != 'OUTAGE':
                 continue
 
             hostname = construct_fqdn(downtime['url'])
             service_type = downtime['service_type']
             start_time = datetime.datetime.strptime(downtime['start_time'], "%m/%d/%Y %H:%M")
             end_time = datetime.datetime.strptime(downtime['end_time'], "%m/%d/%Y %H:%M")
-            classification = downtime['Severity']
 
             if self.uid:
                 entry['hostname'] = '{0}_{1}'.format(hostname, service_id)
@@ -50,7 +50,6 @@ class ParseDowntimes(ParseHelpers):
             downtime['start_time'] = start_time.strftime('%Y-%m-%dT%H:%M:00Z')
             downtime['end_time'] = end_time.strftime('%Y-%m-%dT%H:%M:00Z')
 
-            if classification == 'OUTAGE':
-                downtimes.append(downtime)
+            downtimes.append(downtime)
 
         return downtimes
