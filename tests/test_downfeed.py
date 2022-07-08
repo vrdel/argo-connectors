@@ -20,14 +20,30 @@ class ParseCsvDowntimes(unittest.TestCase):
 
     def test_parseDowntimes(self):
         date_2_21_2022 = datetime.datetime(2022, 2, 21)
-        self.flat_downtimes = ParseDowntimes(self.logger, self.downtimes, date_2_21_2022, False)
-        downtimes = self.flat_downtimes.get_data()
+        flat_downtimes = ParseDowntimes(self.logger, self.downtimes, date_2_21_2022, False)
+        downtimes = flat_downtimes.get_data()
+        self.assertEqual(len(downtimes), 16)
+        first_schedule = downtimes[0]
+        start_time = datetime.datetime.strptime(first_schedule['start_time'], '%Y-%m-%dT%H:%M:00Z')
+        end_time = datetime.datetime.strptime(first_schedule['end_time'], '%Y-%m-%dT%H:%M:00Z')
+        self.assertEqual(start_time, datetime.datetime(2022, 2, 21, 8, 0))
+        self.assertEqual(end_time, datetime.datetime(2022, 2, 21, 23, 59))
+
+        date_2_22_2022 = datetime.datetime(2022, 2, 22)
+        flat_downtimes = ParseDowntimes(self.logger, self.downtimes, date_2_22_2022, False)
+        downtimes = flat_downtimes.get_data()
+        self.assertEqual(len(downtimes), 16)
+        first_schedule = downtimes[0]
+        start_time = datetime.datetime.strptime(first_schedule['start_time'], '%Y-%m-%dT%H:%M:00Z')
+        end_time = datetime.datetime.strptime(first_schedule['end_time'], '%Y-%m-%dT%H:%M:00Z')
+        self.assertEqual(start_time, datetime.datetime(2022, 2, 22, 0, 0))
+        self.assertEqual(end_time, datetime.datetime(2022, 2, 22, 19, 0))
 
     def test_failedParseDowntimes(self):
         date_2_21_2022 = datetime.datetime(2022, 2, 21)
         with self.assertRaises(ConnectorParseError) as cm:
-            self.flat_downtimes = ParseDowntimes(self.logger, 'DUMMY DATA', date_2_21_2022, False)
-            downtimes = self.flat_downtimes.get_data()
+            flat_downtimes = ParseDowntimes(self.logger, 'DUMMY DATA', date_2_21_2022, False)
+            downtimes = flat_downtimes.get_data()
 
         excep = cm.exception
         self.assertTrue('CSV feed' in excep.msg)
