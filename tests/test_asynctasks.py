@@ -214,6 +214,7 @@ class DowntimesCsv(unittest.TestCase):
         authopts = mock.Mock()
         confcust = mock.Mock()
         confcust.send_empty.return_value = False
+        confcust.get_customers.return_value = ['CUSTOMERFOO', 'CUSTOMERBAR']
         custname = CUSTOMER_NAME
         feed = 'https://downtimes-csv.com/api/fetch'
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
