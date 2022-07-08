@@ -208,13 +208,17 @@ class DowntimesCsv(unittest.TestCase):
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        mocked_globopts = dict(generalpublishwebapi='True')
+        mocked_globopts = dict(generalpublishwebapi='True',
+                               generalwriteavro='True',
+                               outputdowntimes='downtimes_DATE.avro',
+                               avroschemasdowntimes='downtimes.avsc')
         globopts = mocked_globopts
         webapiopts = mock.Mock()
         authopts = mock.Mock()
         confcust = mock.Mock()
         confcust.send_empty.return_value = False
         confcust.get_customers.return_value = ['CUSTOMERFOO', 'CUSTOMERBAR']
+        confcust.get_custdir.return_value = '/some/path'
         custname = CUSTOMER_NAME
         feed = 'https://downtimes-csv.com/api/fetch'
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
@@ -235,9 +239,10 @@ class DowntimesCsv(unittest.TestCase):
         )
         self.maxDiff = None
 
+    @mock.patch('argo_connectors.tasks.flat_downtimes.write_avro')
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_state')
     @async_test
-    async def test_StepsSuccessRun(self, mock_writestate):
+    async def test_StepsSuccessRun(self, mock_writestate, mock_writeavro):
         self.downtimes_flat.fetch_data = mock.AsyncMock()
         self.downtimes_flat.fetch_data.side_effect = ['data_downtimes']
         self.downtimes_flat.send_webapi = mock.AsyncMock()
@@ -249,6 +254,8 @@ class DowntimesCsv(unittest.TestCase):
         self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_downtimesflat')
         self.assertEqual(mock_writestate.call_args[0][3], self.downtimes_flat.timestamp)
         self.assertTrue(mock_writestate.call_args[0][4])
+        self.assertTrue(mock_writeavro.called, True)
+        self.assertEqual(mock_writeavro.call_args[0][4], datetime.datetime.now().strftime('%Y_%m_%d'))
         self.assertTrue(self.downtimes_flat.send_webapi.called)
         self.assertTrue(self.downtimes_flat.logger.info.called)
 
