@@ -18,8 +18,6 @@ from argo_connectors.config import Global, CustomerConf
 logger = None
 globopts = {}
 
-DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
-
 
 def get_webapi_opts(cglob, confcust):
     webapi_custopts = confcust.get_webapiopts()
