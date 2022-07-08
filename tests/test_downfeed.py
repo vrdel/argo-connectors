@@ -20,17 +20,13 @@ class ParseCsvDowntimes(unittest.TestCase):
 
     def test_parseDowntimes(self):
         date_2_21_2022 = datetime.datetime(2022, 2, 21)
-        start = date_2_21_2022
-        end = date_2_21_2022.replace(hour=23, minute=59, second=59)
-        self.flat_downtimes = ParseDowntimes(self.logger, self.downtimes, start, end, False)
+        self.flat_downtimes = ParseDowntimes(self.logger, self.downtimes, date_2_21_2022, False)
         downtimes = self.flat_downtimes.get_data()
 
     def test_failedParseDowntimes(self):
         date_2_21_2022 = datetime.datetime(2022, 2, 21)
-        start = date_2_21_2022
-        end = date_2_21_2022.replace(hour=23, minute=59, second=59)
         with self.assertRaises(ConnectorParseError) as cm:
-            self.flat_downtimes = ParseDowntimes(self.logger, 'DUMMY DATA', start, end, False)
+            self.flat_downtimes = ParseDowntimes(self.logger, 'DUMMY DATA', date_2_21_2022, False)
             downtimes = self.flat_downtimes.get_data()
 
         excep = cm.exception

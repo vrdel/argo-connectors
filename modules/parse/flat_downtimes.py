@@ -10,11 +10,11 @@ from argo_connectors.utils import module_class_name
 
 
 class ParseDowntimes(ParseHelpers):
-    def __init__(self, logger, data, start, end, uid=False):
+    def __init__(self, logger, data, current_date, uid=False):
         self.logger = logger
         self.data = self.csv_to_json(data)
-        self.start = start
-        self.end = end
+        self.start = current_date
+        self.end = current_date.replace(hour=23, minute=59, second=59)
         self.uid = uid
 
     def get_data(self):
@@ -37,6 +37,14 @@ class ParseDowntimes(ParseHelpers):
                 entry['hostname'] = '{0}_{1}'.format(hostname, service_id)
             else:
                 entry['hostname'] = hostname
+
+            start_date = start_time.replace(hour=0, minute=0, second=0)
+            end_date = end_time.replace(hour=0, minute=0, second=0)
+            if self.start >= start_date and self.start <= end_date:
+                if start_time < self.start:
+                    start_time = self.start
+                if end_time > self.end:
+                    end_time = self.end
 
             downtime['service'] = service_type
             downtime['start_time'] = start_time.strftime('%Y-%m-%dT%H:%M:00Z')
