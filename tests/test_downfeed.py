@@ -39,6 +39,36 @@ class ParseCsvDowntimes(unittest.TestCase):
         self.assertEqual(start_time, datetime.datetime(2022, 2, 22, 0, 0))
         self.assertEqual(end_time, datetime.datetime(2022, 2, 22, 19, 0))
 
+        date_3_1_2022 = datetime.datetime(2022, 3, 1)
+        flat_downtimes = ParseDowntimes(self.logger, self.downtimes, date_3_1_2022, False)
+        downtimes = flat_downtimes.get_data()
+        self.assertEqual(len(downtimes), 16)
+        first_schedule = downtimes[0]
+        start_time = datetime.datetime.strptime(first_schedule['start_time'], '%Y-%m-%dT%H:%M:00Z')
+        end_time = datetime.datetime.strptime(first_schedule['end_time'], '%Y-%m-%dT%H:%M:00Z')
+        self.assertEqual(start_time, datetime.datetime(2022, 3, 1, 8, 0))
+        self.assertEqual(end_time, datetime.datetime(2022, 3, 1, 23, 59))
+
+        date_3_2_2022 = datetime.datetime(2022, 3, 2)
+        flat_downtimes = ParseDowntimes(self.logger, self.downtimes, date_3_2_2022, False)
+        downtimes = flat_downtimes.get_data()
+        self.assertEqual(len(downtimes), 16)
+        first_schedule = downtimes[0]
+        start_time = datetime.datetime.strptime(first_schedule['start_time'], '%Y-%m-%dT%H:%M:00Z')
+        end_time = datetime.datetime.strptime(first_schedule['end_time'], '%Y-%m-%dT%H:%M:00Z')
+        self.assertEqual(start_time, datetime.datetime(2022, 3, 2, 0, 0))
+        self.assertEqual(end_time, datetime.datetime(2022, 3, 2, 23, 59))
+
+        date_3_4_2022 = datetime.datetime(2022, 3, 4)
+        flat_downtimes = ParseDowntimes(self.logger, self.downtimes, date_3_4_2022, False)
+        downtimes = flat_downtimes.get_data()
+        self.assertEqual(len(downtimes), 16)
+        first_schedule = downtimes[0]
+        start_time = datetime.datetime.strptime(first_schedule['start_time'], '%Y-%m-%dT%H:%M:00Z')
+        end_time = datetime.datetime.strptime(first_schedule['end_time'], '%Y-%m-%dT%H:%M:00Z')
+        self.assertEqual(start_time, datetime.datetime(2022, 3, 4, 0, 0))
+        self.assertEqual(end_time, datetime.datetime(2022, 3, 4, 19, 0))
+
     def test_failedParseDowntimes(self):
         date_2_21_2022 = datetime.datetime(2022, 2, 21)
         with self.assertRaises(ConnectorParseError) as cm:
