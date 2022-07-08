@@ -49,7 +49,7 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    feed = confcust.get_topofeed()
+    feed = confcust.get_downfeed()
     logger.customer = confcust.get_custname()
 
     if len(args.date) == 0:
@@ -58,11 +58,9 @@ def main():
 
     # calculate start and end times
     try:
-        start = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
-        end = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
-        timestamp = start.strftime('%Y_%m_%d')
-        start = start.replace(hour=0, minute=0, second=0)
-        end = end.replace(hour=23, minute=59, second=59)
+        current_date = datetime.datetime.strptime(args.date[0], '%Y-%m-%d')
+        timestamp = current_date.strftime('%Y_%m_%d')
+        current_date = current_date.replace(hour=0, minute=0, second=0)
 
     except ValueError as exc:
         logger.error(exc)
@@ -79,8 +77,8 @@ def main():
         cust = list(confcust.get_customers())[0]
         task = TaskCsvDowntimes(loop, logger, sys.argv[0], globopts,
                                 webapi_opts, confcust,
-                                confcust.get_custname(cust), feed, DOWNTIMEPI,
-                                start, end, uidservtype, args.date[0],
+                                confcust.get_custname(cust), feed,
+                                current_date, uidservtype, args.date[0],
                                 timestamp)
         loop.run_until_complete(task.run())
 

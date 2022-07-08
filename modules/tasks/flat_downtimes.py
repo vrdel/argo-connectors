@@ -10,7 +10,7 @@ from argo_connectors.tasks.common import write_state, write_downtimes_avro as wr
 
 class TaskCsvDowntimes(object):
     def __init__(self, loop, logger, connector_name, globopts, webapi_opts,
-                 confcust, custname, feed, DOWNTIMEPI, start, end,
+                 confcust, custname, feed, current_date,
                  uidservtype, targetdate, timestamp):
         self.event_loop = loop
         self.logger = logger
@@ -20,9 +20,7 @@ class TaskCsvDowntimes(object):
         self.confcust = confcust
         self.custname = custname
         self.feed = feed
-        self.DOWNTIMEPI = DOWNTIMEPI
-        self.start = start
-        self.end = end
+        self.current_date = current_date
         self.uidservtype = uidservtype
         self.targetdate = targetdate
         self.timestamp = timestamp
@@ -31,13 +29,13 @@ class TaskCsvDowntimes(object):
         session = SessionWithRetry(self.logger,
                                    os.path.basename(self.connector_name),
                                    self.globopts)
-        res = await session.http_get()
+        res = await session.http_get(self.feed)
 
         return res
 
     def parse_source(self, res):
-        csv_downtimes = ParseDowntimes(self.logger, res, self.start, self.end,
-                               self.uidservtype)
+        csv_downtimes = ParseDowntimes(self.logger, res, self.current_date,
+                                       self.uidservtype)
         return csv_downtimes.get_data()
 
     async def send_webapi(self, dts):
