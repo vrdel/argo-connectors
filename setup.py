@@ -17,7 +17,7 @@ def get_ver():
 setup(name=NAME,
       version=get_ver(),
       author='SRCE',
-      author_email='dvrcic@srce.hr, kzailac@srce.hr',
+      author_email='dvrcic@srce.hr',
       description='Components generate input data for ARGO Compute Engine',
       classifiers=[
           "Development Status :: 5 - Production/Stable",
