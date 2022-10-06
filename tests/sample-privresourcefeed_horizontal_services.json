@@ -1,11 +1,11 @@
 {
-	"total": 1048,
-	"from": 0,
-	"to": 10,
-	"results": [
+    "total": 1048,
+    "from": 0,
+    "to": 10,
+    "results": [
     {
       "metadata": {
-				"not": "interested"
+        "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -19,7 +19,7 @@
       "latestAuditInfo": null,
       "latestOnboardingInfo": null,
       "latestUpdateInfo": {
-				"not": "interested"
+        "not": "interested"
       },
       "status": "approved resource",
       "resourceExtras": {
@@ -43,12 +43,12 @@
         "useCases": [],
         "scientificDomains": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
@@ -65,7 +65,7 @@
         ],
         "resourceGeographicLocations": [],
         "mainContact": {
-					"not": "interested"
+          "not": "interested"
         },
         "publicContacts": [
           {
@@ -112,7 +112,7 @@
     },
     {
       "metadata": {
-				"not": "interested"
+        "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -120,12 +120,12 @@
       "migrationStatus": null,
       "loggingInfo": [
         {
-					"not": "interested"
+                    "not": "interested"
         }
       ],
       "latestAuditInfo": null,
       "latestOnboardingInfo": {
-				"not": "interested"
+        "not": "interested"
       },
       "latestUpdateInfo": null,
       "status": "approved resource",
@@ -148,22 +148,22 @@
         "logo": "https://www.cyfronet.pl/zalacznik/8437",
         "multimedia": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "useCases": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "scientificDomains": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
@@ -186,7 +186,7 @@
         ],
         "resourceGeographicLocations": [],
         "mainContact": {
-					"not": "interested"
+          "not": "interested"
         },
         "publicContacts": [
           {
@@ -249,7 +249,7 @@
     },
     {
       "metadata": {
-				"not": "interested"
+        "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -281,12 +281,12 @@
         "useCases": [],
         "scientificDomains": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
@@ -318,7 +318,7 @@
         ],
         "resourceGeographicLocations": [],
         "mainContact": {
-					"not": "interested"
+          "not": "interested"
         },
         "publicContacts": [
           {
@@ -367,7 +367,7 @@
     },
     {
       "metadata": {
-				"not": "interested"
+        "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -375,13 +375,13 @@
       "migrationStatus": null,
       "loggingInfo": [
         {
-					"not": "interested"
+                    "not": "interested"
         }
       ],
       "latestAuditInfo": null,
       "latestOnboardingInfo": null,
       "latestUpdateInfo": {
-				"not": "interested"
+        "not": "interested"
       },
       "status": "approved resource",
       "resourceExtras": {
@@ -407,12 +407,12 @@
         "useCases": [],
         "scientificDomains": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
@@ -436,7 +436,7 @@
         ],
         "resourceGeographicLocations": [],
         "mainContact": {
-					"not": "interested"
+          "not": "interested"
         },
         "publicContacts": [
           {
@@ -485,7 +485,7 @@
     },
     {
       "metadata": {
-				"not": "interested"
+        "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -493,13 +493,13 @@
       "migrationStatus": null,
       "loggingInfo": [
         {
-					"published": false
+                    "published": false
         }
       ],
       "latestAuditInfo": null,
       "latestOnboardingInfo": null,
       "latestUpdateInfo": {
-				"not": "interested"
+        "not": "interested"
       },
       "status": "approved resource",
       "resourceExtras": {
@@ -523,12 +523,12 @@
         "useCases": [],
         "scientificDomains": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
@@ -545,7 +545,7 @@
         ],
         "resourceGeographicLocations": [],
         "mainContact": {
-					"not": "interested"
+                    "not": "interested"
         },
         "publicContacts": [
           {
@@ -598,7 +598,7 @@
     },
     {
       "metadata": {
-				"not": "interested"
+        "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -606,12 +606,12 @@
       "migrationStatus": null,
       "loggingInfo": [
         {
-					"not": "interested"
+          "not": "interested"
         }
       ],
       "latestAuditInfo": null,
       "latestOnboardingInfo": {
-				"not": "interested"
+        "not": "interested"
       },
       "latestUpdateInfo": null,
       "status": "approved resource",
@@ -636,12 +636,12 @@
         "useCases": [],
         "scientificDomains": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
@@ -658,11 +658,11 @@
           "EO"
         ],
         "languageAvailabilities": [
-					"not": "interested"
+          "not": "interested"
         ],
         "resourceGeographicLocations": [],
         "mainContact": {
-					"not": "interested"
+          "not": "interested"
         },
         "publicContacts": [
           {
@@ -713,7 +713,7 @@
     },
     {
       "metadata": {
-				"not": "interested"
+                "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -721,12 +721,12 @@
       "migrationStatus": null,
       "loggingInfo": [
         {
-					"not": "interested"
+          "not": "interested"
         }
       ],
       "latestAuditInfo": null,
       "latestOnboardingInfo": {
-				"not": "interested"
+                "not": "interested"
       },
       "latestUpdateInfo": null,
       "status": "approved resource",
@@ -747,16 +747,16 @@
         "useCases": [],
         "scientificDomains": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
-					"not": "interested"
+          "not": "interested"
         ],
         "accessTypes": [
           "access_type-physical",
@@ -772,7 +772,7 @@
         ],
         "resourceGeographicLocations": null,
         "mainContact": {
-					"not": "interested"
+          "not": "interested"
         },
         "publicContacts": [
           {
@@ -827,7 +827,7 @@
     },
     {
       "metadata": {
-				"not": "interested"
+        "not": "interested"
       },
       "active": true,
       "suspended": false,
@@ -835,12 +835,12 @@
       "migrationStatus": null,
       "loggingInfo": [
         {
-					"not": "interested"
+          "not": "interested"
         }
       ],
       "latestAuditInfo": null,
       "latestOnboardingInfo": {
-				"not": "interested"
+        "not": "interested"
       },
       "latestUpdateInfo": null,
       "status": "approved resource",
@@ -867,11 +867,11 @@
         ],
         "categories": [
           {
-						"not": "interested"
+            "not": "interested"
           }
         ],
         "targetUsers": [
-					"not": "interested"
+          "not": "interested"
         ],
         "accessTypes": [
           "access_type-physical",
@@ -887,7 +887,7 @@
         ],
         "resourceGeographicLocations": null,
         "mainContact": {
-					"not": "interested"
+          "not": "interested"
         },
         "publicContacts": [
           {
@@ -932,5 +932,5 @@
       },
       "id": "embrc-eric.trl2_mba"
     }
-	]
+    ]
 }
