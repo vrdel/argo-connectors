@@ -43,7 +43,8 @@ class ParseResourcesExtras(ParseHelpers):
                 extras = resource.get('resourceExtras', None)
                 if extras:
                     for key in self.keys:
-                        if key in list(extras.keys()):
+                        key_true = extras.get(key, False)
+                        if key_true:
                             service = resource['service']
                             self._resources.append({
                                 'id': service['id'],

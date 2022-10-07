@@ -24,7 +24,7 @@
       "status": "approved resource",
       "resourceExtras": {
         "eoscIFGuidelines": null,
-        "horizontalService": true,
+        "horizontalService": false,
         "researchCategories": [
           "research_category-acr"
         ]
