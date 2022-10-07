@@ -878,5 +878,24 @@ class ParseEoscProvider(unittest.TestCase):
         ])
 
 
+class ParseEoscProviderExtras(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-resourcefeed_extras.json', encoding='utf-8') as feed_file:
+            resources = feed_file.read()
+        with open('tests/sample-providerfeed_extras.json', encoding='utf-8') as feed_file:
+            providers = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
+        self.group_groups = eosc_topo.get_group_groups()
+        self.group_endpoints = eosc_topo.get_group_endpoints()
+        self.maxDiff = None
+
+    def test_groupGroups(self):
+        pass
+
+    def test_groupEndpoints(self):
+        pass
+
+
 if __name__ == '__main__':
     unittest.main()
