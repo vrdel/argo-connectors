@@ -4,6 +4,7 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import filename_date, module_class_name, construct_fqdn
 
 import uuid
+import json
 
 
 SERVICE_NAME_WEBPAGE='eu.eosc.portal.services.url'
@@ -25,11 +26,12 @@ def build_urlpath_id(http_endpoint):
 
 
 class ParseResourcesExtras(ParseHelpers):
-    def __init__(self, logger, data=None, keys=[], custname=None):
+    def __init__(self, logger, data=None, keys=[], custname=None, ret_json=False):
         super(ParseResourcesExtras, self).__init__(logger)
         self.data = data
-        self.keys = keys
+        self._keys = keys
         self.custname = custname
+        self._ret_json = ret_json
         self._resources = list()
         self._parse_data()
 
@@ -42,20 +44,17 @@ class ParseResourcesExtras(ParseHelpers):
             for resource in json_data['results']:
                 extras = resource.get('resourceExtras', None)
                 if extras:
-                    for key in self.keys:
+                    for key in self._keys:
                         key_true = extras.get(key, False)
                         if key_true:
                             service = resource['service']
-                            self._resources.append({
-                                'id': service['id'],
-                                'hardcoded_service': SERVICE_NAME_WEBPAGE,
-                                'name': service['name'],
-                                'provider': service['resourceOrganisation'],
-                                'webpage': service['webpage'],
-                                'resource_tag': service['tags'],
-                                'description': service['description']
-                            })
-            self.data = self._resources
+                            self._resources.append(service)
+            if self._ret_json:
+                self.data = self._resources
+            else:
+                self.data = json.dumps(
+                    {'results': self._resources}
+                )
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
