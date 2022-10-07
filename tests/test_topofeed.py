@@ -3,7 +3,7 @@ import unittest
 from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, ParseResourcesExtras, buildmap_id2groupname
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -884,11 +884,12 @@ class ParseEoscProviderExtras(unittest.TestCase):
             resources = feed_file.read()
         with open('tests/sample-providerfeed_extras.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
+        resources = ParseResourcesExtras(logger, resources, ['horizontalService'], CUSTOMER_NAME).data
         logger.customer = CUSTOMER_NAME
-        eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
-        self.group_groups = eosc_topo.get_group_groups()
-        self.group_endpoints = eosc_topo.get_group_endpoints()
-        self.maxDiff = None
+        # eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
+        # self.group_groups = eosc_topo.get_group_groups()
+        # self.group_endpoints = eosc_topo.get_group_endpoints()
+        # self.maxDiff = None
 
     def test_groupGroups(self):
         pass

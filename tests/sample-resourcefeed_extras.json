@@ -658,7 +658,9 @@
           "EO"
         ],
         "languageAvailabilities": [
-          "not": "interested"
+          {
+            "not": "interested"
+          }
         ],
         "resourceGeographicLocations": [],
         "mainContact": {
@@ -756,7 +758,9 @@
           }
         ],
         "targetUsers": [
-          "not": "interested"
+          {
+            "not": "interested"
+          }
         ],
         "accessTypes": [
           "access_type-physical",
@@ -871,7 +875,9 @@
           }
         ],
         "targetUsers": [
-          "not": "interested"
+          {
+            "not": "interested"
+          }
         ],
         "accessTypes": [
           "access_type-physical",

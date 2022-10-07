@@ -24,6 +24,46 @@ def build_urlpath_id(http_endpoint):
         return None
 
 
+class ParseResourcesExtras(ParseHelpers):
+    def __init__(self, logger, data=None, keys=[], custname=None):
+        super(ParseResourcesExtras, self).__init__(logger)
+        self.data = data
+        self.keys = keys
+        self.custname = custname
+        self._resources = list()
+        self._parse_data()
+
+    def _parse_data(self):
+        try:
+            if type(self.data) == str:
+                json_data = self.parse_json(self.data)
+            else:
+                json_data = self.data
+            for resource in json_data['results']:
+                extras = resource.get('resourceExtras', None)
+                if extras:
+                    for key in self.keys:
+                        if key in list(extras.keys()):
+                            service = resource['service']
+                            self._resources.append({
+                                'id': service['id'],
+                                'hardcoded_service': SERVICE_NAME_WEBPAGE,
+                                'name': service['name'],
+                                'provider': service['resourceOrganisation'],
+                                'webpage': service['webpage'],
+                                'resource_tag': service['tags'],
+                                'description': service['description']
+                            })
+            self.data = self._resources
+
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
+            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            raise ConnectorParseError(msg)
+
+        except ConnectorParseError as exc:
+            raise exc
+
+
 class ParseResources(ParseHelpers):
     def __init__(self, logger, data=None, custname=None):
         super(ParseResources, self).__init__(logger)
