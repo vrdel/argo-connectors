@@ -57,7 +57,7 @@ class ParseResourcesExtras(ParseHelpers):
                 )
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Extras Resources feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:

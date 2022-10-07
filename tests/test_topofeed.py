@@ -1011,6 +1011,13 @@ class ParseEoscProviderExtras(unittest.TestCase):
             }
         ])
 
+    def test_FailedEoscResourcesExtrasTopology(self):
+        logger.customer = CUSTOMER_NAME
+        with self.assertRaises(ConnectorParseError) as cm:
+            resources = ParseResourcesExtras(logger, 'FAILED_DATA', ['horizontalService'], CUSTOMER_NAME).data
+        excep = cm.exception
+        self.assertTrue('JSON feed' in excep.msg)
+        self.assertTrue('JSONDecodeError' in excep.msg)
 
 if __name__ == '__main__':
     unittest.main()
