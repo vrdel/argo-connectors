@@ -150,9 +150,21 @@ class TaskProviderTopology(object):
 
         res = await session.http_post('{}://{}{}'.format(token_endpoint.scheme,
                                                         token_endpoint.netloc,
-                                                        token_endpoint.path), data, headers={
-                                                            'content-type': 'application/x-www-form-urlencoded'
-                                                        })
+                                                        token_endpoint.path), data,
+                                      headers={
+                                        'content-type': 'application/x-www-form-urlencoded'
+                                      })
+        access_token = json.loads(res).get('id_token', None)
+        if access_token:
+            extras_feed = urlparse(feedextras)
+            headers = {
+                "Accept": "application/json",
+                "Authorization": "Bearer {0}".format(access_token)
+            }
+            res = await session.http_get('{}://{}{}'.format(extras_feed.scheme,
+                                                            extras_feed.netloc,
+                                                            extras_feed.path),
+                                         headers=headers)
 
 
     async def run(self):
