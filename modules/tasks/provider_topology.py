@@ -54,9 +54,15 @@ def filter_out_results(data):
 def concatenate_resources(left, right):
     data_left = json.loads(left)['results']
     data_right = json.loads(right)['results']
+    keys = [resource['id'] for resource in data_right]
+    new_def = []
+    for resource_def in data_left:
+        if resource_def['id'] in keys:
+            continue
+        new_def.append(resource_def)
 
     return json.dumps({
-        'results': data_left + data_right
+        'results': new_def + data_right
     })
 
 
