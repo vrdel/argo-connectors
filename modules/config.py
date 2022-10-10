@@ -274,6 +274,8 @@ class CustomerConf(object):
                     topofeedendpointsextensions = config.get(section, 'TopoFeedServiceEndpointsExtensions', fallback=None)
                     topofeedendpointsextras = config.get(section, 'TopoFeedServiceEndpointsExtras', fallback=None)
                     topofeedservicegroups = config.get(section, 'TopoFeedServiceGroups', fallback=None)
+                    oidctoken = config.get(section, 'OIDCRefreshToken', fallback=None)
+                    oidctokenapi = config.get(section, 'OIDCTokenEndpoint' , fallback=None)
                     topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
                     servicetypesfeed = config.get(section, 'ServiceTypesFeed', fallback=None)
                     downtimesfeed = config.get(section, 'DowntimesFeed', fallback=None)
@@ -309,7 +311,9 @@ class CustomerConf(object):
                                              'TopoFetchType': topofetchtype,
                                              'TopoScope': toposcope,
                                              'TopoType': topotype,
-                                             'TopoUIDServiceEnpoints': topouidservendpoints
+                                             'TopoUIDServiceEnpoints': topouidservendpoints,
+                                             'OIDCTokenEndpoint': oidctokenapi,
+                                             'OIDCRefreshToken': oidctoken
                                              }})
                 if optopts:
                     auth, webapi, empty_data, bdii = {}, {}, {}, {}
@@ -531,6 +535,12 @@ class CustomerConf(object):
 
     def get_topofeedendpointsextensions(self):
         return self._get_cust_options('TopoFeedEndpointsExtensions')
+
+    def get_oidctoken(self):
+        return self._get_cust_options('OIDCRefreshToken')
+
+    def get_oidctokenapi(self):
+        return self._get_cust_options('OIDCTokenEndpoint')
 
     def get_topofeedendpointsextras(self):
         return self._get_cust_options('TopoFeedEndpointsExtras')

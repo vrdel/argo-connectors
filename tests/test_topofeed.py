@@ -1019,5 +1019,6 @@ class ParseEoscProviderExtras(unittest.TestCase):
         self.assertTrue('JSON feed' in excep.msg)
         self.assertTrue('JSONDecodeError' in excep.msg)
 
+
 if __name__ == '__main__':
     unittest.main()

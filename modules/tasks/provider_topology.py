@@ -144,6 +144,10 @@ class TaskProviderTopology(object):
         topofeedextensions = self.confcust.get_topofeedendpointsextensions()
         topofeedproviders = self.confcust.get_topofeedservicegroups()
         topofeedresources = self.confcust.get_topofeedendpoints()
+        oidctoken = self.confcust.get_oidctoken()
+        oidctokenapi = self.confcust.get_oidctokenapi()
+        topofeedresources = self.confcust.get_topofeedendpoints()
+        topofeedextras = self.confcust.get_topofeedendpointsextras()
         coros = [
             self.fetch_data(topofeedresources, self.topofeedpaging),
             self.fetch_data(topofeedproviders, self.topofeedpaging),
