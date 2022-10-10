@@ -9,7 +9,7 @@ from argo_connectors.io.webapi import WebAPI
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
-from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
+from argo_connectors.parse.provider_topology import ParseTopo, ParseResourcesExtras, ParseExtensions, buildmap_id2groupname
 from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError
 
@@ -49,6 +49,15 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
 def filter_out_results(data):
     json_data = json.loads(data)['results']
     return json_data
+
+
+def concatenate_resources(left, right):
+    data_left = json.loads(left)['results']
+    data_right = json.loads(right)['results']
+
+    return json.dumps({
+        'results': data_left + data_right
+    })
 
 
 class TaskProviderTopology(object):
@@ -227,15 +236,14 @@ class TaskProviderTopology(object):
         oidcclientid = self.confcust.get_oidcclientid()
         topofeedresources = self.confcust.get_topofeedendpoints()
         topofeedextras = self.confcust.get_topofeedendpointsextras()
-        # coros = [
-            # self.fetch_data(topofeedresources, self.topofeedpaging),
-            # self.fetch_data(topofeedproviders, self.topofeedpaging),
-        # ]
-        # if topofeedextensions:
-            # coros.append(self.fetch_data(topofeedextensions, self.topofeedpaging))
+        coros = [
+            self.fetch_data(topofeedresources, self.topofeedpaging),
+            self.fetch_data(topofeedproviders, self.topofeedpaging),
+        ]
+        if topofeedextensions:
+            coros.append(self.fetch_data(topofeedextensions, self.topofeedpaging))
 
         if oidctoken and oidctokenapi:
-            coros = []
             coros.append(self.token_and_data_fetch(oidcclientid, oidctoken,
                                                    oidctokenapi,
                                                    topofeedextras,
@@ -248,12 +256,23 @@ class TaskProviderTopology(object):
         if exc_raised:
             raise ConnectorError(repr(exc))
 
-        if topofeedextensions:
+        if topofeedextensions and topofeedextras:
+            fetched_resources, fetched_providers, fetched_extensions, fetched_extras = fetched_data
+        elif topofeedextensions:
             fetched_resources, fetched_providers, fetched_extensions = fetched_data
+        elif topofeedextras:
+            fetched_resources, fetched_providers, fetched_extras = fetched_data
         else:
             fetched_resources, fetched_providers = fetched_data
 
         if fetched_resources and fetched_providers:
+            if fetched_extras:
+                parsed_extras = ParseResourcesExtras(self.logger,
+                                                     fetched_extras,
+                                                     ['horizontalService'],
+                                                     self.logger.customer).data
+                fetched_resources = concatenate_resources(fetched_resources, parsed_extras)
+            import ipdb; ipdb.set_trace()
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
