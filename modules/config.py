@@ -276,6 +276,7 @@ class CustomerConf(object):
                     topofeedservicegroups = config.get(section, 'TopoFeedServiceGroups', fallback=None)
                     oidctoken = config.get(section, 'OIDCRefreshToken', fallback=None)
                     oidctokenapi = config.get(section, 'OIDCTokenEndpoint' , fallback=None)
+                    oidcclientid = config.get(section, 'OIDCClientId' , fallback=None)
                     topofeedpaging = config.get(section, 'TopoFeedPaging', fallback='GOCDB')
                     servicetypesfeed = config.get(section, 'ServiceTypesFeed', fallback=None)
                     downtimesfeed = config.get(section, 'DowntimesFeed', fallback=None)
@@ -313,7 +314,8 @@ class CustomerConf(object):
                                              'TopoType': topotype,
                                              'TopoUIDServiceEnpoints': topouidservendpoints,
                                              'OIDCTokenEndpoint': oidctokenapi,
-                                             'OIDCRefreshToken': oidctoken
+                                             'OIDCRefreshToken': oidctoken,
+                                             'OIDCClientId': oidcclientid
                                              }})
                 if optopts:
                     auth, webapi, empty_data, bdii = {}, {}, {}, {}
@@ -541,6 +543,9 @@ class CustomerConf(object):
 
     def get_oidctokenapi(self):
         return self._get_cust_options('OIDCTokenEndpoint')
+
+    def get_oidcclientid(self):
+        return self._get_cust_options('OIDCClientId')
 
     def get_topofeedendpointsextras(self):
         return self._get_cust_options('TopoFeedEndpointsExtras')
