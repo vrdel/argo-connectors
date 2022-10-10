@@ -204,6 +204,7 @@ class ParseTopo(object):
 
     def get_group_groups(self):
         gg = list()
+        providers_added = dict()
         for provider in self.providers.data:
             resource_from_provider = list(filter(
                 lambda resource: resource['provider'] == provider['id'],
@@ -211,6 +212,9 @@ class ParseTopo(object):
             ))
             for resource in resource_from_provider:
                 gge = dict()
+                if (providers_added.get(provider['id'], False) and
+                    providers_added[provider['id']] == resource['id']):
+                    continue
                 gge['type'] = 'PROJECT'
                 gge['group'] = provider['id']
                 gge['subgroup'] = resource['id']
@@ -220,6 +224,7 @@ class ParseTopo(object):
                 else:
                     gge['tags'] = dict(info_projectname=provider['abbr'])
                 gg.append(gge)
+                providers_added.update({provider['id']: resource['id']})
 
         return gg
 

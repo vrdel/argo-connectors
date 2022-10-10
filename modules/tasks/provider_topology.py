@@ -272,7 +272,6 @@ class TaskProviderTopology(object):
                                                      ['horizontalService'],
                                                      self.logger.customer).data
                 fetched_resources = concatenate_resources(fetched_resources, parsed_extras)
-            import ipdb; ipdb.set_trace()
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
