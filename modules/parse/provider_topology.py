@@ -48,6 +48,7 @@ class ParseResourcesExtras(ParseHelpers):
                         key_true = extras.get(key, False)
                         if key_true:
                             service = resource['service']
+                            service['tags'].append(key)
                             self._resources.append(service)
             if self._ret_json:
                 self.data = self._resources
