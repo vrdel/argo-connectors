@@ -140,20 +140,42 @@ class TaskProviderTopology(object):
                 await session.close()
                 raise exc
 
+    async def token_and_data_fetch(self, oidcclientid, oidctoken, oidcapi,
+                                   feedextras):
+        token_endpoint = urlparse(oidcapi)
+        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
+
+        data = 'grant_type=refresh_token&refresh_token={0}'.format(oidctoken)
+        data += '&client_id={0}&scope=openid%20email%20profile'.format(oidcclientid)
+
+        res = await session.http_post('{}://{}{}'.format(token_endpoint.scheme,
+                                                        token_endpoint.netloc,
+                                                        token_endpoint.path), data, headers={
+                                                            'content-type': 'application/x-www-form-urlencoded'
+                                                        })
+
+
     async def run(self):
         topofeedextensions = self.confcust.get_topofeedendpointsextensions()
         topofeedproviders = self.confcust.get_topofeedservicegroups()
         topofeedresources = self.confcust.get_topofeedendpoints()
         oidctoken = self.confcust.get_oidctoken()
         oidctokenapi = self.confcust.get_oidctokenapi()
+        oidcclientid = self.confcust.get_oidcclientid()
         topofeedresources = self.confcust.get_topofeedendpoints()
         topofeedextras = self.confcust.get_topofeedendpointsextras()
-        coros = [
-            self.fetch_data(topofeedresources, self.topofeedpaging),
-            self.fetch_data(topofeedproviders, self.topofeedpaging),
-        ]
-        if topofeedextensions:
-            coros.append(self.fetch_data(topofeedextensions, self.topofeedpaging))
+        # coros = [
+            # self.fetch_data(topofeedresources, self.topofeedpaging),
+            # self.fetch_data(topofeedproviders, self.topofeedpaging),
+        # ]
+        # if topofeedextensions:
+            # coros.append(self.fetch_data(topofeedextensions, self.topofeedpaging))
+
+        if oidctoken and oidctokenapi:
+            coros = []
+            coros.append(self.token_and_data_fetch(oidcclientid, oidctoken,
+                                                   oidctokenapi,
+                                                   topofeedextras))
 
         # fetch topology data concurrently in coroutines
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
