@@ -140,8 +140,7 @@ class TaskProviderTopology(object):
                 await session.close()
                 raise exc
 
-    async def token_and_data_fetch(self, oidcclientid, oidctoken, oidcapi,
-                                   feedextras):
+    async def token_and_data_fetch(self, oidcclientid, oidctoken, oidcapi, feedextras, paginated):
         token_endpoint = urlparse(oidcapi)
         session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
 
@@ -151,21 +150,73 @@ class TaskProviderTopology(object):
         res = await session.http_post('{}://{}{}'.format(token_endpoint.scheme,
                                                         token_endpoint.netloc,
                                                         token_endpoint.path), data,
-                                      headers={
+                                    headers={
                                         'content-type': 'application/x-www-form-urlencoded'
-                                      })
+                                    })
+
         access_token = json.loads(res).get('id_token', None)
+
         if access_token:
-            extras_feed = urlparse(feedextras)
             headers = {
                 "Accept": "application/json",
                 "Authorization": "Bearer {0}".format(access_token)
             }
-            res = await session.http_get('{}://{}{}'.format(extras_feed.scheme,
-                                                            extras_feed.netloc,
-                                                            extras_feed.path),
-                                         headers=headers)
+            extras_feed = urlparse(feedextras)
+            res = await session.http_get('{}://{}{}'.format(
+                extras_feed.scheme,
+                extras_feed.netloc,
+                extras_feed.path),
+                headers=headers
+            )
+            if paginated:
+                try:
+                    next_cursor = find_next_paging_cursor_count(self.logger, res)
+                    total, from_index, to_index = next_cursor()
+                    fetched_results = filter_out_results(res)
+                    num = to_index - from_index
+                    from_index = to_index
 
+                    while to_index != total:
+                        res = await session.http_get('{}://{}{}?from={}&quantity={}'.format(
+                            extras_feed.scheme,
+                            extras_feed.netloc,
+                            extras_feed.path,
+                            from_index, num),
+                            headers=headers
+                        )
+                        fetched_results = fetched_results + filter_out_results(res)
+                        next_cursor = find_next_paging_cursor_count(self.logger, res)
+                        total, from_index, to_index = next_cursor()
+                        num = to_index - from_index
+                        from_index = to_index
+
+                    await session.close()
+                    return dict(results=fetched_results)
+
+                except ConnectorParseError as exc:
+                    await session.close()
+                    raise exc
+
+            else:
+                try:
+                    next_cursor = find_next_paging_cursor_count(self.logger, res)
+                    total, from_index, to_index = next_cursor()
+                    num = total
+                    from_index = 0
+
+                    res = await session.http_get('{}://{}{}?from={}&quantity={}'.format(
+                        extras_feed.scheme,
+                        extras_feed.netloc,
+                        extras_feed.path,
+                        from_index, num),
+                        headers=headers
+                    )
+                    await session.close()
+                    return res
+
+                except ConnectorParseError as exc:
+                    await session.close()
+                    raise exc
 
     async def run(self):
         topofeedextensions = self.confcust.get_topofeedendpointsextensions()
@@ -187,7 +238,8 @@ class TaskProviderTopology(object):
             coros = []
             coros.append(self.token_and_data_fetch(oidcclientid, oidctoken,
                                                    oidctokenapi,
-                                                   topofeedextras))
+                                                   topofeedextras,
+                                                   self.topofeedpaging))
 
         # fetch topology data concurrently in coroutines
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
