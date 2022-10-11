@@ -951,7 +951,7 @@ class ParseEoscProviderExtras(unittest.TestCase):
                     'info_ID': 'provider_0310_1.resource_provider_0310_1_upate',
                     'info_URL': 'https://www.cyfronet.pl/zalacznik/8437',
                     'info_groupname': 'resource Provider 03.10 1 upate',
-                    'service_tags': 'ee'
+                    'service_tags': 'ee, horizontalService'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -965,7 +965,7 @@ class ParseEoscProviderExtras(unittest.TestCase):
                     'info_URL': 'https://support.d4science.org/projects/aginfraplus_wiki/wiki/CHART_VIS',
                     'info_groupname': 'AGINFRA+ Chart Visualization',
                     'service_tags': 'visualization, chart, graph, line, mind map, '
-                                    'scatter plot, spline, bar, pie, donought'
+                                    'scatter plot, spline, bar, pie, donought, horizontalService'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -978,7 +978,7 @@ class ParseEoscProviderExtras(unittest.TestCase):
                     'info_ID': 'aginfra.agris_elastic_index',
                     'info_URL': 'https://support.d4science.org/projects/aginfraplus_wiki/wiki/AGRIS_Elastic_Index',
                     'info_groupname': 'AGINFRA+ AGRIS Elastic Index',
-                    'service_tags': 'Publication Discovery, Metadata, Search'
+                    'service_tags': 'Publication Discovery, Metadata, Search, horizontalService'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -990,7 +990,8 @@ class ParseEoscProviderExtras(unittest.TestCase):
                     'hostname': 'www.cyfronet.pl',
                     'info_ID': '3200-beta2._test_412',
                     'info_URL': 'https://www.cyfronet.pl/zalacznik/8437',
-                    'info_groupname': '       test 4.12'
+                    'info_groupname': '       test 4.12',
+                    'service_tags': 'horizontalService'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1005,7 +1006,8 @@ class ParseEoscProviderExtras(unittest.TestCase):
                                 'eoscen-220',
                     'info_URL': 'https://wiki.geant.org/display/SYS/GEANT+Service+Catalogue+v3.00%3Ev4.00+compliance',
                     'info_groupname': 'EOSC Profile v4.0.0 Test for EOSCEN-218 and '
-                                        'EOSCEN-220'
+                                      'EOSCEN-220',
+                    'service_tags': 'horizontalService'
                 },
                 'type': 'SERVICEGROUPS'
             }
