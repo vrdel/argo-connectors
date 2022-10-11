@@ -234,7 +234,7 @@ class TaskProviderTopology(object):
                     await session.close()
                     return dict(results=fetched_results)
 
-                except ConnectorParseError as exc:
+                except (ConnectorParseError, ConnectorHttpError) as exc:
                     await session.close()
                     raise exc
 
