@@ -11,7 +11,7 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo, ParseResourcesExtras, ParseExtensions, buildmap_id2groupname
 from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 
 
 def contains_exception(list):
@@ -106,11 +106,17 @@ class TaskProviderTopology(object):
     async def fetch_data(self, feed, paginated):
         fetched_data = list()
         remote_topo = urlparse(feed)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts)
+        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
 
-        res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
-                                                        remote_topo.netloc,
-                                                        remote_topo.path))
+        try:
+            res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
+                                                            remote_topo.netloc,
+                                                            remote_topo.path))
+
+        except ConnectorHttpError as exc:
+            await session.close()
+            raise exc
+
         if paginated:
             try:
                 next_cursor = find_next_paging_cursor_count(self.logger, res)
@@ -161,17 +167,22 @@ class TaskProviderTopology(object):
 
     async def token_and_data_fetch(self, oidcclientid, oidctoken, oidcapi, feedextras, paginated):
         token_endpoint = urlparse(oidcapi)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts)
+        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
 
         data = 'grant_type=refresh_token&refresh_token={0}'.format(oidctoken)
         data += '&client_id={0}&scope=openid%20email%20profile'.format(oidcclientid)
 
-        res = await session.http_post('{}://{}{}'.format(token_endpoint.scheme,
-                                                        token_endpoint.netloc,
-                                                        token_endpoint.path), data,
-                                    headers={
-                                        'content-type': 'application/x-www-form-urlencoded'
-                                    })
+        try:
+            res = await session.http_post('{}://{}{}'.format(token_endpoint.scheme,
+                                                            token_endpoint.netloc,
+                                                            token_endpoint.path), data,
+                                        headers={
+                                            'content-type': 'application/x-www-form-urlencoded'
+                                        })
+
+        except ConnectorHttpError as exc:
+            await session.close()
+            raise exc
 
         try:
             access_token = json.loads(res).get('id_token', None)
@@ -186,12 +197,18 @@ class TaskProviderTopology(object):
                 "Authorization": "Bearer {0}".format(access_token)
             }
             extras_feed = urlparse(feedextras)
-            res = await session.http_get('{}://{}{}'.format(
-                extras_feed.scheme,
-                extras_feed.netloc,
-                extras_feed.path),
-                headers=headers
-            )
+
+            try:
+                res = await session.http_get('{}://{}{}'.format(
+                    extras_feed.scheme,
+                    extras_feed.netloc,
+                    extras_feed.path),
+                    headers=headers
+                )
+            except ConnectorHttpError as exc:
+                await session.close()
+                raise exc
+
             if paginated:
                 try:
                     next_cursor = find_next_paging_cursor_count(self.logger, res)
