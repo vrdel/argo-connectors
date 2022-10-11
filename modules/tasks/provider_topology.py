@@ -169,7 +169,12 @@ class TaskProviderTopology(object):
                                         'content-type': 'application/x-www-form-urlencoded'
                                     })
 
-        access_token = json.loads(res).get('id_token', None)
+        try:
+            access_token = json.loads(res).get('id_token', None)
+        except json.decoder.JSONDecodeError as exc:
+            msg = "Could not extract OIDC Access token: {}".format(repr(exc))
+            await session.close()
+            raise ConnectorParseError(msg)
 
         if access_token:
             headers = {
