@@ -990,7 +990,7 @@ class ParseEoscProviderExtras(unittest.TestCase):
                     'hostname': 'www.cyfronet.pl',
                     'info_ID': '3200-beta2._test_412',
                     'info_URL': 'https://www.cyfronet.pl/zalacznik/8437',
-                    'info_groupname': '       test 4.12',
+                    'info_groupname': 'test 4.12',
                     'service_tags': 'horizontalService'
                 },
                 'type': 'SERVICEGROUPS'
