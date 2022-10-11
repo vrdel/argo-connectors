@@ -51,7 +51,11 @@ def filter_out_results(data):
     return json_data
 
 
-def concatenate_resources(left, right):
+def join_resources(left, right):
+    """
+        Join default and extras resources leaving out duplicate if found from
+        default.
+    """
     data_left = json.loads(left)['results']
     data_right = json.loads(right)['results']
     keys = [resource['id'] for resource in data_right]
@@ -102,7 +106,7 @@ class TaskProviderTopology(object):
     async def fetch_data(self, feed, paginated):
         fetched_data = list()
         remote_topo = urlparse(feed)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
+        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts)
 
         res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                         remote_topo.netloc,
@@ -157,7 +161,7 @@ class TaskProviderTopology(object):
 
     async def token_and_data_fetch(self, oidcclientid, oidctoken, oidcapi, feedextras, paginated):
         token_endpoint = urlparse(oidcapi)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
+        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts)
 
         data = 'grant_type=refresh_token&refresh_token={0}'.format(oidctoken)
         data += '&client_id={0}&scope=openid%20email%20profile'.format(oidcclientid)
@@ -254,7 +258,7 @@ class TaskProviderTopology(object):
         if topofeedextensions:
             coros.append(self.fetch_data(topofeedextensions, self.topofeedpaging))
 
-        if oidctoken and oidctokenapi:
+        if oidctoken and oidctokenapi and topofeedextras:
             coros.append(self.token_and_data_fetch(oidcclientid, oidctoken,
                                                    oidctokenapi,
                                                    topofeedextras,
@@ -282,7 +286,7 @@ class TaskProviderTopology(object):
                                                      fetched_extras,
                                                      ['horizontalService'],
                                                      self.logger.customer).data
-                fetched_resources = concatenate_resources(fetched_resources, parsed_extras)
+                fetched_resources = join_resources(fetched_resources, parsed_extras)
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
