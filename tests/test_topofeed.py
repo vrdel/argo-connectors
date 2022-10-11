@@ -3,7 +3,7 @@ import unittest
 from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, ParseResourcesExtras, buildmap_id2groupname
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -876,6 +876,150 @@ class ParseEoscProvider(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             }
         ])
+
+
+class ParseEoscProviderExtras(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-resourcefeed_extras.json', encoding='utf-8') as feed_file:
+            resources = feed_file.read()
+        with open('tests/sample-providerfeed_extras.json', encoding='utf-8') as feed_file:
+            providers = feed_file.read()
+        resources = ParseResourcesExtras(logger, resources, ['horizontalService'], CUSTOMER_NAME).data
+        logger.customer = CUSTOMER_NAME
+        eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
+        self.group_groups = eosc_topo.get_group_groups()
+        self.group_endpoints = eosc_topo.get_group_endpoints()
+
+        self.maxDiff = None
+
+    def test_groupGroups(self):
+        self.assertEqual(self.group_groups, [
+            {
+                'group': 'provider_0310_1',
+                'subgroup': 'provider_0310_1.resource_provider_0310_1_upate',
+                'tags': {
+                    'info_projectname': 'Provider 03.10 1'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'aginfra',
+                'subgroup': 'aginfra.chart_visualization',
+                'tags': {
+                    'info_projectname': 'AGINFRA+', 'provider_tags': 'Agri-food'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'aginfra',
+                'subgroup': 'aginfra.agris_elastic_index',
+                'tags': {
+                    'info_projectname': 'AGINFRA+',
+                    'provider_tags': 'Agri-food'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': '3200-beta2',
+                'subgroup': '3200-beta2._test_412',
+                'tags': {
+                    'info_projectname': '3.20.0-beta.2 update',
+                    'provider_tags': 'tag'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'geant',
+                'subgroup': 'geant.eosc_profile v4.0.0 test for eoscen-218 and eoscen-220',
+                'tags': {
+                    'info_projectname': 'GÉANT',
+                    'provider_tags': 'e-infrastructure, Pan-European GÉANT network, '
+                                    'Networks, Trust and Identity'
+                },
+                'type': 'PROJECT'
+            }
+        ])
+
+    def test_groupEndpoints(self):
+        self.assertEqual(self.group_endpoints, [
+            {
+                'group': 'provider_0310_1.resource_provider_0310_1_upate',
+                'hostname': 'www.cyfronet.pl_provider_0310_1.resource_provider_0310_1_upate',
+                'service': 'eu.eosc.portal.services.url',
+                'tags': {
+                    'hostname': 'www.cyfronet.pl',
+                    'info_ID': 'provider_0310_1.resource_provider_0310_1_upate',
+                    'info_URL': 'https://www.cyfronet.pl/zalacznik/8437',
+                    'info_groupname': 'resource Provider 03.10 1 upate',
+                    'service_tags': 'ee, horizontalService'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'aginfra.chart_visualization',
+                'hostname': 'support.d4science.org_aginfra.chart_visualization',
+                'service': 'eu.eosc.portal.services.url',
+                'tags': {
+                    'hostname': 'support.d4science.org',
+                    'info_ID': 'aginfra.chart_visualization',
+                    'info_URL': 'https://support.d4science.org/projects/aginfraplus_wiki/wiki/CHART_VIS',
+                    'info_groupname': 'AGINFRA+ Chart Visualization',
+                    'service_tags': 'visualization, chart, graph, line, mind map, '
+                                    'scatter plot, spline, bar, pie, donought, horizontalService'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'aginfra.agris_elastic_index',
+                'hostname': 'support.d4science.org_aginfra.agris_elastic_index',
+                'service': 'eu.eosc.portal.services.url',
+                'tags': {
+                    'hostname': 'support.d4science.org',
+                    'info_ID': 'aginfra.agris_elastic_index',
+                    'info_URL': 'https://support.d4science.org/projects/aginfraplus_wiki/wiki/AGRIS_Elastic_Index',
+                    'info_groupname': 'AGINFRA+ AGRIS Elastic Index',
+                    'service_tags': 'Publication Discovery, Metadata, Search, horizontalService'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': '3200-beta2._test_412',
+                'hostname': 'www.cyfronet.pl_3200-beta2._test_412',
+                'service': 'eu.eosc.portal.services.url',
+                'tags': {
+                    'hostname': 'www.cyfronet.pl',
+                    'info_ID': '3200-beta2._test_412',
+                    'info_URL': 'https://www.cyfronet.pl/zalacznik/8437',
+                    'info_groupname': 'test 4.12',
+                    'service_tags': 'horizontalService'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'geant.eosc_profile v4.0.0 test for eoscen-218 and eoscen-220',
+                'hostname': 'wiki.geant.org_geant.eosc_profile v4.0.0 test for eoscen-218 '
+                        'and eoscen-220',
+                'service': 'eu.eosc.portal.services.url',
+                'tags': {
+                    'hostname': 'wiki.geant.org',
+                    'info_ID': 'geant.eosc_profile v4.0.0 test for eoscen-218 and '
+                                'eoscen-220',
+                    'info_URL': 'https://wiki.geant.org/display/SYS/GEANT+Service+Catalogue+v3.00%3Ev4.00+compliance',
+                    'info_groupname': 'EOSC Profile v4.0.0 Test for EOSCEN-218 and '
+                                      'EOSCEN-220',
+                    'service_tags': 'horizontalService'
+                },
+                'type': 'SERVICEGROUPS'
+            }
+        ])
+
+    def test_FailedEoscResourcesExtrasTopology(self):
+        logger.customer = CUSTOMER_NAME
+        with self.assertRaises(ConnectorParseError) as cm:
+            resources = ParseResourcesExtras(logger, 'FAILED_DATA', ['horizontalService'], CUSTOMER_NAME).data
+        excep = cm.exception
+        self.assertTrue('JSON feed' in excep.msg)
+        self.assertTrue('JSONDecodeError' in excep.msg)
 
 
 if __name__ == '__main__':
