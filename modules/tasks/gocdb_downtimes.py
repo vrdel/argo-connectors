@@ -10,7 +10,7 @@ from argo_connectors.tasks.common import write_state, write_downtimes_avro as wr
 
 class TaskGocdbDowntimes(object):
     def __init__(self, loop, logger, connector_name, globopts, webapi_opts,
-                 confcust, custname, feed, DOWNTIMEPI, start, end,
+                 confcust, custname, feed, start, end,
                  uidservtype, targetdate, timestamp):
         self.event_loop = loop
         self.logger = logger
@@ -20,7 +20,6 @@ class TaskGocdbDowntimes(object):
         self.confcust = confcust
         self.custname = custname
         self.feed = feed
-        self.DOWNTIMEPI = DOWNTIMEPI
         self.start = start
         self.end = end
         self.uidservtype = uidservtype
@@ -34,12 +33,21 @@ class TaskGocdbDowntimes(object):
         session = SessionWithRetry(self.logger,
                                    os.path.basename(self.connector_name),
                                    self.globopts)
-        res = await session.http_get(
-            '{}://{}{}&windowstart={}&windowend={}'.format(feed_parts.scheme,
+        if feed_parts.query:
+            query_url = \
+            '{}://{}{}?{}&windowstart={}&windowend={}'.format(feed_parts.scheme,
+                                                              feed_parts.netloc,
+                                                              feed_parts.path,
+                                                              feed_parts.query,
+                                                              start_fmt,
+                                                              end_fmt)
+        else:
+            query_url = \
+            '{}://{}{}?windowstart={}&windowend={}'.format(feed_parts.scheme,
                                                            feed_parts.netloc,
-                                                           self.DOWNTIMEPI,
+                                                           feed_parts.path,
                                                            start_fmt, end_fmt)
-        )
+        res = await session.http_get(query_url)
 
         return res
 
