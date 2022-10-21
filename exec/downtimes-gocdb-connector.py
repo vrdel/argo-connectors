@@ -52,6 +52,13 @@ def main():
     feed = confcust.get_topofeed()
     logger.customer = confcust.get_custname()
 
+    auth_custopts = confcust.get_authopts()
+    auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
+    auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
+    if not auth_complete:
+        logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
+        raise SystemExit(1)
+
     if len(args.date) == 0:
         print(parser.print_help())
         raise SystemExit(1)
@@ -82,7 +89,7 @@ def main():
     try:
         cust = list(confcust.get_customers())[0]
         task = TaskGocdbDowntimes(loop, logger, sys.argv[0], globopts,
-                                  webapi_opts, confcust,
+                                  auth_opts, webapi_opts, confcust,
                                   confcust.get_custname(cust), feed, start,
                                   end, uidservtype, args.date[0], timestamp)
         loop.run_until_complete(task.run())

@@ -9,13 +9,14 @@ from argo_connectors.tasks.common import write_state, write_downtimes_avro as wr
 
 
 class TaskGocdbDowntimes(object):
-    def __init__(self, loop, logger, connector_name, globopts, webapi_opts,
-                 confcust, custname, feed, start, end,
+    def __init__(self, loop, logger, connector_name, globopts, auth_opts,
+                 webapi_opts, confcust, custname, feed, start, end,
                  uidservtype, targetdate, timestamp):
         self.event_loop = loop
         self.logger = logger
         self.connector_name = connector_name
         self.globopts = globopts
+        self.auth_opts = auth_opts
         self.webapi_opts = webapi_opts
         self.confcust = confcust
         self.custname = custname
@@ -32,7 +33,8 @@ class TaskGocdbDowntimes(object):
         end_fmt = self.end.strftime("%Y-%m-%d")
         session = SessionWithRetry(self.logger,
                                    os.path.basename(self.connector_name),
-                                   self.globopts)
+                                   self.globopts,
+                                   custauth=self.auth_opts)
         if feed_parts.query:
             query_url = \
             '{}://{}{}?{}&windowstart={}&windowend={}'.format(feed_parts.scheme,
