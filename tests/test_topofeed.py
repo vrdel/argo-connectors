@@ -35,12 +35,13 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
         parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
+        self.maxDiff = None
 
         parse_service_endpoints_ext = ParseServiceEndpoints(logger, self.content, 'CUSTOMERFOO', uid=True, pass_extensions=True)
         self.group_endpoints_ext = parse_service_endpoints_ext.get_group_endpoints()
 
     def test_LenEndpoints(self):
-        self.assertEqual(len(self.group_endpoints), 3) # Parsed correct number of endpoint groups
+        self.assertEqual(len(self.group_endpoints), 4) # Parsed correct number of endpoint groups
 
     def test_DataEndpoints(self):
         self.assertEqual(self.group_endpoints[0],
@@ -68,7 +69,6 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                     'scope': 'EGI, wlcg, tier1, alice, atlas, cms, lhcb'},
                 'type': 'SITES'
             }
-
         )
 
     def test_HaveExtensions(self):
@@ -78,6 +78,66 @@ class ParseServiceEndpointsTest(unittest.TestCase):
     def test_EnabledExtensions(self):
         # Assert pass_extensions=True is working
         self.assertTrue(endpoints_have_extension(self.group_endpoints_ext))
+        self.assertEqual(self.group_endpoints_ext, [
+            {
+                'group': 'AZ-IFAN',
+                'hostname': 'ce.physics.science.az_1555G0',
+                'service': 'CREAM-CE',
+                'tags': {
+                    'info_HOSTDN': '/DC=ORG/DC=SEE-GRID/O=Hosts/O=Institute of Physics '
+                                'of ANAS/CN=ce.physics.science.az',
+                    'info_ID': '1555G0',
+                    'info_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
+                    'info_service_endpoint_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI, wlcg, atlas'
+                },
+                'type': 'SITES'
+            },
+            {
+                'group': 'GRIDOPS-CheckIn',
+                'hostname': 'aai.egi.eu_9502G0',
+                'service': 'egi.aai.oidc',
+                'tags': {
+                    'info_ID': '9502G0',
+                    'info_URL': 'https://aai.egi.eu/auth/realms/egi',
+                    'info_ext_ARGO_OIDC_AUTHORISATION_ENDPOINT': '/auth/realms/egi/protocol/openid-connect/auth',
+                    'info_ext_ARGO_OIDC_PROVIDER_CONFIGURATION': '/auth/realms/egi/.well-known/openid-configuration',
+                    'info_service_endpoint_URL': 'https://aai.egi.eu/auth/realms/egi/.well-known/openid-configuration, '
+                                                'https://aai.egi.eu/auth/realms/egi/protocol/openid-connect/auth',
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI'
+                },
+                'type': 'SITES'},
+            {
+                'group': 'GSI-LCG2',
+                'hostname': 'grid13.gsi.de_14G0',
+                'service': 'CE',
+                'tags': {
+                    'info_ID': '14G0',
+                    'monitored': '0',
+                    'production': '0',
+                    'scope': 'EGI, wlcg, tier2, alice'
+                },
+                'type': 'SITES'
+            },
+            {
+                'group': 'RAL-LCG2',
+                'hostname': 'arc-ce01.gridpp.rl.ac.uk_782G0',
+                'service': 'gLite-APEL',
+                'tags': {
+                    'info_HOSTDN': '/C=UK/O=eScience/OU=CLRC/L=RAL/CN=arc-ce01.gridpp.rl.ac.uk',
+                    'info_ID': '782G0',
+                    'info_ext_InformationSystem': 'https://www.gridpp.rl.ac.uk/RAL-LCG2/RAL-LCG2_CE.json',
+                    'monitored': '1',
+                    'production': '1',
+                    'scope': 'EGI, wlcg, tier1, alice, atlas, cms, lhcb'
+                },
+                'type': 'SITES'
+            }
+        ])
 
     def test_SuffixUid(self):
         # Assert uid=True is working
