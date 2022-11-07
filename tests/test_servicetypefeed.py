@@ -19,6 +19,7 @@ class ParseGocdb(unittest.TestCase):
         logger.customer = CUSTOMER_NAME
         self.services_gocdb = ParseGocdbServiceTypes(logger, service_types)
         self.maxDiff = None
+        self.fail_services_gocdb = ParseGocdbServiceTypes(logger, 'FAILED_DATA')
 
     def test_GocdbFeedParse(self):
         service_types = self.services_gocdb.get_data()
@@ -42,8 +43,20 @@ class ParseGocdb(unittest.TestCase):
             {
                 'description': '',
                 'name': 'service.type.empty.desc'
+            },
+            {
+                'description': '',
+                'name': 'SERVICE.TYPE.UPPERCASE'
             }
         ])
+
+    def test_FailedGocdbFeedParse(self):
+        with self.assertRaises(ConnectorParseError) as cm:
+            failed_service_types = self.fail_services_gocdb.get_data()
+
+        excep = cm.exception
+        self.assertTrue('XML feed' in excep.msg)
+        self.assertTrue('syntax error' in excep.msg)
 
 
 class ParseFlat(unittest.TestCase):
