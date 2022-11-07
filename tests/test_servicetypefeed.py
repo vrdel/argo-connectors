@@ -43,6 +43,10 @@ class ParseGocdb(unittest.TestCase):
             {
                 'description': '',
                 'name': 'service.type.empty.desc'
+            },
+            {
+                'description': '',
+                'name': 'SERVICE.TYPE.UPPERCASE'
             }
         ])
 
