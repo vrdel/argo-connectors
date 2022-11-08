@@ -298,7 +298,7 @@ class TaskProviderTopology(object):
             fetched_resources, fetched_providers = fetched_data
 
         if fetched_resources and fetched_providers:
-            if fetched_extras:
+            if topofeedextras and fetched_extras:
                 parsed_extras = ParseResourcesExtras(self.logger,
                                                      fetched_extras,
                                                      ['horizontalService'],
