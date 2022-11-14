@@ -28,7 +28,7 @@ class ParseGocdbServiceTypes(ParseHelpers):
                             "description": desc if desc else ''
                         })
 
-            return all_service_type
+            return sorted(all_service_type,  key=lambda s: s['name'].lower())
 
         except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as exc:
             msg = '{} Customer:{} : Error parsing service types feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
