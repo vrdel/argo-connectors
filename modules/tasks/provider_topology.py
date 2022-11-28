@@ -116,8 +116,8 @@ class TaskProviderTopology(object):
         try:
             res = await session.http_get('{}://{}{}'.format(remote_topo.scheme,
                                                             remote_topo.netloc,
-                                                            remote_topo.path,
-                                                            headers=headers))
+                                                            remote_topo.path),
+                                                            headers=headers)
 
         except ConnectorHttpError as exc:
             await session.close()
@@ -137,8 +137,8 @@ class TaskProviderTopology(object):
                                                                                 remote_topo.netloc,
                                                                                 remote_topo.path,
                                                                                 from_index,
-                                                                                num,
-                                                                                headers=headers))
+                                                                                num),
+                                                                                headers=headers)
                     fetched_results = fetched_results + filter_out_results(res)
                     next_cursor = find_next_paging_cursor_count(self.logger, res)
                     total, from_index, to_index = next_cursor()
@@ -164,8 +164,8 @@ class TaskProviderTopology(object):
                                                                             remote_topo.netloc,
                                                                             remote_topo.path,
                                                                             from_index,
-                                                                            num,
-                                                                            headers=headers))
+                                                                            num),
+                                                                            headers=headers)
                 await session.close()
                 return res
 
