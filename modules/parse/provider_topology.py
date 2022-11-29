@@ -80,6 +80,8 @@ class ParseResources(ParseHelpers):
             else:
                 json_data = self.data
             for resource in json_data['results']:
+                if not resource.get('name', False):
+                    continue
                 self._resources.append({
                     'id': resource['id'],
                     'hardcoded_service': SERVICE_NAME_WEBPAGE,
@@ -114,6 +116,8 @@ class ParseProviders(ParseHelpers):
             else:
                 json_data = self.data
             for provider in json_data['results']:
+                if not provider.get('website', False):
+                    continue
                 self._providers.append({
                     'id': provider['id'],
                     'website': provider['website'],
