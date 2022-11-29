@@ -241,6 +241,8 @@ class ParseTopo(object):
                 gee['hostname'] = construct_fqdn(resource['webpage'])
             if resource.get('resource_tag', False):
                 resource_tags = [tag.strip() for tag in resource['resource_tag']]
+                if not resource.get('webpage', False):
+                    continue
                 gee['tags'] = dict(service_tags=', '.join(resource_tags),
                                    info_URL=resource['webpage'].strip(),
                                    info_ID=resource['id'].strip(),
