@@ -3,7 +3,7 @@ import unittest
 from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, ParseResourcesExtras, buildmap_id2groupname
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 
@@ -609,11 +609,11 @@ class ParseSitesBiomed(unittest.TestCase):
 
 class ParseEoscProvider(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-private-resource.json', encoding='utf-8') as feed_file:
+        with open('sample-private-resource.json', encoding='utf-8') as feed_file:
             resources = feed_file.read()
-        with open('tests/sample-private-provider.json', encoding='utf-8') as feed_file:
+        with open('sample-private-provider.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
-        with open('tests/sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
+        with open('sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
             resource_extensions = feed_file.read()
         logger.customer = CUSTOMER_NAME
         eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
@@ -633,59 +633,6 @@ class ParseEoscProvider(unittest.TestCase):
 
     def test_groupGroups(self):
         self.assertEqual(self.group_groups, [
-            {
-                'group': 'eudat',
-                'subgroup': 'eudat.b2access',
-                'tags': {
-                    'info_projectname': 'EUDAT',
-                    'provider_tags': 'Data Infrastructure, European Data Initiative'
-                },
-                'type': 'PROJECT'
-            },
-            {
-                'group': 'eudat',
-                'subgroup': 'eudat.b2note',
-                'tags': {
-                    'info_projectname': 'EUDAT',
-                    'provider_tags': 'Data Infrastructure, European Data Initiative'
-                },
-                'type': 'PROJECT'
-            },
-            {
-                'group': 'eudat',
-                'subgroup': 'eudat.b2share',
-                'tags': {
-                    'info_projectname': 'EUDAT',
-                    'provider_tags': 'Data Infrastructure, European Data Initiative'
-                },
-                'type': 'PROJECT'},
-            {
-                'group': 'eudat',
-                'subgroup': 'eudat.b2drop',
-                'tags': {
-                    'info_projectname': 'EUDAT',
-                    'provider_tags': 'Data Infrastructure, European Data Initiative'
-                },
-                'type': 'PROJECT'
-            },
-            {
-                'group': 'eudat',
-                'subgroup': 'eudat.b2safe',
-                'tags': {
-                    'info_projectname': 'EUDAT',
-                    'provider_tags': 'Data Infrastructure, European Data Initiative'
-                },
-                'type': 'PROJECT'
-            },
-            {
-                'group': 'eudat',
-                'subgroup': 'eudat.b2find',
-                'tags': {
-                    'info_projectname': 'EUDAT',
-                    'provider_tags': 'Data Infrastructure, European Data Initiative'
-                },
-                'type': 'PROJECT'
-            }
         ])
 
     def test_meshContactsProviders(self):
@@ -713,87 +660,69 @@ class ParseEoscProvider(unittest.TestCase):
             }
         )
 
-    def test_groupEndoints(self):
-        self.assertEqual(self.group_endpoints,[
+    def test_groupEndpoints(self):
+        self.assertEqual(self.group_endpoints, [
             {
-                'group': 'eudat.b2access',
-                'hostname': 'www.eudat.eu_eudat.b2access',
+                'group': 'srce.3dbionotes',
+                'hostname': '3dbionotes.cnb.csic.es_srce.3dbionotes',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
-                    'hostname': 'www.eudat.eu',
-                    'info_ID': 'eudat.b2access',
-                    'info_groupname': 'B2ACCESS',
-                    'info_URL': 'https://www.eudat.eu/services/b2access',
-                    'service_tags': 'single sign-on, federated identity management, federated '
-                                'AAI proxy'
+                    'hostname': '3dbionotes.cnb.csic.es',
+                    'info_ID': 'srce.3dbionotes',
+                    'info_URL': 'https://3dbionotes.cnb.csic.es/',
+                    'info_groupname': '3DBionotes-WS-TEST'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'eudat.b2note',
-                'hostname': 'b2note.eudat.eu_eudat.b2note',
+                'group': 'srce.poem',
+                'hostname': 'poem.devel.argo.grnet.gr_srce.poem',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
-                    'hostname': 'b2note.eudat.eu',
-                    'info_ID': 'eudat.b2note',
-                    'info_groupname': 'B2NOTE',
-                    'info_URL': 'https://b2note.eudat.eu',
-                    'service_tags': 'annotation'
+                    'hostname': 'poem.devel.argo.grnet.gr',
+                    'info_ID': 'srce.poem',
+                    'info_URL': 'https://poem.devel.argo.grnet.gr',
+                    'info_groupname': 'POEM'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'eudat.b2share',
-                'hostname': 'www.eudat.eu_eudat.b2share',
+                'group': 'srce.srceweb',
+                'hostname': 'www.srce.unizg.hr_srce.srceweb',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
-                    'hostname': 'www.eudat.eu',
-                    'info_ID': 'eudat.b2share',
-                    'info_groupname': 'B2SHARE',
-                    'info_URL': 'https://www.eudat.eu/services/b2share',
-                    'service_tags': 'data repository, data sharing, data publishing, FAIR'
+                    'hostname': 'www.srce.unizg.hr',
+                    'info_ID': 'srce.srceweb',
+                    'info_URL': 'https://www.srce.unizg.hr/',
+                    'info_groupname': 'SRCE Web'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'eudat.b2drop',
-                'hostname': 'www.eudat.eu_eudat.b2drop',
+                'group': 'srce.webodv',
+                'hostname': 'webodv-egi-ace.cloud.ba.infn.it_srce.webodv',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
-                    'hostname': 'www.eudat.eu',
-                    'info_ID': 'eudat.b2drop',
-                    'info_groupname': 'B2DROP',
-                    'info_URL': 'https://www.eudat.eu/services/b2drop',
-                    'service_tags': 'sync and share'
+                    'hostname': 'webodv-egi-ace.cloud.ba.infn.it',
+                    'info_ID': 'srce.webodv',
+                    'info_URL': 'http://webodv-egi-ace.cloud.ba.infn.it/',
+                    'info_groupname': 'WebODV - Online extraction, analysis and '
+                                        'visualization of SeaDataNet and Argo data'
                 },
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'eudat.b2safe',
-                'hostname': 'www.eudat.eu_eudat.b2safe',
+                'group': 'openaire.validator',
+                'hostname': 'www.openaire.eu_openaire.validator',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
-                    'hostname': 'www.eudat.eu',
-                    'info_ID': 'eudat.b2safe',
-                    'info_groupname': 'B2SAFE',
-                    'info_URL': 'https://www.eudat.eu/services/b2safe',
-                    'service_tags': 'replication, Policy-based data management, persistent identifiers, data archiving'
+                    'hostname': 'www.openaire.eu',
+                    'info_ID': 'openaire.validator',
+                    'info_URL': 'https://www.openaire.eu/validator',
+                    'info_groupname': 'OpenAIRE Validator',
+                    'service_tags': 'OAI-PMH protocol, horizontalService'
                 },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'eudat.b2find',
-                'hostname': 'www.eudat.eu_eudat.b2find',
-                'service': 'eu.eosc.portal.services.url',
-                'tags': {
-                    'hostname': 'www.eudat.eu',
-                    'info_ID': 'eudat.b2find',
-                    'info_groupname': 'B2FIND',
-                    'info_URL': 'https://www.eudat.eu/services/b2find',
-                    'service_tags': 'metadata, search, harvesting, interdisciplinary, discovery'
-                },
-                'type': 'SERVICEGROUPS'
-            }
+                'type': 'SERVICEGROUPS'}
         ])
 
     def test_idGroupname(self):
