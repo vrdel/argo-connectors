@@ -66,9 +66,10 @@ class ParseResourcesExtras(ParseHelpers):
 
 
 class ParseResources(ParseHelpers):
-    def __init__(self, logger, data=None, custname=None):
+    def __init__(self, logger, data=None, keys=[], custname=None):
         super(ParseResources, self).__init__(logger)
         self.data = data
+        self._keys = keys
         self.custname = custname
         self._resources = list()
         self._parse_data()
@@ -81,6 +82,13 @@ class ParseResources(ParseHelpers):
                 json_data = self.data
             for feeddata in json_data['results']:
                 resource = feeddata['service']
+                tags = resource['tags']
+                extras = feeddata.get('resourceExtras', None)
+                if extras:
+                    for key in self._keys:
+                        key_true = extras.get(key, False)
+                        if key_true:
+                            tags.append(key)
                 if not resource.get('name', False):
                     continue
                 self._resources.append({
@@ -89,7 +97,7 @@ class ParseResources(ParseHelpers):
                     'name': resource['name'],
                     'provider': resource['resourceOrganisation'],
                     'webpage': resource['webpage'],
-                    'resource_tag': resource['tags'],
+                    'resource_tag': tags,
                     'description': resource['description']
                 })
             self.data = self._resources
@@ -208,7 +216,7 @@ class ParseTopo(object):
         # extracted_resources = ParseResourcesExtras(logger, resources,
                                                    # ['horizontalService'],
                                                    # logger.customer).data
-        self.resources = ParseResources(logger, resources, custname)
+        self.resources = ParseResources(logger, resources, ['horizontalService'], custname)
         self.maxDiff = None
 
     def get_group_groups(self):
