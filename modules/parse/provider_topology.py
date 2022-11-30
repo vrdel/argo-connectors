@@ -79,7 +79,8 @@ class ParseResources(ParseHelpers):
                 json_data = self.parse_json(self.data)
             else:
                 json_data = self.data
-            for resource in json_data['results']:
+            for feeddata in json_data['results']:
+                resource = feeddata['service']
                 if not resource.get('name', False):
                     continue
                 self._resources.append({
@@ -115,7 +116,8 @@ class ParseProviders(ParseHelpers):
                 json_data = self.parse_json(self.data)
             else:
                 json_data = self.data
-            for provider in json_data['results']:
+            for feeddata in json_data['results']:
+                provider = feeddata['provider']
                 if not provider.get('website', False):
                     continue
                 self._providers.append({
@@ -203,6 +205,9 @@ class ParseTopo(object):
     def __init__(self, logger, providers, resources, uidservendp, custname):
         self.uidservendp = uidservendp
         self.providers = ParseProviders(logger, providers, custname)
+        # extracted_resources = ParseResourcesExtras(logger, resources,
+                                                   # ['horizontalService'],
+                                                   # logger.customer).data
         self.resources = ParseResources(logger, resources, custname)
         self.maxDiff = None
 
