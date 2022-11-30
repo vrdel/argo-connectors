@@ -224,10 +224,6 @@ class TaskProviderTopology(object):
         if topofeedextensions:
             coros.append(self.fetch_data(topofeedextensions, access_token, self.topofeedpaging))
 
-        if topofeedextras:
-            coros.append(self.fetch_data(topofeedextras, access_token,
-                                         self.topofeedpaging))
-
         # fetch topology data concurrently in coroutines
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
@@ -235,22 +231,12 @@ class TaskProviderTopology(object):
         if exc_raised:
             raise ConnectorError(repr(exc))
 
-        if topofeedextensions and topofeedextras:
-            fetched_resources, fetched_providers, fetched_extensions, fetched_extras = fetched_data
-        elif topofeedextensions:
+        if topofeedextensions:
             fetched_resources, fetched_providers, fetched_extensions = fetched_data
-        elif topofeedextras:
-            fetched_resources, fetched_providers, fetched_extras = fetched_data
         else:
             fetched_resources, fetched_providers = fetched_data
 
         if fetched_resources and fetched_providers:
-            if topofeedextras and fetched_extras:
-                parsed_extras = ParseResourcesExtras(self.logger,
-                                                     fetched_extras,
-                                                     ['horizontalService'],
-                                                     self.logger.customer).data
-                fetched_resources = join_resources(fetched_resources, parsed_extras)
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
             endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
 
