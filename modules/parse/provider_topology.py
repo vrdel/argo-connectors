@@ -25,46 +25,6 @@ def build_urlpath_id(http_endpoint):
         return None
 
 
-class ParseResourcesExtras(ParseHelpers):
-    def __init__(self, logger, data=None, keys=[], custname=None, ret_json=False):
-        super(ParseResourcesExtras, self).__init__(logger)
-        self.data = data
-        self._keys = keys
-        self.custname = custname
-        self._ret_json = ret_json
-        self._resources = list()
-        self._parse_data()
-
-    def _parse_data(self):
-        try:
-            if type(self.data) == str:
-                json_data = self.parse_json(self.data)
-            else:
-                json_data = self.data
-            for resource in json_data['results']:
-                extras = resource.get('resourceExtras', None)
-                if extras:
-                    for key in self._keys:
-                        key_true = extras.get(key, False)
-                        if key_true:
-                            service = resource['service']
-                            service['tags'].append(key)
-                            self._resources.append(service)
-            if self._ret_json:
-                self.data = self._resources
-            else:
-                self.data = json.dumps(
-                    {'results': self._resources}
-                )
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
-            msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Extras Resources feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
-            raise ConnectorParseError(msg)
-
-        except ConnectorParseError as exc:
-            raise exc
-
-
 class ParseResources(ParseHelpers):
     def __init__(self, logger, data=None, keys=[], custname=None):
         super(ParseResources, self).__init__(logger)
@@ -213,9 +173,6 @@ class ParseTopo(object):
     def __init__(self, logger, providers, resources, uidservendp, custname):
         self.uidservendp = uidservendp
         self.providers = ParseProviders(logger, providers, custname)
-        # extracted_resources = ParseResourcesExtras(logger, resources,
-                                                   # ['horizontalService'],
-                                                   # logger.customer).data
         self.resources = ParseResources(logger, resources, ['horizontalService'], custname)
         self.maxDiff = None
 
