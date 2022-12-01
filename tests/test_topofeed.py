@@ -801,6 +801,32 @@ class ParseEoscProvider(unittest.TestCase):
                     'info_monitored_by': 'asdf'
                 },
                 'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'srce.poem',
+                'hostname': 'eosc.poem.devel.argo.grnet.gr_c302082a-b0e3-4735-9e1f-b93053e4aa27',
+                'service': 'eu.eosc.argo.poem',
+                'tags': {
+                    'hostname': 'eosc.poem.devel.argo.grnet.gr',
+                    'info_ID': 'c302082a-b0e3-4735-9e1f-b93053e4aa27',
+                    'info_URL': 'https://eosc.poem.devel.argo.grnet.gr',
+                    'info_groupname': 'POEM',
+                    'info_monitored_by': 'monitored_by-eosc'
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'srce.poem',
+                'hostname': 'eosc.poem.devel.argo.grnet.gr_c302082a-b0e3-4735-9e1f-b93053e4aa28_2fcf95f1-858b-311a-97aa-52d7e1fe66eb',
+                'service': 'eu.eosc.argo.poem',
+                'tags': {
+                    'hostname': 'eosc.poem.devel.argo.grnet.gr',
+                    'info_ID': 'c302082a-b0e3-4735-9e1f-b93053e4aa28_2fcf95f1-858b-311a-97aa-52d7e1fe66eb',
+                    'info_URL': 'https://eosc.poem.devel.argo.grnet.gr/different/url/path',
+                    'info_groupname': 'POEM',
+                    'info_monitored_by': 'monitored_by-eosc'
+                },
+                'type': 'SERVICEGROUPS'
             }
         ])
 
