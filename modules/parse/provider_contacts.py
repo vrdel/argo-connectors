@@ -42,7 +42,8 @@ class ParseResourcesContacts(ParseHelpers):
             json_data = self.parse_json(self.data)
         else:
             json_data = self.data
-        for resource in json_data['results']:
+        for feeddata in json_data['results']:
+            resource = feeddata['service']
             if not resource.get('webpage', False):
                 continue
             key = '{}+{}'.format(construct_fqdn(resource['webpage']),
