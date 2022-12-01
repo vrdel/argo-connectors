@@ -621,11 +621,12 @@ class ParseEoscProvider(unittest.TestCase):
         self.group_endpoints = eosc_topo.get_group_endpoints()
         self.id_groupname = buildmap_id2groupname(self.group_endpoints)
         fakemap_idgroupnames = {
-            'grnet.grnet-test': 'grnet-test',
             'openaire.validator': 'OpenAIRE Validator',
-            'openaire.zenodo': 'Zenodo',
-            'openaire.amnesia': 'AMNESIA',
-            'grnet.hpc__national_hpc_infrastructure': 'HPC | National HPC Infrastructure'
+            'srce.3dbionotes': '3DBionotes-WS-TEST',
+            'srce.poem': 'POEM',
+            'srce.srceweb': 'SRCE Web',
+            'srce.webodv': 'WebODV - Online extraction, analysis and visualization of '
+                            'SeaDataNet and Argo data'
         }
         eosc_topo_extensions = ParseExtensions(logger, resource_extensions, fakemap_idgroupnames, True, CUSTOMER_NAME)
         self.extensions = eosc_topo_extensions.get_extensions()
@@ -633,28 +634,69 @@ class ParseEoscProvider(unittest.TestCase):
 
     def test_groupGroups(self):
         self.assertEqual(self.group_groups, [
+            {
+                'group': 'srce',
+                'subgroup': 'srce.3dbionotes',
+                'tags': {
+                    'info_projectname': 'SRCE'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'srce',
+                'subgroup': 'srce.poem',
+                'tags': {
+                    'info_projectname': 'SRCE'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'srce',
+                'subgroup': 'srce.srceweb',
+                'tags': {
+                    'info_projectname': 'SRCE'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'srce',
+                'subgroup': 'srce.webodv',
+                'tags': {
+                    'info_projectname': 'SRCE'
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'openaire',
+                'subgroup': 'openaire.validator',
+                'tags': {
+                    'info_projectname': 'OpenAIRE',
+                    'provider_tags': 'Open Science'
+                },
+                'type': 'PROJECT'
+            }
         ])
 
     def test_meshContactsProviders(self):
         sample_resources_contacts = {
-            'www.eudat.eu+eudat.b2access': ['helpdesk@eudat.eu']
+            '3dbionotes.cnb.csic.es+srce.3dbionotes': ['Emir.Imamagic@srce.hr']
         }
 
         attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
         self.assertEqual(self.group_endpoints[0],
             {
-                'group': 'eudat.b2access',
-                'hostname': 'www.eudat.eu_eudat.b2access',
+                'group': 'srce.3dbionotes',
+                'hostname': '3dbionotes.cnb.csic.es_srce.3dbionotes',
                 'notifications': {
-                    'contacts': ['helpdesk@eudat.eu'], 'enabled': True
+                    'contacts': ['Emir.Imamagic@srce.hr'],
+                    'enabled': True
                 },
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
-                    'hostname': 'www.eudat.eu',
-                    'info_ID': 'eudat.b2access',
-                    'info_groupname': 'B2ACCESS',
-                    'info_URL': 'https://www.eudat.eu/services/b2access',
-                    'service_tags': 'single sign-on, federated identity management, federated AAI proxy'
+                    'hostname': '3dbionotes.cnb.csic.es',
+                    'info_ID': 'srce.3dbionotes',
+                    'info_URL': 'https://3dbionotes.cnb.csic.es/',
+                    'info_groupname': '3DBionotes-WS-TEST'
                 },
                 'type': 'SERVICEGROUPS'
             }
@@ -727,12 +769,12 @@ class ParseEoscProvider(unittest.TestCase):
 
     def test_idGroupname(self):
         self.assertEqual(self.id_groupname, {
-            'eudat.b2access': 'B2ACCESS',
-            'eudat.b2drop': 'B2DROP',
-            'eudat.b2find': 'B2FIND',
-            'eudat.b2note': 'B2NOTE',
-            'eudat.b2safe': 'B2SAFE',
-            'eudat.b2share': 'B2SHARE'
+            'openaire.validator': 'OpenAIRE Validator',
+            'srce.3dbionotes': '3DBionotes-WS-TEST',
+            'srce.poem': 'POEM',
+            'srce.srceweb': 'SRCE Web',
+            'srce.webodv': 'WebODV - Online extraction, analysis and visualization of '
+                            'SeaDataNet and Argo data'
         })
 
     def test_FailedEoscProviderTopology(self):
@@ -748,45 +790,6 @@ class ParseEoscProvider(unittest.TestCase):
     def test_serviceExtensions(self):
         self.assertEqual(self.extensions, [
             {
-                'group': 'grnet.grnet-test',
-                'hostname': 'srce.hr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                'service': 'eu.eosc.generic.https',
-                'tags': {
-                    'hostname': 'srce.hr',
-                    'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                    'info_URL': 'https://srce.hr',
-                    'info_groupname': 'grnet-test',
-                    'info_monitored_by': 'eosc'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'grnet.grnet-test',
-                'hostname': 'grnet.gr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                'service': 'eu.eosc.generic.https',
-                'tags': {
-                    'hostname': 'grnet.gr',
-                    'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                    'info_URL': 'https://grnet.gr',
-                    'info_groupname': 'grnet-test',
-                    'info_monitored_by': 'eosc'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'grnet.grnet-test',
-                'hostname': 'kathimerini.gr_367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                'service': 'eu.eosc.generic.https',
-                'tags': {
-                    'hostname': 'kathimerini.gr',
-                    'info_ID': '367752f8-a1e8-45d0-9e2d-fcae3c2fc0e2',
-                    'info_URL': 'https://kathimerini.gr',
-                    'info_groupname': 'grnet-test',
-                    'info_monitored_by': 'eosc'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
                 'group': 'openaire.validator',
                 'hostname': 'argo.grnet.gr_4429aede-129a-4a2d-9788-198a96912bc1',
                 'service': 'eu.eosc.portal',
@@ -796,71 +799,6 @@ class ParseEoscProvider(unittest.TestCase):
                     'info_URL': 'argo.grnet.gr',
                     'info_groupname': 'OpenAIRE Validator',
                     'info_monitored_by': 'asdf'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'openaire.zenodo',
-                'hostname': 'some.endpoint.zenodo.com_5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
-                'service': 'eu.eosc.ckan',
-                'tags': {
-                    'hostname': 'some.endpoint.zenodo.com',
-                    'info_ID': '5ce1854d-a4e0-4ec3-adc9-3e09d42945a5',
-                    'info_URL': 'some.endpoint.zenodo.com',
-                    'info_groupname': 'Zenodo',
-                    'info_monitored_by': 'string'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'openaire.amnesia',
-                'hostname': 'argo.grnet.gr_0920c959-ea0c-412b-a282-dd97e7c594fc',
-                'service': 'eu.eosc.portal',
-                'tags': {
-                    'hostname': 'argo.grnet.gr',
-                    'info_ID': '0920c959-ea0c-412b-a282-dd97e7c594fc',
-                    'info_URL': 'argo.grnet.gr',
-                    'info_groupname': 'AMNESIA',
-                    'info_monitored_by': 'asdf'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'grnet.hpc__national_hpc_infrastructure',
-                'hostname': 'hpc.grnet.gr_18afc30d-2f78-4417-8b11-315ea1611ad7',
-                'service': 'eu.eosc.portal',
-                'tags': {
-                    'hostname': 'hpc.grnet.gr',
-                    'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7',
-                    'info_URL': 'https://hpc.grnet.gr/',
-                    'info_groupname': 'HPC | National HPC Infrastructure',
-                    'info_monitored_by': 'monitored_by-eosc'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'grnet.hpc__national_hpc_infrastructure',
-                'hostname': 'hpc.grnet.gr_18afc30d-2f78-4417-8b11-315ea1611ad7_d59ff23a-1ed8-39a3-949f-b1b1b82547d0',
-                'service': 'eu.eosc.portal',
-                'tags': {
-                    'hostname': 'hpc.grnet.gr',
-                    'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7_d59ff23a-1ed8-39a3-949f-b1b1b82547d0',
-                    'info_URL': 'https://hpc.grnet.gr/some/path',
-                    'info_groupname': 'HPC | National HPC Infrastructure',
-                    'info_monitored_by': 'monitored_by-eosc'
-                },
-                'type': 'SERVICEGROUPS'
-            },
-            {
-                'group': 'grnet.hpc__national_hpc_infrastructure',
-                'hostname': 'hpc.grnet.gr_18afc30d-2f78-4417-8b11-315ea1611ad7_d002662b-7924-3906-b845-c3c2ebf33e5a',
-                'service': 'eu.eosc.portal',
-                'tags': {
-                    'hostname': 'hpc.grnet.gr',
-                    'info_ID': '18afc30d-2f78-4417-8b11-315ea1611ad7_d002662b-7924-3906-b845-c3c2ebf33e5a',
-                    'info_URL': 'https://hpc.grnet.gr/some/path/another',
-                    'info_groupname': 'HPC | National HPC Infrastructure',
-                    'info_monitored_by': 'monitored_by-eosc'
                 },
                 'type': 'SERVICEGROUPS'
             }
