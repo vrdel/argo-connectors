@@ -77,6 +77,7 @@ class ParseProviders(ParseHelpers):
         self.custname = custname
         self._providers = list()
         self._parse_data()
+        self.unique_names = set()
 
     def _parse_data(self):
         try:
@@ -103,6 +104,12 @@ class ParseProviders(ParseHelpers):
 
         except ConnectorParseError as exc:
             raise exc
+
+    def get_unique(self, key='id'):
+        uniques = set()
+        for entry in self.data:
+            uniques.add(entry[key])
+        return list(uniques)
 
 
 class ParseExtensions(ParseHelpers):
@@ -204,7 +211,10 @@ class ParseTopo(object):
 
     def get_group_endpoints(self):
         ge = list()
+        unique_providers = self.providers.get_unique()
         for resource in self.resources.data:
+            if resource['provider'] not in unique_providers:
+                continue
             gee = dict()
             gee['type'] = 'SERVICEGROUPS'
             gee['service'] = resource['hardcoded_service']
