@@ -226,9 +226,9 @@ class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
 
 class ParseEoscContacts(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-resourcefeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
+        with open('sample-private-resource.json', encoding='utf-8') as feed_file:
             self.resources = feed_file.read()
-        with open('tests/sample-providerfeed_eoscprovider_eudat.json', encoding='utf-8') as feed_file:
+        with open('sample-private-provider.json', encoding='utf-8') as feed_file:
             self.providers = feed_file.read()
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
@@ -254,8 +254,10 @@ class ParseEoscContacts(unittest.TestCase):
         self.assertEqual(self.providers_contacts,
             [
                 {
-                    'contacts': ['eudat-cdi-secretariat@eudat.eu'],
-                    'name': 'EUDAT'
+                    'contacts': ['office@srce.hr'], 'name': 'SRCE'
+                },
+                {
+                    'contacts': ['info@openaire.eu'], 'name': 'OpenAIRE'
                 }
             ]
         )

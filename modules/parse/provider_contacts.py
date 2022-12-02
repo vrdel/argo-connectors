@@ -16,7 +16,8 @@ class ParseProvidersContacts(ParseHelpers):
             json_data = self.parse_json(self.data)
         else:
             json_data = self.data
-        for provider in json_data['results']:
+        for feeddata in json_data['results']:
+            provider = feeddata['provider']
             key = provider['abbreviation']
             contacts = [contact['email'] for contact in provider['publicContacts']]
             if contacts:
