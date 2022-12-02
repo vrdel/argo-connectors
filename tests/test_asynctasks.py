@@ -124,18 +124,19 @@ class TopologyProvider(unittest.TestCase):
         )
 
     @mock.patch.object(ParseHelpers, 'parse_json')
+    @mock.patch('argo_connectors.tasks.provider_topology.TaskProviderTopology.token_fetch')
     @mock.patch('argo_connectors.io.http.build_connection_retry_settings')
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_post')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_get')
     @async_test
     async def test_failedNextCursor(self, mock_httpget, mock_httppost, mock_buildsslsettings,
-                                  mock_buildconnretry, mock_parsejson):
+                                  mock_buildconnretry, mock_tokenfetch, mock_parsejson):
         mock_httpget.return_value = 'garbled JSON data'
         mock_httppost.return_value = 'garbled JSON data'
         mock_buildsslsettings.return_value = 'SSL settings'
+        mock_tokenfetch.return_value = 'OIDC token'
         mock_parsejson.side_effect = [
-            ConnectorParseError('failed PROVIDER find_next_paging_cursor_count'),
             ConnectorParseError('failed PROVIDER find_next_paging_cursor_count'),
             ConnectorParseError('failed PROVIDER find_next_paging_cursor_count'),
         ]
@@ -143,7 +144,7 @@ class TopologyProvider(unittest.TestCase):
         with self.assertRaises(ConnectorError) as cm:
             await self.topo_provider.run()
         excep = cm.exception
-        self.assertTrue('ConnectorParseError' in excep.msg)
+        self.assertTrue(type(excep), ConnectorParseError)
         self.assertTrue('failed PROVIDER' in excep.msg)
 
     @mock.patch('argo_connectors.io.http.build_connection_retry_settings')
@@ -161,7 +162,7 @@ class TopologyProvider(unittest.TestCase):
         with self.assertRaises(ConnectorError) as cm:
             await self.topo_provider.run()
         excep = cm.exception
-        self.assertTrue('ConnectorParseError' in excep.msg)
+        self.assertTrue(type(excep), ConnectorParseError)
         self.assertTrue('JSONDecodeError' in excep.msg)
 
 
