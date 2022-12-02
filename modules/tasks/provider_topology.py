@@ -210,7 +210,6 @@ class TaskProviderTopology(object):
         oidctokenapi = self.confcust.get_oidctokenapi()
         oidcclientid = self.confcust.get_oidcclientid()
         topofeedresources = self.confcust.get_topofeedendpoints()
-        topofeedextras = self.confcust.get_topofeedendpointsextras()
 
         if oidctoken and oidctokenapi:
             access_token = await self.token_fetch(oidcclientid, oidctoken, oidctokenapi)
