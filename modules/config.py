@@ -272,7 +272,6 @@ class CustomerConf(object):
                     topofeedsites = config.get(section, 'TopoFeedSites', fallback=None)
                     topofeedendpoints = config.get(section, 'TopoFeedServiceEndpoints', fallback=None)
                     topofeedendpointsextensions = config.get(section, 'TopoFeedServiceEndpointsExtensions', fallback=None)
-                    topofeedendpointsextras = config.get(section, 'TopoFeedServiceEndpointsExtras', fallback=None)
                     topofeedservicegroups = config.get(section, 'TopoFeedServiceGroups', fallback=None)
                     oidctoken = config.get(section, 'OIDCRefreshToken', fallback=None)
                     oidctokenapi = config.get(section, 'OIDCTokenEndpoint' , fallback=None)
@@ -305,7 +304,6 @@ class CustomerConf(object):
                                              'TopoFeed': topofeed,
                                              'TopoFeedEndpoints': topofeedendpoints,
                                              'TopoFeedEndpointsExtensions': topofeedendpointsextensions,
-                                             'TopoFeedEndpointsExtras': topofeedendpointsextras,
                                              'TopoFeedPaging': topofeedpaging,
                                              'TopoFeedServiceGroups': topofeedservicegroups,
                                              'TopoFeedSites': topofeedsites,
@@ -546,9 +544,6 @@ class CustomerConf(object):
 
     def get_oidcclientid(self):
         return self._get_cust_options('OIDCClientId')
-
-    def get_topofeedendpointsextras(self):
-        return self._get_cust_options('TopoFeedEndpointsExtras')
 
     def get_topofeedservicegroups(self):
         return self._get_cust_options('TopoFeedServiceGroups')
