@@ -25,7 +25,8 @@ class ParseGocdbServiceTypes(ParseHelpers):
                     if name:
                         all_service_type.append({
                             "name": name,
-                            "description": desc if desc else ''
+                            "description": desc if desc else '',
+                            "tags": "connectors"
                         })
 
             return sorted(all_service_type,  key=lambda s: s['name'].lower())
