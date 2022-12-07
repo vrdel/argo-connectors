@@ -29,29 +29,29 @@ class ParseGocdb(unittest.TestCase):
                     'Dashboard, which provides a web based user interface to '
                     'OpenStack services',
                 'name': 'org.openstack.horizon',
-                'tags': 'connectors'
+                'tags': ['connectors']
             },
             {
                 'description': 'The primary endpoint for an OpenStack Cloud. Provides '
                     'identity and an endpoint catalog for other OpenStack '
                     'services',
                 'name': 'org.openstack.keystone',
-                'tags': 'connectors'
+                'tags': ['connectors']
             },
             {
                 'description': 'OpenStack Nova provides VM management services',
                 'name': 'org.openstack.nova',
-                'tags': 'connectors'
+                'tags': ['connectors']
             },
             {
                 'description': '',
                 'name': 'service.type.empty.desc',
-                'tags': 'connectors'
+                'tags': ['connectors']
             },
             {
                 'description': '',
                 'name': 'SERVICE.TYPE.UPPERCASE',
-                'tags': 'connectors'
+                'tags': ['connectors']
             }
         ])
 
@@ -81,17 +81,17 @@ class ParseFlat(unittest.TestCase):
             {
                 'description': 'tenant project Data sharing service',
                 'name': 'nextcloud',
-                'tags': 'connectors'
+                'tags': ['connectors']
             },
             {
                 'description': 'tenant project SSO service',
                 'name': 'aai',
-                'tags': 'connectors'
+                'tags': ['connectors']
             },
             {
                 'description': 'NEANIAS project SPACE-VIS ViaLactea service',
                 'name': 'WebService',
-                'tags': 'connectors'
+                'tags': ['connectors']
             },
         ])
 
