@@ -28,25 +28,30 @@ class ParseGocdb(unittest.TestCase):
                 'description': 'Horizon is the canonical implementation of OpenStack’s '
                     'Dashboard, which provides a web based user interface to '
                     'OpenStack services',
-                'name': 'org.openstack.horizon'
+                'name': 'org.openstack.horizon',
+                'tags': 'connectors'
             },
             {
                 'description': 'The primary endpoint for an OpenStack Cloud. Provides '
                     'identity and an endpoint catalog for other OpenStack '
                     'services',
-                'name': 'org.openstack.keystone'
+                'name': 'org.openstack.keystone',
+                'tags': 'connectors'
             },
             {
                 'description': 'OpenStack Nova provides VM management services',
-                'name': 'org.openstack.nova'
+                'name': 'org.openstack.nova',
+                'tags': 'connectors'
             },
             {
                 'description': '',
-                'name': 'service.type.empty.desc'
+                'name': 'service.type.empty.desc',
+                'tags': 'connectors'
             },
             {
                 'description': '',
-                'name': 'SERVICE.TYPE.UPPERCASE'
+                'name': 'SERVICE.TYPE.UPPERCASE',
+                'tags': 'connectors'
             }
         ])
 
@@ -75,15 +80,18 @@ class ParseFlat(unittest.TestCase):
         self.assertEqual(service_types, [
             {
                 'description': 'tenant project Data sharing service',
-                'name': 'nextcloud'
+                'name': 'nextcloud',
+                'tags': 'connectors'
             },
             {
                 'description': 'tenant project SSO service',
-                'name': 'aai'
+                'name': 'aai',
+                'tags': 'connectors'
             },
             {
                 'description': 'NEANIAS project SPACE-VIS ViaLactea service',
-                'name': 'WebService'
+                'name': 'WebService',
+                'tags': 'connectors'
             },
         ])
 
