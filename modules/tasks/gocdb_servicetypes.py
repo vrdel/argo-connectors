@@ -52,12 +52,10 @@ class TaskGocdbServiceTypes(object):
         try:
             res = await self.fetch_data()
             service_types = self.parse_source(res)
-
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
                 await self.send_webapi(service_types)
-
             self.logger.info('Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
 
         except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
