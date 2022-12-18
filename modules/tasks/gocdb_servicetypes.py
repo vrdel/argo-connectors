@@ -1,4 +1,5 @@
 import os
+import asyncio
 
 from urllib.parse import urlparse
 
@@ -35,6 +36,15 @@ class TaskGocdbServiceTypes(object):
 
         return res
 
+    async def fetch_webapi(self):
+        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
+                        self.webapi_opts['webapitoken'], self.logger,
+                        int(self.globopts['ConnectionRetry'.lower()]),
+                        int(self.globopts['ConnectionTimeout'.lower()]),
+                        int(self.globopts['ConnectionSleepRetry'.lower()]),
+                        date=self.timestamp)
+        return await webapi.get('service-types')
+
     async def send_webapi(self, data):
         webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
                         self.webapi_opts['webapitoken'], self.logger,
@@ -50,7 +60,9 @@ class TaskGocdbServiceTypes(object):
 
     async def run(self):
         try:
-            res = await self.fetch_data()
+            coros = [self.fetch_data(), self.fetch_webapi()]
+            res, res_webapi = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
+
             service_types = self.parse_source(res)
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 
