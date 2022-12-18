@@ -177,6 +177,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         authopts = mock.Mock()
         confcust = mock.Mock()
         custname = CUSTOMER_NAME
+        initsync = False
         feed = 'https://service-types.com/api/fetch'
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
         self.services_gocdb = TaskGocdbServiceTypes(
@@ -189,7 +190,8 @@ class ServiceTypesGocdb(unittest.TestCase):
             confcust,
             custname,
             feed,
-            timestamp
+            timestamp,
+            initsync
         )
         self.maxDiff = None
 

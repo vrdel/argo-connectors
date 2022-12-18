@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
+from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_downtimes_avro as write_avro
 from argo_connectors.exceptions import ConnectorError, ConnectorHttpError, ConnectorParseError
@@ -73,18 +74,26 @@ class TaskGocdbServiceTypes(object):
 
     async def run(self):
         try:
-            coros = [self.fetch_data(), self.fetch_webapi()]
+            coros = [self.fetch_data()]
+
+            if not self.initsync:
+                coros.append(self.fetch_webapi())
+
             fetched_data = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
 
             exc_raised, exc = contains_exception(fetched_data)
             if exc_raised:
                 raise ConnectorError(repr(exc))
 
-            res, res_webapi = fetched_data
+            if not self.initsync:
+                res, res_webapi = fetched_data
+            else:
+                res = fetched_data
 
             # small set data, parsing sequentially
             service_types = self.parse_source(res)
-            service_types_poem = self.parse_webapi_poem(res_webapi)
+            if not self.initsync:
+                service_types_poem = self.parse_webapi_poem(res_webapi)
 
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 
