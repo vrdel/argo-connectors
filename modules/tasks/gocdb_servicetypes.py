@@ -53,7 +53,7 @@ class TaskGocdbServiceTypes(object):
                         int(self.globopts['ConnectionTimeout'.lower()]),
                         int(self.globopts['ConnectionSleepRetry'.lower()]),
                         date=self.timestamp)
-        return await webapi.get('service-types')
+        return await webapi.get('service-types', jsonret=False)
 
     async def send_webapi(self, data):
         webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
@@ -88,7 +88,7 @@ class TaskGocdbServiceTypes(object):
             if not self.initsync:
                 res, res_webapi = fetched_data
             else:
-                res = fetched_data
+                res = fetched_data[0]
 
             # small set data, parsing sequentially
             service_types = self.parse_source(res)

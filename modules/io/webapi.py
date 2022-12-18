@@ -107,9 +107,12 @@ class WebAPI(object):
                                    errormsg))
         return status
 
-    async def _get(self, api):
+    async def _get(self, api, jsonret=False):
         content, headers, status = await self.session.http_get(api, headers=self.headers)
-        return json.loads(content)
+        if jsonret:
+            return json.loads(content)
+        else:
+            return content
 
     async def _delete(self, api, id=None, date=None):
         from urllib.parse import urlparse
@@ -161,7 +164,7 @@ class WebAPI(object):
             await self._send(api, data_send, self.connector)
             self.logger.info('Succesfully deleted and created new resource')
 
-    async def get(self, api_path):
+    async def get(self, api_path, jsonret):
         if api_path:
             webapi_url = '{}/{}'.format(self.webapi_method, api_path)
         else:
@@ -174,7 +177,7 @@ class WebAPI(object):
             api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
 
         try:
-            content = await self._get(api)
+            content = await self._get(api, jsonret)
             self.logger.info('Data succesfully fetched from WEB-API')
             return content
 
