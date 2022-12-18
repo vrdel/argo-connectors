@@ -5,6 +5,7 @@ import mock
 from argo_connectors.log import Logger
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
+from argo_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
 from argo_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
 from argo_connectors.parse.base import ParseHelpers
 
@@ -17,9 +18,9 @@ class ParseWebApi(unittest.TestCase):
             service_types = feed_file.read()
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
+        self.logger = logger
         self.maxDiff = None
         self.services_webapi = ParseWebApiServiceTypes(logger, service_types)
-        # self.fail_services_webapi = ParseWebApiServiceTypes(logger, 'FAILED_DATA')
 
     def test_WebApiFeedParse(self):
         service_types = self.services_webapi.get_data()
@@ -114,13 +115,13 @@ class ParseWebApi(unittest.TestCase):
             ]
         )
 
-    # def test_FailedWebApiFeedParse(self):
-        # with self.assertRaises(ConnectorParseError) as cm:
-            # failed_service_types = self.fail_services_webapi.get_data()
+    def test_FailedWebApiFeedParse(self):
+        with self.assertRaises(ConnectorParseError) as cm:
+            fail_services_webapi = ParseWebApiServiceTypes(self.logger, 'FAILED_DATA')
 
-        # excep = cm.exception
-        # self.assertTrue('XML feed' in excep.msg)
-        # self.assertTrue('syntax error' in excep.msg)
+        excep = cm.exception
+        self.assertTrue('JSON feed' in excep.msg)
+        self.assertTrue('JSONDecodeError' in excep.msg)
 
 
 class ParseGocdb(unittest.TestCase):
