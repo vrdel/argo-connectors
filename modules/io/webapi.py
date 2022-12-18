@@ -161,6 +161,29 @@ class WebAPI(object):
             await self._send(api, data_send, self.connector)
             self.logger.info('Succesfully deleted and created new resource')
 
+    async def get(self, api_path):
+        if api_path:
+            webapi_url = '{}/{}'.format(self.webapi_method, api_path)
+        else:
+            webapi_url = self.webapi_method
+        if self.date:
+            api = 'https://{}/api/v2/{}?date={}'.format(self.host,
+                                                        webapi_url,
+                                                        self.date)
+        else:
+            api = 'https://{}/api/v2/{}'.format(self.host, self.webapi_method)
+
+        try:
+            content = await self._get(api)
+            self.logger.info('Data succesfully fetched from WEB-API')
+            return content
+
+        except ConnectorHttpError:
+            self.logger.error('Failed data fetch from WEB-API')
+
+        finally:
+            await self.session.close()
+
     async def send(self, data, topo_component=None, downtimes_component=None):
         if topo_component:
             # /topology/groups, /topology/endpoints
