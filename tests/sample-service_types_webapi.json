@@ -99,6 +99,11 @@
    "tags": [
     "poem"
    ]
+  },
+  {
+   "date": "2022-12-18",
+   "name": "Service.Type.Three",
+   "description": "Service type created from POEM earlier without tag"
   }
  ]
 }

@@ -91,6 +91,11 @@ class ParseWebApi(unittest.TestCase):
                     'tags': ['poem']
                 },
                 {
+                    'description': 'Service type created from POEM earlier without tag',
+                    'name': 'Service.Type.Three',
+                    'tags': ['poem']
+                },
+                {
                     'description': 'Service type created from POEM',
                     'name': 'Service.Type.Two',
                     'tags': ['poem']
@@ -105,6 +110,11 @@ class ParseWebApi(unittest.TestCase):
                 {
                     'description': 'Service type created from POEM',
                     'name': 'Service.Type.One',
+                    'tags': ['poem']
+                },
+                {
+                    'description': 'Service type created from POEM earlier without tag',
+                    'name': 'Service.Type.Three',
                     'tags': ['poem']
                 },
                 {
