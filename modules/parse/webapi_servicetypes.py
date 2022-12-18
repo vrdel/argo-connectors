@@ -19,7 +19,7 @@ class ParseWebApiServiceTypes(ParseHelpers):
                 all_service_type.append({
                     'name': st['name'],
                     'description': st['description'],
-                    'tags': st['tags']
+                    'tags': st['tags'] if st.get('tags', False) else ['poem']
                 })
 
             return sorted(all_service_type,  key=lambda s: s['name'].lower())
