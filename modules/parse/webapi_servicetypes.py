@@ -31,5 +31,8 @@ class ParseWebApiServiceTypes(ParseHelpers):
         except ConnectorParseError as exc:
             raise exc
 
-    def get_data(self):
-        return self.service_types
+    def get_data(self, tag=None):
+        if not tag:
+            return self.service_types
+        else:
+            return list(filter(lambda st: tag in st['tags'] , self.service_types))

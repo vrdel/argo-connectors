@@ -97,6 +97,23 @@ class ParseWebApi(unittest.TestCase):
             ]
         )
 
+    def test_WebApiTagPoem(self):
+        service_types_poem = self.services_webapi.get_data(tag='poem')
+        self.assertEqual(service_types_poem,
+            [
+                {
+                    'description': 'Service type created from POEM',
+                    'name': 'Service.Type.One',
+                    'tags': ['poem']
+                },
+                {
+                    'description': 'Service type created from POEM',
+                    'name': 'Service.Type.Two',
+                    'tags': ['poem']
+                }
+            ]
+        )
+
     # def test_FailedWebApiFeedParse(self):
         # with self.assertRaises(ConnectorParseError) as cm:
             # failed_service_types = self.fail_services_webapi.get_data()
