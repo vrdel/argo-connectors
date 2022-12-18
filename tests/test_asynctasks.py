@@ -232,6 +232,22 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertEqual(self.services_gocdb.logger.error.call_args[0][0], repr(ConnectorError("ConnectorHttpError('fetch_data failed',)")))
         self.assertFalse(self.services_gocdb.send_webapi.called)
 
+        self.services_gocdb.fetch_data = mock.AsyncMock()
+        self.services_gocdb.fetch_data.side_effect = ['data_servicetypes']
+        self.services_gocdb.send_webapi = mock.AsyncMock()
+        self.services_gocdb.parse_source = mock.MagicMock()
+        self.services_gocdb.fetch_webapi = mock.AsyncMock()
+        self.services_gocdb.fetch_webapi.side_effect = [ConnectorHttpError('fetch_webapi_data failed')]
+        await self.services_gocdb.run()
+        self.assertTrue(self.services_gocdb.fetch_data.called)
+        self.assertFalse(self.services_gocdb.parse_source.called)
+        self.assertEqual(mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesgocdb')
+        self.assertEqual(mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
+        self.assertFalse(mock_writestate.call_args[0][4])
+        self.assertTrue(self.services_gocdb.logger.error.called)
+        self.assertEqual(self.services_gocdb.logger.error.call_args[0][0], repr(ConnectorError("ConnectorHttpError('fetch_webapi_data failed',)")))
+        self.assertFalse(self.services_gocdb.send_webapi.called)
+
 
 class ServiceTypesFlat(unittest.TestCase):
     def setUp(self):
