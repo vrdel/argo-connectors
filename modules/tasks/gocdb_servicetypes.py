@@ -7,7 +7,15 @@ from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_downtimes_avro as write_avro
-from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_connectors.exceptions import ConnectorError, ConnectorHttpError, ConnectorParseError
+
+
+def contains_exception(list):
+    for a in list:
+        if isinstance(a, Exception):
+            return (True, a)
+
+    return (False, None)
 
 
 class TaskGocdbServiceTypes(object):
@@ -61,8 +69,13 @@ class TaskGocdbServiceTypes(object):
     async def run(self):
         try:
             coros = [self.fetch_data(), self.fetch_webapi()]
-            res, res_webapi = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
+            fetched_data = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
 
+            exc_raised, exc = contains_exception(fetched_data)
+            if exc_raised:
+                raise ConnectorError(repr(exc))
+
+            res, res_webapi = fetched_data
             service_types = self.parse_source(res)
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 
