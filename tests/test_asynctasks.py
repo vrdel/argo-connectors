@@ -204,6 +204,7 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.services_gocdb.fetch_webapi.side_effect = ['data_webapi_servicetypes']
         self.services_gocdb.send_webapi = mock.AsyncMock()
         self.services_gocdb.parse_source = mock.MagicMock()
+        self.services_gocdb.parse_webapi_poem = mock.MagicMock()
         await self.services_gocdb.run()
         self.assertTrue(self.services_gocdb.fetch_webapi.called)
         self.assertTrue(self.services_gocdb.fetch_data.called)
