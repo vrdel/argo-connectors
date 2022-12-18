@@ -20,7 +20,7 @@ def contains_exception(list):
 
 class TaskGocdbServiceTypes(object):
     def __init__(self, loop, logger, connector_name, globopts, auth_opts,
-                 webapi_opts, confcust, custname, feed, timestamp):
+                 webapi_opts, confcust, custname, feed, timestamp, initsync):
         self.logger = logger
         self.loop = loop
         self.connector_name = connector_name
@@ -31,6 +31,7 @@ class TaskGocdbServiceTypes(object):
         self.custname = custname
         self.feed = feed
         self.timestamp = timestamp
+        self.initsync = initsync
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
