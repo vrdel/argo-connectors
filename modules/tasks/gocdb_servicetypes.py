@@ -94,6 +94,8 @@ class TaskGocdbServiceTypes(object):
             service_types = self.parse_source(res)
             if not self.initsync:
                 service_types_poem = self.parse_webapi_poem(res_webapi)
+                service_types = service_types + service_types_poem
+                service_types = sorted(service_types,  key=lambda s: s['name'].lower())
 
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 

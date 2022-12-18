@@ -218,6 +218,73 @@ class ServiceTypesGocdb(unittest.TestCase):
 
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
+    async def test_StepsCombinedServiceTypes(self, mock_writestate):
+        self.services_gocdb.fetch_data = mock.AsyncMock()
+        self.services_gocdb.fetch_webapi = mock.AsyncMock()
+        self.services_gocdb.parse_source = mock.Mock()
+        self.services_gocdb.parse_webapi_poem = mock.Mock()
+        self.services_gocdb.parse_source.return_value = [
+            {
+                'name': 'service.type.one',
+                'description': 'service description one',
+                'tags': ['topology']
+            },
+            {
+                'name': 'service.type.two',
+                'description': 'service description two',
+                'tags': ['topology']
+            },
+            {
+                'name': 'service.type.three',
+                'description': 'service description three',
+                'tags': ['topology']
+            }
+        ]
+        self.services_gocdb.parse_webapi_poem.return_value = [
+            {
+                'name': 'service.type.four',
+                'description': 'service description four',
+                'tags': ['poem']
+            },
+            {
+                'name': 'service.type.five',
+                'description': 'service description five',
+                'tags': ['poem']
+            }
+        ]
+        self.services_gocdb.send_webapi = mock.AsyncMock()
+        await self.services_gocdb.run()
+        self.assertTrue(self.services_gocdb.send_webapi.called)
+        self.services_gocdb.send_webapi.assert_called_with([
+            {
+                'name': 'service.type.five',
+                'description': 'service description five',
+                'tags': ['poem']
+            },
+            {
+                'name': 'service.type.four',
+                'description': 'service description four',
+                'tags': ['poem']
+            },
+            {
+                'name': 'service.type.one',
+                'description': 'service description one',
+                'tags': ['topology']
+            },
+            {
+                'name': 'service.type.three',
+                'description': 'service description three',
+                'tags': ['topology']
+            },
+            {
+                'name': 'service.type.two',
+                'description': 'service description two',
+                'tags': ['topology']
+            }
+        ])
+
+    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
+    @async_test
     async def test_StepsFailedRun(self, mock_writestate):
         self.services_gocdb.fetch_data = mock.AsyncMock()
         self.services_gocdb.fetch_data.side_effect = [ConnectorHttpError('fetch_data failed')]
