@@ -66,6 +66,10 @@ class TaskGocdbServiceTypes(object):
         gocdb = ParseGocdbServiceTypes(self.logger, res)
         return gocdb.get_data()
 
+    def parse_webapi_poem(self, res):
+        webapi = ParseWebApiServiceTypes(self.logger, res)
+        return webapi.get_data(tag='poem')
+
     async def run(self):
         try:
             coros = [self.fetch_data(), self.fetch_webapi()]
@@ -76,7 +80,11 @@ class TaskGocdbServiceTypes(object):
                 raise ConnectorError(repr(exc))
 
             res, res_webapi = fetched_data
+
+            # small set data, parsing sequentially
             service_types = self.parse_source(res)
+            service_types_poem = self.parse_webapi_poem(res_webapi)
+
             await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
 
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
