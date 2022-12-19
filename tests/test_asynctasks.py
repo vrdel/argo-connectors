@@ -352,7 +352,11 @@ class ServiceTypesFlat(unittest.TestCase):
         self.services_flat.fetch_data = mock.AsyncMock()
         self.services_flat.fetch_data.side_effect = ['data_servicetypes']
         self.services_flat.send_webapi = mock.AsyncMock()
+        self.services_flat.fetch_webapi = mock.AsyncMock()
+        self.services_flat.fetch_webapi.side_effect = ['data_webapi_servicetypes']
+        self.services_flat.send_webapi = mock.AsyncMock()
         self.services_flat.parse_source = mock.MagicMock()
+        self.services_flat.parse_webapi_poem = mock.MagicMock()
         await self.services_flat.run()
         self.assertTrue(self.services_flat.fetch_data.called)
         self.assertTrue(self.services_flat.parse_source.called)
