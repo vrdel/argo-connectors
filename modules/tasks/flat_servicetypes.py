@@ -21,7 +21,8 @@ def contains_exception(list):
 
 class TaskFlatServiceTypes(object):
     def __init__(self, loop, logger, connector_name, globopts, auth_opts,
-                 webapi_opts, confcust, custname, feed, timestamp, is_csv=False, initsync=False):
+                 webapi_opts, confcust, custname, feed, timestamp,
+                 is_csv=False, initsync=False):
         self.logger = logger
         self.loop = loop
         self.connector_name = connector_name

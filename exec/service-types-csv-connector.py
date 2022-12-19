@@ -72,7 +72,8 @@ def main():
     try:
         task = TaskFlatServiceTypes(
             loop, logger, sys.argv[0], globopts, auth_opts, webapi_opts,
-            confcust, custname, feed, fixed_date, is_csv=True, args.initsync
+            confcust, custname, feed, fixed_date, is_csv=True,
+            initsync=args.initsync
         )
         loop.run_until_complete(task.run())
 
