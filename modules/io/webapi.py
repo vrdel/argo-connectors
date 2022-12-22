@@ -65,7 +65,8 @@ class WebAPI(object):
 
         if data:
             formatted['weight_type'] = data[0]['type']
-            groups = map(lambda s: {'name': s['site'], 'value': float(s['weight'])}, data)
+            groups = map(
+                lambda s: {'name': s['site'], 'value': float(s['weight'])}, data)
         else:
             formatted['weight_type'] = ''
             groups = []
@@ -78,12 +79,13 @@ class WebAPI(object):
 
     async def _send(self, api, data_send, connector):
         content, headers, status = await self.session.http_post(api,
-                                                                data=json.dumps(data_send),
+                                                                data=json.dumps(
+                                                                    data_send),
                                                                 headers=self.headers)
         if status != 201:
             if (connector.startswith('topology')
                 or connector.startswith('downtimes')
-                or connector.startswith('service-types')):
+                    or connector.startswith('service-types')):
                 jsonret = json.loads(content)
                 msg = None
                 statusmsg = jsonret.get('status', False)
@@ -129,15 +131,19 @@ class WebAPI(object):
     async def _put(self, api, data_send, id):
         from urllib.parse import urlparse
         loc = urlparse(api)
-        loc = '{}://{}{}/{}?{}'.format(loc.scheme, loc.hostname, loc.path, id, loc.query)
+        loc = '{}://{}{}/{}?{}'.format(loc.scheme,
+                                       loc.hostname, loc.path, id, loc.query)
         content, headers, status = await self.session.http_put(loc,
-                                                               data=json.dumps(data_send),
+                                                               data=json.dumps(
+                                                                   data_send),
                                                                headers=self.headers)
         return content, status
 
     async def _update(self, api, data_send):
         content = await self._get(api)
-        target = list(filter(lambda w: w['name'] == data_send['name'], content['data']))
+        content = json.loads(content)
+        target = list(
+            filter(lambda w: w['name'] == data_send['name'], content['data']))
         if len(target) > 1:
             self.logger.error('%s %s() Customer:%s Job:%s - HTTP PUT %s' %
                               (module_class_name(self), '_update',

@@ -30,7 +30,7 @@ def get_group(group_endpoints, group_name):
 
 class ParseServiceEndpointsTest(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-service_endpoint.xml') as feed_file:
+        with open('../tests/sample-service_endpoint.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
         parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
@@ -372,7 +372,7 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
 
 class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-topo.csv') as feed_file:
+        with open('../tests/sample-topo.csv') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
@@ -464,7 +464,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
 
 class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-topo.json') as feed_file:
+        with open('../tests/sample-topo.json') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
@@ -539,7 +539,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
 
 class ParseServiceEndpointsBiomed(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-service_endpoint_biomed.xml') as feed_file:
+        with open('../tests/sample-service_endpoint_biomed.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
         parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
@@ -578,7 +578,7 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
 
 class ParseSitesBiomed(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-sites_biomed.xml') as feed_file:
+        with open('../tests/sample-sites_biomed.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
         parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
@@ -609,11 +609,11 @@ class ParseSitesBiomed(unittest.TestCase):
 
 class ParseEoscProvider(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-private-resource.json', encoding='utf-8') as feed_file:
+        with open('../tests/sample-private-resource.json', encoding='utf-8') as feed_file:
             resources = feed_file.read()
-        with open('tests/sample-private-provider.json', encoding='utf-8') as feed_file:
+        with open('../tests/sample-private-provider.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
-        with open('tests/sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
+        with open('../tests/sample-resourcefeed_extensions.json', encoding='utf-8') as feed_file:
             resource_extensions = feed_file.read()
         logger.customer = CUSTOMER_NAME
         eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)

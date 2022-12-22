@@ -12,7 +12,6 @@ from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServic
 from argo_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
 
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
-from argo_connectors.io.avrowrite import AvroWriter
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.ldap import LDAPSessionWithRetry
 from argo_connectors.io.statewrite import state_write
@@ -20,7 +19,7 @@ from argo_connectors.io.webapi import WebAPI
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_connectors.mesh.storage_element_path import attach_sepath_topodata
-from argo_connectors.tasks.common import write_state, write_topo_avro as write_avro
+from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 from argo_connectors.parse.base import ParseHelpers
 
 
@@ -405,7 +404,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                 self.send_webapi(group_endpoints,'endpoints')
             )
 
-        if eval(self.globopts['GeneralWriteAvro'.lower()]):
-            write_avro(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
+        if eval(self.globopts['GeneralWriteJson'.lower()]):
+            write_json(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
 
         self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))

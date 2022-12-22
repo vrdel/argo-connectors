@@ -14,7 +14,7 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 
 class ParseWebApi(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-service_types_webapi.json', encoding='utf-8') as feed_file:
+        with open('../tests/sample-service_types_webapi.json', encoding='utf-8') as feed_file:
             service_types = feed_file.read()
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
@@ -136,7 +136,7 @@ class ParseWebApi(unittest.TestCase):
 
 class ParseGocdb(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-service_types_gocdb.xml', encoding='utf-8') as feed_file:
+        with open('../tests/sample-service_types_gocdb.xml', encoding='utf-8') as feed_file:
             service_types = feed_file.read()
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
@@ -189,7 +189,7 @@ class ParseGocdb(unittest.TestCase):
 
 class ParseFlat(unittest.TestCase):
     def setUp(self):
-        with open('tests/sample-topo.csv', encoding='utf-8') as feed_file:
+        with open('../tests/sample-topo.csv', encoding='utf-8') as feed_file:
             service_types = feed_file.read()
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME

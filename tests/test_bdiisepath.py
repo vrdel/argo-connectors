@@ -1,6 +1,8 @@
 import unittest
 import json
 
+import mock
+
 from argo_connectors.log import Logger
 from argo_connectors.mesh.storage_element_path import attach_sepath_topodata
 
@@ -14,7 +16,7 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 class MeshSePathAndTopodata(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
-        with open('tests/sample-bdii_sepaths.json') as fh:
+        with open('../tests/sample-bdii_sepaths.json') as fh:
             content = fh.read()
             self.sample_ldap = json.loads(content)
         self.maxDiff = None
