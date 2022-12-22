@@ -11,7 +11,7 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 
 class ParseCsvDowntimes(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-downtimes.csv', encoding='utf-8') as feed_file:
+        with open('tests/sample-downtimes.csv', encoding='utf-8') as feed_file:
             self.downtimes = feed_file.read()
         self.maxDiff = None
         logger = mock.Mock()

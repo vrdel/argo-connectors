@@ -16,7 +16,7 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 
 class ParseRocContactTest(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-roc_contacts.xml') as feed_file:
+        with open('tests/sample-roc_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
         parse_roc_contacts = ParseRocContacts(logger, self.content)
@@ -70,7 +70,7 @@ class ParseRocContactTest(unittest.TestCase):
 
 class ParseSitesContactTest(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-site_contacts.xml') as feed_file:
+        with open('tests/sample-site_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
         parse_sites_contacts = ParseSiteContacts(logger, self.content)
@@ -126,7 +126,7 @@ class ParseSitesContactTest(unittest.TestCase):
 
 class ParseSitesWithContactTest(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-sites_with_contacts.xml') as feed_file:
+        with open('tests/sample-sites_with_contacts.xml') as feed_file:
             self.content = feed_file.read()
         self.maxDiff = None
         logger.customer = CUSTOMER_NAME
@@ -144,14 +144,14 @@ class ParseSitesWithContactTest(unittest.TestCase):
 
 class ParseServiceEndpointsWithContactsTest(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-service_endpoint_with_contacts.xml') as feed_file:
+        with open('tests/sample-service_endpoint_with_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
         serviceendpoint_contacts = ParseServiceEndpointContacts(logger, self.content)
         self.serviceendpoint_contacts = serviceendpoint_contacts.get_contacts()
 
-        with open('../tests/sample-service_endpoint.xml') as feed_file:
+        with open('tests/sample-service_endpoint.xml') as feed_file:
             self.content = feed_file.read()
         serviceendpoint_nocontacts = ParseServiceEndpointContacts(logger, self.content)
         self.serviceendpoint_nocontacts = serviceendpoint_nocontacts.get_contacts()
@@ -171,7 +171,7 @@ class ParseServiceEndpointsWithContactsTest(unittest.TestCase):
 
 class ParseServiceGroupRolesTest(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-service_group_contacts.xml') as feed_file:
+        with open('tests/sample-service_group_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
@@ -189,7 +189,7 @@ class ParseServiceGroupRolesTest(unittest.TestCase):
 
 class ParseServiceGroupWithContactsTest(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-service_group_with_contacts.xml') as feed_file:
+        with open('tests/sample-service_group_with_contacts.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
@@ -207,7 +207,7 @@ class ParseServiceGroupWithContactsTest(unittest.TestCase):
 
 class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-topo.csv') as feed_file:
+        with open('tests/sample-topo.csv') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
 
@@ -226,9 +226,9 @@ class ParseCsvServiceEndpointsWithContacts(unittest.TestCase):
 
 class ParseEoscContacts(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-private-resource.json', encoding='utf-8') as feed_file:
+        with open('tests/sample-private-resource.json', encoding='utf-8') as feed_file:
             self.resources = feed_file.read()
-        with open('../tests/sample-private-provider.json', encoding='utf-8') as feed_file:
+        with open('tests/sample-private-provider.json', encoding='utf-8') as feed_file:
             self.providers = feed_file.read()
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
