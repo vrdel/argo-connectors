@@ -4,15 +4,18 @@ import json
 
 
 class JsonWriter:
-    def write_json(self, weights, filename):
+    def __init__(self, data, filename):
+        self.data = data
+        self.filename = filename
+
+    def write_json(self):
         try:
-            json_data = json.dumps(weights, indent=4)
-            
-            with open(filename, 'w') as f:
+            json_data = json.dumps(self.data, indent=4)
+
+            with open(self.filename, 'w') as f:
                 f.write(json_data)
-                f.close()
+
+            return True, None
 
         except Exception as e:
             return False, e
-
-        return True, None

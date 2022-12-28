@@ -20,7 +20,6 @@ logger = None
 
 VAPORPI = 'https://operations-portal.egi.eu/vapor/downloadLavoisier/option/json/view/VAPOR_Ngi_Sites_Info'
 
-
 def main():
     global logger, globopts
     parser = argparse.ArgumentParser(description="""Fetch weights information from Gstat provider

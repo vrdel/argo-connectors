@@ -16,7 +16,7 @@ CUSTOMER_NAME = 'CUSTOMERFOO'
 class MeshSePathAndTopodata(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
-        with open('../tests/sample-bdii_sepaths.json') as fh:
+        with open('tests/sample-bdii_sepaths.json') as fh:
             content = fh.read()
             self.sample_ldap = json.loads(content)
         self.maxDiff = None
