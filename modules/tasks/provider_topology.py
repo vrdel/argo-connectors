@@ -10,7 +10,7 @@ from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
-from argo_connectors.tasks.common import write_topo_avro as write_avro, write_state
+from argo_connectors.tasks.common import write_topo_json as write_json, write_state
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 
 
@@ -260,7 +260,7 @@ class TaskProviderTopology(object):
                         loop=self.loop
                 )
 
-            if eval(self.globopts['GeneralWriteAvro'.lower()]):
-                write_avro(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
+            if eval(self.globopts['GeneralWriteJson'.lower()]):
+                write_json(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
 
             self.logger.info('Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
