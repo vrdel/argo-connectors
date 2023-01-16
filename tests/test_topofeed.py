@@ -170,6 +170,9 @@ class MeshSitesAndContacts(unittest.TestCase):
             {
                 'group': 'iris.ac.uk',
                 'subgroup': 'dirac-durham',
+                'notifications': {
+                    'enabled': False
+                },
                 'tags': {
                     'certification': 'Certified', 'infrastructure':
                     'Production', 'scope': 'iris.ac.uk'
@@ -179,6 +182,9 @@ class MeshSitesAndContacts(unittest.TestCase):
             {
                 'group': 'Russia',
                 'subgroup': 'RU-SARFTI',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'certification': 'Certified', 'infrastructure':
                     'Production', 'scope': 'EGI'
@@ -228,7 +234,7 @@ class MeshSitesAndContacts(unittest.TestCase):
                 'group': 'iris.ac.uk',
                 'notifications': {'contacts': ['name1.surname1@durham.ac.uk',
                                                'name2.surname2@durham.ac.uk'],
-                                  'enabled': True},
+                                  'enabled': False},
                 'subgroup': 'dirac-durham',
                 'tags': {'certification': 'Certified', 'infrastructure':
                          'Production', 'scope': 'iris.ac.uk'},
@@ -257,6 +263,9 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
             {
                 'group': 'EGI',
                 'subgroup': 'NGI_ARMGRID_SERVICES',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'monitored': '1',
                     'scope': 'EGI'
@@ -266,6 +275,9 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
             {
                 'group': 'EGI',
                 'subgroup': 'NGI_CYGRID_SERVICES',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'monitored': '1',
                     'scope': 'EGI'

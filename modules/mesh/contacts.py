@@ -44,7 +44,7 @@ def attach_contacts_topodata(logger, contacts, topodata):
                             if filtered_emails:
                                 entity.update(notifications={
                                     'contacts': filtered_emails,
-                                    'enabled': True
+                                    'enabled': entity['notifications']['enabled']
                                 })
                                 break
                         else:
@@ -54,7 +54,7 @@ def attach_contacts_topodata(logger, contacts, topodata):
                         if filtered_emails:
                             entity.update(notifications={
                                 'contacts': filtered_emails,
-                                'enabled': True
+                                'enabled': entity['notifications']['enabled']
                             })
 
             # group_endpoints topotype
