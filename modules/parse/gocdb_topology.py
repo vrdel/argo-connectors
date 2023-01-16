@@ -34,6 +34,12 @@ class ParseSites(ParseHelpers):
                 except IndexError:
                     self._sites[site_name]['ngi'] = site.getAttribute('ROC')
                 self._sites[site_name]['scope'] = ', '.join(self.parse_scopes(site))
+                try:
+                    notification = self.parse_xmltext(site.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                    notification = True if notification.lower() == 'true' else False
+                    self._sites[site_name]['notification'] = notification
+                except IndexError:
+                    self._sites[site_name]['notification'] = False
 
                 # biomed feed does not have extensions
                 if self.pass_extensions:
@@ -59,6 +65,7 @@ class ParseSites(ParseHelpers):
             tmpg['type'] = 'NGI'
             tmpg['group'] = group['ngi']
             tmpg['subgroup'] = group['site']
+            tmpg['notifications'] = {'enabled': group['notification']}
             tmpg['tags'] = {'certification': group.get('certification', ''),
                             'scope': group.get('scope', ''),
                             'infrastructure': group.get('infrastructure', '')}

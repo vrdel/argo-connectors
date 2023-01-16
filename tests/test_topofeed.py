@@ -589,6 +589,9 @@ class ParseSitesBiomed(unittest.TestCase):
             [
                 {
                     'group': 'NGI_FRANCE',
+                    'notifications': {
+                        'enabled': False
+                    },
                     'subgroup': 'AUVERGRID',
                     'tags': {
                         'certification': '', 'infrastructure': '', 'scope': ''
@@ -597,6 +600,9 @@ class ParseSitesBiomed(unittest.TestCase):
                 },
                 {
                     'group': 'NGI_IT',
+                    'notifications': {
+                        'enabled': False
+                    },
                     'subgroup': 'CNR-ILC-PISA',
                     'tags': {
                         'certification': '', 'infrastructure': '', 'scope': ''
@@ -617,12 +623,14 @@ class ParseSitesTest(unittest.TestCase):
         self.maxDiff = None
 
     def test_EgiSites(self):
-        import ipdb; ipdb.set_trace()
         self.assertEqual(self.group_groups,
             [
                 {
                     'group': 'NGI_CZ',
                     'subgroup': 'prague_cesnet_lcg2_cert',
+                    'notifications': {
+                        'enabled': False
+                    },
                     'tags': {
                         'certification': 'Closed',
                         'infrastructure': 'Production',
@@ -633,6 +641,9 @@ class ParseSitesTest(unittest.TestCase):
                 {
                     'group': 'NGI_SK',
                     'subgroup': 'TU-Kosice',
+                    'notifications': {
+                        'enabled': True
+                    },
                     'tags': {
                         'certification': 'Certified',
                         'infrastructure': 'Production',
@@ -643,6 +654,9 @@ class ParseSitesTest(unittest.TestCase):
                 {
                     'group': 'NGI_SK',
                     'subgroup': 'IISAS-Bratislava',
+                    'notifications': {
+                        'enabled': True
+                    },
                     'tags': {
                         'certification': 'Certified',
                         'infrastructure': 'Production',
