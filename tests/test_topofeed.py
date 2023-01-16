@@ -607,6 +607,53 @@ class ParseSitesBiomed(unittest.TestCase):
         )
 
 
+class ParseSitesTest(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-site.xml') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
+        self.group_groups = parse_sites.get_group_groups()
+        self.maxDiff = None
+
+    def test_EgiSites(self):
+        import ipdb; ipdb.set_trace()
+        self.assertEqual(self.group_groups,
+            [
+                {
+                    'group': 'NGI_CZ',
+                    'subgroup': 'prague_cesnet_lcg2_cert',
+                    'tags': {
+                        'certification': 'Closed',
+                        'infrastructure': 'Production',
+                        'scope': 'EGI'
+                    },
+                    'type': 'NGI'
+                },
+                {
+                    'group': 'NGI_SK',
+                    'subgroup': 'TU-Kosice',
+                    'tags': {
+                        'certification': 'Certified',
+                        'infrastructure': 'Production',
+                        'scope': 'EGI'
+                    },
+                    'type': 'NGI'
+                },
+                {
+                    'group': 'NGI_SK',
+                    'subgroup': 'IISAS-Bratislava',
+                    'tags': {
+                        'certification': 'Certified',
+                        'infrastructure': 'Production',
+                        'scope': 'EGI'
+                    },
+                    'type': 'NGI'
+                }
+            ]
+        )
+
+
 class ParseEoscProvider(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-private-resource.json', encoding='utf-8') as feed_file:
