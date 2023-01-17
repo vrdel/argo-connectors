@@ -116,6 +116,14 @@ class ParseServiceEndpoints(ParseHelpers):
                 self._service_endpoints[service_id]['scope'] = ', '.join(self.parse_scopes(service))
                 self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + '-' + self._service_endpoints[service_id]['type'] + '-' + self._service_endpoints[service_id]['site']
                 self._service_endpoints[service_id]['url'] = self.parse_xmltext(service.getElementsByTagName('URL')[0].childNodes)
+
+                try:
+                    notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                    notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                    self._service_endpoints[service_id]['notification'] = notification
+                except IndexError:
+                    self._service_endpoints[service_id]['notification'] = True
+
                 if self.pass_extensions:
                     extension_node = None
                     extnodes = service.getElementsByTagName('EXTENSIONS')
@@ -142,6 +150,7 @@ class ParseServiceEndpoints(ParseHelpers):
             tmpg['type'] = 'SITES'
             tmpg['group'] = group['site']
             tmpg['service'] = group['type']
+            tmpg['notifications'] = {'enabled': group['notification']}
             if self.uidservendp:
                 tmpg['hostname'] = '{1}_{0}'.format(group['service_id'], group['hostname'])
             else:
