@@ -65,7 +65,7 @@ class ParseSites(ParseHelpers):
             tmpg['type'] = 'NGI'
             tmpg['group'] = group['ngi']
             tmpg['subgroup'] = group['site']
-            tmpg['notifications'] = {'enabled': group['notification']}
+            tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
             tmpg['tags'] = {'certification': group.get('certification', ''),
                             'scope': group.get('scope', ''),
                             'infrastructure': group.get('infrastructure', '')}
@@ -150,7 +150,7 @@ class ParseServiceEndpoints(ParseHelpers):
             tmpg['type'] = 'SITES'
             tmpg['group'] = group['site']
             tmpg['service'] = group['type']
-            tmpg['notifications'] = {'enabled': group['notification']}
+            tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
             if self.uidservendp:
                 tmpg['hostname'] = '{1}_{0}'.format(group['service_id'], group['hostname'])
             else:
@@ -261,7 +261,7 @@ class ParseServiceGroups(ParseHelpers):
                 tmpg['type'] = 'SERVICEGROUPS'
                 tmpg['group'] = group['name']
                 tmpg['service'] = service['type']
-                tmpg['notifications'] = {'enabled': service['notification']}
+                tmpg['notifications'] = {'contacts': [], 'enabled': service['notification']}
                 if self.uidservendp:
                     tmpg['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
@@ -297,7 +297,7 @@ class ParseServiceGroups(ParseHelpers):
             tmpg = dict()
             tmpg['type'] = 'PROJECT'
             tmpg['group'] = self.custname
-            tmpg['notifications'] = {'enabled': group['notification']}
+            tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
             tmpg['subgroup'] = group['name']
             tmpg['tags'] = {'monitored': '1' if group['monitored'].lower() == 'Y'.lower() or
                             group['monitored'].lower() == 'True'.lower() else '0', 'scope': group.get('scope', '')}
