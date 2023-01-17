@@ -39,7 +39,7 @@ class ParseSites(ParseHelpers):
                     notification = True if notification.lower() == 'true' else False
                     self._sites[site_name]['notification'] = notification
                 except IndexError:
-                    self._sites[site_name]['notification'] = False
+                    self._sites[site_name]['notification'] = True
 
                 # biomed feed does not have extensions
                 if self.pass_extensions:
@@ -201,6 +201,7 @@ class ParseServiceGroups(ParseHelpers):
                 self._service_groups[group_id]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
                 self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))
+                self._service_groups[group_id]['notification'] = True
 
                 for service in services:
                     tmps = dict()
@@ -272,6 +273,7 @@ class ParseServiceGroups(ParseHelpers):
             tmpg = dict()
             tmpg['type'] = 'PROJECT'
             tmpg['group'] = self.custname
+            tmpg['notifications'] = {'enabled': group['notification']}
             tmpg['subgroup'] = group['name']
             tmpg['tags'] = {'monitored': '1' if group['monitored'].lower() == 'Y'.lower() or
                             group['monitored'].lower() == 'True'.lower() else '0', 'scope': group.get('scope', '')}

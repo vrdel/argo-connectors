@@ -602,7 +602,7 @@ class ParseSitesBiomed(unittest.TestCase):
                 {
                     'group': 'NGI_FRANCE',
                     'notifications': {
-                        'enabled': False
+                        'enabled': True
                     },
                     'subgroup': 'AUVERGRID',
                     'tags': {
@@ -613,7 +613,7 @@ class ParseSitesBiomed(unittest.TestCase):
                 {
                     'group': 'NGI_IT',
                     'notifications': {
-                        'enabled': False
+                        'enabled': True
                     },
                     'subgroup': 'CNR-ILC-PISA',
                     'tags': {
