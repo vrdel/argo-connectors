@@ -36,7 +36,7 @@ class ParseSites(ParseHelpers):
                 self._sites[site_name]['scope'] = ', '.join(self.parse_scopes(site))
                 try:
                     notification = self.parse_xmltext(site.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
-                    notification = True if notification.lower() == 'true' else False
+                    notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
                     self._sites[site_name]['notification'] = notification
                 except IndexError:
                     self._sites[site_name]['notification'] = True
@@ -122,6 +122,7 @@ class ParseServiceEndpoints(ParseHelpers):
                     notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
                     self._service_endpoints[service_id]['notification'] = notification
                 except IndexError:
+                    print(notification)
                     self._service_endpoints[service_id]['notification'] = True
 
                 if self.pass_extensions:
@@ -212,7 +213,7 @@ class ParseServiceGroups(ParseHelpers):
                 self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))
                 try:
                     notification = self.parse_xmltext(group.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
-                    notification = True if notification.lower() == 'true' else False
+                    notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
                     self._service_groups[group_id]['notification'] = notification
                 except IndexError:
                     self._service_groups[group_id]['notification'] = True
@@ -233,7 +234,7 @@ class ParseServiceGroups(ParseHelpers):
 
                     try:
                         notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
-                        notification = True if notification.lower() == 'true' else False
+                        notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
                         tmps['notification'] = notification
                     except IndexError:
                         tmps['notification'] = True
