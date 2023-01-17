@@ -73,7 +73,7 @@ def attach_contacts_topodata(logger, contacts, topodata):
                     contact = contacts[contact_key]
                     entity.update(notifications={
                         'contacts': contact,
-                        'enabled': True
+                        'enabled': entity['notifications']['enabled']
                     })
 
             updated_topodata.append(entity)

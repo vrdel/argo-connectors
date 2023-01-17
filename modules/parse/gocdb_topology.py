@@ -210,7 +210,12 @@ class ParseServiceGroups(ParseHelpers):
                 self._service_groups[group_id]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
                 self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))
-                self._service_groups[group_id]['notification'] = True
+                try:
+                    notification = self.parse_xmltext(group.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                    notification = True if notification.lower() == 'true' else False
+                    self._service_groups[group_id]['notification'] = notification
+                except IndexError:
+                    self._service_groups[group_id]['notification'] = True
 
                 for service in services:
                     tmps = dict()
@@ -225,10 +230,19 @@ class ParseServiceGroups(ParseHelpers):
                     tmps['production'] = self.parse_xmltext(service.getElementsByTagName('IN_PRODUCTION')[0].childNodes)
                     tmps['scope'] = ', '.join(self.parse_scopes(service))
                     tmps['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
+
+                    try:
+                        notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                        notification = True if notification.lower() == 'true' else False
+                        tmps['notification'] = notification
+                    except IndexError:
+                        tmps['notification'] = True
+
                     if self.pass_extensions:
                         extensions = self.parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                         tmps['extensions'] = extensions
                     self._service_groups[group_id]['services'].append(tmps)
+
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing service groups feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
@@ -247,6 +261,7 @@ class ParseServiceGroups(ParseHelpers):
                 tmpg['type'] = 'SERVICEGROUPS'
                 tmpg['group'] = group['name']
                 tmpg['service'] = service['type']
+                tmpg['notifications'] = {'enabled': service['notification']}
                 if self.uidservendp:
                     tmpg['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
