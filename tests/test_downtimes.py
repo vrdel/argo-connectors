@@ -9,7 +9,7 @@ from argo_connectors.exceptions import ConnectorParseError
 
 class ParseGocdbDowntimes(unittest.TestCase):
     def setUp(self):
-        with open('../tests/sample-gocdb_downtimes.xml', encoding='utf-8') as feed_file:
+        with open('tests/sample-gocdb_downtimes.xml', encoding='utf-8') as feed_file:
             self.downtimes = feed_file.read()
         self.maxDiff = None
         logger = mock.Mock()
@@ -36,11 +36,10 @@ class ParseGocdbDowntimes(unittest.TestCase):
             flat_downtimes = ParseDowntimes(
                 self.logger, 'Foo_data', self.start, self.end, False)
             downtimes = flat_downtimes.get_data()
-            print("downtimes: ", downtimes)
 
         excep = cm.exception
 
-        self.assertTrue('XML feed' in excep.msg)
+        self.assertTrue('XMLSyntaxError' in excep.msg)
         self.assertTrue('mock_customer' in excep.msg)
 
 

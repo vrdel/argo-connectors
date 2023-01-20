@@ -57,7 +57,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                 'production': '1',
                 'scope': 'EGI, wlcg, atlas'},
                 'type': 'SITES'
-            },
+            },       
             {
                 'group': 'RAL-LCG2',
                 'hostname': 'arc-ce01.gridpp.rl.ac.uk',
@@ -158,8 +158,8 @@ class ParseServiceEndpointsTest(unittest.TestCase):
         with self.assertRaises(ConnectorParseError) as cm:
             ParseServiceEndpoints(logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
         excep = cm.exception
-        self.assertTrue('XML feed' in excep.msg)
-        self.assertTrue('ExpatError' in excep.msg)
+        self.assertTrue('endpoint feed' in excep.msg)
+        self.assertTrue('XMLSyntaxError' in excep.msg)
 
 
 class MeshSitesAndContacts(unittest.TestCase):
@@ -645,6 +645,7 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
                 }
             ]
         )
+
 
 
 class ParseSitesBiomed(unittest.TestCase):

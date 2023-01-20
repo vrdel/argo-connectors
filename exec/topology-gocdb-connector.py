@@ -38,7 +38,8 @@ def get_webapi_opts(cglob, confcust):
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
     webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
     if not webapi_complete:
-        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
+        logger.error('Customer:%s %s options incomplete, missing %s' %
+                     (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
     return webapi_opts
 
@@ -48,7 +49,8 @@ def get_bdii_opts(confcust):
     if bdii_custopts:
         bdii_complete, missing = confcust.is_complete_bdii(bdii_custopts)
         if not bdii_complete:
-            logger.error('%s options incomplete, missing %s' % ('bdii', ' '.join(missing)))
+            logger.error('%s options incomplete, missing %s' %
+                         ('bdii', ' '.join(missing)))
             raise SystemExit(1)
         return bdii_custopts
     else:
@@ -60,9 +62,12 @@ def main():
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
-    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
-    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
-    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf',
+                        help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf',
+                        help='path to global configuration file', type=str, required=False)
+    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY',
+                        help='write data for this date', type=str, required=False)
     args = parser.parse_args()
     group_endpoints, group_groups = [], []
     logger = Logger(os.path.basename(sys.argv[0]))
@@ -92,7 +97,8 @@ def main():
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if not auth_complete:
-        logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
+        logger.error('%s options incomplete, missing %s' %
+                     ('authentication', ' '.join(missing)))
         raise SystemExit(1)
 
     bdii_opts = get_bdii_opts(confcust)
