@@ -520,8 +520,8 @@ class CustomerConf(object):
     def get_vo_ggtags(self, job):
         return self._get_tags(job, 'TopoSelectGroupOfGroups')
 
-    def get_notif_flag(self, job):
-        return self._jobs[job]['HonorNotificationFlag']
+    def get_notif_flag(self):
+        return self._get_cust_options('HonorNotificationFlag')
 
     def _get_feed(self, job, key):
         try:

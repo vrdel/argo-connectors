@@ -165,7 +165,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                  SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI,
                  SERVICE_GROUPS_PI, SITES_PI, globopts, auth_opts, webapi_opts,
                  bdii_opts, confcust, custname, topofeed, topofetchtype,
-                 fixed_date, uidservendp, pass_extensions, topofeedpaging):
+                 fixed_date, uidservendp, pass_extensions, topofeedpaging, notiflag):
         TaskParseTopology.__init__(self, logger, custname, uidservendp, pass_extensions)
         super(TaskGocdbTopology, self).__init__(logger)
         self.loop = loop
@@ -188,6 +188,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.uidservendp = uidservendp
         self.pass_extensions = pass_extensions
         self.topofeedpaging = topofeedpaging
+        self.notfication_flag = notiflag
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
         ldap_session = LDAPSessionWithRetry(self.logger, int(self.globopts['ConnectionRetry'.lower()]),
