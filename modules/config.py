@@ -218,7 +218,8 @@ class CustomerConf(object):
                       'BDIIQueryBase', 'BDIIQueryFilterSRM',
                       'BDIIQueryAttributesSRM', 'BDIIQueryFilterSEPATH',
                       'BDIIQueryAttributesSEPATH', 'WebAPIToken',
-                      'WeightsEmpty', 'DowntimesEmpty', 'ServiceTypesFeed']
+                      'WeightsEmpty', 'DowntimesEmpty', 'ServiceTypesFeed',
+                      'HonorNotificationFlag']
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
@@ -281,6 +282,8 @@ class CustomerConf(object):
                         section, 'ServiceTypesFeed', fallback=None)
                     downtimesfeed = config.get(
                         section, 'DowntimesFeed', fallback=None)
+                    notifflag = config.getboolean(
+                        section, 'HonorNotificationFlag', fallback=None)
 
                     if not custdir.endswith('/'):
                         custdir = '{}/'.format(custdir)
@@ -314,6 +317,7 @@ class CustomerConf(object):
                                              'TopoScope': toposcope,
                                              'TopoType': topotype,
                                              'TopoUIDServiceEnpoints': topouidservendpoints,
+                                             'HonorNotificationFlag': notifflag,
                                              'OIDCTokenEndpoint': oidctokenapi,
                                              'OIDCRefreshToken': oidctoken,
                                              'OIDCClientId': oidcclientid
@@ -515,6 +519,9 @@ class CustomerConf(object):
 
     def get_vo_ggtags(self, job):
         return self._get_tags(job, 'TopoSelectGroupOfGroups')
+
+    def get_notif_flag(self, job):
+        return self._jobs[job]['HonorNotificationFlag']
 
     def _get_feed(self, job, key):
         try:
