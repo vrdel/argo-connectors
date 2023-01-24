@@ -105,7 +105,8 @@ class TaskParseTopology(object):
                                           self.notification_flag).get_group_groups()
         group_endpoints = ParseServiceGroups(self.logger, res, self.custname,
                                              self.uidservendp,
-                                             self.pass_extensions).get_group_endpoints()
+                                             self.pass_extensions,
+                                             self.notification_flag).get_group_endpoints()
 
         return group_groups, group_endpoints
 

@@ -218,12 +218,13 @@ class ParseServiceGroups(ParseHelpers):
                 self._service_groups[group_id]['services'] = []
                 services = group.getElementsByTagName('SERVICE_ENDPOINT')
                 self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))
-                try:
-                    notification = self.parse_xmltext(group.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
-                    notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
-                    self._service_groups[group_id]['notification'] = notification
-                except IndexError:
-                    self._service_groups[group_id]['notification'] = True
+                if self.notification_flag:
+                    try:
+                        notification = self.parse_xmltext(group.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                        notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                        self._service_groups[group_id]['notification'] = notification
+                    except IndexError:
+                        self._service_groups[group_id]['notification'] = True
 
                 for service in services:
                     tmps = dict()
