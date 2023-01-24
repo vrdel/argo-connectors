@@ -101,7 +101,8 @@ class TaskParseTopology(object):
     def parse_source_servicegroups(self, res):
         group_groups = ParseServiceGroups(self.logger, res, self.custname,
                                           self.uidservendp,
-                                          self.pass_extensions).get_group_groups()
+                                          self.pass_extensions,
+                                          self.notification_flag).get_group_groups()
         group_endpoints = ParseServiceGroups(self.logger, res, self.custname,
                                              self.uidservendp,
                                              self.pass_extensions).get_group_endpoints()
@@ -110,7 +111,8 @@ class TaskParseTopology(object):
 
     def parse_source_endpoints(self, res):
         group_endpoints = ParseServiceEndpoints(self.logger, res, self.custname, self.uidservendp,
-                                                self.pass_extensions).get_group_endpoints()
+                                                self.pass_extensions,
+                                                self.notification_flag).get_group_endpoints()
 
         return group_endpoints
 

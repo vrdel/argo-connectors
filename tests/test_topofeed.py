@@ -291,6 +291,7 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
+        self.notification_flag = True
         self.sample_servicegroups_data = [
             {
                 'group': 'EGI',
@@ -308,7 +309,7 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
                 'group': 'EGI',
                 'subgroup': 'NGI_CYGRID_SERVICES',
                 'notifications': {
-                    'enabled': True
+                    'enabled': False
                 },
                 'tags': {
                     'monitored': '1',
@@ -324,13 +325,32 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
 
     def test_ServiceGroupsAndContacts(self):
         attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
-                                 self.sample_servicegroups_data)
+                                 self.sample_servicegroups_data, self.notification_flag)
         self.assertEqual(self.sample_servicegroups_data[0],
             {
                 'group': 'EGI',
                 'subgroup': 'NGI_ARMGRID_SERVICES',
                 'notifications': {
                     'contacts': ['Name1.Surname1@email.com', 'Name2.Surname2@email.com'],
+                    'enabled': True
+                },
+                'tags': {
+                    'monitored': '1',
+                    'scope': 'EGI'
+                },
+                'type': 'PROJECT'
+            }
+        )
+
+    def test_ServiceGroupsAndContactsNoHonorNotificationFlag(self):
+        attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
+                                 self.sample_servicegroups_data, False)
+        self.assertEqual(self.sample_servicegroups_data[1],
+            {
+                'group': 'EGI',
+                'subgroup': 'NGI_CYGRID_SERVICES',
+                'notifications': {
+                    'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
                     'enabled': True
                 },
                 'tags': {
@@ -352,6 +372,9 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
                 'group': 'GROUP1',
                 'hostname': 'fqdn1.com',
                 'service': 'service1',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'monitored': '1',
                     'production': '0',
@@ -363,6 +386,9 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
                 'group': 'GROUP2',
                 'hostname': 'fqdn2.com',
                 'service': 'service2',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'monitored': '1',
                     'production': '0',
@@ -626,7 +652,9 @@ class ParseSitesBiomed(unittest.TestCase):
         with open('tests/sample-sites_biomed.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
+        self.notification_flag = False
+        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
+                                 False, self.notification_flag)
         self.group_groups = parse_sites.get_group_groups()
 
     def test_BiomedSites(self):
@@ -634,9 +662,6 @@ class ParseSitesBiomed(unittest.TestCase):
             [
                 {
                     'group': 'NGI_FRANCE',
-                    'notifications': {
-                        'enabled': True
-                    },
                     'subgroup': 'AUVERGRID',
                     'tags': {
                         'certification': '', 'infrastructure': '', 'scope': ''
@@ -645,9 +670,6 @@ class ParseSitesBiomed(unittest.TestCase):
                 },
                 {
                     'group': 'NGI_IT',
-                    'notifications': {
-                        'enabled': True
-                    },
                     'subgroup': 'CNR-ILC-PISA',
                     'tags': {
                         'certification': '', 'infrastructure': '', 'scope': ''
@@ -663,7 +685,9 @@ class ParseSitesTest(unittest.TestCase):
         with open('tests/sample-site.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
+        self.notification_flag = True
+        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
+                                 False, self.notification_flag)
         self.group_groups = parse_sites.get_group_groups()
         self.maxDiff = None
 
@@ -674,6 +698,7 @@ class ParseSitesTest(unittest.TestCase):
                     'group': 'NGI_CZ',
                     'subgroup': 'prague_cesnet_lcg2_cert',
                     'notifications': {
+                        'contacts': [],
                         'enabled': False
                     },
                     'tags': {
@@ -687,6 +712,7 @@ class ParseSitesTest(unittest.TestCase):
                     'group': 'NGI_SK',
                     'subgroup': 'TU-Kosice',
                     'notifications': {
+                        'contacts': [],
                         'enabled': True
                     },
                     'tags': {
@@ -700,6 +726,7 @@ class ParseSitesTest(unittest.TestCase):
                     'group': 'NGI_SK',
                     'subgroup': 'IISAS-Bratislava',
                     'notifications': {
+                        'contacts': [],
                         'enabled': True
                     },
                     'tags': {

@@ -87,12 +87,13 @@ class ParseSites(ParseHelpers):
 
 class ParseServiceEndpoints(ParseHelpers):
     def __init__(self, logger, data=None, custname=None, uid=False,
-                 pass_extensions=False):
+                 pass_extensions=False, notification_flag=False):
         super().__init__(logger)
         self.data = data
         self.uidservendp = uid
         self.custname = custname
         self.pass_extensions = pass_extensions
+        self.notification_flag = notification_flag
         self._service_endpoints = dict()
         self._parse_data()
         self.maxDiff = None
@@ -121,12 +122,13 @@ class ParseServiceEndpoints(ParseHelpers):
                 self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + '-' + self._service_endpoints[service_id]['type'] + '-' + self._service_endpoints[service_id]['site']
                 self._service_endpoints[service_id]['url'] = self.parse_xmltext(service.getElementsByTagName('URL')[0].childNodes)
 
-                try:
-                    notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
-                    notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
-                    self._service_endpoints[service_id]['notification'] = notification
-                except IndexError:
-                    self._service_endpoints[service_id]['notification'] = True
+                if self.notification_flag:
+                    try:
+                        notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                        notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                        self._service_endpoints[service_id]['notification'] = notification
+                    except IndexError:
+                        self._service_endpoints[service_id]['notification'] = True
 
                 if self.pass_extensions:
                     extension_node = None
@@ -154,7 +156,8 @@ class ParseServiceEndpoints(ParseHelpers):
             tmpg['type'] = 'SITES'
             tmpg['group'] = group['site']
             tmpg['service'] = group['type']
-            tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
+            if self.notification_flag:
+                tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
             if self.uidservendp:
                 tmpg['hostname'] = '{1}_{0}'.format(group['service_id'], group['hostname'])
             else:
@@ -190,12 +193,13 @@ class ParseServiceEndpoints(ParseHelpers):
 
 class ParseServiceGroups(ParseHelpers):
     def __init__(self, logger, data, custname, uid=False,
-                 pass_extensions=False):
+                 pass_extensions=False, notification_flag=False):
         super().__init__(logger)
         self.data = data
         self.uidservendp = uid
         self.custname = custname
         self.pass_extensions = pass_extensions
+        self.notification_flag = notification_flag
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()
         self._parse_data()
@@ -235,12 +239,13 @@ class ParseServiceGroups(ParseHelpers):
                     tmps['scope'] = ', '.join(self.parse_scopes(service))
                     tmps['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
-                    try:
-                        notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
-                        notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
-                        tmps['notification'] = notification
-                    except IndexError:
-                        tmps['notification'] = True
+                    if self.notfication_flag:
+                        try:
+                            notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                            notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                            tmps['notification'] = notification
+                        except IndexError:
+                            tmps['notification'] = True
 
                     if self.pass_extensions:
                         extensions = self.parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
@@ -265,7 +270,8 @@ class ParseServiceGroups(ParseHelpers):
                 tmpg['type'] = 'SERVICEGROUPS'
                 tmpg['group'] = group['name']
                 tmpg['service'] = service['type']
-                tmpg['notifications'] = {'contacts': [], 'enabled': service['notification']}
+                if self.notification_flag:
+                    tmpg['notifications'] = {'contacts': [], 'enabled': service['notification']}
                 if self.uidservendp:
                     tmpg['hostname'] = '{1}_{0}'.format(service['service_id'], service['hostname'])
                 else:
@@ -301,7 +307,8 @@ class ParseServiceGroups(ParseHelpers):
             tmpg = dict()
             tmpg['type'] = 'PROJECT'
             tmpg['group'] = self.custname
-            tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
+            if self.notification_flag:
+                tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
             tmpg['subgroup'] = group['name']
             tmpg['tags'] = {'monitored': '1' if group['monitored'].lower() == 'Y'.lower() or
                             group['monitored'].lower() == 'True'.lower() else '0', 'scope': group.get('scope', '')}
