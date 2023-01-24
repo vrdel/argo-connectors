@@ -90,11 +90,13 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
 
 
 class TaskParseTopology(object):
-    def __init__(self, logger, custname, uidservendp, pass_extensions):
+    def __init__(self, logger, custname, uidservendp, pass_extensions,
+                 notiflag):
         self.logger = logger
         self.custname = custname
         self.uidservendp = uidservendp
         self.pass_extensions = pass_extensions
+        self.notification_flag = notiflag
 
     def parse_source_servicegroups(self, res):
         group_groups = ParseServiceGroups(self.logger, res, self.custname,
@@ -115,7 +117,8 @@ class TaskParseTopology(object):
     def parse_source_sites(self, res):
         group_groups = ParseSites(self.logger, res, self.custname,
                                   self.uidservendp,
-                                  self.pass_extensions).get_group_groups()
+                                  self.pass_extensions,
+                                  self.notification_flag).get_group_groups()
 
         return group_groups
 
@@ -166,7 +169,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                  SERVICE_GROUPS_PI, SITES_PI, globopts, auth_opts, webapi_opts,
                  bdii_opts, confcust, custname, topofeed, topofetchtype,
                  fixed_date, uidservendp, pass_extensions, topofeedpaging, notiflag):
-        TaskParseTopology.__init__(self, logger, custname, uidservendp, pass_extensions)
+        TaskParseTopology.__init__(self, logger, custname, uidservendp,
+                                   pass_extensions, notiflag)
         super(TaskGocdbTopology, self).__init__(logger)
         self.loop = loop
         self.logger = logger
@@ -379,19 +383,23 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             self.loop.run_in_executor(executor,
                                       partial(attach_contacts_topodata, self.logger,
                                               parsed_serviceendpoint_contacts,
-                                              group_endpoints))
+                                              group_endpoints, self.notfication_flag))
         ]
 
         executor = ProcessPoolExecutor(max_workers=2)
         group_groups, group_endpoints = await asyncio.gather(*attach_contacts_workers, loop=self.loop)
 
         if parsed_servicegroups_contacts:
-            attach_contacts_topodata(self.logger, parsed_servicegroups_contacts, group_groups)
+            attach_contacts_topodata(self.logger,
+                                     parsed_servicegroups_contacts,
+                                     group_groups, self.notification_flag)
         elif fetched_servicegroups:
             # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
             # servicegroups topology entities
             parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
-            attach_contacts_topodata(self.logger, parsed_servicegroups_contacts, group_groups)
+            attach_contacts_topodata(self.logger,
+                                     parsed_servicegroups_contacts,
+                                     group_groups, self.notfication_flag)
 
         await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
 
