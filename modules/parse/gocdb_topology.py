@@ -239,7 +239,7 @@ class ParseServiceGroups(ParseHelpers):
                     tmps['scope'] = ', '.join(self.parse_scopes(service))
                     tmps['endpoint_urls'] = self.parse_url_endpoints(service.getElementsByTagName('ENDPOINTS')[0].childNodes)
 
-                    if self.notfication_flag:
+                    if self.notification_flag:
                         try:
                             notification = self.parse_xmltext(service.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
                             notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False

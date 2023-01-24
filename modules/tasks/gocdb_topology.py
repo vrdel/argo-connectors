@@ -127,16 +127,21 @@ class TaskParseTopology(object):
 
 # basic function wrappers used because to avoid class TaskParseTopology pickle
 # in ProcessPoolExecutor
-def parse_endpoints(logger, custname, uidservendp, pass_extensions, data):
-    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions)
+def parse_endpoints(logger, custname, uidservendp, pass_extensions,
+                    notification_flag, data):
+    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions,
+                             notification_flag)
     return task.parse_source_endpoints(data)
 
-def parse_sites(logger, custname, uidservendp, pass_extensions, data):
-    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions)
+def parse_sites(logger, custname, uidservendp, pass_extensions,
+                notification_flag, data):
+    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions, notification_flag)
     return task.parse_source_sites(data)
 
-def parse_servicegroups(logger, custname, uidservendp, pass_extensions, data):
-    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions)
+def parse_servicegroups(logger, custname, uidservendp, pass_extensions,
+                        notification_flag, data):
+    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions,
+                             notification_flag)
     return task.parse_source_servicegroups(data)
 
 
@@ -194,7 +199,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.uidservendp = uidservendp
         self.pass_extensions = pass_extensions
         self.topofeedpaging = topofeedpaging
-        self.notfication_flag = notiflag
+        self.notification_flag = notiflag
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
         ldap_session = LDAPSessionWithRetry(self.logger, int(self.globopts['ConnectionRetry'.lower()]),
@@ -315,15 +320,18 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         exe_parse_source_endpoints = partial(parse_endpoints, self.logger,
                                              self.custname, self.uidservendp,
                                              self.pass_extensions,
+                                             self.notification_flag,
                                              fetched_endpoints)
         exe_parse_source_servicegroups = partial(parse_servicegroups,
                                                  self.logger, self.custname,
                                                  self.uidservendp,
                                                  self.pass_extensions,
+                                                 self.notification_flag,
                                                  fetched_servicegroups)
         exe_parse_source_sites = partial(parse_sites, self.logger,
                                          self.custname, self.uidservendp,
-                                         self.pass_extensions, fetched_sites)
+                                         self.pass_extensions,
+                                         self.notification_flag, fetched_sites)
 
         # parse topology depend on configured components fetch. we can fetch
         # only sites, only servicegroups or both.
@@ -381,11 +389,11 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             self.loop.run_in_executor(executor,
                                       partial(attach_contacts_topodata, self.logger,
                                               parsed_site_contacts,
-                                              group_groups)),
+                                              group_groups, self.notification_flag)),
             self.loop.run_in_executor(executor,
                                       partial(attach_contacts_topodata, self.logger,
                                               parsed_serviceendpoint_contacts,
-                                              group_endpoints, self.notfication_flag))
+                                              group_endpoints, self.notification_flag))
         ]
 
         executor = ProcessPoolExecutor(max_workers=2)
@@ -401,7 +409,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
             attach_contacts_topodata(self.logger,
                                      parsed_servicegroups_contacts,
-                                     group_groups, self.notfication_flag)
+                                     group_groups, self.notification_flag)
 
         await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
 
