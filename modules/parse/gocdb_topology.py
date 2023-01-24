@@ -5,7 +5,7 @@ from argo_connectors.exceptions import ConnectorParseError
 
 class ParseSites(ParseHelpers):
     def __init__(self, logger, data, custname, uid=False,
-                 pass_extensions=False):
+                 pass_extensions=False, notification_flag=False):
         super().__init__(logger)
         self.logger = logger
         self.data = data
@@ -13,6 +13,7 @@ class ParseSites(ParseHelpers):
         self.custname = custname
         self.pass_extensions = pass_extensions
         self._sites = dict()
+        self.notification_flag = notification_flag
         self._parse_data()
 
     def _parse_data(self):
@@ -34,12 +35,14 @@ class ParseSites(ParseHelpers):
                 except IndexError:
                     self._sites[site_name]['ngi'] = site.getAttribute('ROC')
                 self._sites[site_name]['scope'] = ', '.join(self.parse_scopes(site))
-                try:
-                    notification = self.parse_xmltext(site.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
-                    notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
-                    self._sites[site_name]['notification'] = notification
-                except IndexError:
-                    self._sites[site_name]['notification'] = True
+
+                if self.notification_flag:
+                    try:
+                        notification = self.parse_xmltext(site.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+                        notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                        self._sites[site_name]['notification'] = notification
+                    except IndexError:
+                        self._sites[site_name]['notification'] = True
 
                 # biomed feed does not have extensions
                 if self.pass_extensions:
@@ -65,7 +68,8 @@ class ParseSites(ParseHelpers):
             tmpg['type'] = 'NGI'
             tmpg['group'] = group['ngi']
             tmpg['subgroup'] = group['site']
-            tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
+            if self.notification_flag:
+                tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
             tmpg['tags'] = {'certification': group.get('certification', ''),
                             'scope': group.get('scope', ''),
                             'infrastructure': group.get('infrastructure', '')}
@@ -122,7 +126,6 @@ class ParseServiceEndpoints(ParseHelpers):
                     notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
                     self._service_endpoints[service_id]['notification'] = notification
                 except IndexError:
-                    print(notification)
                     self._service_endpoints[service_id]['notification'] = True
 
                 if self.pass_extensions:

@@ -166,6 +166,7 @@ class MeshSitesAndContacts(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
+        self.notification_flag = True
         self.sample_sites_data = [
             {
                 'group': 'iris.ac.uk',
@@ -228,13 +229,44 @@ class MeshSitesAndContacts(unittest.TestCase):
         }
 
     def test_SitesAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_sites_contacts, self.sample_sites_data)
+        attach_contacts_topodata(logger, self.sample_sites_contacts,
+                                 self.sample_sites_data,
+                                 self.notification_flag)
         self.assertEqual(self.sample_sites_data[0],
             {
                 'group': 'iris.ac.uk',
                 'notifications': {'contacts': ['name1.surname1@durham.ac.uk',
                                                'name2.surname2@durham.ac.uk'],
                                   'enabled': False},
+                'subgroup': 'dirac-durham',
+                'tags': {'certification': 'Certified', 'infrastructure':
+                         'Production', 'scope': 'iris.ac.uk'},
+                'type': 'NGI'
+            }
+        )
+        self.assertEqual(self.sample_sites_data[1],
+            {
+                'group': 'Russia',
+                'notifications': {'contacts': ['name1.surname1@gmail.com',
+                                               'name2.surname2@gmail.com'],
+                                  'enabled': True},
+                'subgroup': 'RU-SARFTI',
+                'tags': {'certification': 'Certified', 'infrastructure':
+                         'Production', 'scope': 'EGI'},
+                'type': 'NGI'
+            }
+        )
+
+    def test_SitesAndContactsNoHonorNotificationFlag(self):
+        attach_contacts_topodata(logger, self.sample_sites_contacts,
+                                 self.sample_sites_data,
+                                 False)
+        self.assertEqual(self.sample_sites_data[0],
+            {
+                'group': 'iris.ac.uk',
+                'notifications': {'contacts': ['name1.surname1@durham.ac.uk',
+                                               'name2.surname2@durham.ac.uk'],
+                                  'enabled': True},
                 'subgroup': 'dirac-durham',
                 'tags': {'certification': 'Certified', 'infrastructure':
                          'Production', 'scope': 'iris.ac.uk'},
@@ -314,6 +346,7 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
+        self.notfication_flag = True
         self.sample_serviceendpoints_data = [
             {
                 'group': 'GROUP1',
@@ -345,7 +378,7 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
 
     def test_ServiceEndpointsAndContacts(self):
         attach_contacts_topodata(logger, self.sample_serviceendpoints_contacts,
-                                 self.sample_serviceendpoints_data)
+                                 self.sample_serviceendpoints_data, self.notfication_flag)
         self.assertEqual(self.sample_serviceendpoints_data[0],
             {
                 'group': 'GROUP1',
