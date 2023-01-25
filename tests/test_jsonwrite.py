@@ -5,9 +5,22 @@ import json
 from argo_connectors.io.jsonwrite import JsonWriter
 
 mock_json = [
-    {'id': 5414470, 'name': 'mike'},
-    {'id': 5414472, 'name': 'tom'},
-    {'id': 5414232, 'name': 'pete'},
+   {
+        "type": "NGI",
+        "group": "iris.ac.uk",
+        "subgroup": "dirac-durham",
+        "tags": {
+            "certification": "Certified",
+            "scope": "iris.ac.uk",
+            "infrastructure": "Production"
+        },
+        "notifications": {
+            "contacts": [
+                "a.g.basden@durham.ac.uk"
+            ],
+            "enabled": "true"
+        }
+    }
 ]
 
 mock_filename = "mock_file.json"
@@ -23,7 +36,7 @@ class JsonWriteTest(unittest.TestCase):
         m.assert_called_once_with('mock_file.json', 'w')
         handle = m()
         handle.write.assert_called_once_with(
-            '[\n    {\n        "id": 5414470,\n        "name": "mike"\n    },\n    {\n        "id": 5414472,\n        "name": "tom"\n    },\n    {\n        "id": 5414232,\n        "name": "pete"\n    }\n]')
+            '[\n    {\n        "type": "NGI",\n        "group": "iris.ac.uk",\n        "subgroup": "dirac-durham",\n        "tags": {\n            "certification": "Certified",\n            "scope": "iris.ac.uk",\n            "infrastructure": "Production"\n        },\n        "notifications": {\n            "contacts": [\n                "a.g.basden@durham.ac.uk"\n            ],\n            "enabled": "true"\n        }\n    }\n]')
 
     def test_fail_jsonwrite(self):
         mock_jsondumps = Mock(name='json.dumps')

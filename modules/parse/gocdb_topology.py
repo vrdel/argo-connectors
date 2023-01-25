@@ -108,7 +108,6 @@ class ParseSites(ParseHelpers):
 
             groupofgroups.append(tmpg)
 
-        print("groupofgroups: ", groupofgroups)
         return groupofgroups
 
 

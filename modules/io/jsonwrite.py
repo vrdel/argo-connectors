@@ -1,7 +1,6 @@
 import json
 
-
-class JsonWriter:
+class JsonWriter():
     def __init__(self, data, filename):
         self.data = data
         self.filename = filename
