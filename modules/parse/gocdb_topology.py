@@ -221,10 +221,17 @@ class ParseServiceGroups(ParseHelpers):
                 if self.notification_flag:
                     try:
                         notification = self.parse_xmltext(group.getElementsByTagName('NOTIFICATIONS')[0].childNodes)
+
+
                         notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
                         self._service_groups[group_id]['notification'] = notification
                     except IndexError:
-                        self._service_groups[group_id]['notification'] = True
+                        try:
+                            notification = self.parse_xmltext(group.getElementsByTagName('NOTIFY')[0].childNodes)
+                            notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                            self._service_groups[group_id]['notification'] = notification
+                        except IndexError:
+                            self._service_groups[group_id]['notification'] = True
 
                 for service in services:
                     tmps = dict()
@@ -252,7 +259,6 @@ class ParseServiceGroups(ParseHelpers):
                         extensions = self.parse_extensions(service.getElementsByTagName('EXTENSIONS')[0].childNodes)
                         tmps['extensions'] = extensions
                     self._service_groups[group_id]['services'].append(tmps)
-
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing service groups feed - %s' % (self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
