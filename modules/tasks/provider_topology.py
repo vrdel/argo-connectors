@@ -195,7 +195,7 @@ class TaskProviderTopology(object):
             await session.close()
 
         try:
-            access_token = json.loads(res).get('id_token', None)
+            access_token = json.loads(res).get('access_token', None)
         except json.decoder.JSONDecodeError as exc:
             msg = "Could not extract OIDC Access token: {}".format(repr(exc))
             raise ConnectorParseError(msg)
