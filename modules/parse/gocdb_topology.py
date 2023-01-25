@@ -52,6 +52,16 @@ class ParseSites(ParseHelpers):
                 self._sites[site_name]['scope'] = ', '.join(
                     self.parse_scopes_lxml(site))
 
+                if self.notification_flag:
+                    try:
+                        for notification in site.xpath('NOTIFICATIONS'):
+                            notification = notification.text
+                            notification = True if notification.lower(
+                            ) == 'true' or notification.lower() == 'y' else False
+                        self._sites[site_name]['notification'] = notification
+                    except IndexError:
+                        self._sites[site_name]['notification'] = True
+
                 # # biomed feed does not have extensions
                 if self.pass_extensions:
                     try:
@@ -83,6 +93,11 @@ class ParseSites(ParseHelpers):
             tmpg['group'] = group['ngi']
 
             tmpg['subgroup'] = group['site']
+
+            if self.notification_flag:
+                tmpg['notifications'] = {
+                    'contacts': [], 'enabled': group['notification']}
+
             tmpg['tags'] = {'certification': group.get('certification', ''),
                             'scope': group.get('scope', ''),
                             'infrastructure': group.get('infrastructure', '')}
@@ -93,6 +108,7 @@ class ParseSites(ParseHelpers):
 
             groupofgroups.append(tmpg)
 
+        print("groupofgroups: ", groupofgroups)
         return groupofgroups
 
 
@@ -187,7 +203,8 @@ class ParseServiceEndpoints(ParseHelpers):
             tmpg['group'] = group['site']
             tmpg['service'] = group['type']
             if self.notification_flag:
-                tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
+                tmpg['notifications'] = {
+                    'contacts': [], 'enabled': group['notification']}
             if self.uidservendp:
                 tmpg['hostname'] = '{1}_{0}'.format(
                     group['service_id'], group['hostname'])
@@ -302,7 +319,8 @@ class ParseServiceGroups(ParseHelpers):
                 tmpg['group'] = group['name']
                 tmpg['service'] = service['type']
                 if self.notification_flag:
-                    tmpg['notifications'] = {'contacts': [], 'enabled': service['notification']}
+                    tmpg['notifications'] = {
+                        'contacts': [], 'enabled': service['notification']}
                 if self.uidservendp:
                     tmpg['hostname'] = '{1}_{0}'.format(
                         service['service_id'], service['hostname'])
@@ -341,7 +359,8 @@ class ParseServiceGroups(ParseHelpers):
             tmpg['type'] = 'PROJECT'
             tmpg['group'] = self.custname
             if self.notification_flag:
-                tmpg['notifications'] = {'contacts': [], 'enabled': group['notification']}
+                tmpg['notifications'] = {
+                    'contacts': [], 'enabled': group['notification']}
             tmpg['subgroup'] = group['name']
             tmpg['tags'] = {'monitored': '1' if group['monitored'].lower() == 'Y'.lower() or
                             group['monitored'].lower() == 'True'.lower() else '0', 'scope': group.get('scope', '')}
