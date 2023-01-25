@@ -166,10 +166,14 @@ class MeshSitesAndContacts(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
+        self.notification_flag = True
         self.sample_sites_data = [
             {
                 'group': 'iris.ac.uk',
                 'subgroup': 'dirac-durham',
+                'notifications': {
+                    'enabled': False
+                },
                 'tags': {
                     'certification': 'Certified', 'infrastructure':
                     'Production', 'scope': 'iris.ac.uk'
@@ -179,6 +183,9 @@ class MeshSitesAndContacts(unittest.TestCase):
             {
                 'group': 'Russia',
                 'subgroup': 'RU-SARFTI',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'certification': 'Certified', 'infrastructure':
                     'Production', 'scope': 'EGI'
@@ -222,7 +229,38 @@ class MeshSitesAndContacts(unittest.TestCase):
         }
 
     def test_SitesAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_sites_contacts, self.sample_sites_data)
+        attach_contacts_topodata(logger, self.sample_sites_contacts,
+                                 self.sample_sites_data,
+                                 self.notification_flag)
+        self.assertEqual(self.sample_sites_data[0],
+            {
+                'group': 'iris.ac.uk',
+                'notifications': {'contacts': ['name1.surname1@durham.ac.uk',
+                                               'name2.surname2@durham.ac.uk'],
+                                  'enabled': False},
+                'subgroup': 'dirac-durham',
+                'tags': {'certification': 'Certified', 'infrastructure':
+                         'Production', 'scope': 'iris.ac.uk'},
+                'type': 'NGI'
+            }
+        )
+        self.assertEqual(self.sample_sites_data[1],
+            {
+                'group': 'Russia',
+                'notifications': {'contacts': ['name1.surname1@gmail.com',
+                                               'name2.surname2@gmail.com'],
+                                  'enabled': True},
+                'subgroup': 'RU-SARFTI',
+                'tags': {'certification': 'Certified', 'infrastructure':
+                         'Production', 'scope': 'EGI'},
+                'type': 'NGI'
+            }
+        )
+
+    def test_SitesAndContactsNoHonorNotificationFlag(self):
+        attach_contacts_topodata(logger, self.sample_sites_contacts,
+                                 self.sample_sites_data,
+                                 False)
         self.assertEqual(self.sample_sites_data[0],
             {
                 'group': 'iris.ac.uk',
@@ -253,10 +291,14 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
+        self.notification_flag = True
         self.sample_servicegroups_data = [
             {
                 'group': 'EGI',
                 'subgroup': 'NGI_ARMGRID_SERVICES',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'monitored': '1',
                     'scope': 'EGI'
@@ -266,6 +308,9 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
             {
                 'group': 'EGI',
                 'subgroup': 'NGI_CYGRID_SERVICES',
+                'notifications': {
+                    'enabled': False
+                },
                 'tags': {
                     'monitored': '1',
                     'scope': 'EGI'
@@ -280,7 +325,7 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
 
     def test_ServiceGroupsAndContacts(self):
         attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
-                                 self.sample_servicegroups_data)
+                                 self.sample_servicegroups_data, self.notification_flag)
         self.assertEqual(self.sample_servicegroups_data[0],
             {
                 'group': 'EGI',
@@ -297,16 +342,39 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
             }
         )
 
+    def test_ServiceGroupsAndContactsNoHonorNotificationFlag(self):
+        attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
+                                 self.sample_servicegroups_data, False)
+        self.assertEqual(self.sample_servicegroups_data[1],
+            {
+                'group': 'EGI',
+                'subgroup': 'NGI_CYGRID_SERVICES',
+                'notifications': {
+                    'contacts': ['Name3.Surname3@email.com', 'Name4.Surname4@email.com'],
+                    'enabled': True
+                },
+                'tags': {
+                    'monitored': '1',
+                    'scope': 'EGI'
+                },
+                'type': 'PROJECT'
+            }
+        )
+
 
 class MeshServiceEndpointsAndContacts(unittest.TestCase):
     def setUp(self):
         logger.customer = CUSTOMER_NAME
         self.maxDiff = None
+        self.notfication_flag = True
         self.sample_serviceendpoints_data = [
             {
                 'group': 'GROUP1',
                 'hostname': 'fqdn1.com',
                 'service': 'service1',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'monitored': '1',
                     'production': '0',
@@ -318,6 +386,9 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
                 'group': 'GROUP2',
                 'hostname': 'fqdn2.com',
                 'service': 'service2',
+                'notifications': {
+                    'enabled': True
+                },
                 'tags': {
                     'monitored': '1',
                     'production': '0',
@@ -333,7 +404,7 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
 
     def test_ServiceEndpointsAndContacts(self):
         attach_contacts_topodata(logger, self.sample_serviceendpoints_contacts,
-                                 self.sample_serviceendpoints_data)
+                                 self.sample_serviceendpoints_data, self.notfication_flag)
         self.assertEqual(self.sample_serviceendpoints_data[0],
             {
                 'group': 'GROUP1',
@@ -581,7 +652,9 @@ class ParseSitesBiomed(unittest.TestCase):
         with open('tests/sample-sites_biomed.xml') as feed_file:
             self.content = feed_file.read()
         logger.customer = CUSTOMER_NAME
-        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME)
+        self.notification_flag = False
+        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
+                                 False, self.notification_flag)
         self.group_groups = parse_sites.get_group_groups()
 
     def test_BiomedSites(self):
@@ -600,6 +673,66 @@ class ParseSitesBiomed(unittest.TestCase):
                     'subgroup': 'CNR-ILC-PISA',
                     'tags': {
                         'certification': '', 'infrastructure': '', 'scope': ''
+                    },
+                    'type': 'NGI'
+                }
+            ]
+        )
+
+
+class ParseSitesTest(unittest.TestCase):
+    def setUp(self):
+        with open('tests/sample-site.xml') as feed_file:
+            self.content = feed_file.read()
+        logger.customer = CUSTOMER_NAME
+        self.notification_flag = True
+        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
+                                 False, self.notification_flag)
+        self.group_groups = parse_sites.get_group_groups()
+        self.maxDiff = None
+
+    def test_EgiSites(self):
+        self.assertEqual(self.group_groups,
+            [
+                {
+                    'group': 'NGI_CZ',
+                    'subgroup': 'prague_cesnet_lcg2_cert',
+                    'notifications': {
+                        'contacts': [],
+                        'enabled': False
+                    },
+                    'tags': {
+                        'certification': 'Closed',
+                        'infrastructure': 'Production',
+                        'scope': 'EGI'
+                    },
+                    'type': 'NGI'
+                },
+                {
+                    'group': 'NGI_SK',
+                    'subgroup': 'TU-Kosice',
+                    'notifications': {
+                        'contacts': [],
+                        'enabled': True
+                    },
+                    'tags': {
+                        'certification': 'Certified',
+                        'infrastructure': 'Production',
+                        'scope': 'EGI'
+                    },
+                    'type': 'NGI'
+                },
+                {
+                    'group': 'NGI_SK',
+                    'subgroup': 'IISAS-Bratislava',
+                    'notifications': {
+                        'contacts': [],
+                        'enabled': True
+                    },
+                    'tags': {
+                        'certification': 'Certified',
+                        'infrastructure': 'Production',
+                        'scope': 'EGI'
                     },
                     'type': 'NGI'
                 }

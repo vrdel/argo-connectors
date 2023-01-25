@@ -43,6 +43,7 @@ class TopologyGocdb(unittest.TestCase):
         bdiiopts.__getitem__.return_value = 'True'
         confcust = mock.Mock()
         topofeedpaging = True
+        notification_flag = True
         uidservendp = False
         passext = True
         fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
@@ -67,7 +68,8 @@ class TopologyGocdb(unittest.TestCase):
             fixed_date,
             uidservendp,
             passext,
-            topofeedpaging
+            topofeedpaging,
+            notification_flag
         )
 
     @mock.patch.object(ParseHelpers, 'parse_xml')
