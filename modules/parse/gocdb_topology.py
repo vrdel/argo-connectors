@@ -21,7 +21,8 @@ class ParseSites(ParseHelpers):
 
     def _parse_data(self):
         try:
-            xml_bytes = self.data.encode("utf-8")
+            doc = self.parse_xml(self.data)
+            xml_bytes = doc.encode("utf-8")
             sites = etree.fromstring(xml_bytes)
 
             for site in sites:
@@ -127,7 +128,8 @@ class ParseServiceEndpoints(ParseHelpers):
 
     def _parse_data(self):
         try:
-            xml_bytes = self.data.encode("utf-8")
+            doc = self.parse_xml(self.data)
+            xml_bytes = doc.encode("utf-8")
             services = etree.fromstring(xml_bytes)
 
             for service in services:
@@ -254,7 +256,8 @@ class ParseServiceGroups(ParseHelpers):
 
     def _parse_data(self):
         try:
-            xml_bytes = self.data.encode("utf-8")
+            doc = self.parse_xml(self.data)
+            xml_bytes = doc.encode("utf-8")
             groups = etree.fromstring(xml_bytes)
             for group in groups:
                 if group.tag != 'meta':
@@ -278,7 +281,8 @@ class ParseServiceGroups(ParseHelpers):
 
                         tmps['hostname'] = service.find('HOSTNAME').text
                         try:
-                            tmps['service_id'] = service.find('PRIMARY_KEY').text
+                            tmps['service_id'] = service.find(
+                                'PRIMARY_KEY').text
                         except AttributeError:
                             tmps['service_id'] = service.attrib["PRIMARY_KEY"]
 

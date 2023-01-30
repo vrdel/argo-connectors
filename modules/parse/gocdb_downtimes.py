@@ -19,7 +19,8 @@ class ParseDowntimes():
         filtered_downtimes = list()
 
         try:
-            xml_bytes = self.data.encode("utf-8")
+            doc = self.parse_xml(self.data)
+            xml_bytes = doc.encode("utf-8")
             root = etree.fromstring(xml_bytes)
 
             for downtimes in root:

@@ -14,7 +14,8 @@ class ParseGocdbServiceTypes():
         all_service_type = list()
 
         try:
-            xml_bytes = self.data.encode("utf-8")
+            doc = self.parse_xml(self.data)
+            xml_bytes = doc.encode("utf-8")
             service_types = etree.fromstring(xml_bytes)
 
             for service in service_types:

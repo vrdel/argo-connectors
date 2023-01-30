@@ -26,7 +26,8 @@ class ParseContacts(ParseHelpers):
         try:
             data = dict()
 
-            xml_bytes = self.data.encode("utf-8")
+            doc = self.parse_xml(self.data)
+            xml_bytes = doc.encode("utf-8")
             entities = etree.fromstring(xml_bytes)
 
             for entity in entities:
@@ -60,7 +61,8 @@ class ParseContacts(ParseHelpers):
         try:
             sites_contacts = dict()
 
-            xml_bytes = data.encode("utf-8")
+            doc = self.parse_xml(data)
+            xml_bytes = doc.encode("utf-8")
             elements = etree.fromstring(xml_bytes)
 
             for element in elements:
@@ -95,7 +97,8 @@ class ParseContacts(ParseHelpers):
         try:
             endpoints_contacts = dict()
 
-            xml_bytes = data.encode("utf-8")
+            doc = self.parse_xml(data)
+            xml_bytes = doc.encode("utf-8")
             elements = etree.fromstring(xml_bytes)
 
             for element in elements:
@@ -121,7 +124,8 @@ class ParseContacts(ParseHelpers):
         try:
             endpoints_contacts = dict()
 
-            xml_bytes = data.encode("utf-8")
+            doc = self.parse_xml(data)
+            xml_bytes = doc.encode("utf-8")
             elements = etree.fromstring(xml_bytes)
 
             for element in elements:
