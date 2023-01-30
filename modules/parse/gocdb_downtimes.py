@@ -4,9 +4,10 @@ from lxml.etree import XMLSyntaxError
 
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.parse.base import ParseHelpers
 
 
-class ParseDowntimes():
+class ParseDowntimes(ParseHelpers):
     def __init__(self, logger, data, start, end, uid=False):
 
         self.logger = logger
