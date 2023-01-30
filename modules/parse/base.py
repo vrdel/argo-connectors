@@ -1,6 +1,7 @@
 import csv
 import json
 from io import StringIO
+from lxml.etree import XMLSyntaxError
 
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
@@ -52,6 +53,26 @@ class ParseHelpers(object):
                 scopes_list.append(scope.text)
 
         return scopes_list
+    
+
+    def parse_xml(self, data):
+        try:
+            if self.res is None:
+                if getattr(self.logger, 'job', False):
+                    raise ConnectorParseError("{} Customer:{} Job:{} : No XML data fetched".format(module_class_name(self), self.logger.customer, self.logger.job))
+                else:
+                    raise ConnectorParseError("{} Customer:{} : No XML data fetched".format(module_class_name(self), self.logger.customer))
+        
+            return data
+    
+        except XMLSyntaxError:
+            msg = '{} Customer:{} : Error parsing XML feed - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
+            raise ConnectorParseError(msg)
+
+        except Exception as exc:
+            msg = '{} Customer:{} : Error - {}'.format(module_class_name(self), self.logger.customer, repr(exc))
+            raise ConnectorParseError(msg)            
+
 
     def parse_json(self, data):
         try:

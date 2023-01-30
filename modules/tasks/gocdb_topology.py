@@ -1,7 +1,6 @@
 import os
 import asyncio
 from lxml import etree
-from lxml.etree import XMLSyntaxError
 
 from collections import Callable
 from urllib.parse import urlparse
@@ -11,7 +10,6 @@ from functools import partial
 
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
-
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.ldap import LDAPSessionWithRetry
@@ -74,29 +72,29 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
             self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(
                 self.res.replace('\r\n', '').replace('\n', '')))
             raise ConnectorParseError(exc)
-        except XMLSyntaxError:    #TODO:TU NEGDJE UBACITI ERROR PORUKU ZA --> def _parse(self):
-            print("nevalja ovaj parse")
+        
 
 
 
     def _parse(self):
-        cursor, count = None, None
+            cursor, count = None, None
 
-        xml_bytes = self.res.encode("utf-8")
-        sites = etree.fromstring(xml_bytes)
+            doc = self.parse_xml(self.res)
+            xml_bytes = doc.encode("utf-8")
+            sites = etree.fromstring(xml_bytes)
 
-        for cnt in sites.xpath('.//count'):
-            count = int(cnt.text)
+            for cnt in sites.xpath('.//count'):
+                count = int(cnt.text)
 
-        for lnk in sites.xpath('.//link'):
-            if lnk.attrib["rel"] == "next":
-                href = lnk.attrib["href"]
-                for query in href.split('&'):
-                    if 'next_cursor' in query:
-                        cursor = query.split('=')[1]
+            for lnk in sites.xpath('.//link'):
+                if lnk.attrib["rel"] == "next":
+                    href = lnk.attrib["href"]
+                    for query in href.split('&'):
+                        if 'next_cursor' in query:
+                            cursor = query.split('=')[1]
 
-        return count, cursor
-
+            return count, cursor       
+        
 
 class TaskParseTopology(object):
     def __init__(self, logger, custname, uidservendp, pass_extensions,
