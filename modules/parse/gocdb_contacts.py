@@ -1,6 +1,5 @@
 from lxml import etree
 from lxml.etree import XMLSyntaxError
-from xml.parsers.expat import ExpatError
 
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import module_class_name
@@ -48,7 +47,7 @@ class ParseContacts(ParseHelpers):
                         if entity_node.tag == topo_node:
                             entity_name = entity_node.text
 
-                data[entity_name] = emails
+                    data[entity_name] = emails
 
             return data
 
@@ -81,6 +80,7 @@ class ParseContacts(ParseHelpers):
                     else:
                         sites_contacts[sitename] = [contact]
 
+            
             return sites_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
@@ -99,7 +99,7 @@ class ParseContacts(ParseHelpers):
             elements = etree.fromstring(xml_bytes)
 
             for element in elements:
-
+                name, contact = None, None
                 for child in element:
                     if child.tag == 'NAME':
                         name = child.text
@@ -169,7 +169,7 @@ class ParseRocContacts(ParseContacts):
         try:
             return self.parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError, XMLSyntaxError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -187,7 +187,7 @@ class ParseSiteContacts(ParseContacts):
         try:
             return self.parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError, XMLSyntaxError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -205,7 +205,7 @@ class ParseSitesWithContacts(ParseContacts):
         try:
             return self.parse_sites_with_contacts(self.data)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError, XMLSyntaxError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -222,7 +222,7 @@ class ParseServiceEndpointContacts(ParseContacts):
         try:
             return self.parse_serviceendpoint_contacts(self.data)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError, XMLSyntaxError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -251,7 +251,7 @@ class ParseServiceGroupWithContacts(ParseContacts):
         try:
             return self.parse_servicegroups_with_contacts(self.data)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError, XMLSyntaxError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             raise ConnectorParseError
 
     def get_contacts(self):
@@ -268,7 +268,7 @@ class ParseServiceGroupRoles(ParseContacts):
         try:
             return self.parse_servicegroup_contacts(self.data)
 
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, ExpatError, XMLSyntaxError) as exc:
+        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             raise ConnectorParseError
 
     def get_contacts(self):

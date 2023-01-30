@@ -2,7 +2,6 @@ import datetime
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from xml.parsers.expat import ExpatError
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
 

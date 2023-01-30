@@ -1,20 +1,16 @@
-import xml.dom.minidom
-
-from xml.parsers.expat import ExpatError
+import csv
+import json
 from io import StringIO
 
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
-
-import json
-import csv
 
 
 class ParseHelpers(object):
     def __init__(self, logger, *args, **kwargs):
         self.logger = logger
 
-    def parse_extensions_lxml(self, extensions_node):
+    def parse_extensions(self, extensions_node):
         extensions_dict = dict()
 
         for extension in extensions_node:
@@ -29,7 +25,7 @@ class ParseHelpers(object):
 
         return extensions_dict
 
-    def parse_url_endpoints_lxml(self, endpoints_node):
+    def parse_url_endpoints(self, endpoints_node):
         endpoints_urls = list()
 
         for endpoint in endpoints_node:
@@ -47,7 +43,7 @@ class ParseHelpers(object):
         else:
             return None
 
-    def parse_scopes_lxml(self, xml_node):
+    def parse_scopes(self, xml_node):
         scopes_list = list()
 
         scopes = xml_node.find('SCOPES')
@@ -71,28 +67,6 @@ class ParseHelpers(object):
 
         except ValueError as exc:
             msg = '{} Customer:{} : Error parsing JSON feed - {}'.format(
-                module_class_name(self), self.logger.customer, repr(exc))
-            raise ConnectorParseError(msg)
-
-        except Exception as exc:
-            msg = '{} Customer:{} : Error - {}'.format(
-                module_class_name(self), self.logger.customer, repr(exc))
-            raise ConnectorParseError(msg)
-
-    def parse_xml(self, data):
-        try:
-            if data is None:
-                if getattr(self.logger, 'job', False):
-                    raise ConnectorParseError("{} Customer:{} Job:{} : No XML data fetched".format(
-                        module_class_name(self), self.logger.customer, self.logger.job))
-                else:
-                    raise ConnectorParseError("{} Customer:{} : No XML data fetched".format(
-                        module_class_name(self), self.logger.customer))
-
-            return xml.dom.minidom.parseString(data)
-
-        except ExpatError as exc:
-            msg = '{} Customer:{} : Error parsing XML feed - {}'.format(
                 module_class_name(self), self.logger.customer, repr(exc))
             raise ConnectorParseError(msg)
 

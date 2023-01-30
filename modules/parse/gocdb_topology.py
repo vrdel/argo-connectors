@@ -25,52 +25,53 @@ class ParseSites(ParseHelpers):
             sites = etree.fromstring(xml_bytes)
 
             for site in sites:
-                site_name = site.attrib["NAME"]
-                if site_name not in self._sites:
-                    self._sites[site_name] = {'site': site_name}
+                if site.tag != 'meta':
+                    site_name = site.attrib["NAME"]
+                    if site_name not in self._sites:
+                        self._sites[site_name] = {'site': site_name}
 
-                for prod_in in site.xpath('.//PRODUCTION_INFRASTRUCTURE'):
-                    production_infra = prod_in.text
-                    if production_infra:
-                        self._sites[site_name]['infrastructure'] = production_infra
+                    for prod_in in site.xpath('.//PRODUCTION_INFRASTRUCTURE'):
+                        production_infra = prod_in.text
+                        if production_infra:
+                            self._sites[site_name]['infrastructure'] = production_infra
 
-                for cert_st in site.xpath('.//CERTIFICATION_STATUS'):
-                    certification_status = cert_st.text
-                    if certification_status:
-                        self._sites[site_name]['certification'] = certification_status
+                    for cert_st in site.xpath('.//CERTIFICATION_STATUS'):
+                        certification_status = cert_st.text
+                        if certification_status:
+                            self._sites[site_name]['certification'] = certification_status
 
-                for roc in site.xpath('.//ROC'):
-                    if roc != None:
-                        self._sites[site_name]['ngi'] = roc.text
+                    for roc in site.xpath('.//ROC'):
+                        if roc != None:
+                            self._sites[site_name]['ngi'] = roc.text
 
-                try:
-                    if site.attrib["ROC"] != None:
-                        self._sites[site_name]['ngi'] = site.attrib["ROC"]
-                except:
-                    pass
-
-                self._sites[site_name]['scope'] = ', '.join(
-                    self.parse_scopes_lxml(site))
-
-                if self.notification_flag:
                     try:
-                        for notification in site.xpath('NOTIFICATIONS'):
-                            notification = notification.text
-                            notification = True if notification.lower(
-                            ) == 'true' or notification.lower() == 'y' else False
-                        self._sites[site_name]['notification'] = notification
-                    except IndexError:
-                        self._sites[site_name]['notification'] = True
-
-                # # biomed feed does not have extensions
-                if self.pass_extensions:
-                    try:
-                        for ext in site:
-                            if ext.tag == 'EXTENSIONS':
-                                self._sites[site_name]['extensions'] = self.parse_extensions_lxml(
-                                    ext)
-                    except IndexError:
+                        if site.attrib["ROC"] != None:
+                            self._sites[site_name]['ngi'] = site.attrib["ROC"]
+                    except:
                         pass
+
+                    self._sites[site_name]['scope'] = ', '.join(
+                        self.parse_scopes(site))
+
+                    if self.notification_flag:
+                        try:
+                            for notification in site.xpath('NOTIFICATIONS'):
+                                notification = notification.text
+                                notification = True if notification.lower(
+                                ) == 'true' or notification.lower() == 'y' else False
+                            self._sites[site_name]['notification'] = notification
+                        except IndexError:
+                            self._sites[site_name]['notification'] = True
+
+                    # # biomed feed does not have extensions
+                    if self.pass_extensions:
+                        try:
+                            for ext in site:
+                                if ext.tag == 'EXTENSIONS':
+                                    self._sites[site_name]['extensions'] = self.parse_extensions(
+                                        ext)
+                        except IndexError:
+                            pass
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing sites feed - %s' % (
@@ -130,57 +131,57 @@ class ParseServiceEndpoints(ParseHelpers):
             services = etree.fromstring(xml_bytes)
 
             for service in services:
+                if service.tag != 'meta':
+                    service_id = service.attrib["PRIMARY_KEY"]
+                    if service_id not in self._service_endpoints:
+                        self._service_endpoints[service_id] = {}
 
-                service_id = service.attrib["PRIMARY_KEY"]
-                if service_id not in self._service_endpoints:
-                    self._service_endpoints[service_id] = {}
+                    for serv_endpnts in service.xpath('.//HOSTNAME'):
+                        self._service_endpoints[service_id]['hostname'] = serv_endpnts.text
 
-                for serv_endpnts in service.xpath('.//HOSTNAME'):
-                    self._service_endpoints[service_id]['hostname'] = serv_endpnts.text
+                    for serv_types in service.xpath('.//SERVICE_TYPE'):
+                        self._service_endpoints[service_id]['type'] = serv_types.text
 
-                for serv_types in service.xpath('.//SERVICE_TYPE'):
-                    self._service_endpoints[service_id]['type'] = serv_types.text
+                    for hostdn in service.xpath('.//HOSTDN'):
+                        self._service_endpoints[service_id]['hostdn'] = hostdn.text
 
-                for hostdn in service.xpath('.//HOSTDN'):
-                    self._service_endpoints[service_id]['hostdn'] = hostdn.text
+                    for node_mon in service.xpath('.//NODE_MONITORED'):
+                        self._service_endpoints[service_id]['monitored'] = node_mon.text
 
-                for node_mon in service.xpath('.//NODE_MONITORED'):
-                    self._service_endpoints[service_id]['monitored'] = node_mon.text
+                    for in_prod in service.xpath('.//IN_PRODUCTION'):
+                        self._service_endpoints[service_id]['production'] = in_prod.text
 
-                for in_prod in service.xpath('.//IN_PRODUCTION'):
-                    self._service_endpoints[service_id]['production'] = in_prod.text
+                    for site_name in service.xpath('.//SITENAME'):
+                        self._service_endpoints[service_id]['site'] = site_name.text
 
-                for site_name in service.xpath('.//SITENAME'):
-                    self._service_endpoints[service_id]['site'] = site_name.text
+                    for roc_name in service.xpath('.//ROC_NAME'):
+                        self._service_endpoints[service_id]['roc'] = roc_name.text
 
-                for roc_name in service.xpath('.//ROC_NAME'):
-                    self._service_endpoints[service_id]['roc'] = roc_name.text
+                    self._service_endpoints[service_id]['service_id'] = service_id
 
-                self._service_endpoints[service_id]['service_id'] = service_id
+                    self._service_endpoints[service_id]['scope'] = ', '.join(
+                        self.parse_scopes(service))
 
-                self._service_endpoints[service_id]['scope'] = ', '.join(
-                    self.parse_scopes_lxml(service))
+                    self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + \
+                        '-' + self._service_endpoints[service_id]['type'] + \
+                        '-' + self._service_endpoints[service_id]['site']
 
-                self._service_endpoints[service_id]['sortId'] = self._service_endpoints[service_id]['hostname'] + \
-                    '-' + self._service_endpoints[service_id]['type'] + \
-                    '-' + self._service_endpoints[service_id]['site']
+                    self._service_endpoints[service_id]['url'] = service.find(
+                        'URL').text
 
-                self._service_endpoints[service_id]['url'] = service.find(
-                    'URL').text
+                    if self.pass_extensions:
+                        extension_node = None
+                        extnodes = service.xpath('.//EXTENSIONS')
+                        for node in extnodes:
+                            parent = node.getparent()
+                            if parent.tag == 'SERVICE_ENDPOINT':
+                                extension_node = node
+                        extensions = self.parse_extensions(extension_node)
+                        self._service_endpoints[service_id]['extensions'] = extensions
 
-                if self.pass_extensions:
-                    extension_node = None
-                    extnodes = service.xpath('.//EXTENSIONS')
-                    for node in extnodes:
-                        parent = node.getparent()
-                        if parent.tag == 'SERVICE_ENDPOINT':
-                            extension_node = node
-                    extensions = self.parse_extensions_lxml(extension_node)
-                    self._service_endpoints[service_id]['extensions'] = extensions
-
-                url = service.find('.//ENDPOINTS')
-                self._service_endpoints[service_id]['endpoint_urls'] = self.parse_url_endpoints_lxml(
-                    url)
+                    url = service.find('.//ENDPOINTS')
+                    self._service_endpoints[service_id]['endpoint_urls'] = self.parse_url_endpoints(
+                        url)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing topology service endpoint feed - %s' % (
@@ -256,47 +257,48 @@ class ParseServiceGroups(ParseHelpers):
             xml_bytes = self.data.encode("utf-8")
             groups = etree.fromstring(xml_bytes)
             for group in groups:
-                group_id = group.attrib["PRIMARY_KEY"]
-                if group_id not in self._service_groups:
-                    self._service_groups[group_id] = {}
+                if group.tag != 'meta':
+                    group_id = group.attrib["PRIMARY_KEY"]
+                    if group_id not in self._service_groups:
+                        self._service_groups[group_id] = {}
 
-                self._service_groups[group_id]['name'] = group.find(
-                    'NAME').text
+                    self._service_groups[group_id]['name'] = group.find(
+                        'NAME').text
 
-                self._service_groups[group_id]['monitored'] = group.find(
-                    'MONITORED').text
+                    self._service_groups[group_id]['monitored'] = group.find(
+                        'MONITORED').text
 
-                self._service_groups[group_id]['scope'] = ', '.join(
-                    self.parse_scopes_lxml(group))
+                    self._service_groups[group_id]['scope'] = ', '.join(
+                        self.parse_scopes(group))
 
-                self._service_groups[group_id]['services'] = []
+                    self._service_groups[group_id]['services'] = []
 
-                for service in group.iter("SERVICE_ENDPOINT"):
-                    tmps = dict()
+                    for service in group.iter("SERVICE_ENDPOINT"):
+                        tmps = dict()
 
-                    tmps['hostname'] = service.find('HOSTNAME').text
-                    try:
-                        tmps['service_id'] = service.find('PRIMARY_KEY').text
-                    except AttributeError:
-                        tmps['service_id'] = service.attrib["PRIMARY_KEY"]
+                        tmps['hostname'] = service.find('HOSTNAME').text
+                        try:
+                            tmps['service_id'] = service.find('PRIMARY_KEY').text
+                        except AttributeError:
+                            tmps['service_id'] = service.attrib["PRIMARY_KEY"]
 
-                    tmps['type'] = service.find('SERVICE_TYPE').text
+                        tmps['type'] = service.find('SERVICE_TYPE').text
 
-                    tmps['monitored'] = service.find('NODE_MONITORED').text
+                        tmps['monitored'] = service.find('NODE_MONITORED').text
 
-                    tmps['production'] = service.find('IN_PRODUCTION').text
+                        tmps['production'] = service.find('IN_PRODUCTION').text
 
-                    tmps['scope'] = ', '.join(self.parse_scopes_lxml(service))
+                        tmps['scope'] = ', '.join(self.parse_scopes(service))
 
-                    endpoint_urls = service.find('ENDPOINTS/ENDPOINT/URL')
-                    endpoint_urls = None if endpoint_urls == None else endpoint_urls.text
-                    tmps['endpoint_urls'] = endpoint_urls
+                        endpoint_urls = service.find('ENDPOINTS/ENDPOINT/URL')
+                        endpoint_urls = None if endpoint_urls == None else endpoint_urls.text
+                        tmps['endpoint_urls'] = endpoint_urls
 
-                    if self.pass_extensions:
-                        extensions = self.parse_extensions_lxml(
-                            service.find('EXTENSIONS'))
-                        tmps['extensions'] = extensions
-                    self._service_groups[group_id]['services'].append(tmps)
+                        if self.pass_extensions:
+                            extensions = self.parse_extensions(
+                                service.find('EXTENSIONS'))
+                            tmps['extensions'] = extensions
+                        self._service_groups[group_id]['services'].append(tmps)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing service groups feed - %s' % (

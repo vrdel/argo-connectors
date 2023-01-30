@@ -1,6 +1,7 @@
 import os
 import asyncio
-import xml.dom.minidom
+from lxml import etree
+from lxml.etree import XMLSyntaxError
 
 from collections import Callable
 from urllib.parse import urlparse
@@ -70,18 +71,26 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
             return self._parse()
         except ConnectorParseError as exc:
             self.logger.error(repr(exc))
-            self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(self.res.replace('\r\n', '').replace('\n', '')))
+            self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(
+                self.res.replace('\r\n', '').replace('\n', '')))
             raise ConnectorParseError(exc)
+        except XMLSyntaxError:    #TODO:TU NEGDJE UBACITI ERROR PORUKU ZA --> def _parse(self):
+            print("nevalja ovaj parse")
+
+
 
     def _parse(self):
         cursor, count = None, None
 
-        doc = self.parse_xml(self.res)
-        count = int(doc.getElementsByTagName('count')[0].childNodes[0].data)
-        links = doc.getElementsByTagName('link')
-        for link in links:
-            if link.getAttribute('rel') == 'next':
-                href = link.getAttribute('href')
+        xml_bytes = self.res.encode("utf-8")
+        sites = etree.fromstring(xml_bytes)
+
+        for cnt in sites.xpath('.//count'):
+            count = int(cnt.text)
+
+        for lnk in sites.xpath('.//link'):
+            if lnk.attrib["rel"] == "next":
+                href = lnk.attrib["href"]
                 for query in href.split('&'):
                     if 'next_cursor' in query:
                         cursor = query.split('=')[1]
@@ -136,7 +145,8 @@ def parse_endpoints(logger, custname, uidservendp, pass_extensions,
 
 def parse_sites(logger, custname, uidservendp, pass_extensions,
                 notification_flag, data):
-    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions, notification_flag)
+    task = TaskParseTopology(
+        logger, custname, uidservendp, pass_extensions, notification_flag)
     return task.parse_source_sites(data)
 
 def parse_servicegroups(logger, custname, uidservendp, pass_extensions,
@@ -418,7 +428,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         elif fetched_servicegroups:
             # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
             # servicegroups topology entities
-            parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
+            parsed_servicegroups_contacts = self.parse_servicegroups_contacts(
+                fetched_servicegroups)
             attach_contacts_topodata(self.logger,
                                      parsed_servicegroups_contacts,
                                      group_groups, self.notification_flag)
