@@ -16,7 +16,6 @@ Prefix:    %{_prefix}
 Requires: python3-aiofiles
 Requires: python3-aiohttp
 Requires: python3-attrs
-Requires: python3-avro
 Requires: python3-requests
 Requires: python3-typing-extensions
 Requires: python3-uvloop
