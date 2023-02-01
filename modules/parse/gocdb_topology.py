@@ -60,7 +60,7 @@ class ParseSites(ParseHelpers):
                                 notification = notification.text
                                 notification = True if notification.lower(
                                 ) == 'true' or notification.lower() == 'y' else False
-                            self._sites[site_name]['notification'] = notification
+                                self._sites[site_name]['notification'] = notification
                         except IndexError:
                             self._sites[site_name]['notification'] = True
 

@@ -10,7 +10,7 @@ from argo_connectors.exceptions import ConnectorError, ConnectorParseError, Conn
 from argo_connectors.tasks.flat_downtimes import TaskCsvDowntimes
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
-from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
+from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology, find_next_paging_cursor_count
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
 from argo_connectors.parse.base import ParseHelpers
 
@@ -95,6 +95,20 @@ class TopologyGocdb(unittest.TestCase):
         self.assertTrue('ConnectorParseError' in excep.msg)
         self.assertTrue('failed GOCDB' in excep.msg)
 
+
+class TestFindNextPagingCursorCount(unittest.TestCase):
+    def setUp(self):
+        self.logger = mock.MagicMock()
+        with open ('tests/sample-topofeedpaging.xml') as tf:
+            self.res = tf.read()
+    
+    def test_count_n_cursor(self):
+        paging = find_next_paging_cursor_count(self.logger, self.res)
+        count, cursor = paging()
+        
+        self.assertEqual(count, 95)
+        self.assertEqual(cursor, '134')
+        
 
 class TopologyProvider(unittest.TestCase):
     def setUp(self):

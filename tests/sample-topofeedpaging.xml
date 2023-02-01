@@ -1,0 +1,63 @@
+<results>
+  <meta>
+    <link rel="self" href="https://goc-sdc.argo.grnet.gr/private/?method=get_site&amp;scope=&amp;next_cursor=0"/>
+    <link rel="next" href="https://goc-sdc.argo.grnet.gr/private/?method=get_site&amp;scope=&amp;next_cursor=134"/>
+    <link rel="prev" href="https://goc-sdc.argo.grnet.gr/private/?method=get_site&amp;scope=&amp;prev_cursor=13"/>
+    <link rel="start" href="https://goc-sdc.argo.grnet.gr/private/?method=get_site&amp;scope=&amp;next_cursor=0"/>
+    <count>95</count>
+    <max_page_size>100</max_page_size>
+  </meta>
+  <SITE ID="13" PRIMARY_KEY="2G0" NAME="FZ-JUELICH">
+    <PRIMARY_KEY>2G0</PRIMARY_KEY>
+    <SHORT_NAME>FZ-JUELICH</SHORT_NAME>
+    <SITE_DESCRIPTION>Authentication and authorization service</SITE_DESCRIPTION>
+    <GOCDB_PORTAL_URL>https://goc-sdc.argo.grnet.gr/portal/index.php?Page_Type=Site&amp;id=13</GOCDB_PORTAL_URL>
+    <CONTACT_EMAIL>themis@grnet.gr</CONTACT_EMAIL>
+    <CONTACT_TEL>+3021074747274</CONTACT_TEL>
+    <COUNTRY_CODE>DE</COUNTRY_CODE>
+    <COUNTRY>Germany</COUNTRY>
+    <ROC>SDC-ALL</ROC>
+    <PRODUCTION_INFRASTRUCTURE>Production</PRODUCTION_INFRASTRUCTURE>
+    <CERTIFICATION_STATUS>Certified</CERTIFICATION_STATUS>
+    <TIMEZONE>Europe/Rome</TIMEZONE>
+    <NOTIFICATIONS>FALSE</NOTIFICATIONS>
+    <DOMAIN>
+      <DOMAIN_NAME>b2access.eudat.eu</DOMAIN_NAME>
+    </DOMAIN>
+    <SCOPES>
+      <SCOPE>SDC</SCOPE>
+    </SCOPES>
+    <EXTENSIONS/>
+  </SITE>
+  <SITE ID="14" PRIMARY_KEY="4G0" NAME="IGME-GR">
+    <PRIMARY_KEY>4G0</PRIMARY_KEY>
+    <SHORT_NAME>IGME-GR</SHORT_NAME>
+    <OFFICIAL_NAME>IGME-GR</OFFICIAL_NAME>
+    <SITE_DESCRIPTION>IGME-GR</SITE_DESCRIPTION>
+    <GOCDB_PORTAL_URL>https://goc-sdc.argo.grnet.gr/portal/index.php?Page_Type=Site&amp;id=14</GOCDB_PORTAL_URL>
+    <HOME_URL>https://www.igme.gr</HOME_URL>
+    <CONTACT_EMAIL>izanan@igme.gr</CONTACT_EMAIL>
+    <CONTACT_TEL>2107474241</CONTACT_TEL>
+    <COUNTRY_CODE>GR</COUNTRY_CODE>
+    <COUNTRY>Greece</COUNTRY>
+    <ROC>SDC-ALL</ROC>
+    <PRODUCTION_INFRASTRUCTURE>Production</PRODUCTION_INFRASTRUCTURE>
+    <CERTIFICATION_STATUS>Certified</CERTIFICATION_STATUS>
+    <TIMEZONE>Europe/Athens</TIMEZONE>
+    <NOTIFICATIONS>FALSE</NOTIFICATIONS>
+    <DOMAIN>
+      <DOMAIN_NAME>igme.gr</DOMAIN_NAME>
+    </DOMAIN>
+    <SCOPES>
+      <SCOPE>SDC</SCOPE>
+    </SCOPES>
+    <EXTENSIONS/>
+  </SITE>
+  <meta>
+    <link rel="self" href="https://goc-sdc.argo.grnet.gr/private/?method=get_site&amp;scope=&amp;next_cursor=134"/>
+    <link rel="prev" href="https://goc-sdc.argo.grnet.gr/private/?method=get_site&amp;scope=&amp;prev_cursor=135"/>
+    <link rel="start" href="https://goc-sdc.argo.grnet.gr/private/?method=get_site&amp;scope=&amp;next_cursor=0"/>
+    <count>0</count>
+    <max_page_size>100</max_page_size>
+  </meta>
+</results>
