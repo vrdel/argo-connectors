@@ -99,7 +99,7 @@ class TopologyGocdb(unittest.TestCase):
 class TestFindNextPagingCursorCount(unittest.TestCase):
     def setUp(self):
         self.logger = mock.MagicMock()
-        with open ('tests/sample-topofeedpaging.xml') as tf:
+        with open('tests/sample-topofeedpaging.xml') as tf:
             self.res = tf.read()
     
     def test_count_n_cursor(self):
