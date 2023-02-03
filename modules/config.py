@@ -16,7 +16,7 @@ class Global(object):
     conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                     'VerifyServerCert', 'UsePlainHttpAuth',
                                     'HttpUser', 'HttpPass']}
-    conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry']}
+    conf_conn = {'Connection': ['Timeout', 'Retry', 'SleepRetry', 'RetryRandom', 'SleepRandomRetryMax']}
     conf_state = {'InputState': ['SaveDir', 'Days']}
     conf_webapi = {'WebAPI': ['Token', 'Host']}
 
