@@ -51,6 +51,8 @@ class TaskGocdbServiceTypes(object):
                         int(self.globopts['ConnectionRetry'.lower()]),
                         int(self.globopts['ConnectionTimeout'.lower()]),
                         int(self.globopts['ConnectionSleepRetry'.lower()]),
+                        self.globopts['ConnectionRetryRandom'.lower()],
+                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
                         date=self.timestamp)
         return await webapi.get('service-types', jsonret=False)
 
@@ -60,6 +62,8 @@ class TaskGocdbServiceTypes(object):
                         int(self.globopts['ConnectionRetry'.lower()]),
                         int(self.globopts['ConnectionTimeout'.lower()]),
                         int(self.globopts['ConnectionSleepRetry'.lower()]),
+                        self.globopts['ConnectionRetryRandom'.lower()],
+                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
                         date=self.timestamp)
         await webapi.send(data, 'service-types')
 

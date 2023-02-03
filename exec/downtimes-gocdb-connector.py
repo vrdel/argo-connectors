@@ -26,17 +26,22 @@ def get_webapi_opts(cglob, confcust):
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
     webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
     if not webapi_complete:
-        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
+        logger.error('Customer:%s %s options incomplete, missing %s' %
+                     (logger.customer, 'webapi', ' '.join(missopt)))
         raise SystemExit(1)
     return webapi_opts
 
 
 def main():
     global logger, globopts
-    parser = argparse.ArgumentParser(description='Fetch downtimes from GOCDB for given date')
-    parser.add_argument('-d', dest='date', nargs=1, metavar='YEAR-MONTH-DAY', required=True)
-    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
-    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
+    parser = argparse.ArgumentParser(
+        description='Fetch downtimes from GOCDB for given date')
+    parser.add_argument('-d', dest='date', nargs=1,
+                        metavar='YEAR-MONTH-DAY', required=True)
+    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf',
+                        help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf',
+                        help='path to global configuration file', type=str, required=False)
     args = parser.parse_args()
 
     logger = Logger(os.path.basename(sys.argv[0]))
@@ -56,7 +61,8 @@ def main():
     auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
     auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
     if not auth_complete:
-        logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
+        logger.error('%s options incomplete, missing %s' %
+                     ('authentication', ' '.join(missing)))
         raise SystemExit(1)
 
     if len(args.date) == 0:
@@ -79,7 +85,7 @@ def main():
         feed = downtimesfeed
     else:
         feed = feed + DOWNTIMEPI
-        #print("feed: ", feed)
+
     uidservtype = confcust.get_uidserviceendpoints()
     webapi_opts = get_webapi_opts(cglob, confcust)
 
@@ -101,6 +107,7 @@ def main():
         )
 
     loop.close()
+
 
 if __name__ == '__main__':
     main()
