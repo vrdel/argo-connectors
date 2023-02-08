@@ -258,6 +258,9 @@ class CustomerConf(object):
                     custname = config.get(section, 'Name')
                     topofetchtype = config.get(section, 'TopoFetchType')
                     topofeed = config.get(section, 'TopoFeed')
+                    site_contacts = config.get(section, 'SiteContacts', fallback=None)
+                    servicegroup_contacts = config.get(section, 'ServicegroupContacts', fallback=None)
+                    vaporpi = config.get(section, 'Vaporpi', fallback=None)
                     topotype = config.get(section, 'TopoType')
                     topouidservendpoints = config.get(
                         section, 'TopoUIDServiceEndpoints', fallback=False)
@@ -265,7 +268,7 @@ class CustomerConf(object):
                     topofeedsites = config.get(
                         section, 'TopoFeedSites', fallback=None)
                     topofeedendpoints = config.get(
-                        section, 'TopoFeedServiceEndpoints', fallback=None)
+                        section, 'TopoFeedEndpoints', fallback=None)
                     topofeedendpointsextensions = config.get(
                         section, 'TopoFeedServiceEndpointsExtensions', fallback=None)
                     topofeedservicegroups = config.get(
@@ -308,6 +311,9 @@ class CustomerConf(object):
                                              'DowntimesFeed': downtimesfeed,
                                              'ServiceTypesFeed': servicetypesfeed,
                                              'TopoFeed': topofeed,
+                                             'SiteContacts': site_contacts,
+                                             'ServicegroupContacts': servicegroup_contacts,
+                                             'Vaporpi': vaporpi,
                                              'TopoFeedEndpoints': topofeedendpoints,
                                              'TopoFeedEndpointsExtensions': topofeedendpointsextensions,
                                              'TopoFeedPaging': topofeedpaging,
@@ -543,6 +549,15 @@ class CustomerConf(object):
     def get_downfeed(self):
         return self._get_cust_options('DowntimesFeed')
 
+    def get_sitecontacts(self):
+        return self._get_cust_options('SiteContacts')   
+
+    def get_servicegroupcontacts(self):
+        return self._get_cust_options('ServicegroupContacts')   
+
+    def get_vaporpi(self):
+        return self._get_cust_options('Vaporpi')  
+    
     def get_topofeed(self):
         return self._get_cust_options('TopoFeed')
 

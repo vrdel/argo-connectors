@@ -15,23 +15,11 @@ from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.utils import date_check
 
 logger = None
-
-# GOCDB explicitly says &scope='' for all scopes
-# TODO: same methods can be served on different paths
-SERVICE_ENDPOINTS_PI = '/gocdbpi/private/?method=get_service_endpoint&scope='
-SITES_PI = '/gocdbpi/private/?method=get_site&scope='
-SERVICE_GROUPS_PI = '/gocdbpi/private/?method=get_service_group&scope='
-
-ROC_CONTACTS = '/gocdbpi/private/?method=get_roc_contacts'
-SITE_CONTACTS = '/gocdbpi/private/?method=get_site_contacts'
-PROJECT_CONTACTS = '/gocdbpi/private/?method=get_project_contacts'
-SERVICEGROUP_CONTACTS = '/gocdbpi/private/?method=get_service_group_role'
-
 globopts = {}
 custname = ''
-
 isok = True
 
+# GOCDB explicitly says &scope='' for all scopes
 
 def get_webapi_opts(cglob, confcust):
     webapi_custopts = confcust.get_webapiopts()
@@ -104,28 +92,24 @@ def main():
     bdii_opts = get_bdii_opts(confcust)
     webapi_opts = get_webapi_opts(cglob, confcust)
 
+    SITE_CONTACTS = confcust.get_sitecontacts()
+    SERVICEGROUP_CONTACTS = confcust.get_servicegroupcontacts()
+
     toposcope = confcust.get_toposcope()
     topofeedendpoints = confcust.get_topofeedendpoints()
     topofeedservicegroups = confcust.get_topofeedservicegroups()
     topofeedsites = confcust.get_topofeedsites()
     notiflag = confcust.get_notif_flag()
-    global SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI
+
     if toposcope:
-        SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI + toposcope
-        SERVICE_GROUPS_PI = SERVICE_GROUPS_PI + toposcope
-        SITES_PI = SITES_PI + toposcope
-    if topofeedendpoints:
+        SERVICE_ENDPOINTS_PI = topofeedendpoints + toposcope
+        SERVICE_GROUPS_PI = topofeedservicegroups + toposcope
+        SITES_PI = topofeedsites + toposcope
+
+    else:
         SERVICE_ENDPOINTS_PI = topofeedendpoints
-    else:
-        SERVICE_ENDPOINTS_PI = topofeed + SERVICE_ENDPOINTS_PI
-    if topofeedservicegroups:
         SERVICE_GROUPS_PI = topofeedservicegroups
-    else:
-        SERVICE_GROUPS_PI = topofeed + SERVICE_GROUPS_PI
-    if topofeedsites:
         SITES_PI = topofeedsites
-    else:
-        SITES_PI = topofeed + SITES_PI
 
     loop = uvloop.new_event_loop()
     asyncio.set_event_loop(loop)
