@@ -268,7 +268,7 @@ class CustomerConf(object):
                     topofeedsites = config.get(
                         section, 'TopoFeedSites', fallback=None)
                     topofeedendpoints = config.get(
-                        section, 'TopoFeedEndpoints', fallback=None)
+                        section, 'TopoFeedServiceEndpoints', fallback=None)
                     topofeedendpointsextensions = config.get(
                         section, 'TopoFeedServiceEndpointsExtensions', fallback=None)
                     topofeedservicegroups = config.get(
