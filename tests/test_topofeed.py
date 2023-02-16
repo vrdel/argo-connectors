@@ -981,21 +981,21 @@ class ParseAgoraTopology(unittest.TestCase):
     def test_groupGroups(self):
         self.assertEqual(self.group_groups, [
                 {
-                    "group": "NI4OS Providers",
-                    "type": "PROVIDERS",
-                    "subgroup": "UoB_IBISS",
-                    "tags": {
+                "group": "NI4OS Providers",
+                "type": "PROVIDERS",
+                "subgroup": "UoB_IBISS",
+                "tags": {
                     "info_ext_catalog_id": "02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_catalog_type": "provider",
                     "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_name": "Institute for Biological Research Sinisa Stankovic, University of Belgrade"
-                    }
-                },
-                {
-                    "group": "NI4OS Providers",
-                    "type": "PROVIDERS",
-                    "subgroup": "UNIOS-EFOS",
-                    "tags": {
+                }
+            },
+            {
+                "group": "NI4OS Providers",
+                "type": "PROVIDERS",
+                "subgroup": "UNIOS-EFOS",
+                "tags": {
                     "info_ext_catalog_id": "0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                     "info_ext_catalog_type": "provider",
                     "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
@@ -1006,62 +1006,77 @@ class ParseAgoraTopology(unittest.TestCase):
         )
 
     def test_groupEndpoints(self):
+
         self.assertEqual(self.group_endpoints, [
                 {
-                    "group": "UoB-RCUB",
-                    "type": "SERVICEGROUPS",
-                    "service": "catalog.service.entry",
-                    "hostname": "foo.foo2.gov.rs/__",
-                    "tags": {
-                        "hostname": "foo.foo2.gov.rs/",
-                        "info_ID": "uob_nardus",
-                        "info_ext_catalog_id": "01426fe3-8783-47f2-97e6-757bcd70e1be",
-                        "info_ext_catalog_type": "resource",
-                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/01426fe3-8783-47f2-97e6-757bcd70e1be",
-                        "info_ext_name": "NaRDuS - National Repository of Dissertations in Serbia"
-                    }
-                },
-                {
-                    "group": "CING",
-                    "type": "SERVICEGROUPS",
-                    "service": "catalog.service.entry",
-                    "hostname": "bioinformatics.cing.ac.cy/MelGene/__",
-                    "tags": {
-                        "hostname": "bioinformatics.cing.ac.cy/MelGene/",
-                        "info_ID": "melgene_cy",
-                        "info_ext_catalog_id": "04b06b6f-e3a1-490b-94ea-8a1ab0309213",
-                        "info_ext_catalog_type": "resource",
-                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/04b06b6f-e3a1-490b-94ea-8a1ab0309213",
-                        "info_ext_name": "MelGene"
-                    }
-                },
-                {
-                    "group": "UoB_IBISS",
-                    "type": "SERVICEGROUPS",
-                    "service": "catalog.provider.entry",
-                    "hostname": "agora.ni40s.eu__grnet",
-                    "tags": {
-                        "hostname": "agora.ni4os.eu",
-                        "info_ID": "UoB_IBISS",
-                        "info_ext_catalog_id": "02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
-                        "info_ext_catalog_type": "provider",
-                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
-                        "info_ext_name": "Institute for Biological Research Sinisa Stankovic, University of Belgrade"
-                    }
-                },
-                {
-                    "group": "UNIOS-EFOS",
-                    "type": "SERVICEGROUPS",
-                    "service": "catalog.provider.entry",
-                    "hostname": "agora.ni40s.eu__grnet",
-                    "tags": {
-                        "hostname": "agora.ni4os.eu",
-                        "info_ID": "UNIOS-EFOS",
-                        "info_ext_catalog_id": "0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
-                        "info_ext_catalog_type": "provider",
-                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
-                        "info_ext_name": "J.J. Strossmayer University of Osijek, Faculty of Economics in Osijek"
-                    }
+                "group": "UoB-RCUB",
+                "type": "SERVICEGROUPS",
+                "service": "catalog.service.entry",
+                "hostname": "foo.foo2.gov.rs/__",
+                "tags": {
+                    "hostname": "foo.foo2.gov.rs/",
+                    "info_ID": "uob_nardus",
+                    "info_ext_catalog_id": "01426fe3-8783-47f2-97e6-757bcd70e1be",
+                    "info_ext_catalog_type": "resource",
+                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/01426fe3-8783-47f2-97e6-757bcd70e1be",
+                    "info_ext_name": "Repository of Faculty of Science, University of Zagreb"
+                }
+            },
+            {
+                "group": "SRCE",
+                "type": "SERVICEGROUPS",
+                "service": "catalog.service.entry",
+                "hostname": "foo.foo2.gov.rs/__",
+                "tags": {
+                    "hostname": "foo.foo2.gov.rs/",
+                    "info_ID": "uob_nardus",
+                    "info_ext_catalog_id": "01426fe3-8783-47f2-97e6-757bcd70e1be",
+                    "info_ext_catalog_type": "resource",
+                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/01426fe3-8783-47f2-97e6-757bcd70e1be",
+                    "info_ext_name": "Repository of Faculty of Science, University of Zagreb"
+                }
+            },
+            {
+                "group": "CING",
+                "type": "SERVICEGROUPS",
+                "service": "catalog.service.entry",
+                "hostname": "bioinformatics.cing.ac.cy/MelGene/__",
+                "tags": {
+                    "hostname": "bioinformatics.cing.ac.cy/MelGene/",
+                    "info_ID": "melgene_cy",
+                    "info_ext_catalog_id": "04b06b6f-e3a1-490b-94ea-8a1ab0309213",
+                    "info_ext_catalog_type": "resource",
+                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/04b06b6f-e3a1-490b-94ea-8a1ab0309213",
+                    "info_ext_name": "MelGene"
+                }
+            },
+            {
+                "group": "UoB_IBISS",
+                "type": "SERVICEGROUPS",
+                "service": "catalog.provider.entry",
+                "hostname": "agora.ni40s.eu__grnet",
+                "tags": {
+                    "hostname": "agora.ni4os.eu",
+                    "info_ID": "UoB_IBISS",
+                    "info_ext_catalog_id": "02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
+                    "info_ext_catalog_type": "provider",
+                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
+                    "info_ext_name": "Institute for Biological Research Sinisa Stankovic, University of Belgrade"
+                }
+            },
+            {
+                "group": "UNIOS-EFOS",
+                "type": "SERVICEGROUPS",
+                "service": "catalog.provider.entry",
+                "hostname": "agora.ni40s.eu__grnet",
+                "tags": {
+                    "hostname": "agora.ni4os.eu",
+                    "info_ID": "UNIOS-EFOS",
+                    "info_ext_catalog_id": "0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
+                    "info_ext_catalog_type": "provider",
+                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
+                    "info_ext_name": "J.J. Strossmayer University of Osijek, Faculty of Economics in Osijek"
+                }
                 }
             ]
         )

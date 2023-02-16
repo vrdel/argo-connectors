@@ -354,7 +354,7 @@
     "erp_bai_webpage": "https://foo.foo2.gov.rs/",
     "erp_bai_abbreviation": "",
     "erp_mgi_privacy_policy": null,
-    "erp_bai_name": "NaRDuS - National Repository of Dissertations in Serbia",
+    "erp_bai_name": "Repository of Faculty of Science, University of Zagreb",
     "published_at": "2021-02-15T22:22:13",
     "erp_mgi_sla_specification": null,
     "erp_mri_multimedia": null,
@@ -374,6 +374,13 @@
         "href": "https://agora.ni4os.eu/api/v2/public/providers/801e9d68-8df2-43ae-a2cc-4dbb14317cea/",
         "id": "801e9d68-8df2-43ae-a2cc-4dbb14317cea",
         "epp_bai_id": "UoB-RCUB"
+      },
+      {
+        "epp_bai_name": "University of Zagreb, University Computing Centre (SRCE)",
+        "href": "https://agora.ni4os.eu/api/v2/public/providers/801e9d68-8df2-43ae-a2cc-4dbb14317cea/",
+        "id": "801e9d68-8df2-43ae-a2cc-4dbb14317cea",
+        "epp_bai_id": "SRCE"
+        
       }
     ],
     "erp_mti_open_source_technologies": "Linux\nApache\nPostgreSQL\nDSpace\nXML",
