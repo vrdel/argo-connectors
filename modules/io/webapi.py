@@ -15,6 +15,7 @@ class WebAPI(object):
         'topology-csv-connector.py': 'topology',
         'topology-provider-connector.py': 'topology',
         'topology-json-connector.py': 'topology',
+        'topology-agora-connector.py': 'topology',
         'weights-vapor-connector.py': 'weights',
         'service-types-gocdb-connector.py': 'topology',
         'service-types-csv-connector.py': 'topology',
