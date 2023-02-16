@@ -987,7 +987,7 @@ class ParseAgoraTopology(unittest.TestCase):
                     "tags": {
                     "info_ext_catalog_id": "02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_catalog_type": "provider",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
+                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_name": "Institute for Biological Research Sinisa Stankovic, University of Belgrade"
                     }
                 },
@@ -998,7 +998,7 @@ class ParseAgoraTopology(unittest.TestCase):
                     "tags": {
                     "info_ext_catalog_id": "0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                     "info_ext_catalog_type": "provider",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
+                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                     "info_ext_name": "J.J. Strossmayer University of Osijek, Faculty of Economics in Osijek"
                     }
                 }
@@ -1045,7 +1045,7 @@ class ParseAgoraTopology(unittest.TestCase):
                         "info_ID": "UoB_IBISS",
                         "info_ext_catalog_id": "02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                         "info_ext_catalog_type": "provider",
-                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
+                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                         "info_ext_name": "Institute for Biological Research Sinisa Stankovic, University of Belgrade"
                     }
                 },
@@ -1059,7 +1059,7 @@ class ParseAgoraTopology(unittest.TestCase):
                         "info_ID": "UNIOS-EFOS",
                         "info_ext_catalog_id": "0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                         "info_ext_catalog_type": "provider",
-                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
+                        "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                         "info_ext_name": "J.J. Strossmayer University of Osijek, Faculty of Economics in Osijek"
                     }
                 }

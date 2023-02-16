@@ -25,7 +25,7 @@ class ParseAgoraTopo(object):
                     'tags': {
                         'info_ext_catalog_id': data['id'],
                         'info_ext_catalog_type': 'provider',
-                        'info_ext_catalog_url': f'catalogue.ni4os.eu/?_/providers/{data["id"]}',
+                        'info_ext_catalog_url': f'catalogue.ni4os.eu/?_=/providers/{data["id"]}',
                         'info_ext_name': data['epp_bai_name'],
                     }
                 })
@@ -100,7 +100,7 @@ class ParseAgoraTopo(object):
                         'info_ID': pr_data['epp_bai_id'],
                         'info_ext_catalog_id': pr_data['id'],
                         'info_ext_catalog_type': 'provider',
-                        'info_ext_catalog_url': f'catalogue.ni4os.eu/?_/providers/{pr_data["id"]}',
+                        'info_ext_catalog_url': f'catalogue.ni4os.eu/?_=/providers/{pr_data["id"]}',
                         'info_ext_name': pr_data['epp_bai_name']
                     }
                 })
