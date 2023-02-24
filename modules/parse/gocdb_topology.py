@@ -60,11 +60,12 @@ class ParseSites(ParseHelpers):
                                 notification = notification.text
                                 notification = True if notification.lower(
                                 ) == 'true' or notification.lower() == 'y' else False
+
                                 self._sites[site_name]['notification'] = notification
                         except IndexError:
                             self._sites[site_name]['notification'] = True
 
-                    # # biomed feed does not have extensions
+                    # biomed feed does not have extensions
                     if self.pass_extensions:
                         try:
                             for ext in site:
@@ -91,15 +92,11 @@ class ParseSites(ParseHelpers):
         for group in group_list:
             tmpg = dict()
             tmpg['type'] = 'NGI'
-
             tmpg['group'] = group['ngi']
-
             tmpg['subgroup'] = group['site']
-
             if self.notification_flag:
                 tmpg['notifications'] = {
                     'contacts': [], 'enabled': group['notification']}
-
             tmpg['tags'] = {'certification': group.get('certification', ''),
                             'scope': group.get('scope', ''),
                             'infrastructure': group.get('infrastructure', '')}
@@ -171,6 +168,16 @@ class ParseServiceEndpoints(ParseHelpers):
                     self._service_endpoints[service_id]['url'] = service.find(
                         'URL').text
 
+                    if self.notification_flag:
+                        for notification in service.xpath('NOTIFICATIONS'):
+                            notification = notification.text
+                            notification = True if notification.lower(
+                            ) == 'true' or notification.lower() == 'y' else False
+
+                            self._service_endpoints[service_id]['notification'] = notification
+
+                        self._service_endpoints[service_id]['notification'] = True
+
                     if self.pass_extensions:
                         extension_node = None
                         extnodes = service.xpath('.//EXTENSIONS')
@@ -198,7 +205,7 @@ class ParseServiceEndpoints(ParseHelpers):
         group_list = group_list + \
             sorted([value for _, value in self._service_endpoints.items()],
                    key=lambda s: s['site'])
-
+        
         for group in group_list:
             tmpg = dict()
             tmpg['type'] = 'SITES'
@@ -240,7 +247,6 @@ class ParseServiceEndpoints(ParseHelpers):
 
         return groupofendpoints
 
-
 class ParseServiceGroups(ParseHelpers):
     def __init__(self, logger, data, custname, uid=False,
                  pass_extensions=False, notification_flag=False):
@@ -271,10 +277,26 @@ class ParseServiceGroups(ParseHelpers):
                     self._service_groups[group_id]['monitored'] = group.find(
                         'MONITORED').text
 
+                    self._service_groups[group_id]['services'] = []
                     self._service_groups[group_id]['scope'] = ', '.join(
                         self.parse_scopes(group))
+                    
 
-                    self._service_groups[group_id]['services'] = []
+                    if self.notification_flag:
+                        try:
+                            notification = group.find('NOTIFICATIONS').text                          
+                            notification = True if notification.lower(
+                            ) == 'true' or notification.lower() == 'y' else False
+                            self._service_groups[group_id]['notification'] = notification
+                        except:
+                            try:
+                                notification = group.find('NOTIFY').text
+                                notification = True if notification.lower(
+                                ) == 'true' or notification.lower() == 'y' else False
+                                self._service_groups[group_id]['notification'] = notification
+
+                            except:
+                                self._service_groups[group_id]['notification'] = True
 
                     for service in group.iter("SERVICE_ENDPOINT"):
                         tmps = dict()
@@ -297,6 +319,16 @@ class ParseServiceGroups(ParseHelpers):
                         endpoint_urls = service.find('ENDPOINTS/ENDPOINT/URL')
                         endpoint_urls = None if endpoint_urls == None else endpoint_urls.text
                         tmps['endpoint_urls'] = endpoint_urls
+
+                        if self.notification_flag:
+                            try:
+                                notification = service.find('NOTIFICATIONS').text
+                                notification = True if notification.lower(
+                                ) == 'true' or notification.lower() == 'y' else False
+                                tmps['notification'] = notification
+
+                            except:
+                                tmps['notification'] = True
 
                         if self.pass_extensions:
                             extensions = self.parse_extensions(
