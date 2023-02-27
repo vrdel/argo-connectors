@@ -18,8 +18,6 @@ from argo_connectors.config import Global, CustomerConf
 logger = None
 globopts = {}
 
-DOWNTIMEPI = '/gocdbpi/private/?method=get_downtime'
-
 
 def get_webapi_opts(cglob, confcust):
     webapi_custopts = confcust.get_webapiopts()
@@ -54,7 +52,7 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    feed = confcust.get_topofeed()
+
     logger.customer = confcust.get_custname()
 
     auth_custopts = confcust.get_authopts()
@@ -80,11 +78,7 @@ def main():
         logger.error(exc)
         raise SystemExit(1)
 
-    downtimesfeed = confcust.get_downfeed()
-    if downtimesfeed:
-        feed = downtimesfeed
-    else:
-        feed = feed + DOWNTIMEPI
+    downtime_feed = confcust.get_downfeed()
 
     uidservtype = confcust.get_uidserviceendpoints()
     webapi_opts = get_webapi_opts(cglob, confcust)
@@ -96,7 +90,7 @@ def main():
         cust = list(confcust.get_customers())[0]
         task = TaskGocdbDowntimes(loop, logger, sys.argv[0], globopts,
                                   auth_opts, webapi_opts, confcust,
-                                  confcust.get_custname(cust), feed, start,
+                                  confcust.get_custname(cust), downtime_feed, start,
                                   end, uidservtype, args.date[0], timestamp)
         loop.run_until_complete(task.run())
 
