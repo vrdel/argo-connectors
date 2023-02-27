@@ -53,17 +53,15 @@ class ParseAgoraTopo(object):
                 elif data['erp_bai_providers_public'] != []:
                     group_name = data['erp_bai_providers_public'][0]['epp_bai_id']
 
-                no_https = f'{data["erp_bai_webpage"].split("//")[1] if data["erp_bai_webpage"] != None else ""}'
-
                 if type(group_name) == list and group_name != []:
                     for i in range(len(group_name)):
                         resources.append({
                             'group': group_name[i],
                             'type': 'SERVICEGROUPS',
                             'service': 'catalog.service.entry',
-                            'hostname': f'{no_https}__{data["erp_bai_id"].lower().replace(" ", "_")}',
+                            'hostname': f'agora.ni4os.eu_{data["erp_bai_id"].lower().replace(" ", "_")}',
                             'tags': {
-                                'hostname': no_https,
+                                'hostname': 'agora.ni4os.eu',
                                 'info_ID': f'{data["erp_bai_id"].lower().replace(" ", "_") if data["erp_bai_id"] is not None else ""}',
                                 'info_ext_catalog_id': f'{data["id"]}',
                                 'info_ext_catalog_type': 'resource',
@@ -77,9 +75,9 @@ class ParseAgoraTopo(object):
                         'group': group_name,
                         'type': 'SERVICEGROUPS',
                         'service': 'catalog.service.entry',
-                        'hostname': f'{no_https}__{data["erp_bai_id"].lower().replace(" ", "_")}',
+                        'hostname': f'agora.ni4os.eu_{data["erp_bai_id"].lower().replace(" ", "_")}',
                         'tags': {
-                            'hostname': no_https,
+                            'hostname': 'agora.ni4os.eu',
                             'info_ID': f'{data["erp_bai_id"].lower().replace(" ", "_") if data["erp_bai_id"] is not None else ""}',
                             'info_ext_catalog_id': f'{data["id"]}',
                             'info_ext_catalog_type': 'resource',
@@ -94,10 +92,10 @@ class ParseAgoraTopo(object):
                     'group': pr_data['epp_bai_id'],
                     'type': 'SERVICEGROUPS',
                     'service': 'catalog.provider.entry',
-                    'hostname': 'agora.ni40s.eu__grnet',
+                    'hostname': f'agora.ni4os.eu_{pr_data["epp_bai_id"].lower().replace(" ", "_").replace(",", "")}',
                     'tags': {
                         'hostname': 'agora.ni4os.eu',
-                        'info_ID': pr_data['epp_bai_id'],
+                        'info_ID': pr_data['epp_bai_id'].lower().replace(" ", "_").replace(",", ""),
                         'info_ext_catalog_id': pr_data['id'],
                         'info_ext_catalog_type': 'provider',
                         'info_ext_catalog_url': f'https://catalogue.ni4os.eu/?_=/providers/{pr_data["id"]}',
