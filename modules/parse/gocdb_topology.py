@@ -170,13 +170,12 @@ class ParseServiceEndpoints(ParseHelpers):
 
                     if self.notification_flag:
                         for notification in service.xpath('NOTIFICATIONS'):
-                            notification = notification.text
-                            notification = True if notification.lower(
-                            ) == 'true' or notification.lower() == 'y' else False
-
-                            self._service_endpoints[service_id]['notification'] = notification
-
-                        self._service_endpoints[service_id]['notification'] = True
+                            if notification is not None:
+                                notification = notification.text
+                                notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                                self._service_endpoints[service_id]['notification'] = notification
+                            else:
+                                self._service_endpoints[service_id]['notification'] = True
 
                     if self.pass_extensions:
                         extension_node = None
@@ -205,7 +204,7 @@ class ParseServiceEndpoints(ParseHelpers):
         group_list = group_list + \
             sorted([value for _, value in self._service_endpoints.items()],
                    key=lambda s: s['site'])
-        
+
         for group in group_list:
             tmpg = dict()
             tmpg['type'] = 'SITES'
@@ -247,6 +246,7 @@ class ParseServiceEndpoints(ParseHelpers):
 
         return groupofendpoints
 
+
 class ParseServiceGroups(ParseHelpers):
     def __init__(self, logger, data, custname, uid=False,
                  pass_extensions=False, notification_flag=False):
@@ -280,11 +280,11 @@ class ParseServiceGroups(ParseHelpers):
                     self._service_groups[group_id]['services'] = []
                     self._service_groups[group_id]['scope'] = ', '.join(
                         self.parse_scopes(group))
-                    
+
 
                     if self.notification_flag:
                         try:
-                            notification = group.find('NOTIFICATIONS').text                          
+                            notification = group.find('NOTIFICATIONS').text
                             notification = True if notification.lower(
                             ) == 'true' or notification.lower() == 'y' else False
                             self._service_groups[group_id]['notification'] = notification
