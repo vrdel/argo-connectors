@@ -60,7 +60,6 @@ def main():
         raise SystemExit(1)
 
     if len(args.date) == 0:
-        print(parser.print_help())
         raise SystemExit(1)
 
     # calculate start and end times
@@ -80,6 +79,7 @@ def main():
         feed = downtimesfeed
     else:
         feed = feed + DOWNTIMEPI
+        #print("feed: ", feed)
     uidservtype = confcust.get_uidserviceendpoints()
     webapi_opts = get_webapi_opts(cglob, confcust)
 

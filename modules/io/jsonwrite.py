@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-
 import json
 
-
-class JsonWriter:
+class JsonWriter(object):
     def __init__(self, data, filename):
         self.data = data
         self.filename = filename
