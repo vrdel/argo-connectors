@@ -72,29 +72,26 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
             self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(
                 self.res.replace('\r\n', '').replace('\n', '')))
             raise ConnectorParseError(exc)
-        
-
-
 
     def _parse(self):
-            cursor, count = None, None
+        cursor, count = None, None
 
-            doc = self.parse_xml(self.res)
-            xml_bytes = doc.encode("utf-8")
-            sites = etree.fromstring(xml_bytes)
+        doc = self.parse_xml(self.res)
+        xml_bytes = doc.encode("utf-8")
+        sites = etree.fromstring(xml_bytes)
 
-            for cnt in sites.xpath('.//count'):
-                count = int(cnt.text)
+        for cnt in sites.xpath('.//count'):
+            count = int(cnt.text)
 
-            for lnk in sites.xpath('.//link'):
-                if lnk.attrib["rel"] == "next":
-                    href = lnk.attrib["href"]
-                    for query in href.split('&'):
-                        if 'next_cursor' in query:
-                            cursor = query.split('=')[1]
+        for lnk in sites.xpath('.//link'):
+            if lnk.attrib["rel"] == "next":
+                href = lnk.attrib["href"]
+                for query in href.split('&'):
+                    if 'next_cursor' in query:
+                        cursor = query.split('=')[1]
 
-            return count, cursor       
-        
+        return count, cursor
+
 
 class TaskParseTopology(object):
     def __init__(self, logger, custname, uidservendp, pass_extensions,
@@ -141,11 +138,13 @@ def parse_endpoints(logger, custname, uidservendp, pass_extensions,
                              notification_flag)
     return task.parse_source_endpoints(data)
 
+
 def parse_sites(logger, custname, uidservendp, pass_extensions,
                 notification_flag, data):
     task = TaskParseTopology(
         logger, custname, uidservendp, pass_extensions, notification_flag)
     return task.parse_source_sites(data)
+
 
 def parse_servicegroups(logger, custname, uidservendp, pass_extensions,
                         notification_flag, data):
@@ -257,6 +256,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                         int(self.globopts['ConnectionRetry'.lower()]),
                         int(self.globopts['ConnectionTimeout'.lower()]),
                         int(self.globopts['ConnectionSleepRetry'.lower()]),
+                        self.globopts['ConnectionRetryRandom'.lower()],
+                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
                         date=self.fixed_date)
         await webapi.send(data, topotype)
 

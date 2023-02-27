@@ -22,7 +22,7 @@ class WebAPI(object):
     }
 
     def __init__(self, connector, host, token, logger, retry,
-                 timeout=180, sleepretry=60, report=None, endpoints_group=None,
+                 timeout=180, sleepretry=60, retryrandom=None, sleepretryrandom=None, report=None, endpoints_group=None,
                  date=None):
         self.connector = os.path.basename(connector)
         self.webapi_method = self.methods[self.connector]
@@ -37,10 +37,14 @@ class WebAPI(object):
         self.retry = retry
         self.timeout = timeout
         self.sleepretry = sleepretry
+        self.retryrandom = retryrandom
+        self.sleepretryrandom = sleepretryrandom
         self.retry_options = {
             'ConnectionRetry'.lower(): retry,
             'ConnectionTimeout'.lower(): timeout,
-            'ConnectionSleepRetry'.lower(): sleepretry
+            'ConnectionSleepRetry'.lower(): sleepretry,
+            'ConnectionRetryRandom'.lower(): retryrandom,
+            'ConnectionSleepRandomRetryMax'.lower(): sleepretryrandom
         }
         self.endpoints_group = endpoints_group
         self.date = date or self._construct_datenow()
