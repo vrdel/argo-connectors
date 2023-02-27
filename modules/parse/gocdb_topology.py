@@ -271,28 +271,24 @@ class ParseServiceGroups(ParseHelpers):
                     if group_id not in self._service_groups:
                         self._service_groups[group_id] = {}
 
-                    self._service_groups[group_id]['name'] = group.find(
-                        'NAME').text
+                    self._service_groups[group_id]['name'] = self.parse_xmltext(group.find('NAME'))
 
-                    self._service_groups[group_id]['monitored'] = group.find(
-                        'MONITORED').text
+                    self._service_groups[group_id]['monitored'] =  self.parse_xmltext(group.find('MONITORED'))
 
                     self._service_groups[group_id]['services'] = []
-                    self._service_groups[group_id]['scope'] = ', '.join(
-                        self.parse_scopes(group))
-
+                    self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))
 
                     if self.notification_flag:
                         try:
-                            notification = group.find('NOTIFICATIONS').text
-                            notification = True if notification.lower(
-                            ) == 'true' or notification.lower() == 'y' else False
+                            notification = self.parse_xmltext(group.find('NOTIFICATIONS'))
+                            notification = True if notification.lower() == 'true' \
+                                or notification.lower() == 'y' else False
                             self._service_groups[group_id]['notification'] = notification
                         except:
                             try:
-                                notification = group.find('NOTIFY').text
-                                notification = True if notification.lower(
-                                ) == 'true' or notification.lower() == 'y' else False
+                                notification = self.parse_xmltext(group.find('NOTIFY'))
+                                notification = True if notification.lower() == 'true' \
+                                    or notification.lower() == 'y' else False
                                 self._service_groups[group_id]['notification'] = notification
 
                             except:
@@ -301,10 +297,9 @@ class ParseServiceGroups(ParseHelpers):
                     for service in group.iter("SERVICE_ENDPOINT"):
                         tmps = dict()
 
-                        tmps['hostname'] = service.find('HOSTNAME').text
+                        tmps['hostname'] = self.parse_xmltext(service.find('HOSTNAME'))
                         try:
-                            tmps['service_id'] = service.find(
-                                'PRIMARY_KEY').text
+                            tmps['service_id'] = self.parse_xmltext(service.find('PRIMARY_KEY'))
                         except AttributeError:
                             tmps['service_id'] = service.attrib["PRIMARY_KEY"]
 
@@ -318,9 +313,9 @@ class ParseServiceGroups(ParseHelpers):
 
                         if self.notification_flag:
                             try:
-                                notification = service.find('NOTIFICATIONS').text
-                                notification = True if notification.lower(
-                                ) == 'true' or notification.lower() == 'y' else False
+                                notification = self.parse_xmltext(service.find('NOTIFICATIONS'))
+                                notification = True if notification.lower() == 'true' or \
+                                    notification.lower() == 'y' else False
                                 tmps['notification'] = notification
 
                             except:
