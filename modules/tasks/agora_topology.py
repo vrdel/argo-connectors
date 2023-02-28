@@ -15,6 +15,7 @@ def contains_exception(list):
 
     return (False, None)
 
+
 class TaskProviderTopology(object):
     def __init__(self, loop, logger, connector_name, globopts, webapi_opts,
                  confcust, uidservendp, fetchtype, fixed_date):
@@ -44,11 +45,11 @@ class TaskProviderTopology(object):
                         self.globopts['ConnectionRetryRandom'.lower()],
                         int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
                         date=fixed_date)
-        
+
         await webapi.send(data, topotype)
 
 
-    async def fetch_data(self, feed):  
+    async def fetch_data(self, feed):
         remote_topo = urlparse(feed)
         session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
         headers = {
@@ -60,7 +61,7 @@ class TaskProviderTopology(object):
                                                             remote_topo.netloc,
                                                             remote_topo.path),
                                                             headers=headers)
-            
+
             await session.close()
             return res
 
@@ -79,7 +80,7 @@ class TaskProviderTopology(object):
         ]
 
         # fetch topology data concurrently in coroutines
-        fetched_data = await asyncio.gather(*coros, return_exceptions=True)     
+        fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
         exc_raised, exc = contains_exception(fetched_data)
         if exc_raised:
@@ -91,11 +92,11 @@ class TaskProviderTopology(object):
 
             await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
 
-            numge = len(group_providers)
-            numgg = len(group_resources)
+            numgg = len(group_providers)
+            numge = len(group_resources)
 
             # send concurrently to WEB-API in coroutines
-            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):  
+            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
                 await asyncio.gather(
                         self.send_webapi(self.webapi_opts, group_resources, 'groups', self.fixed_date),
                         self.send_webapi(self.webapi_opts, group_providers, 'endpoints', self.fixed_date),
