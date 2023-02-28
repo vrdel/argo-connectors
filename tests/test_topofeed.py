@@ -58,7 +58,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                 'production': '1',
                 'scope': 'EGI, wlcg, atlas'},
                 'type': 'SITES'
-            },       
+            },
             {
                 'group': 'RAL-LCG2',
                 'hostname': 'arc-ce01.gridpp.rl.ac.uk',
@@ -971,9 +971,9 @@ class ParseAgoraTopology(unittest.TestCase):
         with open('tests/agora_resource_sample.json', encoding='utf-8') as feed_file:
             resources = feed_file.read()
         with open('tests/agora_provider_sample.json', encoding='utf-8') as feed_file:
-            providers = feed_file.read()     
+            providers = feed_file.read()
         logger.customer = CUSTOMER_NAME
-
+        self.maxDiff = None
         agora_topo = ParseAgoraTopo(logger, providers, resources, False)
         self.group_groups = agora_topo.get_group_groups()
         self.group_endpoints = agora_topo.get_group_endpoints()
@@ -987,7 +987,7 @@ class ParseAgoraTopology(unittest.TestCase):
                 "tags": {
                     "info_ext_catalog_id": "02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_catalog_type": "provider",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
+                    "info_ext_catalog_url": "https://catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_name": "Institute for Biological Research Sinisa Stankovic, University of Belgrade"
                 }
             },
@@ -998,7 +998,7 @@ class ParseAgoraTopology(unittest.TestCase):
                 "tags": {
                     "info_ext_catalog_id": "0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                     "info_ext_catalog_type": "provider",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
+                    "info_ext_catalog_url": "https://catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                     "info_ext_name": "J.J. Strossmayer University of Osijek, Faculty of Economics in Osijek"
                     }
                 }
@@ -1006,19 +1006,18 @@ class ParseAgoraTopology(unittest.TestCase):
         )
 
     def test_groupEndpoints(self):
-
         self.assertEqual(self.group_endpoints, [
                 {
                 "group": "UoB-RCUB",
                 "type": "SERVICEGROUPS",
                 "service": "catalog.service.entry",
-                "hostname": "foo.foo2.gov.rs/__",
+                "hostname": "agora.ni4os.eu_uob_nardus",
                 "tags": {
-                    "hostname": "foo.foo2.gov.rs/",
+                    "hostname": "agora.ni4os.eu",
                     "info_ID": "uob_nardus",
                     "info_ext_catalog_id": "01426fe3-8783-47f2-97e6-757bcd70e1be",
                     "info_ext_catalog_type": "resource",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/01426fe3-8783-47f2-97e6-757bcd70e1be",
+                    "info_ext_catalog_url": "https://catalogue.ni4os.eu/?_=/resources/01426fe3-8783-47f2-97e6-757bcd70e1be",
                     "info_ext_name": "Repository of Faculty of Science, University of Zagreb"
                 }
             },
@@ -1026,13 +1025,13 @@ class ParseAgoraTopology(unittest.TestCase):
                 "group": "SRCE",
                 "type": "SERVICEGROUPS",
                 "service": "catalog.service.entry",
-                "hostname": "foo.foo2.gov.rs/__",
+                "hostname": "agora.ni4os.eu_uob_nardus",
                 "tags": {
-                    "hostname": "foo.foo2.gov.rs/",
+                    "hostname": "agora.ni4os.eu",
                     "info_ID": "uob_nardus",
                     "info_ext_catalog_id": "01426fe3-8783-47f2-97e6-757bcd70e1be",
                     "info_ext_catalog_type": "resource",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/01426fe3-8783-47f2-97e6-757bcd70e1be",
+                    "info_ext_catalog_url": "https://catalogue.ni4os.eu/?_=/resources/01426fe3-8783-47f2-97e6-757bcd70e1be",
                     "info_ext_name": "Repository of Faculty of Science, University of Zagreb"
                 }
             },
@@ -1040,13 +1039,13 @@ class ParseAgoraTopology(unittest.TestCase):
                 "group": "CING",
                 "type": "SERVICEGROUPS",
                 "service": "catalog.service.entry",
-                "hostname": "bioinformatics.cing.ac.cy/MelGene/__",
+                "hostname": "agora.ni4os.eu_melgene_cy",
                 "tags": {
-                    "hostname": "bioinformatics.cing.ac.cy/MelGene/",
+                    "hostname": "agora.ni4os.eu",
                     "info_ID": "melgene_cy",
                     "info_ext_catalog_id": "04b06b6f-e3a1-490b-94ea-8a1ab0309213",
                     "info_ext_catalog_type": "resource",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/resources/04b06b6f-e3a1-490b-94ea-8a1ab0309213",
+                    "info_ext_catalog_url": "https://catalogue.ni4os.eu/?_=/resources/04b06b6f-e3a1-490b-94ea-8a1ab0309213",
                     "info_ext_name": "MelGene"
                 }
             },
@@ -1054,13 +1053,13 @@ class ParseAgoraTopology(unittest.TestCase):
                 "group": "UoB_IBISS",
                 "type": "SERVICEGROUPS",
                 "service": "catalog.provider.entry",
-                "hostname": "agora.ni40s.eu__grnet",
+                "hostname": "agora.ni4os.eu_uob_ibiss",
                 "tags": {
                     "hostname": "agora.ni4os.eu",
-                    "info_ID": "UoB_IBISS",
+                    "info_ID": "uob_ibiss",
                     "info_ext_catalog_id": "02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_catalog_type": "provider",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
+                    "info_ext_catalog_url": "https://catalogue.ni4os.eu/?_=/providers/02dc5b9a-99ba-4924-ab80-aa51b9c86b1e",
                     "info_ext_name": "Institute for Biological Research Sinisa Stankovic, University of Belgrade"
                 }
             },
@@ -1068,13 +1067,13 @@ class ParseAgoraTopology(unittest.TestCase):
                 "group": "UNIOS-EFOS",
                 "type": "SERVICEGROUPS",
                 "service": "catalog.provider.entry",
-                "hostname": "agora.ni40s.eu__grnet",
+                "hostname": "agora.ni4os.eu_unios-efos",
                 "tags": {
                     "hostname": "agora.ni4os.eu",
-                    "info_ID": "UNIOS-EFOS",
+                    "info_ID": "unios-efos",
                     "info_ext_catalog_id": "0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                     "info_ext_catalog_type": "provider",
-                    "info_ext_catalog_url": "catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
+                    "info_ext_catalog_url": "https://catalogue.ni4os.eu/?_=/providers/0a6361a4-dfb4-4acd-af16-05b57c7a80d4",
                     "info_ext_name": "J.J. Strossmayer University of Osijek, Faculty of Economics in Osijek"
                 }
                 }
