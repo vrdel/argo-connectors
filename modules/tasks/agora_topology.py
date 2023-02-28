@@ -98,8 +98,8 @@ class TaskProviderTopology(object):
             # send concurrently to WEB-API in coroutines
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
                 await asyncio.gather(
-                        self.send_webapi(self.webapi_opts, group_resources, 'groups', self.fixed_date),
-                        self.send_webapi(self.webapi_opts, group_providers, 'endpoints', self.fixed_date),
+                        self.send_webapi(self.webapi_opts, group_resources, 'endpoints', self.fixed_date),
+                        self.send_webapi(self.webapi_opts, group_providers, 'groups', self.fixed_date),
                         loop=self.loop
                 )
 
