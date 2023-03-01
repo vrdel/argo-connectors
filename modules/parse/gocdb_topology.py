@@ -136,25 +136,25 @@ class ParseServiceEndpoints(ParseHelpers):
                         self._service_endpoints[service_id] = {}
 
                     for serv_endpnts in service.xpath('.//HOSTNAME'):
-                        self._service_endpoints[service_id]['hostname'] = serv_endpnts.text
+                        self._service_endpoints[service_id]['hostname'] = self.parse_xmltext(serv_endpnts)
 
                     for serv_types in service.xpath('.//SERVICE_TYPE'):
-                        self._service_endpoints[service_id]['type'] = serv_types.text
+                        self._service_endpoints[service_id]['type'] = self.parse_xmltext(serv_types)
 
                     for hostdn in service.xpath('.//HOSTDN'):
-                        self._service_endpoints[service_id]['hostdn'] = hostdn.text
+                        self._service_endpoints[service_id]['hostdn'] = self.parse_xmltext(hostdn)
 
                     for node_mon in service.xpath('.//NODE_MONITORED'):
-                        self._service_endpoints[service_id]['monitored'] = node_mon.text
+                        self._service_endpoints[service_id]['monitored'] = self.parse_xmltext(node_mon)
 
                     for in_prod in service.xpath('.//IN_PRODUCTION'):
-                        self._service_endpoints[service_id]['production'] = in_prod.text
+                        self._service_endpoints[service_id]['production'] = self.parse_xmltext(in_prod)
 
                     for site_name in service.xpath('.//SITENAME'):
-                        self._service_endpoints[service_id]['site'] = site_name.text
+                        self._service_endpoints[service_id]['site'] = self.parse_xmltext(site_name)
 
                     for roc_name in service.xpath('.//ROC_NAME'):
-                        self._service_endpoints[service_id]['roc'] = roc_name.text
+                        self._service_endpoints[service_id]['roc'] = self.parse_xmltext(roc_name)
 
                     self._service_endpoints[service_id]['service_id'] = service_id
 
@@ -170,13 +170,12 @@ class ParseServiceEndpoints(ParseHelpers):
 
                     if self.notification_flag:
                         for notification in service.xpath('NOTIFICATIONS'):
-                            notification = notification.text
-                            notification = True if notification.lower(
-                            ) == 'true' or notification.lower() == 'y' else False
-
-                            self._service_endpoints[service_id]['notification'] = notification
-
-                        self._service_endpoints[service_id]['notification'] = True
+                            if notification is not None:
+                                notification = notification.text
+                                notification = True if notification.lower() == 'true' or notification.lower() == 'y' else False
+                                self._service_endpoints[service_id]['notification'] = notification
+                            else:
+                                self._service_endpoints[service_id]['notification'] = True
 
                     if self.pass_extensions:
                         extension_node = None
@@ -205,7 +204,7 @@ class ParseServiceEndpoints(ParseHelpers):
         group_list = group_list + \
             sorted([value for _, value in self._service_endpoints.items()],
                    key=lambda s: s['site'])
-        
+
         for group in group_list:
             tmpg = dict()
             tmpg['type'] = 'SITES'
@@ -247,6 +246,7 @@ class ParseServiceEndpoints(ParseHelpers):
 
         return groupofendpoints
 
+
 class ParseServiceGroups(ParseHelpers):
     def __init__(self, logger, data, custname, uid=False,
                  pass_extensions=False, notification_flag=False):
@@ -271,28 +271,24 @@ class ParseServiceGroups(ParseHelpers):
                     if group_id not in self._service_groups:
                         self._service_groups[group_id] = {}
 
-                    self._service_groups[group_id]['name'] = group.find(
-                        'NAME').text
+                    self._service_groups[group_id]['name'] = self.parse_xmltext(group.find('NAME'))
 
-                    self._service_groups[group_id]['monitored'] = group.find(
-                        'MONITORED').text
+                    self._service_groups[group_id]['monitored'] =  self.parse_xmltext(group.find('MONITORED'))
 
                     self._service_groups[group_id]['services'] = []
-                    self._service_groups[group_id]['scope'] = ', '.join(
-                        self.parse_scopes(group))
-                    
+                    self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))
 
                     if self.notification_flag:
                         try:
-                            notification = group.find('NOTIFICATIONS').text                          
-                            notification = True if notification.lower(
-                            ) == 'true' or notification.lower() == 'y' else False
+                            notification = self.parse_xmltext(group.find('NOTIFICATIONS'))
+                            notification = True if notification.lower() == 'true' \
+                                or notification.lower() == 'y' else False
                             self._service_groups[group_id]['notification'] = notification
                         except:
                             try:
-                                notification = group.find('NOTIFY').text
-                                notification = True if notification.lower(
-                                ) == 'true' or notification.lower() == 'y' else False
+                                notification = self.parse_xmltext(group.find('NOTIFY'))
+                                notification = True if notification.lower() == 'true' \
+                                    or notification.lower() == 'y' else False
                                 self._service_groups[group_id]['notification'] = notification
 
                             except:
@@ -301,30 +297,25 @@ class ParseServiceGroups(ParseHelpers):
                     for service in group.iter("SERVICE_ENDPOINT"):
                         tmps = dict()
 
-                        tmps['hostname'] = service.find('HOSTNAME').text
+                        tmps['hostname'] = self.parse_xmltext(service.find('HOSTNAME'))
                         try:
-                            tmps['service_id'] = service.find(
-                                'PRIMARY_KEY').text
+                            tmps['service_id'] = self.parse_xmltext(service.find('PRIMARY_KEY'))
                         except AttributeError:
                             tmps['service_id'] = service.attrib["PRIMARY_KEY"]
 
-                        tmps['type'] = service.find('SERVICE_TYPE').text
-
-                        tmps['monitored'] = service.find('NODE_MONITORED').text
-
-                        tmps['production'] = service.find('IN_PRODUCTION').text
-
+                        tmps['type'] = self.parse_xmltext(service.find('SERVICE_TYPE'))
+                        tmps['monitored'] = self.parse_xmltext(service.find('NODE_MONITORED'))
+                        tmps['production'] = self.parse_xmltext(service.find('IN_PRODUCTION'))
                         tmps['scope'] = ', '.join(self.parse_scopes(service))
 
-                        endpoint_urls = service.find('ENDPOINTS/ENDPOINT/URL')
-                        endpoint_urls = None if endpoint_urls == None else endpoint_urls.text
+                        endpoint_urls = self.parse_xmltext(service.find('ENDPOINTS/ENDPOINT/URL'))
                         tmps['endpoint_urls'] = endpoint_urls
 
                         if self.notification_flag:
                             try:
-                                notification = service.find('NOTIFICATIONS').text
-                                notification = True if notification.lower(
-                                ) == 'true' or notification.lower() == 'y' else False
+                                notification = self.parse_xmltext(service.find('NOTIFICATIONS'))
+                                notification = True if notification.lower() == 'true' or \
+                                    notification.lower() == 'y' else False
                                 tmps['notification'] = notification
 
                             except:
@@ -363,11 +354,13 @@ class ParseServiceGroups(ParseHelpers):
                         service['service_id'], service['hostname'])
                 else:
                     tmpg['hostname'] = service['hostname']
+
                 tmpg['tags'] = {'scope': service.get('scope', ''),
                                 'monitored': '1' if service['monitored'].lower() == 'Y'.lower() or
                                 service['monitored'].lower() == 'True'.lower() else '0',
                                 'production': '1' if service['production'].lower() == 'Y'.lower() or
                                 service['production'].lower() == 'True'.lower() else '0'}
+
                 if self.uidservendp:
                     tmpg['tags'].update({'hostname': service['hostname']})
                 tmpg['tags'].update({'info_ID': str(service['service_id'])})

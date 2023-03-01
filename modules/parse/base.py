@@ -54,6 +54,16 @@ class ParseHelpers(object):
 
         return scopes_list
 
+    def parse_xmltext(self, node):
+        try:
+            value = node.text
+            if value is not None:
+                return value
+            else:
+                return ''
+        except AttributeError:
+            return ''
+
     def parse_xml(self, data):
         try:
             if data is None:

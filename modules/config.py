@@ -204,7 +204,7 @@ class CustomerConf(object):
     _defjobattrs = {'topology-gocdb-connector.py': [''],
                     'topology-json-connector.py': [''],
                     'topology-csv-connector.py': [''],
-                    'topology-provider-connector.py': [''], 
+                    'topology-provider-connector.py': [''],
                     'topology-agora-connector.py': [''],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
                     'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
@@ -261,7 +261,7 @@ class CustomerConf(object):
                     custdir = config.get(section, 'OutputDir')
                     custname = config.get(section, 'Name')
                     topofetchtype = config.get(section, 'TopoFetchType')
-                    topofeed = config.get(section, 'TopoFeed')
+                    topofeed = config.get(section, 'TopoFeed', fallback=None)
                     site_contacts = config.get(section, 'SiteContacts', fallback=None)
                     servicegroup_contacts = config.get(section, 'ServicegroupContacts', fallback=None)
                     vaporpi = config.get(section, 'Vaporpi', fallback=None)
@@ -554,14 +554,14 @@ class CustomerConf(object):
         return self._get_cust_options('DowntimesFeed')
 
     def get_sitecontacts(self):
-        return self._get_cust_options('SiteContacts')   
+        return self._get_cust_options('SiteContacts')
 
     def get_servicegroupcontacts(self):
-        return self._get_cust_options('ServicegroupContacts')   
+        return self._get_cust_options('ServicegroupContacts')
 
     def get_vaporpi(self):
-        return self._get_cust_options('Vaporpi')  
-    
+        return self._get_cust_options('Vaporpi')
+
     def get_topofeed(self):
         return self._get_cust_options('TopoFeed')
 

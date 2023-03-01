@@ -269,9 +269,11 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
 
         try:
+            api_site_contacts = self.topofeed + self.SITE_CONTACTS if self.topofeed else self.SITE_CONTACTS
+            api_servicegroup_contacts = self.topofeed + self.SERVICEGROUP_CONTACTS if self.topofeed else self.SERVICEGROUP_CONTACTS
             contact_coros = [
-                self.fetch_data(self.topofeed + self.SITE_CONTACTS),
-                self.fetch_data(self.topofeed + self.SERVICEGROUP_CONTACTS)
+                self.fetch_data(api_site_contacts),
+                self.fetch_data(api_servicegroup_contacts)
             ]
             contacts = await asyncio.gather(*contact_coros, loop=self.loop, return_exceptions=True)
 
