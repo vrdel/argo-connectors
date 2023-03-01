@@ -1,4 +1,5 @@
 import json
+import gzip
 
 class JsonWriter(object):
     def __init__(self, data, filename):
@@ -9,8 +10,10 @@ class JsonWriter(object):
         try:
             json_data = json.dumps(self.data, indent=4)
 
-            with open(self.filename, 'w') as f:
-                f.write(json_data)
+            compressed_file = gzip.compress(json_data.encode())
+
+            with gzip.open(self.filename + '.gz', 'wb') as f:
+                f.write(compressed_file)
 
             return True, None
 
