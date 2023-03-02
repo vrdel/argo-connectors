@@ -3,14 +3,20 @@ from argo_connectors.utils import module_class_name
 
 import json
 from json.decoder import JSONDecodeError
-import re
 from unidecode import unidecode
 
 
-def remove_non_utf(data):
-    pattern = r"[\s+@]+"
+def remove_non_utf(string):
+    if '+' in string:
+        string = string.replace("+", '_plus_')
+    
+    if '@' in string:
+        string = string.replace('@', '_at_')
 
-    return re.sub(pattern, "-", data)
+    if ' ' in string:
+        string = string.replace(' ', '_')
+
+    return string
 
 
 class ParseAgoraTopo(object):
