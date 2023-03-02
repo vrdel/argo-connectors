@@ -26,15 +26,20 @@ class ParseAgoraTopo(object):
             providers_data = json.loads(self.providers)
 
             for data in providers_data:
+                subgroup = unidecode(data['epp_bai_id'])
+                catalog_id = unidecode(data['id'])
+                catalog_url = unidecode(f'https://catalogue.ni4os.eu/?_=/providers/{data["id"]}')
+                ext_name = unidecode(data['epp_bai_name'])
+
                 providers.append({
                     'group': 'NI4OS Providers',
                     'type': 'PROVIDERS',
-                    'subgroup': data['epp_bai_id'],
+                    'subgroup': subgroup,
                     'tags': {
-                        'info_ext_catalog_id': data['id'],
+                        'info_ext_catalog_id': catalog_id,
                         'info_ext_catalog_type': 'provider',
-                        'info_ext_catalog_url': f'https://catalogue.ni4os.eu/?_=/providers/{data["id"]}',
-                        'info_ext_name': data['epp_bai_name'],
+                        'info_ext_catalog_url': catalog_url,
+                        'info_ext_name': ext_name,
                     }
                 })
 
