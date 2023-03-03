@@ -10,10 +10,8 @@ class JsonWriter(object):
         try:
             json_data = json.dumps(self.data, indent=4)
 
-            compressed_file = gzip.compress(json_data.encode())
-
             with gzip.open(self.filename + '.gz', 'wb') as f:
-                f.write(compressed_file)
+                f.write(json_data.encode())
 
             return True, None
 
