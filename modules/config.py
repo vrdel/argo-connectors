@@ -12,7 +12,7 @@ class Global(object):
     """
     # options common for all connectors
     conf_general = {'General': ['WriteJson',
-                                'PublishWebAPI', 'PassExtensions']}
+                                'PublishWebAPI', 'PassExtensions', 'CompressJson']}
     conf_auth = {'Authentication': ['HostKey', 'HostCert', 'CAPath', 'CAFile',
                                     'VerifyServerCert', 'UsePlainHttpAuth',
                                     'HttpUser', 'HttpPass']}
