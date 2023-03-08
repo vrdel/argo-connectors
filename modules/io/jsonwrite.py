@@ -1,21 +1,30 @@
 import json
 import gzip
 
+
 class JsonWriter(object):
-    def __init__(self, data, filename):
+    def __init__(self, data, filename, compress_json):
         self.data = data
         self.filename = filename
+        self.compress_json = compress_json
 
     def write_json(self):
         try:
-            json_data = json.dumps(self.data, indent=4)
+            if self.compress_json == str(True):
+                json_data = json.dumps(self.data, indent=4)
 
-            compressed_file = gzip.compress(json_data.encode())
+                with gzip.open(self.filename + '.gz', 'wb') as f:
+                    f.write(json_data.encode())
 
-            with gzip.open(self.filename + '.gz', 'wb') as f:
-                f.write(compressed_file)
+                return True, None
+            
+            else:
+                json_data = json.dumps(self.data, indent=4)
 
-            return True, None
+                with open(self.filename, 'w') as f:
+                    f.write(json_data)
+
+                return True, None
 
         except Exception as e:
             return False, e
