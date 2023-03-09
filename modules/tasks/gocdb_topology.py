@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
+from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.ldap import LDAPSessionWithRetry
@@ -157,20 +157,12 @@ class TaskParseContacts(object):
     def __init__(self, logger):
         self.logger = logger
 
-    def parse_sites_contacts(self, res):
-        contacts = ParseSiteContacts(self.logger, res)
-        return contacts.get_contacts()
-
     def parse_siteswith_contacts(self, res):
         contacts = ParseSitesWithContacts(self.logger, res)
         return contacts.get_contacts()
 
     def parse_servicegroups_contacts(self, res):
         contacts = ParseServiceGroupWithContacts(self.logger, res)
-        return contacts.get_contacts()
-
-    def parse_servicegroups_roles(self, res):
-        contacts = ParseServiceGroupRoles(self.logger, res)
         return contacts.get_contacts()
 
     def parse_serviceendpoints_contacts(self, res):
