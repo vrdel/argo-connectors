@@ -92,9 +92,6 @@ def main():
     bdii_opts = get_bdii_opts(confcust)
     webapi_opts = get_webapi_opts(cglob, confcust)
 
-    SITE_CONTACTS = confcust.get_sitecontacts()
-    SERVICEGROUP_CONTACTS = confcust.get_servicegroupcontacts()
-
     toposcope = confcust.get_toposcope()
     topofeedendpoints = confcust.get_topofeedendpoints()
     topofeedservicegroups = confcust.get_topofeedservicegroups()
@@ -116,11 +113,10 @@ def main():
 
     try:
         task = TaskGocdbTopology(
-            loop, logger, sys.argv[0], SITE_CONTACTS, SERVICEGROUP_CONTACTS,
-            SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI, SITES_PI, globopts,
-            auth_opts, webapi_opts, bdii_opts, confcust, custname, topofeed,
-            topofetchtype, fixed_date, uidservendp, pass_extensions,
-            topofeedpaging, notiflag
+            loop, logger, sys.argv[0], SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
+            SITES_PI, globopts, auth_opts, webapi_opts, bdii_opts, confcust,
+            custname, topofeed, topofetchtype, fixed_date, uidservendp,
+            pass_extensions, topofeedpaging, notiflag
         )
         loop.run_until_complete(task.run())
 
