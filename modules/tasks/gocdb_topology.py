@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_connectors.parse.gocdb_contacts import ParseSiteContacts, ParseServiceEndpointContacts, ParseServiceGroupRoles, ParseSitesWithContacts, ParseServiceGroupWithContacts
+from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.ldap import LDAPSessionWithRetry
@@ -157,10 +157,6 @@ class TaskParseContacts(object):
     def __init__(self, logger):
         self.logger = logger
 
-    def parse_sites_contacts(self, res):
-        contacts = ParseSiteContacts(self.logger, res)
-        return contacts.get_contacts()
-
     def parse_siteswith_contacts(self, res):
         contacts = ParseSitesWithContacts(self.logger, res)
         return contacts.get_contacts()
@@ -169,29 +165,23 @@ class TaskParseContacts(object):
         contacts = ParseServiceGroupWithContacts(self.logger, res)
         return contacts.get_contacts()
 
-    def parse_servicegroups_roles(self, res):
-        contacts = ParseServiceGroupRoles(self.logger, res)
-        return contacts.get_contacts()
-
     def parse_serviceendpoints_contacts(self, res):
         contacts = ParseServiceEndpointContacts(self.logger, res)
         return contacts.get_contacts()
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, loop, logger, connector_name, SITE_CONTACTS,
-                 SERVICEGROUP_CONTACTS, SERVICE_ENDPOINTS_PI,
+    def __init__(self, loop, logger, connector_name, SERVICE_ENDPOINTS_PI,
                  SERVICE_GROUPS_PI, SITES_PI, globopts, auth_opts, webapi_opts,
                  bdii_opts, confcust, custname, topofeed, topofetchtype,
-                 fixed_date, uidservendp, pass_extensions, topofeedpaging, notiflag):
+                 fixed_date, uidservendp, pass_extensions, topofeedpaging,
+                 notiflag):
         TaskParseTopology.__init__(self, logger, custname, uidservendp,
                                    pass_extensions, notiflag)
         super(TaskGocdbTopology, self).__init__(logger)
         self.loop = loop
         self.logger = logger
         self.connector_name = connector_name
-        self.SITE_CONTACTS = SITE_CONTACTS
-        self.SERVICEGROUP_CONTACTS = SERVICEGROUP_CONTACTS
         self.SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI
         self.SERVICE_GROUPS_PI = SERVICE_GROUPS_PI
         self.SITES_PI = SITES_PI
@@ -267,27 +257,6 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         group_endpoints, group_groups = list(), list()
         parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
-
-        try:
-            api_site_contacts = self.topofeed + self.SITE_CONTACTS if self.topofeed else self.SITE_CONTACTS
-            api_servicegroup_contacts = self.topofeed + self.SERVICEGROUP_CONTACTS if self.topofeed else self.SERVICEGROUP_CONTACTS
-            contact_coros = [
-                self.fetch_data(api_site_contacts),
-                self.fetch_data(api_servicegroup_contacts)
-            ]
-            contacts = await asyncio.gather(*contact_coros, loop=self.loop, return_exceptions=True)
-
-            exc_raised, exc = contains_exception(contacts)
-            if exc_raised:
-                raise ConnectorError(repr(exc))
-
-            parsed_site_contacts = self.parse_sites_contacts(contacts[0])
-            parsed_servicegroups_contacts = self.parse_servicegroups_roles(
-                contacts[1])
-
-        except (ConnectorError, ConnectorHttpError, ConnectorParseError) as exc:
-            self.logger.warn(
-                'SITE_CONTACTS and SERVICERGOUP_CONTACT methods not implemented')
 
         coros = [self.fetch_data(self.SERVICE_ENDPOINTS_PI)]
         if 'servicegroups' in self.topofetchtype:
@@ -400,12 +369,9 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         # parse contacts from fetched service endpoints topology, if there are
         # any
-        parsed_serviceendpoint_contacts = self.parse_serviceendpoints_contacts(
-            fetched_endpoints)
+        parsed_serviceendpoint_contacts = self.parse_serviceendpoints_contacts(fetched_endpoints)
 
-        if not parsed_site_contacts and fetched_sites:
-            # GOCDB has not SITE_CONTACTS, try to grab contacts from fetched
-            # sites topology entities
+        if fetched_sites:
             parsed_site_contacts = self.parse_siteswith_contacts(fetched_sites)
 
         attach_contacts_workers = [
@@ -422,15 +388,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         executor = ProcessPoolExecutor(max_workers=2)
         group_groups, group_endpoints = await asyncio.gather(*attach_contacts_workers, loop=self.loop)
 
-        if parsed_servicegroups_contacts:
-            attach_contacts_topodata(self.logger,
-                                     parsed_servicegroups_contacts,
-                                     group_groups, self.notification_flag)
-        elif fetched_servicegroups:
-            # GOCDB has not SERVICEGROUP_CONTACTS, try to grab contacts from fetched
-            # servicegroups topology entities
-            parsed_servicegroups_contacts = self.parse_servicegroups_contacts(
-                fetched_servicegroups)
+        if fetched_servicegroups:
+            parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
             attach_contacts_topodata(self.logger,
                                      parsed_servicegroups_contacts,
                                      group_groups, self.notification_flag)

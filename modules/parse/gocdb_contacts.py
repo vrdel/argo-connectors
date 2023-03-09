@@ -20,43 +20,6 @@ class ParseContacts(ParseHelpers):
                 values.append('')
         return values
 
-    def parse_contacts(self, data, root_node, child_node, topo_node):
-        interested = ('EMAIL', 'FORENAME', 'SURNAME', 'CERTDN', 'ROLE_NAME')
-
-        try:
-            data = dict()
-
-            doc = self.parse_xml(self.data)
-            xml_bytes = doc.encode("utf-8")
-            entities = etree.fromstring(xml_bytes)
-
-            for entity in entities:
-                if entity.tag == root_node:
-                    emails = list()
-                    for entity_node in entity:
-                        if entity_node.tag == child_node:
-                            contact = entity_node
-                            email, name, surname, certdn, role = self._parse_contact(
-                                contact, *interested)
-                            emails.append({
-                                'email': email,
-                                'forename': name,
-                                'surname': surname,
-                                'certdn': certdn,
-                                'role': role
-                            })
-                        if entity_node.tag == topo_node:
-                            entity_name = entity_node.text
-
-                    data[entity_name] = emails
-
-            return data
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
-            self.logger.error(module_class_name(self) + ' Customer:%s : Error parsing - %s' %
-                              (self.logger.customer, repr(exc).replace('\'', '').replace('\"', '')))
-            raise exc
-
     def parse_sites_with_contacts(self, data):
         try:
             sites_contacts = dict()
@@ -82,7 +45,7 @@ class ParseContacts(ParseHelpers):
                     else:
                         sites_contacts[sitename] = [contact]
 
-            
+
             return sites_contacts
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
@@ -161,43 +124,6 @@ class ParseContacts(ParseHelpers):
             raise exc
 
 
-class ParseRocContacts(ParseContacts):
-    def __init__(self, logger, data):
-        super().__init__(logger)
-        self.data = data
-        self.logger = logger
-        self.data = data
-        self._parse_data()
-
-    def _parse_data(self):
-        try:
-            return self.parse_contacts(self.data, 'ROC', 'CONTACT', 'ROCNAME')
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
-            raise ConnectorParseError
-
-    def get_contacts(self):
-        return self._parse_data()
-
-
-class ParseSiteContacts(ParseContacts):
-    def __init__(self, logger, data):
-        super().__init__(logger)
-        self.logger = logger
-        self.data = data
-        self._parse_data()
-
-    def _parse_data(self):
-        try:
-            return self.parse_contacts(self.data, 'SITE', 'CONTACT', 'SHORT_NAME')
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
-            raise ConnectorParseError
-
-    def get_contacts(self):
-        return self._parse_data()
-
-
 class ParseSitesWithContacts(ParseContacts):
     def __init__(self, logger, data):
         super().__init__(logger)
@@ -254,23 +180,6 @@ class ParseServiceGroupWithContacts(ParseContacts):
     def _parse_data(self):
         try:
             return self.parse_servicegroups_with_contacts(self.data)
-
-        except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
-            raise ConnectorParseError
-
-    def get_contacts(self):
-        return self._parse_data()
-
-
-class ParseServiceGroupRoles(ParseContacts):
-    def __init__(self, logger, data):
-        super().__init__(logger)
-        self.data = data
-        self.logger = logger
-
-    def _parse_data(self):
-        try:
-            return self.parse_servicegroup_contacts(self.data)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             raise ConnectorParseError
