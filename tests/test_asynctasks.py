@@ -52,8 +52,6 @@ class TopologyGocdb(unittest.TestCase):
             self.loop,
             logger,
             'test_asynctasks_topologygocdb',
-            'https://gocdb.com/site-contacts',
-            'https://gocdb.com/servicegroups-contacts',
             'https://gocdb.com/serviceendpoints_api',
             'https://gocdb.com/serviceegroups_api',
             'https://gocdb.com/sites_api',
@@ -101,14 +99,14 @@ class TestFindNextPagingCursorCount(unittest.TestCase):
         self.logger = mock.MagicMock()
         with open('tests/sample-topofeedpaging.xml') as tf:
             self.res = tf.read()
-    
+
     def test_count_n_cursor(self):
         paging = find_next_paging_cursor_count(self.logger, self.res)
         count, cursor = paging()
-        
+
         self.assertEqual(count, 95)
         self.assertEqual(cursor, '134')
-        
+
 
 class TopologyProvider(unittest.TestCase):
     def setUp(self):
