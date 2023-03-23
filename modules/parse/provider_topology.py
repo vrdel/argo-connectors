@@ -1,11 +1,10 @@
 from urllib.parse import urlparse
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.parse.base import ParseHelpers
-from argo_connectors.utils import filename_date, module_class_name, construct_fqdn
+from argo_connectors.utils import filename_date, module_class_name, construct_fqdn, remove_non_utf
 
 import uuid
 import json
-
 
 SERVICE_NAME_WEBPAGE = 'eu.eosc.portal.services.url'
 
@@ -23,7 +22,7 @@ def build_urlpath_id(http_endpoint):
         return uuid.uuid3(uuid.NAMESPACE_URL, path)
     else:
         return None
-
+    
 
 class ParseResources(ParseHelpers):
     def __init__(self, logger, data=None, keys=[], custname=None):
@@ -231,8 +230,7 @@ class ParseTopo(object):
             gee['service'] = resource['hardcoded_service']
             gee['group'] = resource['id']
             if self.uidservendp:
-                gee['hostname'] = '{}_{}'.format(
-                    construct_fqdn(resource['webpage']), resource['id'])
+                gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), remove_non_utf(resource['id']))
             else:
                 gee['hostname'] = construct_fqdn(resource['webpage'])
             if resource.get('resource_tag', False):
