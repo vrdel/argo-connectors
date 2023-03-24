@@ -56,4 +56,7 @@ def remove_non_utf(string):
     if ' ' in string:
         string = string.replace(' ', '_')
 
+    if '"' in string:
+        string = string.replace('"', '')
+
     return unidecode(string)
