@@ -224,6 +224,8 @@ class ParseServiceEndpoints(ParseHelpers):
                             'production': '1' if group['production'] == 'Y' or
                             group['production'] == 'True' else '0'}
             tmpg['tags'].update({'info_ID': str(group['service_id'])})
+            if self.uidservendp:
+                tmpg['tags'].update({'hostname': group['hostname']})
 
             if 'hostdn' in group:
                 tmpg['tags'].update({'info_HOSTDN': group['hostdn']})
