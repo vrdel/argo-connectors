@@ -92,6 +92,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                     'info_service_endpoint_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
                     'monitored': '1',
                     'production': '1',
+                    'hostname': 'ce.physics.science.az',
                     'scope': 'EGI, wlcg, atlas'
                 },
                 'type': 'SITES'
@@ -109,6 +110,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                                                 'https://aai.egi.eu/auth/realms/egi/protocol/openid-connect/auth',
                     'monitored': '1',
                     'production': '1',
+                    'hostname': 'aai.egi.eu',
                     'scope': 'EGI'
                 },
                 'type': 'SITES'},
@@ -118,6 +120,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                 'service': 'CE',
                 'tags': {
                     'info_ID': '14G0',
+                    'hostname': 'grid13.gsi.de',
                     'monitored': '0',
                     'production': '0',
                     'scope': 'EGI, wlcg, tier2, alice'
@@ -132,6 +135,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
                     'info_HOSTDN': '/C=UK/O=eScience/OU=CLRC/L=RAL/CN=arc-ce01.gridpp.rl.ac.uk',
                     'info_ID': '782G0',
                     'info_ext_InformationSystem': 'https://www.gridpp.rl.ac.uk/RAL-LCG2/RAL-LCG2_CE.json',
+                    'hostname': 'arc-ce01.gridpp.rl.ac.uk',
                     'monitored': '1',
                     'production': '1',
                     'scope': 'EGI, wlcg, tier1, alice, atlas, cms, lhcb'
