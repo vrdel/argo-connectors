@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "argo-connectors"
-version = "0.1.0"
+version = "2.3.0"
 description = ""
 authors = ["Daniel Vrcic <dvrcic@srce.hr>"]
 readme = "README.md"
