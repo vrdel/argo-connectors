@@ -14,6 +14,13 @@ uvloop = "*"
 unidecode = "*"
 lxml = "*"
 
+[tool.poetry.group.devel]
+optional = true
+
+[tool.poetry.group.devel.dependencies]
+build = "*"
+mock = "*"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
