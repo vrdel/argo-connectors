@@ -1,8 +1,4 @@
 [tool.poetry]
-name = "argo-connectors"
-version = "2.3.0"
-authors = ["Daniel Vrcic <dvrcic@srce.hr>"]
-readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
