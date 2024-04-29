@@ -17,7 +17,6 @@ optional = true
 [tool.poetry.group.devel.dependencies]
 build = "*"
 mock = "*"
-setuptools_scm = "*"
 
 [build-system]
 requires = ["setuptools"]
@@ -25,9 +24,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "argo-connectors"
-version = "2.3.0"
+dynamic = ["version"]
 authors = [
-	{name = "Daniel Vrcic", email = "dvrcic@srce.hr"}
+	{ name = "Daniel Vrcic", email = "dvrcic@srce.hr" }
 ]
 description = "Components generate input data for ARGO Compute Engine"
 classifiers = [
@@ -59,3 +58,6 @@ argo_connectors = "modules"
 "" = ["pyproject.toml", "poetry.lock"]
 "etc" = ["etc/*.conf.template"]
 "usr/libexec/argo-connectors" = ["exec/*.py"]
+
+[tool.setuptools.dynamic]
+version = { attr = "version.vernum" }
