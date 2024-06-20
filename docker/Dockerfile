@@ -28,11 +28,19 @@ RUN dnf -y install epel-release rocky-repos && \
       zsh
 RUN dnf --enablerepo=devel install -y ncurses-compat-libs
 RUN pip install -U pip; pip3 install -U pip
+RUN python3.9 -m venv /opt/poetry-tool/
+RUN sh -c '\
+  . /opt/poetry-tool/bin/activate \
+  && pip install -U pip \
+  && pip install -U pip setuptools==69.2.0 \
+  && pip install -U poetry'
+ADD poetry-path.sh /etc/profile.d
 RUN passwd -d root
 VOLUME [ "/sys/fs/cgroup" ]
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN echo "Defaults	env_keep += \"PYTHONPATH\"" >> /etc/sudoers
 USER user
+COPY chezmoi-config-apply.sh /home/user
 WORKDIR /home/user
 RUN curl -sfL https://git.io/chezmoi | sh
 CMD ["/bin/zsh"]
