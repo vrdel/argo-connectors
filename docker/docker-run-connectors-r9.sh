@@ -13,5 +13,6 @@ docker run \
 -v "${HOME}":/mnt/ \
 -v "${HOME}"/.ssh:/home/user/.ssh/ \
 -v "${CONNECTORS_SOURCE}":/home/user/connectors-source \
+\
 -h docker-rocky9 \
 --rm -ti -v /dev/log:/dev/log ipanema:5000/connectors-r9

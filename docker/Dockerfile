@@ -34,9 +34,13 @@ RUN python3.9 -m venv /opt/poetry-tool/
 RUN sh -c '\
   . /opt/poetry-tool/bin/activate \
   && pip install -U pip \
-  && pip install -U pip setuptools==69.2.0 \
+  && pip install -U setuptools==69.2.0 \
   && pip install -U poetry'
 RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
+RUN python3.9 -m venv /opt/argo-connectors/
+RUN sh -c '\
+  . /opt/argo-connectors/bin/activate \
+  && pip install -U pip'
 RUN passwd -d root
 VOLUME [ "/sys/fs/cgroup" ]
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
