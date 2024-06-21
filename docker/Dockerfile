@@ -1,26 +1,28 @@
 FROM rockylinux:9
 MAINTAINER dvrcic@srce.hr
 RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user -s /bin/zsh
+ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/egi-trustanchors.repo /etc/yum.repos.d/
 RUN dnf -y update; dnf clean all
 RUN dnf -y install epel-release rocky-repos && \
     dnf -y install \
-    procps-ng \
     ack \
+    ca-policy-egi-core \
     ctags \
     fortune-mod \
-    git \
     gcc \
+    git \
     glibc-all-langpacks \
     iproute \
     make \
     mc \
     net-tools \
+    openldap-devel \
     passwd \
+    procps-ng \
     python3-devel \
     python3-pip \
     python3-setuptools \
     rpmdevtools \
-    openldap-devel \
     sudo \
     the_silver_searcher \
     tmux \
