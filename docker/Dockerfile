@@ -4,28 +4,30 @@ RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user -s /b
 RUN dnf -y update; dnf clean all
 RUN dnf -y install epel-release rocky-repos && \
     dnf -y install \
-			procps-ng \
-      ack \
-      ctags \
-      fortune-mod \
-      git \
-      glibc-all-langpacks \
-      iproute \
-      make \
-      mc \
-      net-tools \
-      passwd \
-      python3-devel \
-      python3-pip \
-      python3-setuptools \
-      rpmdevtools \
-      sudo \
-      the_silver_searcher \
-      tmux \
-      vim \
-      wget \
-      yum-utils \
-      zsh
+    procps-ng \
+    ack \
+    ctags \
+    fortune-mod \
+    git \
+    gcc \
+    glibc-all-langpacks \
+    iproute \
+    make \
+    mc \
+    net-tools \
+    passwd \
+    python3-devel \
+    python3-pip \
+    python3-setuptools \
+    rpmdevtools \
+    openldap-devel \
+    sudo \
+    the_silver_searcher \
+    tmux \
+    vim \
+    wget \
+    yum-utils \
+    zsh
 RUN dnf --enablerepo=devel install -y ncurses-compat-libs
 RUN pip install -U pip; pip3 install -U pip
 RUN python3.9 -m venv /opt/poetry-tool/
