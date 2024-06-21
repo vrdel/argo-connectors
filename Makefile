@@ -13,6 +13,7 @@ wheel-devel: clean
     fi; \
 	echo "Version $$BUILD_VER"; \
     python3 -m build -w
+	mv dist/*.whl .
 
 
 clean:

@@ -2,3 +2,4 @@ __pycache__/
 .coverage
 *.conf
 *.pem
+*.whl
