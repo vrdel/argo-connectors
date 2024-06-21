@@ -1,5 +1,6 @@
 wheel-prod: clean
-	python3 -m build -w
+	poetry install --no-root --with devel; \
+	poetry run python3 -m build -w
 
 
 wheel-devel: clean
@@ -12,8 +13,9 @@ wheel-devel: clean
 		export BUILD_VER=$$BUILD_VER$$BUILD_CANDIDATE; \
     fi; \
 	echo "Version $$BUILD_VER"; \
-    python3 -m build -w
-	mv dist/*.whl .
+	poetry install --no-root --with devel; \
+    poetry run python3 -m build -w
+	mv -f dist/*.whl .
 
 
 clean:
