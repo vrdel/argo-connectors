@@ -36,7 +36,7 @@ RUN sh -c '\
   && pip install -U pip \
   && pip install -U pip setuptools==69.2.0 \
   && pip install -U poetry'
-ADD poetry-path.sh /etc/profile.d
+RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
 RUN passwd -d root
 VOLUME [ "/sys/fs/cgroup" ]
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
