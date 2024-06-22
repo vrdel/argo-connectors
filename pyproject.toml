@@ -17,6 +17,7 @@ optional = true
 [tool.poetry.group.devel.dependencies]
 build = "*"
 mock = "*"
+ipdb = "*"
 
 [build-system]
 requires = ["setuptools"]
