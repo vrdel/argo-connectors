@@ -57,7 +57,7 @@ argo_connectors = "modules"
 [tool.setuptools.data-files]
 "" = ["pyproject.toml", "poetry.lock"]
 "etc" = ["etc/*.conf.template"]
-"usr/libexec/argo-connectors" = ["exec/*.py"]
+"usr/bin" = ["exec/*.py"]
 
 [tool.setuptools.dynamic]
 version = { attr = "version.vernum" }
