@@ -5,7 +5,6 @@ import os
 import sys
 
 import asyncio
-import uvloop
 
 from argo_connectors.config import Global, CustomerConf
 from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
@@ -70,8 +69,7 @@ def main():
     uidservendp = confcust.get_uidserviceendpoints()
     topofeed = confcust.get_topofeed()
 
-    loop = uvloop.new_event_loop()
-    asyncio.set_event_loop(loop)
+    loop = asyncio.get_event_loop()
 
     try:
         task = TaskFlatTopology(
