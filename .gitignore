@@ -3,3 +3,7 @@ __pycache__/
 *.conf
 *.pem
 *.whl
+.ropeproject
+tags
+*.egg-info
+junit.xml
