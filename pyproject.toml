@@ -17,6 +17,8 @@ optional = true
 build = "*"
 mock = "*"
 ipdb = "*"
+coverage = "*"
+unittest-xml-reporting = "*"
 
 [build-system]
 requires = ["setuptools"]
