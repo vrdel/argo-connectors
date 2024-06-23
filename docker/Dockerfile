@@ -31,6 +31,11 @@ RUN dnf -y install epel-release rocky-repos && \
     yum-utils \
     zsh
 RUN dnf --enablerepo=devel install -y ncurses-compat-libs
+RUN rm -rf /etc/pki/ca-trust/source/anchors/*; \
+    cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors
+ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/ca-trust/source/anchors
+COPY DigiCertCA.crt GEANT_OV_RSA_CA_4.pem /etc/pki/ca-trust/source/anchors
+RUN update-ca-trust
 RUN pip install -U pip; pip3 install -U pip
 RUN python3.9 -m venv /opt/poetry-tool/
 RUN sh -c '\
