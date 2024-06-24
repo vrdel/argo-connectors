@@ -23,11 +23,9 @@ pipeline {
                     cd $WORKSPACE/$PROJECT_DIR/
                     make wheel-devel
                     make clean
-                    rpm -qa '*ldap-devel*'
                     poetry run pip install *.whl
                     poetry run coverage run -m xmlrunner discover --output-file junit.xml -v tests/
                 '''
-                cobertura coberturaReportFile: '**/coverage.xml'
                 junit '**/junit.xml'
             }
         }
