@@ -9,7 +9,6 @@ bonsai = "*"
 lxml = "*"
 requests = "*"
 unidecode = "*"
-uvloop = "*"
 
 [tool.poetry.group.devel]
 optional = true
