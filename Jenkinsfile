@@ -14,6 +14,7 @@ pipeline {
             agent {
                 docker {
                     image 'argo.registry:5000/epel-9-ams'
+                    alwaysPull true
                     args '-u jenkins:jenkins -v /dev/log:/dev/log'
                 }
             }
