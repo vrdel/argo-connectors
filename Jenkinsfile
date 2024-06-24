@@ -25,7 +25,9 @@ pipeline {
                     make clean
                     poetry run pip install *.whl
                     poetry run coverage run -m xmlrunner discover --output-file junit.xml -v tests/
+                    poetry run coverage xml
                 '''
+                cobertura coberturaReportFile: '**/coverage.xml'
                 junit '**/junit.xml'
             }
         }
