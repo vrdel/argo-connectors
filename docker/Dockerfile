@@ -56,5 +56,6 @@ RUN echo "Defaults	env_keep += \"PYTHONPATH\"" >> /etc/sudoers
 USER user
 COPY chezmoi-config-apply.sh /home/user
 WORKDIR /home/user
+RUN mkdir /home/user/.ssh/ && sudo chmod 700 /home/user/.ssh && sudo chown -R user:user /home/user/.ssh
 RUN curl -sfL https://git.io/chezmoi | sh
 CMD ["/bin/zsh"]
