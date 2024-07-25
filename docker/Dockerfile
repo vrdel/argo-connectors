@@ -1,5 +1,5 @@
 FROM rockylinux:9
-MAINTAINER dvrcic@srce.hr
+LABEL org.opencontainers.image.authors=dvrcic@srce.hr
 RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user -s /bin/zsh
 ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/egi-trustanchors.repo /etc/yum.repos.d/
 RUN dnf -y update; dnf clean all
@@ -22,6 +22,7 @@ RUN dnf -y install epel-release rocky-repos && \
     python3-devel \
     python3-pip \
     python3-setuptools \
+    rsync \
     rpmdevtools \
     sudo \
     the_silver_searcher \
@@ -56,5 +57,6 @@ RUN echo "Defaults	env_keep += \"PYTHONPATH\"" >> /etc/sudoers
 USER user
 COPY chezmoi-config-apply.sh /home/user
 WORKDIR /home/user
+RUN mkdir /home/user/.ssh/ && sudo chmod 700 /home/user/.ssh && sudo chown -R user:user /home/user/.ssh
 RUN curl -sfL https://git.io/chezmoi | sh
 CMD ["/bin/zsh"]

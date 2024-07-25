@@ -19,6 +19,7 @@ mock = "*"
 ipdb = "*"
 coverage = "*"
 unittest-xml-reporting = "*"
+pudb = "*"
 
 [build-system]
 requires = ["setuptools"]
