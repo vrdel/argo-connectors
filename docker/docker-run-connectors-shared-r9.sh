@@ -18,8 +18,9 @@ docker run \
 \
 -v "${HOME}":/mnt/ \
 -v "${CONNECTORS_SOURCE}":/home/user/connectors-source \
+-v ./pysitepkg:/home/user/pysitepkg \
+-v ./syncsite.sh:/home/user/syncsite.sh \
 \
--v "${HOME}"/my_work/srce/git.argo-connectors/docker/pysitepkg:/home/user/pysitepkg \
 -v "${CONNECTORS_SOURCE}"/exec:${VENV}/usr/bin/:ro \
 -v "${CONNECTORS_SOURCE}"/modules:${VENV}/lib/python3.9/site-packages/argo_connectors/:ro \
 -v "${CONNECTORS_SOURCE}"/docker/egi-customer.conf:${VENV}/etc/egi-customer.conf:ro \
@@ -31,4 +32,4 @@ docker run \
 -v "${CONNECTORS_SOURCE}"/pyproject.toml:${VENV}/pyproject.toml \
 \
 -h docker-rocky9 \
---rm -ti -v /dev/log:/dev/log ipanema:5000/connectors-r9 $1
+--rm -ti -v /dev/log:/dev/log ipanema:5000/connectors-r9
