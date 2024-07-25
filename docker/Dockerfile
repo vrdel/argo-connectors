@@ -1,5 +1,5 @@
 FROM rockylinux:9
-MAINTAINER dvrcic@srce.hr
+LABEL org.opencontainers.image.authors=dvrcic@srce.hr
 RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user -s /bin/zsh
 ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/egi-trustanchors.repo /etc/yum.repos.d/
 RUN dnf -y update; dnf clean all
