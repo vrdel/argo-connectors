@@ -10,8 +10,11 @@ docker run \
 --privileged \
 --net host \
 --privileged \
+\
+-e "SSH_AUTH_SOCK=${SSH_AUTH_SOCK}" \
+--mount type=bind,src="${SSH_AUTH_SOCK}",target="${SSH_AUTH_SOCK}" \
+\
 -v "${HOME}":/mnt/ \
--v "${HOME}"/.ssh:/home/user/.ssh/ \
 -v "${CONNECTORS_SOURCE}":/home/user/connectors-source \
 \
 -h docker-rocky9 \

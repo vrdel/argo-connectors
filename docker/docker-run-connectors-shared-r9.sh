@@ -12,8 +12,11 @@ docker run \
 --net host \
 -v /etc/localtime:/etc/localtime:ro \
 --name connectors-r9 \
+\
+-e "SSH_AUTH_SOCK=${SSH_AUTH_SOCK}" \
+--mount type=bind,src="${SSH_AUTH_SOCK}",target="${SSH_AUTH_SOCK}" \
+\
 -v "${HOME}":/mnt/ \
--v "${HOME}"/.ssh:/home/user/.ssh/ \
 -v "${CONNECTORS_SOURCE}":/home/user/connectors-source \
 \
 -v "${HOME}"/my_work/srce/git.argo-connectors/docker/pysitepkg:/home/user/pysitepkg \
