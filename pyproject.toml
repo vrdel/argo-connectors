@@ -9,6 +9,7 @@ bonsai = "*"
 lxml = "*"
 requests = "*"
 unidecode = "*"
+pyyaml = "*"
 
 [tool.poetry.group.devel]
 optional = true
