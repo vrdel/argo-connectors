@@ -3,7 +3,7 @@ import errno
 import os
 import re
 
-from .log import Logger
+from argo_connectors.log import Logger
 
 
 class CustomerConf(object):

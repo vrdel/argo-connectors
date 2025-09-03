@@ -2,7 +2,7 @@ import configparser
 import errno
 import os
 
-from .log import Logger
+from argo_connectors.log import Logger
 
 
 class Global(object):
