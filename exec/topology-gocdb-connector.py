@@ -20,6 +20,7 @@ isok = True
 
 # GOCDB explicitly says &scope='' for all scopes
 
+
 def get_webapi_opts(cglob, confcust):
     webapi_custopts = confcust.get_webapiopts()
     webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
