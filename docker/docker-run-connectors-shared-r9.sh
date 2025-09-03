@@ -38,6 +38,8 @@ docker run \
 -v "${CONNECTORS_SOURCE}"/docker/hostcert.pem:/etc/grid-security/hostcert.pem:ro \
 -v "${CONNECTORS_SOURCE}"/docker/hostkey.pem:/etc/grid-security/hostkey.pem:ro \
 \
+-v "${CONNECTORS_SOURCE}"/docker/combine-lot1-gocdb-sc.yml:${VENV}/etc/combine-lot1-gocdb-sc.yml:rw \
+\
 -v "${CONNECTORS_SOURCE}"/poetry.lock:${VENV}/poetry.lock \
 -v "${CONNECTORS_SOURCE}"/pyproject.toml:${VENV}/pyproject.toml \
 \
