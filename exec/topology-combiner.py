@@ -6,7 +6,8 @@ import sys
 
 import asyncio
 
-from argo_connectors.config import Global, CustomerConf
+from argo_connectors.config.glob import Global
+from argo_connectors.config.customer import CustomerConf
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.log import Logger
 
@@ -17,6 +18,8 @@ def main():
                         help='path to YAML file', type=str, required=True)
     args = parser.parse_args()
     logger = Logger(os.path.basename(sys.argv[0]))
+
+    import ipdb; ipdb.set_trace()
 
 
 if __name__ == '__main__':
