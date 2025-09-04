@@ -8,14 +8,21 @@ class CombineConf(object):
     def __init__(self, caller, confpath, **kwargs):
         self.logger = Logger(str(self.__class__))
         self.confpath = confpath
+        self.caller = caller
 
     def parse(self):
         if not os.path.exists(self.confpath):
             self.logger.error('Could not find %s' % self._filename)
             raise SystemExit(1)
 
+        yaml_data = None
         with open(self.confpath, 'r') as file:
-            data = yaml.safe_load(file)
+            yaml_data = yaml.safe_load(file)
 
-        import ipdb; ipdb.set_trace()
+        target_combine = list()
+        for data in yaml_data:
+            combine_type = data.get('type', None)
+            if combine_type in self.caller:
+                target_combine.append(data)
 
+        return target_combine
