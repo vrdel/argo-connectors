@@ -2,10 +2,12 @@ import configparser
 import errno
 import os
 
+from collections.abc import Callable
+
 from argo_connectors.log import Logger
 
 
-class Global(object):
+class _Global(Callable):
     """
        Class represents parser for global.conf
     """
@@ -26,7 +28,15 @@ class Global(object):
     conf_weights_output = {'Output': ['Weights']}
     conf_metricprofile_output = {'Output': ['MetricProfile']}
 
+    def __call__(self, caller=None, confpath=None, **kwargs):
+        if caller:
+            self.__init__(caller, confpath, **kwargs)
+        else:
+            self.__init__(str(self.__class__), confpath, **kwargs)
+        return self
+
     def __init__(self, caller, confpath=None, **kwargs):
+        self.caller = caller
         self.optional = dict()
 
         self.logger = Logger(str(self.__class__))
@@ -82,10 +92,14 @@ class Global(object):
 
         }
 
-        if caller:
-            self.caller_secopts = self.secopts[os.path.basename(caller)]
-        else:
-            self.caller_secopts = self.shared_secopts
+        try:
+            if self.caller:
+                self.caller_secopts = self.secopts[os.path.basename(self.caller)]
+            else:
+                self.caller_secopts = self.shared_secopts
+
+        except KeyError:
+            pass
 
     def _merge_dict(self, *args):
         newd = dict()
@@ -102,11 +116,11 @@ class Global(object):
 
     def merge_opts(self, custopt, section):
         newd = custopt.copy()
-        opts = [o for o in self.options.keys() if o.startswith(section)]
+        opts = [o for o in self._options.keys() if o.startswith(section)]
         for o in opts:
             if o in newd:
                 continue
-            newd.update({o: self.options[o]})
+            newd.update({o: self._options[o]})
 
         return newd
 
@@ -129,15 +143,18 @@ class Global(object):
     def _one_active(self, options):
         loweropts = self._lowercase_dict(options)
 
-        lval = [eval(self.options[k]) for k in self._concat_sectopt(loweropts)]
+        lval = [eval(self._options[k]) for k in self._concat_sectopt(loweropts)]
 
         if any(lval):
             return True
         else:
             return False
 
-    def parse(self):
+    def parse(self, confpath=None):
         config = configparser.ConfigParser()
+
+        if confpath:
+            self._filename = confpath
 
         if not os.path.exists(self._filename):
             self.logger.error('Could not find %s' % self._filename)
@@ -178,7 +195,7 @@ class Global(object):
                                 else:
                                     raise e
 
-            self.options = options
+            self._options = options
 
             if not self._one_active(self.conf_general):
                 self.logger.error('At least one of %s needs to be True' % (
@@ -195,4 +212,11 @@ class Global(object):
             self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
             raise SystemExit(1)
 
-        return options
+        return self._options
+
+    def options(self):
+        self.parse()
+        return self._options
+
+
+Global = _Global('config/glob.py')
