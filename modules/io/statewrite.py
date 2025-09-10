@@ -9,8 +9,10 @@ from argo_connectors.config.glob import Global
 daysback = 1
 
 
-async def state_write(statedir, state, savedays, date=None):
+async def state_write(statedir, state, date=None):
     filenamenew = ''
+    savedays = Global.options()['InputStateDays'.lower()]
+
     if 'topology' in Global.caller:
         filenamebase = 'topology-ok'
     elif 'metricprofile' in Global.caller:

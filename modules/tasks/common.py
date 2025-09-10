@@ -9,12 +9,9 @@ async def write_state(confcust, fixed_date, state):
     jobstatedir = confcust.get_fullstatedir(
         Global.options()['InputStateSaveDir'.lower()], cust)
     if fixed_date:
-        await state_write(jobstatedir, state,
-                          Global.options()['InputStateDays'.lower()],
-                          fixed_date.replace('-', '_'))
+        await state_write(jobstatedir, state, fixed_date.replace('-', '_'))
     else:
-        await state_write(jobstatedir, state,
-                          Global.options()['InputStateDays'.lower()])
+        await state_write(jobstatedir, state)
 
 
 async def write_weights_metricprofile_state(connector_name, globopts, cust, job, confcust, fixed_date, state):
