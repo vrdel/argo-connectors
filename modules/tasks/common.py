@@ -1,19 +1,20 @@
 from argo_connectors.io.statewrite import state_write
 from argo_connectors.utils import filename_date, datestamp, date_check
 from argo_connectors.io.jsonwrite import JsonWriter
+from argo_connectors.config.glob import Global
 
 
-async def write_state(connector_name, globopts, confcust, fixed_date, state):
+async def write_state(confcust, fixed_date, state):
     cust = list(confcust.get_customers())[0]
     jobstatedir = confcust.get_fullstatedir(
-        globopts['InputStateSaveDir'.lower()], cust)
+        Global.options()['InputStateSaveDir'.lower()], cust)
     if fixed_date:
-        await state_write(connector_name, jobstatedir, state,
-                          globopts['InputStateDays'.lower()],
+        await state_write(jobstatedir, state,
+                          Global.options()['InputStateDays'.lower()],
                           fixed_date.replace('-', '_'))
     else:
-        await state_write(connector_name, jobstatedir, state,
-                          globopts['InputStateDays'.lower()])
+        await state_write(jobstatedir, state,
+                          Global.options()['InputStateDays'.lower()])
 
 
 async def write_weights_metricprofile_state(connector_name, globopts, cust, job, confcust, fixed_date, state):

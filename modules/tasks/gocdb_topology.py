@@ -14,7 +14,6 @@ from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, P
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.ldap import LDAPSessionWithRetry
-from argo_connectors.io.statewrite import state_write
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.mesh.srm_port import attach_srmport_topodata
@@ -399,7 +398,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                                      parsed_servicegroups_contacts,
                                      group_groups, self.notification_flag)
 
-        await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
+        await write_state(self.confcust, self.fixed_date, True)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
