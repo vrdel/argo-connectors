@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
+from argo_connectors.config.glob import Global
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
@@ -172,7 +173,7 @@ class TaskParseContacts(object):
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
     def __init__(self, loop, logger, connector_name, SERVICE_ENDPOINTS_PI,
-                 SERVICE_GROUPS_PI, SITES_PI, globopts, auth_opts, webapi_opts,
+                 SERVICE_GROUPS_PI, SITES_PI, auth_opts, webapi_opts,
                  bdii_opts, confcust, custname, topofeed, topofetchtype,
                  fixed_date, uidservendp, pass_extensions, topofeedpaging,
                  notiflag):
@@ -181,11 +182,11 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         super(TaskGocdbTopology, self).__init__(logger)
         self.loop = loop
         self.logger = logger
+        self.globopts = Global.options()
         self.connector_name = connector_name
         self.SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI
         self.SERVICE_GROUPS_PI = SERVICE_GROUPS_PI
         self.SITES_PI = SITES_PI
-        self.globopts = globopts
         self.auth_opts = auth_opts
         self.webapi_opts = webapi_opts
         self.bdii_opts = bdii_opts
