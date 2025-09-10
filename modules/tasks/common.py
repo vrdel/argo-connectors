@@ -5,6 +5,7 @@ from argo_connectors.config.glob import Global
 
 
 async def write_state(confcust, fixed_date, state):
+    # TODO: ditch confcust arg
     cust = list(confcust.get_customers())[0]
     jobstatedir = confcust.get_fullstatedir(
         Global.options()['InputStateSaveDir'.lower()], cust)

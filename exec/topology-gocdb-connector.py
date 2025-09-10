@@ -58,7 +58,6 @@ def main():
     parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY',
                         help='write data for this date', type=str, required=False)
     args = parser.parse_args()
-    group_endpoints, group_groups = [], []
     logger = Logger(os.path.basename(sys.argv[0]))
 
     fixed_date = None
@@ -67,8 +66,6 @@ def main():
 
     confpath = args.gloconf[0] if args.gloconf else None
     globopts = Global(sys.argv[0], confpath).options()
-
-    pass_extensions = eval(globopts['GeneralPassExtensions'.lower()])
 
     confpath = args.custconf[0] if args.custconf else None
     confcust = CustomerConf(sys.argv[0], confpath)
@@ -114,17 +111,17 @@ def main():
 
     try:
         task = TaskGocdbTopology(
-            loop, logger, sys.argv[0], SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
+            loop, logger, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
             SITES_PI, auth_opts, webapi_opts, bdii_opts, confcust,
             custname, topofeed, topofetchtype, fixed_date, uidservendp,
-            pass_extensions, topofeedpaging, notiflag
+            topofeedpaging, notiflag
         )
         loop.run_until_complete(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         loop.run_until_complete(
-            write_state(sys.argv[0], globopts, confcust, fixed_date, False)
+            write_state(confcust, fixed_date, False)
         )
 
     finally:

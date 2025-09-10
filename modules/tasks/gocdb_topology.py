@@ -94,29 +94,26 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
 
 
 class TaskParseTopology(object):
-    def __init__(self, logger, custname, uidservendp, pass_extensions,
-                 notiflag):
+    def __init__(self, logger, custname, uidservendp, notiflag):
         self.logger = logger
         self.custname = custname
         self.uidservendp = uidservendp
-        self.pass_extensions = pass_extensions
         self.notification_flag = notiflag
 
     def parse_source_servicegroups(self, res):
         group_groups = ParseServiceGroups(self.logger, res, self.custname,
                                           self.uidservendp,
-                                          self.pass_extensions,
                                           self.notification_flag).get_group_groups()
         group_endpoints = ParseServiceGroups(self.logger, res, self.custname,
                                              self.uidservendp,
-                                             self.pass_extensions,
                                              self.notification_flag).get_group_endpoints()
 
         return group_groups, group_endpoints
 
     def parse_source_endpoints(self, res):
-        group_endpoints = ParseServiceEndpoints(self.logger, res, self.custname, self.uidservendp,
-                                                self.pass_extensions,
+        group_endpoints = ParseServiceEndpoints(self.logger, res,
+                                                self.custname,
+                                                self.uidservendp,
                                                 self.notification_flag).get_group_endpoints()
 
         return group_endpoints
@@ -124,32 +121,26 @@ class TaskParseTopology(object):
     def parse_source_sites(self, res):
         group_groups = ParseSites(self.logger, res, self.custname,
                                   self.uidservendp,
-                                  self.pass_extensions,
                                   self.notification_flag).get_group_groups()
 
         return group_groups
 
 
-# basic function wrappers used because to avoid class TaskParseTopology pickle
+# basic function wrappers used to avoid class TaskParseTopology pickle
 # in ProcessPoolExecutor
-def parse_endpoints(logger, custname, uidservendp, pass_extensions,
-                    notification_flag, data):
-    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions,
-                             notification_flag)
+def parse_endpoints(logger, custname, uidservendp, notification_flag, data):
+    task = TaskParseTopology(logger, custname, uidservendp, notification_flag)
     return task.parse_source_endpoints(data)
 
 
-def parse_sites(logger, custname, uidservendp, pass_extensions,
-                notification_flag, data):
-    task = TaskParseTopology(
-        logger, custname, uidservendp, pass_extensions, notification_flag)
+def parse_sites(logger, custname, uidservendp, notification_flag, data):
+    task = TaskParseTopology(logger, custname, uidservendp, notification_flag)
     return task.parse_source_sites(data)
 
 
-def parse_servicegroups(logger, custname, uidservendp, pass_extensions,
-                        notification_flag, data):
-    task = TaskParseTopology(logger, custname, uidservendp, pass_extensions,
-                             notification_flag)
+def parse_servicegroups(logger, custname, uidservendp, notification_flag,
+                        data):
+    task = TaskParseTopology(logger, custname, uidservendp, notification_flag)
     return task.parse_source_servicegroups(data)
 
 
@@ -171,18 +162,17 @@ class TaskParseContacts(object):
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, loop, logger, connector_name, SERVICE_ENDPOINTS_PI,
+    def __init__(self, loop, logger, SERVICE_ENDPOINTS_PI,
                  SERVICE_GROUPS_PI, SITES_PI, auth_opts, webapi_opts,
                  bdii_opts, confcust, custname, topofeed, topofetchtype,
-                 fixed_date, uidservendp, pass_extensions, topofeedpaging,
+                 fixed_date, uidservendp, topofeedpaging,
                  notiflag):
-        TaskParseTopology.__init__(self, logger, custname, uidservendp,
-                                   pass_extensions, notiflag)
+        TaskParseTopology.__init__(self, logger, custname, uidservendp, notiflag)
         super(TaskGocdbTopology, self).__init__(logger)
         self.loop = loop
         self.logger = logger
         self.globopts = Global.options()
-        self.connector_name = connector_name
+        self.connector_name = Global.caller
         self.SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI
         self.SERVICE_GROUPS_PI = SERVICE_GROUPS_PI
         self.SITES_PI = SITES_PI
@@ -195,7 +185,6 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.topofetchtype = topofetchtype
         self.fixed_date = fixed_date
         self.uidservendp = uidservendp
-        self.pass_extensions = pass_extensions
         self.topofeedpaging = topofeedpaging
         self.notification_flag = notiflag
 
@@ -309,18 +298,15 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         parse_workers = list()
         exe_parse_source_endpoints = partial(parse_endpoints, self.logger,
                                              self.custname, self.uidservendp,
-                                             self.pass_extensions,
                                              self.notification_flag,
                                              fetched_endpoints)
         exe_parse_source_servicegroups = partial(parse_servicegroups,
                                                  self.logger, self.custname,
                                                  self.uidservendp,
-                                                 self.pass_extensions,
                                                  self.notification_flag,
                                                  fetched_servicegroups)
         exe_parse_source_sites = partial(parse_sites, self.logger,
                                          self.custname, self.uidservendp,
-                                         self.pass_extensions,
                                          self.notification_flag, fetched_sites)
 
         # parse topology depend on configured components fetch. we can fetch
