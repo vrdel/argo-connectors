@@ -68,17 +68,11 @@ def main():
     globopts = Global(sys.argv[0], confpath).options()
 
     confpath = args.custconf[0] if args.custconf else None
-
     confcust = Customer(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    topofeed = confcust.get_topofeed()
-    topofeedpaging = confcust.get_topofeedpaging()
-    uidservendp = confcust.get_uidserviceendpoints()
-    topofetchtype = confcust.get_topofetchtype()
-    custname = confcust.get_custname()
-    logger.customer = custname
+    logger.customer = confcust.get_custname()
 
     auth_custopts = confcust.get_authopts()
 
@@ -111,12 +105,10 @@ def main():
     loop = asyncio.get_event_loop()
 
     try:
-        task = TaskGocdbTopology(
-            loop, logger, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
-            SITES_PI, auth_opts, webapi_opts, bdii_opts, confcust,
-            custname, topofeed, topofetchtype, fixed_date, uidservendp,
-            topofeedpaging, notiflag
-        )
+        task = TaskGocdbTopology(loop, logger, SERVICE_ENDPOINTS_PI,
+                                 SERVICE_GROUPS_PI, SITES_PI, auth_opts,
+                                 webapi_opts, bdii_opts, confcust,
+                                 fixed_date, notiflag)
         loop.run_until_complete(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:

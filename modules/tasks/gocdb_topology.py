@@ -9,6 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_connectors.config.glob import Global
+from argo_connectors.config.customer import Customer
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
@@ -94,10 +95,10 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
 
 
 class TaskParseTopology(object):
-    def __init__(self, logger, custname, uidservendp, notiflag):
+    def __init__(self, logger, notiflag):
         self.logger = logger
-        self.custname = custname
-        self.uidservendp = uidservendp
+        self.custname = Customer.get_custname()
+        self.uidservendp = Customer.get_uidserviceendpoints()
         self.notification_flag = notiflag
 
     def parse_source_servicegroups(self, res):
@@ -129,18 +130,18 @@ class TaskParseTopology(object):
 # basic function wrappers used to avoid class TaskParseTopology pickle
 # in ProcessPoolExecutor
 def parse_endpoints(logger, custname, uidservendp, notification_flag, data):
-    task = TaskParseTopology(logger, custname, uidservendp, notification_flag)
+    task = TaskParseTopology(logger, notification_flag)
     return task.parse_source_endpoints(data)
 
 
 def parse_sites(logger, custname, uidservendp, notification_flag, data):
-    task = TaskParseTopology(logger, custname, uidservendp, notification_flag)
+    task = TaskParseTopology(logger, notification_flag)
     return task.parse_source_sites(data)
 
 
 def parse_servicegroups(logger, custname, uidservendp, notification_flag,
                         data):
-    task = TaskParseTopology(logger, custname, uidservendp, notification_flag)
+    task = TaskParseTopology(logger, notification_flag)
     return task.parse_source_servicegroups(data)
 
 
@@ -162,12 +163,10 @@ class TaskParseContacts(object):
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, loop, logger, SERVICE_ENDPOINTS_PI,
-                 SERVICE_GROUPS_PI, SITES_PI, auth_opts, webapi_opts,
-                 bdii_opts, confcust, custname, topofeed, topofetchtype,
-                 fixed_date, uidservendp, topofeedpaging,
-                 notiflag):
-        TaskParseTopology.__init__(self, logger, custname, uidservendp, notiflag)
+    def __init__(self, loop, logger, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
+                 SITES_PI, auth_opts, webapi_opts, bdii_opts, confcust,
+                 fixed_date, notiflag):
+        TaskParseTopology.__init__(self, logger, notiflag)
         super(TaskGocdbTopology, self).__init__(logger)
         self.loop = loop
         self.logger = logger
@@ -180,12 +179,12 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.webapi_opts = webapi_opts
         self.bdii_opts = bdii_opts
         self.confcust = confcust
-        self.custname = custname
-        self.topofeed = topofeed
-        self.topofetchtype = topofetchtype
+        self.custname = Customer.get_custname()
+        self.topofeed = Customer.get_topofeed()
+        self.topofetchtype = Customer.get_topofetchtype()
         self.fixed_date = fixed_date
-        self.uidservendp = uidservendp
-        self.topofeedpaging = topofeedpaging
+        self.uidservendp = Customer.get_uidserviceendpoints()
+        self.topofeedpaging = Customer.get_topofeedpaging()
         self.notification_flag = notiflag
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
