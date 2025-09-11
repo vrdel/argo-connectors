@@ -5,15 +5,16 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.config.glob import Global
+from argo_connectors.config.customer import Customer
 
 
 class ParseSites(ParseHelpers):
-    def __init__(self, logger, data, custname, uid=False, notification_flag=False):
+    def __init__(self, logger, data, notification_flag=False):
         super().__init__(logger)
         self.logger = logger
         self.data = data
-        self.uidservendp = uid
-        self.custname = custname
+        self.uidservendp = Customer.get_uidserviceendpoints()
+        self.custname = Customer.get_custname()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
         self._sites = dict()
         self.notification_flag = notification_flag
@@ -111,12 +112,11 @@ class ParseSites(ParseHelpers):
 
 
 class ParseServiceEndpoints(ParseHelpers):
-    def __init__(self, logger, data=None, custname=None, uid=False,
-                 notification_flag=False):
+    def __init__(self, logger, data=None, notification_flag=False):
         super().__init__(logger)
         self.data = data
-        self.uidservendp = uid
-        self.custname = custname
+        self.custname = Customer.get_custname()
+        self.uidservendp = Customer.get_uidserviceendpoints()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
         self.notification_flag = notification_flag
         self._service_endpoints = dict()
@@ -250,11 +250,11 @@ class ParseServiceEndpoints(ParseHelpers):
 
 
 class ParseServiceGroups(ParseHelpers):
-    def __init__(self, logger, data, custname, uid=False, notification_flag=False):
+    def __init__(self, logger, data, notification_flag=False):
         super().__init__(logger)
         self.data = data
-        self.uidservendp = uid
-        self.custname = custname
+        self.uidservendp = Customer.get_uidserviceendpoints()
+        self.custname = Customer.get_custname()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
         self.notification_flag = notification_flag
         # group_groups and group_endpoints components for ServiceGroup topology

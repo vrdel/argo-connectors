@@ -97,50 +97,41 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
 class TaskParseTopology(object):
     def __init__(self, logger, notiflag):
         self.logger = logger
-        self.custname = Customer.get_custname()
-        self.uidservendp = Customer.get_uidserviceendpoints()
         self.notification_flag = notiflag
 
     def parse_source_servicegroups(self, res):
-        group_groups = ParseServiceGroups(self.logger, res, self.custname,
-                                          self.uidservendp,
+        group_groups = ParseServiceGroups(self.logger, res,
                                           self.notification_flag).get_group_groups()
-        group_endpoints = ParseServiceGroups(self.logger, res, self.custname,
-                                             self.uidservendp,
+        group_endpoints = ParseServiceGroups(self.logger, res,
                                              self.notification_flag).get_group_endpoints()
 
         return group_groups, group_endpoints
 
     def parse_source_endpoints(self, res):
         group_endpoints = ParseServiceEndpoints(self.logger, res,
-                                                self.custname,
-                                                self.uidservendp,
                                                 self.notification_flag).get_group_endpoints()
 
         return group_endpoints
 
     def parse_source_sites(self, res):
-        group_groups = ParseSites(self.logger, res, self.custname,
-                                  self.uidservendp,
-                                  self.notification_flag).get_group_groups()
+        group_groups = ParseSites(self.logger, res, self.notification_flag).get_group_groups()
 
         return group_groups
 
 
 # basic function wrappers used to avoid class TaskParseTopology pickle
 # in ProcessPoolExecutor
-def parse_endpoints(logger, custname, uidservendp, notification_flag, data):
+def parse_endpoints(logger, custname, notification_flag, data):
     task = TaskParseTopology(logger, notification_flag)
     return task.parse_source_endpoints(data)
 
 
-def parse_sites(logger, custname, uidservendp, notification_flag, data):
+def parse_sites(logger, custname, notification_flag, data):
     task = TaskParseTopology(logger, notification_flag)
     return task.parse_source_sites(data)
 
 
-def parse_servicegroups(logger, custname, uidservendp, notification_flag,
-                        data):
+def parse_servicegroups(logger, custname, notification_flag, data):
     task = TaskParseTopology(logger, notification_flag)
     return task.parse_source_servicegroups(data)
 
@@ -296,16 +287,15 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         executor = ProcessPoolExecutor(max_workers=3)
         parse_workers = list()
         exe_parse_source_endpoints = partial(parse_endpoints, self.logger,
-                                             self.custname, self.uidservendp,
+                                             self.custname,
                                              self.notification_flag,
                                              fetched_endpoints)
         exe_parse_source_servicegroups = partial(parse_servicegroups,
                                                  self.logger, self.custname,
-                                                 self.uidservendp,
                                                  self.notification_flag,
                                                  fetched_servicegroups)
         exe_parse_source_sites = partial(parse_sites, self.logger,
-                                         self.custname, self.uidservendp,
+                                         self.custname,
                                          self.notification_flag, fetched_sites)
 
         # parse topology depend on configured components fetch. we can fetch
