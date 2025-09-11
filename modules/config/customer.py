@@ -4,9 +4,10 @@ import os
 import re
 
 from argo_connectors.log import Logger
+from collections.abc import Callable
 
 
-class CustomerConf(object):
+class _CustomerConf(Callable):
     """
        Class with parser for customer.conf and additional helper methods
     """
@@ -39,16 +40,27 @@ class CustomerConf(object):
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
-    def __init__(self, caller, confpath, **kwargs):
+    def __call__(self, caller=None, confpath=None, **kwargs):
+        if caller:
+            self.__init__(caller, confpath, **kwargs)
+        else:
+            self.__init__(str(self.__class__), confpath, **kwargs)
+        return self
+
+    def __init__(self, caller, confpath=None, **kwargs):
+        self.caller = caller
         self.logger = Logger(str(self.__class__))
         self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/customer.conf" if not confpath else confpath
-        if not kwargs:
-            self._jobattrs = self._defjobattrs[os.path.basename(caller)]
-        else:
-            if 'jobattrs' in kwargs.keys():
-                self._jobattrs = kwargs['jobattrs']
-            if 'custattrs' in kwargs.keys():
-                self._custattrs = kwargs['custattrs']
+        try:
+            if not kwargs:
+                self._jobattrs = self._defjobattrs[os.path.basename(caller)]
+            else:
+                if 'jobattrs' in kwargs.keys():
+                    self._jobattrs = kwargs['jobattrs']
+                if 'custattrs' in kwargs.keys():
+                    self._custattrs = kwargs['custattrs']
+        except KeyError:
+            pass
 
     def parse(self):
         config = configparser.ConfigParser()
@@ -515,3 +527,6 @@ class CustomerConf(object):
             return feed
         else:
             return self._get_cust_options('TopoFeed')
+
+
+Customer = _CustomerConf('config/customer.py')

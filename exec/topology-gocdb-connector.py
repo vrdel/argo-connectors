@@ -7,7 +7,7 @@ import sys
 import asyncio
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import CustomerConf
+from argo_connectors.config.customer import Customer
 
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.log import Logger
@@ -53,8 +53,7 @@ def main():
                                                     in an appropriate place""")
     parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf',
                         help='path to customer configuration file', type=str, required=False)
-    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf',
-                        help='path to global configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
     parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY',
                         help='write data for this date', type=str, required=False)
     args = parser.parse_args()
@@ -64,11 +63,13 @@ def main():
     if args.date and date_check(args.date):
         fixed_date = args.date
 
+    import ipdb; ipdb.set_trace()
     confpath = args.gloconf[0] if args.gloconf else None
     globopts = Global(sys.argv[0], confpath).options()
 
     confpath = args.custconf[0] if args.custconf else None
-    confcust = CustomerConf(sys.argv[0], confpath)
+
+    confcust = Customer(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])

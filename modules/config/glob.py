@@ -7,7 +7,7 @@ from collections.abc import Callable
 from argo_connectors.log import Logger
 
 
-class _Global(Callable):
+class _GlobalConf(Callable):
     """
        Class represents parser for global.conf
     """
@@ -89,7 +89,6 @@ class _Global(Callable):
             self._merge_dict(self.shared_secopts),
             'service-types-json-connector.py':
             self._merge_dict(self.shared_secopts),
-
         }
 
         try:
@@ -219,4 +218,4 @@ class _Global(Callable):
         return self._options
 
 
-Global = _Global('config/glob.py')
+Global = _GlobalConf('config/glob.py')
