@@ -154,8 +154,7 @@ class TaskParseContacts(object):
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, loop, logger, SERVICE_ENDPOINTS_PI, SERVICE_GROUPS_PI,
-                 SITES_PI, auth_opts, webapi_opts, bdii_opts, confcust,
+    def __init__(self, loop, logger, auth_opts, webapi_opts, bdii_opts,
                  fixed_date, notiflag):
         TaskParseTopology.__init__(self, logger, notiflag)
         super(TaskGocdbTopology, self).__init__(logger)
@@ -163,13 +162,18 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
-        self.SERVICE_ENDPOINTS_PI = SERVICE_ENDPOINTS_PI
-        self.SERVICE_GROUPS_PI = SERVICE_GROUPS_PI
-        self.SITES_PI = SITES_PI
+        toposcope = Customer.get_toposcope()
+        if toposcope:
+            self.SERVICE_ENDPOINTS_PI = Customer.get_topofeedendpoints() + toposcope
+            self.SERVICE_GROUPS_PI = Customer.get_topofeedservicegroups() + toposcope
+            self.SITES_PI = Customer.get_topofeedsites() + toposcope
+        else:
+            self.SERVICE_ENDPOINTS_PI = Customer.get_topofeedendpoints()
+            self.SERVICE_GROUPS_PI = Customer.get_topofeedservicegroups()
+            self.SITES_PI = Customer.get_topofeedsites()
         self.auth_opts = auth_opts
         self.webapi_opts = webapi_opts
         self.bdii_opts = bdii_opts
-        self.confcust = confcust
         self.custname = Customer.get_custname()
         self.topofeed = Customer.get_topofeed()
         self.topofetchtype = Customer.get_topofetchtype()
@@ -373,7 +377,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                                      parsed_servicegroups_contacts,
                                      group_groups, self.notification_flag)
 
-        await write_state(self.confcust, self.fixed_date, True)
+        await write_state(self.fixed_date, True)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
@@ -386,8 +390,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             )
 
         if eval(self.globopts['GeneralWriteJson'.lower()]):
-            write_json(self.logger, self.globopts, self.confcust,
-                       group_groups, group_endpoints, self.fixed_date)
+            write_json(self.logger, group_groups, group_endpoints,
+                       self.fixed_date)
 
         self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(
             self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))

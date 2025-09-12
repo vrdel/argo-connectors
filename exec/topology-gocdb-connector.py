@@ -86,29 +86,13 @@ def main():
     bdii_opts = get_bdii_opts(confcust)
     webapi_opts = get_webapi_opts(confcust)
 
-    toposcope = confcust.get_toposcope()
-    topofeedendpoints = confcust.get_topofeedendpoints()
-    topofeedservicegroups = confcust.get_topofeedservicegroups()
-    topofeedsites = confcust.get_topofeedsites()
     notiflag = confcust.get_notif_flag()
-
-    if toposcope:
-        SERVICE_ENDPOINTS_PI = topofeedendpoints + toposcope
-        SERVICE_GROUPS_PI = topofeedservicegroups + toposcope
-        SITES_PI = topofeedsites + toposcope
-
-    else:
-        SERVICE_ENDPOINTS_PI = topofeedendpoints
-        SERVICE_GROUPS_PI = topofeedservicegroups
-        SITES_PI = topofeedsites
 
     loop = asyncio.get_event_loop()
 
     try:
-        task = TaskGocdbTopology(loop, logger, SERVICE_ENDPOINTS_PI,
-                                 SERVICE_GROUPS_PI, SITES_PI, auth_opts,
-                                 webapi_opts, bdii_opts, confcust,
-                                 fixed_date, notiflag)
+        task = TaskGocdbTopology(loop, logger, auth_opts, webapi_opts,
+                                 bdii_opts, fixed_date, notiflag)
         loop.run_until_complete(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
