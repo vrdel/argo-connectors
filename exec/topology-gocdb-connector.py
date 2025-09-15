@@ -7,7 +7,7 @@ import sys
 import asyncio
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer, BDIIOpts
+from argo_connectors.config.customer import Customer, BDIIOpts, WebAPIOpts
 
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.log import Logger
@@ -20,19 +20,6 @@ custname = ''
 isok = True
 
 # GOCDB explicitly says &scope='' for all scopes
-
-
-def get_webapi_opts(confcust):
-    webapi_custopts = confcust.get_webapiopts()
-    webapi_opts = Global.merge_opts(webapi_custopts, 'webapi')
-    webapi_complete, missopt = Global.is_complete(webapi_opts, 'webapi')
-    if not webapi_complete:
-        logger.error('Customer:%s %s options incomplete, missing %s' %
-                     (logger.customer, 'webapi', ' '.join(missopt)))
-        raise SystemExit(1)
-    return webapi_opts
-
-
 
 
 def main():
@@ -77,15 +64,18 @@ def main():
                      ('bdii', ' '.join(bdii_conf.missing)))
         raise SystemExit(1)
 
-    webapi_opts = get_webapi_opts(confcust)
+    webapi_opts = WebAPIOpts()
+    if not webapi_opts.opts:
+        logger.error('%s options incomplete, missing %s' %
+                     ('webapi', ' '.join(webapi_opts.missing)))
+        raise SystemExit(1)
 
     notiflag = confcust.get_notif_flag()
 
     loop = asyncio.get_event_loop()
 
     try:
-        task = TaskGocdbTopology(loop, logger, auth_opts, webapi_opts,
-                                 fixed_date, notiflag)
+        task = TaskGocdbTopology(loop, logger, auth_opts, fixed_date, notiflag)
         loop.run_until_complete(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:

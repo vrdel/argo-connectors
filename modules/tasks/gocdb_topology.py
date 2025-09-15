@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer, BDIIOpts
+from argo_connectors.config.customer import Customer, BDIIOpts, WebAPIOpts
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
@@ -154,7 +154,7 @@ class TaskParseContacts(object):
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, loop, logger, auth_opts, webapi_opts, fixed_date,
+    def __init__(self, loop, logger, auth_opts, fixed_date,
                  notiflag):
         TaskParseTopology.__init__(self, logger, notiflag)
         super(TaskGocdbTopology, self).__init__(logger)
@@ -172,7 +172,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             self.SERVICE_GROUPS_PI = Customer.get_topofeedservicegroups()
             self.SITES_PI = Customer.get_topofeedsites()
         self.auth_opts = auth_opts
-        self.webapi_opts = webapi_opts
+        self.webapi_opts = WebAPIOpts().opts
         self.bdii_opts = BDIIOpts().opts
         self.custname = Customer.get_custname()
         self.topofeed = Customer.get_topofeed()

@@ -4,7 +4,26 @@ import os
 import re
 
 from argo_connectors.log import Logger
+from argo_connectors.config.glob import Global
 from collections.abc import Callable
+
+
+class WebAPIOpts(object):
+    def __init__(self):
+        webapi_custopts = Customer.get_webapiopts()
+        self.webapi_opts = Global.merge_opts(webapi_custopts, 'webapi')
+        webapi_complete, missopt = Global.is_complete(self.webapi_opts, 'webapi')
+        self.missing = None
+        if not webapi_complete:
+            self.missing = missopt
+
+    @property
+    def opts(self):
+        if self.missing:
+            return None
+        else:
+            return self.webapi_opts
+
 
 
 class BDIIOpts(object):
@@ -15,6 +34,8 @@ class BDIIOpts(object):
             bdii_complete, missing = Customer.is_complete_bdii(self.bdii_custopts)
             if not bdii_complete:
                 self.missing = missing
+        else:
+            self.missing = ['all']
 
     @property
     def opts(self):
