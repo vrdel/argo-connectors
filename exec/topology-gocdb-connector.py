@@ -15,21 +15,17 @@ from argo_connectors.tasks.common import write_state
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.utils import date_check
 
-logger = None
-custname = ''
-isok = True
-
-# GOCDB explicitly says &scope='' for all scopes
-
 
 def main():
-    global logger, confcust
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from GOCDB for every customer and job listed in customer.conf and write them
                                                     in an appropriate place""")
-    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf',
-                        help='path to customer configuration file', type=str, required=False)
-    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
+    parser.add_argument('-c', dest='custconf', metavar='customer.conf',
+                        default=None, help='path to customer configuration file',
+                        type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', metavar='global.conf',
+                        default=None, help='path to global configuration file',
+                        type=str, required=False)
     parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY',
                         help='write data for this date', type=str, required=False)
     args = parser.parse_args()
@@ -39,10 +35,10 @@ def main():
     if args.date and date_check(args.date):
         fixed_date = args.date
 
-    confpath = args.gloconf[0] if args.gloconf else None
+    confpath = args.gloconf if args.gloconf else None
     globopts = Global(sys.argv[0], confpath).options()
 
-    confpath = args.custconf[0] if args.custconf else None
+    confpath = args.custconf if args.custconf else None
     confcust = Customer(sys.argv[0], confpath)
     confcust.parse()
     confcust.make_dirstruct()
