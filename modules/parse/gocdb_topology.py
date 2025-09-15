@@ -9,7 +9,7 @@ from argo_connectors.config.customer import Customer
 
 
 class ParseSites(ParseHelpers):
-    def __init__(self, logger, data, notification_flag=False):
+    def __init__(self, logger, data):
         super().__init__(logger)
         self.logger = logger
         self.data = data
@@ -17,7 +17,7 @@ class ParseSites(ParseHelpers):
         self.custname = Customer.get_custname()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
         self._sites = dict()
-        self.notification_flag = notification_flag
+        self.notification_flag = Customer.get_notif_flag() or False
         self._parse_data()
 
     def _parse_data(self):
@@ -112,13 +112,13 @@ class ParseSites(ParseHelpers):
 
 
 class ParseServiceEndpoints(ParseHelpers):
-    def __init__(self, logger, data=None, notification_flag=False):
+    def __init__(self, logger, data=None):
         super().__init__(logger)
         self.data = data
         self.custname = Customer.get_custname()
         self.uidservendp = Customer.get_uidserviceendpoints()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
-        self.notification_flag = notification_flag
+        self.notification_flag = Customer.get_notif_flag() or False
         self._service_endpoints = dict()
         self._parse_data()
         self.maxDiff = None
@@ -250,13 +250,13 @@ class ParseServiceEndpoints(ParseHelpers):
 
 
 class ParseServiceGroups(ParseHelpers):
-    def __init__(self, logger, data, notification_flag=False):
+    def __init__(self, logger, data):
         super().__init__(logger)
         self.data = data
         self.uidservendp = Customer.get_uidserviceendpoints()
         self.custname = Customer.get_custname()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
-        self.notification_flag = notification_flag
+        self.notification_flag = Customer.get_notif_flag() or False
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()
         self._parse_data()
@@ -274,7 +274,7 @@ class ParseServiceGroups(ParseHelpers):
 
                     self._service_groups[group_id]['name'] = self.parse_xmltext(group.find('NAME'))
 
-                    self._service_groups[group_id]['monitored'] =  self.parse_xmltext(group.find('MONITORED'))
+                    self._service_groups[group_id]['monitored'] = self.parse_xmltext(group.find('MONITORED'))
 
                     self._service_groups[group_id]['services'] = []
                     self._service_groups[group_id]['scope'] = ', '.join(self.parse_scopes(group))

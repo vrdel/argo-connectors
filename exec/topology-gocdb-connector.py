@@ -70,12 +70,9 @@ def main():
                      ('webapi', ' '.join(webapi_opts.missing)))
         raise SystemExit(1)
 
-    notiflag = confcust.get_notif_flag()
-
     loop = asyncio.get_event_loop()
-
     try:
-        task = TaskGocdbTopology(loop, logger, auth_opts, fixed_date, notiflag)
+        task = TaskGocdbTopology(loop, logger, auth_opts, fixed_date)
         loop.run_until_complete(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
