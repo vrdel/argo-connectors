@@ -7,7 +7,7 @@ import sys
 import asyncio
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer, BDIIOpts, WebAPIOpts
+from argo_connectors.config.customer import Customer, BDIIOpts, WebAPIOpts, AuthOpts
 
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.log import Logger
@@ -49,13 +49,10 @@ def main():
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     logger.customer = confcust.get_custname()
 
-    auth_custopts = confcust.get_authopts()
-
-    auth_opts = Global.merge_opts(auth_custopts, 'authentication')
-    auth_complete, missing = Global.is_complete(auth_opts, 'authentication')
-    if not auth_complete:
+    auth_conf = AuthOpts()
+    if not auth_conf.opts:
         logger.error('%s options incomplete, missing %s' %
-                     ('authentication', ' '.join(missing)))
+                     ('authentication', ' '.join(auth_conf.missing)))
         raise SystemExit(1)
 
     bdii_conf = BDIIOpts()
@@ -64,15 +61,15 @@ def main():
                      ('bdii', ' '.join(bdii_conf.missing)))
         raise SystemExit(1)
 
-    webapi_opts = WebAPIOpts()
-    if not webapi_opts.opts:
+    webapi_conf = WebAPIOpts()
+    if not webapi_conf.opts:
         logger.error('%s options incomplete, missing %s' %
-                     ('webapi', ' '.join(webapi_opts.missing)))
+                     ('webapi', ' '.join(webapi_conf.missing)))
         raise SystemExit(1)
 
     loop = asyncio.get_event_loop()
     try:
-        task = TaskGocdbTopology(loop, logger, auth_opts, fixed_date)
+        task = TaskGocdbTopology(loop, logger, fixed_date)
         loop.run_until_complete(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:

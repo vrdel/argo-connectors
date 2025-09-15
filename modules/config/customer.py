@@ -8,6 +8,23 @@ from argo_connectors.config.glob import Global
 from collections.abc import Callable
 
 
+class AuthOpts(object):
+    def __init__(self):
+        auth_custopts = Customer.get_authopts()
+        self.auth_opts = Global.merge_opts(auth_custopts, 'authentication')
+        auth_complete, missing = Global.is_complete(self.auth_opts, 'authentication')
+        self.missing = None
+        if not auth_complete:
+            self.missing = missing
+
+    @property
+    def opts(self):
+        if self.missing:
+            return None
+        else:
+            return self.auth_opts
+
+
 class WebAPIOpts(object):
     def __init__(self):
         webapi_custopts = Customer.get_webapiopts()
@@ -23,7 +40,6 @@ class WebAPIOpts(object):
             return None
         else:
             return self.webapi_opts
-
 
 
 class BDIIOpts(object):
