@@ -7,6 +7,23 @@ from argo_connectors.log import Logger
 from collections.abc import Callable
 
 
+class BDIIOpts(object):
+    def __init__(self):
+        self.bdii_custopts = Customer._get_cust_options('BDIIOpts')
+        self.missing = None
+        if self.bdii_custopts:
+            bdii_complete, missing = Customer.is_complete_bdii(self.bdii_custopts)
+            if not bdii_complete:
+                self.missing = missing
+
+    @property
+    def opts(self):
+        if self.missing:
+            return None
+        else:
+            return self.bdii_custopts
+
+
 class _CustomerConf(Callable):
     """
        Class with parser for customer.conf and additional helper methods

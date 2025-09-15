@@ -7,7 +7,7 @@ import sys
 import asyncio
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer
+from argo_connectors.config.customer import Customer, BDIIOpts
 
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.log import Logger
@@ -33,17 +33,6 @@ def get_webapi_opts(confcust):
     return webapi_opts
 
 
-def get_bdii_opts(confcust):
-    bdii_custopts = confcust._get_cust_options('BDIIOpts')
-    if bdii_custopts:
-        bdii_complete, missing = confcust.is_complete_bdii(bdii_custopts)
-        if not bdii_complete:
-            logger.error('%s options incomplete, missing %s' %
-                         ('bdii', ' '.join(missing)))
-            raise SystemExit(1)
-        return bdii_custopts
-    else:
-        return None
 
 
 def main():
@@ -63,7 +52,6 @@ def main():
     if args.date and date_check(args.date):
         fixed_date = args.date
 
-    import ipdb; ipdb.set_trace()
     confpath = args.gloconf[0] if args.gloconf else None
     globopts = Global(sys.argv[0], confpath).options()
 
@@ -83,7 +71,12 @@ def main():
                      ('authentication', ' '.join(missing)))
         raise SystemExit(1)
 
-    bdii_opts = get_bdii_opts(confcust)
+    bdii_conf = BDIIOpts()
+    if not bdii_conf.opts:
+        logger.error('%s options incomplete, missing %s' %
+                     ('bdii', ' '.join(bdii_conf.missing)))
+        raise SystemExit(1)
+
     webapi_opts = get_webapi_opts(confcust)
 
     notiflag = confcust.get_notif_flag()
@@ -92,7 +85,7 @@ def main():
 
     try:
         task = TaskGocdbTopology(loop, logger, auth_opts, webapi_opts,
-                                 bdii_opts, fixed_date, notiflag)
+                                 fixed_date, notiflag)
         loop.run_until_complete(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
