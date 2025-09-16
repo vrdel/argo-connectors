@@ -52,7 +52,7 @@ def main():
         raise SystemExit(1)
 
     bdii_conf = BDIIOpts()
-    if not bdii_conf.opts:
+    if bdii_conf.missing:
         logger.error('%s options incomplete, missing %s' %
                      ('bdii', ' '.join(bdii_conf.missing)))
         raise SystemExit(1)

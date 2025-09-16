@@ -242,7 +242,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         if 'sites' in self.topofetchtype:
             coros.append(self.fetch_data(self.SITES_PI))
 
-        if self.bdii_opts and eval(self.bdii_opts['bdii']):
+        if self.bdii_opts:
             host = self.bdii_opts['bdiihost']
             port = self.bdii_opts['bdiiport']
             base = self.bdii_opts['bdiiquerybase']
@@ -263,7 +263,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         fetched_topology = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
 
         fetched_endpoints = fetched_topology[0]
-        if self.bdii_opts and eval(self.bdii_opts['bdii']):
+        if self.bdii_opts:
             fetched_bdii = list()
             fetched_bdii.append(fetched_topology[-2])
             fetched_bdii.append(fetched_topology[-1])
@@ -336,7 +336,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data
-        if self.bdii_opts and eval(self.bdii_opts['bdii']):
+        if self.bdii_opts:
             attach_srmport_topodata(self.logger, self.bdii_opts['bdiiqueryattributessrm'].split(
                 ' ')[0], fetched_bdii[0], group_endpoints)
             attach_sepath_topodata(self.logger, self.bdii_opts['bdiiqueryattributessepath'].split(

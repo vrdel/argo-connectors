@@ -50,8 +50,6 @@ class BDIIOpts(object):
             bdii_complete, missing = Customer.is_complete_bdii(self.bdii_custopts)
             if not bdii_complete:
                 self.missing = missing
-        else:
-            self.missing = ['all']
 
     @property
     def opts(self):
