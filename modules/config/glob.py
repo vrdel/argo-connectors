@@ -42,8 +42,8 @@ class _GlobalConf(Callable):
         self.logger = Logger(str(self.__class__))
         self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/global.conf" if not confpath else confpath
 
-        self._checkpath = kwargs['checkpath'] if 'checkpath' in kwargs.keys(
-        ) else False
+        self._checkpath = kwargs['checkpath'] if 'checkpath' \
+            in kwargs.keys() else False
 
         self.optional.update(self._lowercase_dict(self.conf_auth))
         self.optional.update(self._lowercase_dict(self.conf_webapi))

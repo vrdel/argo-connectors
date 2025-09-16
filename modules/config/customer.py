@@ -10,7 +10,7 @@ from collections.abc import Callable
 
 class AuthOpts(object):
     def __init__(self):
-        auth_custopts = Customer.get_authopts()
+        auth_custopts = Customer._get_cust_options('AuthOpts')
         self.auth_opts = Global.merge_opts(auth_custopts, 'authentication')
         auth_complete, missing = Global.is_complete(self.auth_opts, 'authentication')
         self.missing = None
@@ -27,7 +27,7 @@ class AuthOpts(object):
 
 class WebAPIOpts(object):
     def __init__(self):
-        webapi_custopts = Customer.get_webapiopts()
+        webapi_custopts = Customer._get_cust_options('WebAPIOpts')
         self.webapi_opts = Global.merge_opts(webapi_custopts, 'webapi')
         webapi_complete, missopt = Global.is_complete(self.webapi_opts, 'webapi')
         self.missing = None
@@ -279,25 +279,6 @@ class _CustomerConf(Callable):
     def get_jobdir(self, job):
         return self._dir_from_sect(job, self._jobs)
 
-    def get_authopts(self, feed=None, jobcust=None):
-        if jobcust:
-            for job, cust in jobcust:
-                if 'AuthOpts' in self._cust[cust]:
-                    return self._cust[cust]['AuthOpts']
-                else:
-                    return dict()
-        else:
-            return self._get_cust_options('AuthOpts')
-
-    def get_bdiiopts(self, cust=None):
-        if cust:
-            if 'BDIIOpts' in self._cust[cust]:
-                return self._cust[cust]['BDIIOpts']
-            else:
-                return dict()
-        else:
-            return self._get_cust_options('BDIIOpts')
-
     def is_complete_bdii(self, opts):
         diff = []
         for opt in self._cust_optional:
@@ -328,15 +309,6 @@ class _CustomerConf(Callable):
             return self._cust[cust]['Name']
         else:
             return self._get_cust_options('Name')
-
-    def get_webapiopts(self, cust=None):
-        if cust:
-            if 'WebAPIOpts' in self._cust[cust]:
-                return self._cust[cust]['WebAPIOpts']
-            else:
-                return dict()
-        else:
-            return self._get_cust_options('WebAPIOpts')
 
     def make_dirstruct(self, root=None):
         dirs = []
@@ -377,34 +349,6 @@ class _CustomerConf(Callable):
 
     def get_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']
-
-    def _get_tags(self, job, option):
-        tags = {}
-        if option in self._jobs[job].keys():
-            tagstr = self._jobs[job][option]
-            match = re.findall("(\w+)\s*:\s*(\(.*?\))", tagstr)
-            if match is not None:
-                for m in match:
-                    tags.update({m[0]: [e.strip('() ')
-                                for e in m[1].split(',')]})
-            match = re.findall('([\w]+)\s*:\s*([\w\.\-\_]+)', tagstr)
-            if match is not None:
-                for m in match:
-                    tags.update({m[0]: m[1]})
-            else:
-                self.logger.error(
-                    "Could not parse option %s: %s" % (option, tagstr))
-                return dict()
-        return tags
-
-    def get_gocdb_ggtags(self, job):
-        return self._get_tags(job, 'TopoSelectGroupOfGroups')
-
-    def get_gocdb_getags(self, job):
-        return self._get_tags(job, 'TopoSelectGroupOfEndpoints')
-
-    def get_vo_ggtags(self, job):
-        return self._get_tags(job, 'TopoSelectGroupOfGroups')
 
     def get_notif_flag(self):
         return self._get_cust_options('HonorNotificationFlag')

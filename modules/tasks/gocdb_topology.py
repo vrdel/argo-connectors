@@ -167,7 +167,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             self.SERVICE_GROUPS_PI = Customer.get_topofeedservicegroups()
             self.SITES_PI = Customer.get_topofeedsites()
         self.auth_opts = AuthOpts().opts
-        self.webapi_opts = WebAPIOpts().opts
+        self.webapi_opts = WebAPIOpts.opts
         self.bdii_opts = BDIIOpts().opts
         self.custname = Customer.get_custname()
         self.topofeed = Customer.get_topofeed()
