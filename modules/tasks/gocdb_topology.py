@@ -150,10 +150,9 @@ class TaskParseContacts(object):
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, loop, logger, fixed_date):
+    def __init__(self, logger, fixed_date):
         TaskParseTopology.__init__(self, logger)
         super(TaskGocdbTopology, self).__init__(logger)
-        self.loop = loop
         self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
@@ -232,7 +231,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
     async def run(self):
         fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
         fetched_bdii = None
-        print("STAAARTED")
+        loop = asyncio.get_running_loop()
 
         group_endpoints, group_groups = list(), list()
         parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
@@ -261,7 +260,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             )
 
         # fetch topology data concurrently in coroutines
-        fetched_topology = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
+        fetched_topology = await asyncio.gather(*coros, return_exceptions=True)
 
         fetched_endpoints = fetched_topology[0]
         if self.bdii_opts:
@@ -300,29 +299,29 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         if fetched_servicegroups and fetched_sites:
             parse_workers.append(
-                self.loop.run_in_executor(executor, exe_parse_source_endpoints)
+                loop.run_in_executor(executor, exe_parse_source_endpoints)
             )
             parse_workers.append(
-                self.loop.run_in_executor(
+                loop.run_in_executor(
                     executor, exe_parse_source_servicegroups)
             )
             parse_workers.append(
-                self.loop.run_in_executor(executor, exe_parse_source_sites)
+                loop.run_in_executor(executor, exe_parse_source_sites)
             )
         elif fetched_servicegroups and not fetched_sites:
             parse_workers.append(
-                self.loop.run_in_executor(
+                loop.run_in_executor(
                     executor, exe_parse_source_servicegroups)
             )
         elif fetched_sites and not fetched_servicegroups:
             parse_workers.append(
-                self.loop.run_in_executor(executor, exe_parse_source_endpoints)
+                loop.run_in_executor(executor, exe_parse_source_endpoints)
             )
             parse_workers.append(
-                self.loop.run_in_executor(executor, exe_parse_source_sites)
+                loop.run_in_executor(executor, exe_parse_source_sites)
             )
 
-        parsed_topology = await asyncio.gather(*parse_workers, loop=self.loop)
+        parsed_topology = await asyncio.gather(*parse_workers)
 
         if fetched_servicegroups and fetched_sites:
             group_endpoints = parsed_topology[0]
@@ -351,18 +350,20 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             parsed_site_contacts = self.parse_siteswith_contacts(fetched_sites)
 
         attach_contacts_workers = [
-            self.loop.run_in_executor(executor,
-                                      partial(attach_contacts_topodata, self.logger,
-                                              parsed_site_contacts,
-                                              group_groups, self.notification_flag)),
-            self.loop.run_in_executor(executor,
-                                      partial(attach_contacts_topodata, self.logger,
-                                              parsed_serviceendpoint_contacts,
-                                              group_endpoints, self.notification_flag))
+            loop.run_in_executor(executor, partial(attach_contacts_topodata,
+                                                   self.logger,
+                                                   parsed_site_contacts,
+                                                   group_groups,
+                                                   self.notification_flag)),
+            loop.run_in_executor(executor, partial(attach_contacts_topodata,
+                                                   self.logger,
+                                                   parsed_serviceendpoint_contacts,
+                                                   group_endpoints,
+                                                   self.notification_flag))
         ]
 
         executor = ProcessPoolExecutor(max_workers=2)
-        group_groups, group_endpoints = await asyncio.gather(*attach_contacts_workers, loop=self.loop)
+        group_groups, group_endpoints = await asyncio.gather(*attach_contacts_workers)
 
         if fetched_servicegroups:
             parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
@@ -374,8 +375,6 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
-
-        print("FINISHED")
 
         # send concurrently to WEB-API in coroutines
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):

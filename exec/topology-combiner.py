@@ -81,20 +81,16 @@ def main():
                      ('webapi', ' '.join(webapi_conf.missing)))
         raise SystemExit(1)
 
-    loop = asyncio.get_event_loop()
     try:
-        task = TaskGocdbTopology(loop, logger, fixed_date)
+        task = TaskGocdbTopology(logger, fixed_date)
         # loop.run_until_complete(task.run())
-        loop.run_until_complete(runme(task))
+        asyncio.run(runme(task))
+        # loop.run_until_complete(runme(task))
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
-        loop.run_until_complete(
-            write_state(confcust, fixed_date, False)
-        )
+        asyncio.run(write_state(fixed_date, False))
 
-    finally:
-        loop.close()
 
 if __name__ == '__main__':
     main()
