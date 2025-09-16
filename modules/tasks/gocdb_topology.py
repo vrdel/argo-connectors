@@ -232,6 +232,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
     async def run(self):
         fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
         fetched_bdii = None
+        print("STAAARTED")
 
         group_endpoints, group_groups = list(), list()
         parsed_site_contacts, parsed_servicegroups_contacts, parsed_serviceendpoint_contacts = None, None, None
@@ -373,6 +374,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
+
+        print("FINISHED")
 
         # send concurrently to WEB-API in coroutines
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
