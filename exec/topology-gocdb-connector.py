@@ -40,7 +40,6 @@ def main():
 
     confpath = args.custconf if args.custconf else None
     confcust = Customer(sys.argv[0], confpath)
-    confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     logger.customer = confcust.get_custname()

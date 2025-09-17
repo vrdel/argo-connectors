@@ -102,7 +102,7 @@ class _CustomerConf(Callable):
     def __init__(self, caller, confpath=None, **kwargs):
         self.caller = caller
         self.logger = Logger(str(self.__class__))
-        self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/customer.conf" if not confpath else confpath
+        self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/customer.conf.template" if not confpath else confpath
         try:
             if not kwargs:
                 self._jobattrs = self._defjobattrs[os.path.basename(caller)]
@@ -113,6 +113,8 @@ class _CustomerConf(Callable):
                     self._custattrs = kwargs['custattrs']
         except KeyError:
             pass
+
+        self.parse()
 
     def parse(self):
         config = configparser.ConfigParser()

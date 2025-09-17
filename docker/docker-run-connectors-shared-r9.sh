@@ -28,6 +28,7 @@ docker run \
 -v "${CONNECTORS_SOURCE}"/docker/eudat-customer.conf:${VENV}/etc/eudat-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/ni4os-customer.conf:${VENV}/etc/ni4os-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/sdc-customer.conf:${VENV}/etc/sdc-customer.conf:rw \
+-v "${CONNECTORS_SOURCE}"/docker/customer.conf.template:${VENV}/etc/customer.conf.template:ro \
 -v "${CONNECTORS_SOURCE}"/docker/global.conf:${VENV}/etc/global.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosc-customer-lot1prod.conf:${VENV}/etc/eosc-customer-lot1prod.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosc-customer-lot1stg.conf:${VENV}/etc/eosc-customer-lot1stg.conf:rw \
