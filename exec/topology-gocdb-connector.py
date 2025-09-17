@@ -6,10 +6,9 @@ import sys
 
 import asyncio
 
+from argo_connectors.config.customer import Customer
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer, BDIIOpts, WebAPIOpts, AuthOpts
-
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
 from argo_connectors.log import Logger
 from argo_connectors.tasks.common import write_state
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
@@ -36,30 +35,18 @@ def main():
         fixed_date = args.date
 
     confpath = args.gloconf if args.gloconf else None
-    globopts = Global(sys.argv[0], confpath).options()
 
-    confpath = args.custconf if args.custconf else None
-    confcust = Customer(sys.argv[0], confpath)
-    confcust.make_dirstruct()
-    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    logger.customer = confcust.get_custname()
+    try:
+        globopts = Global(sys.argv[0], confpath).options()
+        confpath = args.custconf if args.custconf else None
+        confcust = Customer(sys.argv[0], confpath)
+        confcust.make_dirstruct()
+        confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
+        logger.customer = confcust.get_custname()
+        confcust.valid()
 
-    auth_conf = AuthOpts()
-    if not auth_conf.opts:
-        logger.error('%s options incomplete, missing %s' %
-                     ('authentication', ' '.join(auth_conf.missing)))
-        raise SystemExit(1)
-
-    bdii_conf = BDIIOpts()
-    if bdii_conf.missing:
-        logger.error('%s options incomplete, missing %s' %
-                     ('bdii', ' '.join(bdii_conf.missing)))
-        raise SystemExit(1)
-
-    webapi_conf = WebAPIOpts()
-    if not webapi_conf.opts:
-        logger.error('%s options incomplete, missing %s' %
-                     ('webapi', ' '.join(webapi_conf.missing)))
+    except ConnectorConfError as exc:
+        logger.error(exc)
         raise SystemExit(1)
 
     try:

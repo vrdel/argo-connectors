@@ -5,6 +5,7 @@ import re
 
 from argo_connectors.log import Logger
 from argo_connectors.config.glob import Global
+from argo_connectors.exceptions import ConnectorConfError
 from collections.abc import Callable
 
 
@@ -111,10 +112,15 @@ class _CustomerConf(Callable):
                     self._jobattrs = kwargs['jobattrs']
                 if 'custattrs' in kwargs.keys():
                     self._custattrs = kwargs['custattrs']
+
+            self.parse()
+
+            self.auth_opts = AuthOpts()
+            self.webapi_opts = WebAPIOpts()
+            self.bdii_opts = BDIIOpts()
+
         except KeyError:
             pass
-
-        self.parse()
 
     def parse(self):
         config = configparser.ConfigParser()
@@ -251,6 +257,29 @@ class _CustomerConf(Callable):
                     self.logger.error(
                         "Could not find Jobs: %s for customer: %s" % (job, cust))
                     raise SystemExit(1)
+
+    def valid(self):
+        isok = True
+
+        if not self.auth_opts:
+            self.logger.error('%s options incomplete, missing %s' %
+                              ('authentication', ' '.join(self.auth_opts.missing)))
+            isok = False
+
+        if not self.webapi_opts.opts:
+            self.logger.error('%s options incomplete, missing %s' %
+                              ('webapi', ' '.join(self.webapi_opts.missing)))
+            isok = False
+
+        if self.bdii_opts.missing:
+            self.logger.error('%s options incomplete, missing %s' %
+                              ('bdii', ' '.join(self.bdii_opts.missing)))
+            isok = False
+
+        if not isok:
+            raise ConnectorConfError('Not properly configured')
+        else:
+            return True
 
     def _sect_to_dir(self, sect):
         try:
@@ -528,3 +557,5 @@ class _CustomerConf(Callable):
 
 
 Customer = _CustomerConf('config/customer.py')
+
+
