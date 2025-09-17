@@ -5,6 +5,7 @@ import os
 from collections.abc import Callable
 
 from argo_connectors.log import Logger
+from argo_connectors.exceptions import ConnectorConfError
 
 
 class _GlobalConf(Callable):
@@ -156,8 +157,7 @@ class _GlobalConf(Callable):
             self._filename = confpath
 
         if not os.path.exists(self._filename):
-            self.logger.error('Could not find %s' % self._filename)
-            raise SystemExit(1)
+            raise ConnectorConfError('Could not find %s' % self._filename)
 
         config.read(self._filename)
         options = {}
@@ -180,9 +180,7 @@ class _GlobalConf(Callable):
 
                                 if ('output' in section.lower() and 'DATE' not
                                         in optget):
-                                    self.logger.error(
-                                        'No DATE placeholder in %s' % opt)
-                                    raise SystemExit(1)
+                                    raise ConnectorConfError('No DATE placeholder in %s' % opt)
 
                                 options.update({(sect + opt).lower(): optget})
 
@@ -197,19 +195,15 @@ class _GlobalConf(Callable):
             self._options = options
 
             if not self._one_active(self.conf_general):
-                self.logger.error('At least one of %s needs to be True' % (
+                raise ConnectorConfError('At least one of %s needs to be True' % (
                     ', '.join(self._concat_sectopt(self.conf_general))))
-                raise SystemExit(1)
 
         except configparser.NoOptionError as e:
-            self.logger.error(e.message)
-            raise SystemExit(1)
+            raise ConnectorConfError(e.message)
         except configparser.NoSectionError as e:
-            self.logger.error("%s defined" % (e.args[0]))
-            raise SystemExit(1)
+            raise ConnectorConfError("%s defined" % (e.args[0]))
         except OSError as e:
-            self.logger.error('%s %s' % (os.strerror(e.args[0]), e.args[1]))
-            raise SystemExit(1)
+            raise ConnectorConfError('%s %s' % (os.strerror(e.args[0]), e.args[1]))
 
         return self._options
 

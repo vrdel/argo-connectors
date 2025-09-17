@@ -125,13 +125,11 @@ class _CustomerConf(Callable):
     def parse(self):
         config = configparser.ConfigParser()
         if not os.path.exists(self._filename):
-            self.logger.error('Could not find %s' % self._filename)
-            raise SystemExit(1)
+            raise ConnectorConfError('Could not find %s' % self._filename)
         try:
             config.read(self._filename)
         except (configparser.DuplicateOptionError) as e:
-            self.logger.error(e.message)
-            raise SystemExit(1)
+            raise ConnectorConfError(e.message)
 
         lower_custopt = [oo.lower() for oo in self._cust_optional]
 
@@ -190,8 +188,7 @@ class _CustomerConf(Callable):
                                 raise e
 
                 except (configparser.NoOptionError) as e:
-                    self.logger.error(e.message)
-                    raise SystemExit(1)
+                    raise ConnectorConfError(e.message)
 
                 self._cust.update({section: {'Jobs': custjobs, 'OutputDir':
                                              custdir, 'Name': custname,
@@ -243,8 +240,7 @@ class _CustomerConf(Callable):
                         profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
                     except configparser.NoOptionError as e:
-                        self.logger.error(e.message)
-                        raise SystemExit(1)
+                        raise ConnectorConfError(e.message)
 
                     self._jobs.update(
                         {job: {'Profiles': profiles, 'Dirname': dirname}})
@@ -254,9 +250,7 @@ class _CustomerConf(Callable):
                                 self._jobs[job].update(
                                     {attr: config.get(job, attr)})
                 else:
-                    self.logger.error(
-                        "Could not find Jobs: %s for customer: %s" % (job, cust))
-                    raise SystemExit(1)
+                    raise ConnectorConfError("Could not find Jobs: %s for customer: %s" % (job, cust))
 
     def valid(self):
         isok = True
@@ -287,8 +281,7 @@ class _CustomerConf(Callable):
             assert match != None
             dirname = match.group(1)
         except (AssertionError, KeyError) as e:
-            self.logger.error("Could not get Dirname for %s" % e)
-            raise SystemExit(1)
+            raise ConnectorConfError("Could not get Dirname for %s" % e)
         return dirname
 
     def _dir_from_sect(self, sect, d):
@@ -354,17 +347,15 @@ class _CustomerConf(Callable):
                     os.makedirs(d)
                 except OSError as e:
                     if e.args[0] != errno.EEXIST:
-                        self.logger.error('%s %s %s' % (
+                        raise ConnectorConfError('%s %s %s' % (
                             os.strerror(e.args[0]), e.args[1], d))
-                        raise SystemExit(1)
 
     def get_jobs(self, cust):
         jobs = []
         try:
             jobs = self._cust[cust]['Jobs']
         except KeyError:
-            self.logger.error("Could not get Jobs for %s" % cust)
-            raise SystemExit(1)
+            raise ConnectorConfError("Could not get Jobs for %s" % cust)
         return jobs
 
     def get_customers(self):
