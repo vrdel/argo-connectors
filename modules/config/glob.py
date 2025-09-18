@@ -57,6 +57,9 @@ class _GlobalConf(Callable):
             'topology-gocdb-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),
+            'topology-combiner.py':
+            self._merge_dict(self.shared_secopts,
+                             self.conf_topo_output),
             'topology-json-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),

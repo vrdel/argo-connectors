@@ -40,14 +40,15 @@ def main():
         globopts = Global(sys.argv[0], confpath).options()
         confpath = args.custconf if args.custconf else None
         confcust = Customer(sys.argv[0], confpath)
-        confcust.make_dirstruct()
-        confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-        logger.customer = confcust.get_custname()
         confcust.valid()
 
     except ConnectorConfError as exc:
         logger.error(exc)
         raise SystemExit(1)
+
+    confcust.make_dirstruct()
+    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
+    logger.customer = confcust.get_custname()
 
     try:
         task = TaskGocdbTopology(logger, fixed_date)
