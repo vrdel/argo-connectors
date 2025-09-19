@@ -104,6 +104,8 @@ class _GlobalConf(Callable):
         except KeyError:
             pass
 
+        self.parse()
+
     def _merge_dict(self, *args):
         newd = dict()
         for d in args:
@@ -163,7 +165,7 @@ class _GlobalConf(Callable):
             raise ConnectorConfError('Could not find %s' % self._filename)
 
         config.read(self._filename)
-        options = {}
+        self._options = {}
 
         lower_section = [sec.lower() for sec in config.sections()]
 
@@ -185,7 +187,7 @@ class _GlobalConf(Callable):
                                         in optget):
                                     raise ConnectorConfError('No DATE placeholder in %s' % opt)
 
-                                options.update({(sect + opt).lower(): optget})
+                                self._options.update({(sect + opt).lower(): optget})
 
                             except configparser.NoOptionError as e:
                                 s = e.section.lower()
@@ -194,8 +196,6 @@ class _GlobalConf(Callable):
                                     pass
                                 else:
                                     raise e
-
-            self._options = options
 
             if not self._one_active(self.conf_general):
                 raise ConnectorConfError('At least one of %s needs to be True' % (
@@ -207,11 +207,20 @@ class _GlobalConf(Callable):
             raise ConnectorConfError("%s defined" % (e.args[0]))
         except OSError as e:
             raise ConnectorConfError('%s %s' % (os.strerror(e.args[0]), e.args[1]))
+        except AttributeError:
+            # caller_secopts uninitialized on initial creation as it's called with
+            # unknown caller "config/glob.py"
+            pass
 
         return self._options
 
+    def configure(self, extops):
+        for opt in extops:
+            val = extops[opt]
+            opt = ''.join(opt.split('_')).lower()
+            import ipdb; ipdb.set_trace()
+
     def options(self):
-        self.parse()
         return self._options
 
 

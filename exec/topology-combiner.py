@@ -36,14 +36,18 @@ def main():
 
     combopts = CombineConf(sys.argv[0], args.yamlconf).parse()
 
-    try:
-        globopts = Global(sys.argv[0]).options()
-        confcust = Customer(sys.argv[0])
-        confcust.valid()
+    for comb in combopts:
+        try:
+            comb_globopts = comb.get('config', None)
+            globopts = Global(sys.argv[0])
+            if comb_globopts:
+                globopts.configure(comb_globopts)
+            confcust = Customer(sys.argv[0])
+            confcust.valid()
 
-    except ConnectorConfError as exc:
-        logger.error(exc)
-        raise SystemExit(1)
+        except ConnectorConfError as exc:
+            logger.error(exc)
+            raise SystemExit(1)
 
 
 if __name__ == '__main__':
