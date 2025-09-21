@@ -1,6 +1,8 @@
 import configparser
+import contextvars
 import errno
 import os
+import copy
 import re
 
 from argo_connectors.log import Logger
@@ -70,6 +72,7 @@ class _CustomerConf(Callable):
                     'topology-json-connector.py': [''],
                     'topology-csv-connector.py': [''],
                     'topology-provider-connector.py': [''],
+                    'topology-combiner.py': [''],
                     'topology-agora-connector.py': [''],
                     'topology-lot1sc-connector.py': [''],
                     'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
@@ -100,10 +103,11 @@ class _CustomerConf(Callable):
             self.__init__(str(self.__class__), confpath, **kwargs)
         return self
 
-    def __init__(self, caller, confpath=None, **kwargs):
+    def __init__(self, caller, confpath=None, combiner=None, **kwargs):
         self.caller = caller
+        self.combiner = combiner
         self.logger = Logger(str(self.__class__))
-        self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/customer.conf.template" if not confpath else confpath
+        self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/customer.conf" if not confpath else confpath
         try:
             if not kwargs:
                 self._jobattrs = self._defjobattrs[os.path.basename(caller)]
@@ -547,6 +551,22 @@ class _CustomerConf(Callable):
             return self._get_cust_options('TopoFeed')
 
 
+class _CombinerCustomerConf():
+    def __init__(self, combuid=None, connector=None):
+        if not getattr(self, 'combinit', None):
+            self.combinit = dict()
+        if not connector:
+            self.combinit[combuid] = _CustomerConf('config/customer.py')
+        else:
+            self.combinit[combuid] = _CustomerConf(connector)
+
+    def __call__(self, combuid=None, connector=None):
+        self.__init__(combuid, connector)
+        return self.combinit[combuid]
+
+    def get_conf(self, combuid):
+        return self.combinit[combuid]
+
+
 Customer = _CustomerConf('config/customer.py')
-
-
+CombinerCustomer = _CombinerCustomerConf('config/customer.py')

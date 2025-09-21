@@ -218,7 +218,7 @@ class _GlobalConf(Callable):
         for opt in extops:
             val = extops[opt]
             opt = ''.join(opt.split('_')).lower()
-            import ipdb; ipdb.set_trace()
+            self._options[opt] = val
 
     def options(self):
         return self._options

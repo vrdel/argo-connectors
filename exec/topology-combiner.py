@@ -4,12 +4,14 @@ import argparse
 import asyncio
 import os
 import sys
+import contextvars
+import uuid
 
 from argo_connectors.log import Logger
 from argo_connectors.config.combine import CombineConf
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer, BDIIOpts, WebAPIOpts, AuthOpts
+from argo_connectors.config.customer import CombinerCustomer
 
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
 from argo_connectors.tasks.common import write_state
@@ -17,12 +19,8 @@ from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.utils import date_check
 
 
-async def runme(task):
-    coros = list()
-    coros.append(task.run())
-    coros.append(task.run())
-    coros.append(task.run())
-    foo = await asyncio.gather(*coros)
+async def runme(tasks):
+    foo = await asyncio.gather(*tasks)
     print(foo)
 
 
@@ -36,18 +34,37 @@ def main():
 
     combopts = CombineConf(sys.argv[0], args.yamlconf).parse()
 
+    coros = list()
+
     for comb in combopts:
         try:
             comb_globopts = comb.get('config', None)
             globopts = Global(sys.argv[0])
             if comb_globopts:
                 globopts.configure(comb_globopts)
-            confcust = Customer(sys.argv[0])
-            confcust.valid()
+            topos = comb.get('combine')
+            if topos:
+                for topo in topos:
+                    which = topo.get('type', None)
+                    if not which:
+                        raise ConnectorConfError('type is mandatory in topology combine')
+                    combuid = f'{which}-{uuid.uuid4()}'
+                    confcust = CombinerCustomer(combuid, sys.argv[0])
+                    confcust.valid()
+                    if which == 'gocdb':
+                        coros.append(TaskGocdbTopology(logger, None, combuid).run())
 
         except ConnectorConfError as exc:
             logger.error(exc)
             raise SystemExit(1)
+
+    try:
+        asyncio.run(runme(coros))
+
+    except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
+        logger.error(repr(exc))
+        asyncio.run(write_state(None, False))
+
 
 
 if __name__ == '__main__':

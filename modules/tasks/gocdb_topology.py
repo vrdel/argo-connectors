@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer, BDIIOpts, WebAPIOpts, AuthOpts
+from argo_connectors.config.customer import BDIIOpts, WebAPIOpts, AuthOpts, Customer, CombinerCustomer
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
@@ -150,31 +150,37 @@ class TaskParseContacts(object):
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, logger, fixed_date):
+    def __init__(self, logger, fixed_date, combuid=None):
         TaskParseTopology.__init__(self, logger)
         super(TaskGocdbTopology, self).__init__(logger)
         self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
-        toposcope = Customer.get_toposcope()
+        if combuid:
+            self.Customer = CombinerCustomer.get_conf(combuid)
+        else:
+            self.Customer = Customer
+        toposcope = self.Customer.get_toposcope()
+        print("STARTEED")
+        print(self.Customer)
         if toposcope:
-            self.SERVICE_ENDPOINTS_PI = Customer.get_topofeedendpoints() + toposcope
-            self.SERVICE_GROUPS_PI = Customer.get_topofeedservicegroups() + toposcope
-            self.SITES_PI = Customer.get_topofeedsites() + toposcope
+            self.SERVICE_ENDPOINTS_PI = self.Customer.get_topofeedendpoints() + toposcope
+            self.SERVICE_GROUPS_PI = self.Customer.get_topofeedservicegroups() + toposcope
+            self.SITES_PI = self.Customer.get_topofeedsites() + toposcope
         else:
             self.SERVICE_ENDPOINTS_PI = Customer.get_topofeedendpoints()
             self.SERVICE_GROUPS_PI = Customer.get_topofeedservicegroups()
-            self.SITES_PI = Customer.get_topofeedsites()
+            self.SITES_PI = self.Customer.get_topofeedsites()
         self.auth_opts = AuthOpts().opts
-        self.webapi_opts = WebAPIOpts.opts
+        self.webapi_opts = WebAPIOpts().opts
         self.bdii_opts = BDIIOpts().opts
-        self.custname = Customer.get_custname()
-        self.topofeed = Customer.get_topofeed()
-        self.topofetchtype = Customer.get_topofetchtype()
+        self.custname = self.Customer.get_custname()
+        self.topofeed = self.Customer.get_topofeed()
+        self.topofetchtype = self.Customer.get_topofetchtype()
         self.fixed_date = fixed_date
-        self.uidservendp = Customer.get_uidserviceendpoints()
-        self.topofeedpaging = Customer.get_topofeedpaging()
-        self.notification_flag = Customer.get_notif_flag()
+        self.uidservendp = self.Customer.get_uidserviceendpoints()
+        self.topofeedpaging = self.Customer.get_topofeedpaging()
+        self.notification_flag = self.Customer.get_notif_flag()
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
         ldap_session = LDAPSessionWithRetry(self.logger, int(self.globopts['ConnectionRetry'.lower()]),
