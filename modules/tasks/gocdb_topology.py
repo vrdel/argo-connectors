@@ -1,5 +1,6 @@
 import os
 import asyncio
+
 from lxml import etree
 
 from collections import Callable
@@ -95,46 +96,48 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
 
 
 class TaskParseTopology(object):
-    def __init__(self, logger):
+    def __init__(self, logger, combuid):
         self.logger = logger
+        self.combuid = combuid
 
     def parse_source_servicegroups(self, res):
-        group_groups = ParseServiceGroups(self.logger, res).get_group_groups()
-        group_endpoints = ParseServiceGroups(self.logger, res).get_group_endpoints()
+        group_groups = ParseServiceGroups(self.logger, res, self.combuid).get_group_groups()
+        group_endpoints = ParseServiceGroups(self.logger, res, self.combuid).get_group_endpoints()
 
         return group_groups, group_endpoints
 
     def parse_source_endpoints(self, res):
-        group_endpoints = ParseServiceEndpoints(self.logger, res).get_group_endpoints()
+        group_endpoints = ParseServiceEndpoints(self.logger, res, self.combuid).get_group_endpoints()
 
         return group_endpoints
 
     def parse_source_sites(self, res):
-        group_groups = ParseSites(self.logger, res).get_group_groups()
+        group_groups = ParseSites(self.logger, res, self.combuid).get_group_groups()
 
         return group_groups
 
 
 # basic function wrappers used to avoid class TaskParseTopology pickle
 # in ProcessPoolExecutor
-def parse_endpoints(logger, custname, data):
-    task = TaskParseTopology(logger)
+def parse_endpoints(logger, custname, data, combuid):
+    task = TaskParseTopology(logger, combuid)
     return task.parse_source_endpoints(data)
 
 
-def parse_sites(logger, custname, data):
-    task = TaskParseTopology(logger)
+def parse_sites(logger, custname, data, combuid):
+    task = TaskParseTopology(logger, combuid)
     return task.parse_source_sites(data)
 
 
-def parse_servicegroups(logger, custname, data):
-    task = TaskParseTopology(logger)
+def parse_servicegroups(logger, custname, data, combuid):
+    task = TaskParseTopology(logger, combuid)
     return task.parse_source_servicegroups(data)
 
 
 class TaskParseContacts(object):
-    def __init__(self, logger):
+    def __init__(self, logger, combuid):
         self.logger = logger
+        self.combuid = combuid
 
     def parse_siteswith_contacts(self, res):
         contacts = ParseSitesWithContacts(self.logger, res)
@@ -151,8 +154,8 @@ class TaskParseContacts(object):
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
     def __init__(self, logger, fixed_date, combuid=None):
-        TaskParseTopology.__init__(self, logger)
-        super(TaskGocdbTopology, self).__init__(logger)
+        TaskParseTopology.__init__(self, logger, combuid)
+        super(TaskGocdbTopology, self).__init__(logger, combuid)
         self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
@@ -161,8 +164,6 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         else:
             self.Customer = Customer
         toposcope = self.Customer.get_toposcope()
-        print("STARTEED")
-        print(self.Customer)
         if toposcope:
             self.SERVICE_ENDPOINTS_PI = self.Customer.get_topofeedendpoints() + toposcope
             self.SERVICE_GROUPS_PI = self.Customer.get_topofeedservicegroups() + toposcope
@@ -293,12 +294,15 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         parse_workers = list()
         exe_parse_source_endpoints = partial(parse_endpoints, self.logger,
                                              self.custname,
-                                             fetched_endpoints)
+                                             fetched_endpoints,
+                                             self.combuid)
         exe_parse_source_servicegroups = partial(parse_servicegroups,
                                                  self.logger, self.custname,
-                                                 fetched_servicegroups)
+                                                 fetched_servicegroups,
+                                                 self.combuid)
         exe_parse_source_sites = partial(parse_sites, self.logger,
-                                         self.custname, fetched_sites)
+                                         self.custname, fetched_sites,
+                                         self.combuid)
 
         # parse topology depend on configured components fetch. we can fetch
         # only sites, only servicegroups or both.

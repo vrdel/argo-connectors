@@ -5,19 +5,24 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer
+from argo_connectors.config.customer import Customer, CombinerCustomer
 
 
 class ParseSites(ParseHelpers):
-    def __init__(self, logger, data):
+    def __init__(self, logger, data, combuid=None):
         super().__init__(logger)
         self.logger = logger
+        if combuid:
+            self.Customer = CombinerCustomer.get_conf(combuid)
+        else:
+            self.Customer = Customer
         self.data = data
-        self.uidservendp = Customer.get_uidserviceendpoints()
-        self.custname = Customer.get_custname()
+        self.uidservendp = self.Customer.get_uidserviceendpoints()
+        self.custname = self.Customer.get_custname()
+        print(self.Customer)
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
         self._sites = dict()
-        self.notification_flag = Customer.get_notif_flag() or False
+        self.notification_flag = self.Customer.get_notif_flag() or False
         self._parse_data()
 
     def _parse_data(self):
@@ -112,13 +117,17 @@ class ParseSites(ParseHelpers):
 
 
 class ParseServiceEndpoints(ParseHelpers):
-    def __init__(self, logger, data=None):
+    def __init__(self, logger, data=None, combuid=None):
         super().__init__(logger)
+        if combuid:
+            self.Customer = CombinerCustomer.get_conf(combuid)
+        else:
+            self.Customer = Customer
         self.data = data
-        self.custname = Customer.get_custname()
-        self.uidservendp = Customer.get_uidserviceendpoints()
+        self.custname = self.Customer.get_custname()
+        self.uidservendp = self.Customer.get_uidserviceendpoints()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
-        self.notification_flag = Customer.get_notif_flag() or False
+        self.notification_flag = self.Customer.get_notif_flag() or False
         self._service_endpoints = dict()
         self._parse_data()
         self.maxDiff = None
@@ -250,13 +259,17 @@ class ParseServiceEndpoints(ParseHelpers):
 
 
 class ParseServiceGroups(ParseHelpers):
-    def __init__(self, logger, data):
+    def __init__(self, logger, data, combuid=None):
         super().__init__(logger)
+        if combuid:
+            self.Customer = CombinerCustomer.get_conf(combuid)
+        else:
+            self.Customer = Customer
         self.data = data
-        self.uidservendp = Customer.get_uidserviceendpoints()
-        self.custname = Customer.get_custname()
+        self.uidservendp = self.Customer.get_uidserviceendpoints()
+        self.custname = self.Customer.get_custname()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
-        self.notification_flag = Customer.get_notif_flag() or False
+        self.notification_flag = self.Customer.get_notif_flag() or False
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()
         self._parse_data()
