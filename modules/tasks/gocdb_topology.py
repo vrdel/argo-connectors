@@ -10,7 +10,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import BDIIOpts, WebAPIOpts, AuthOpts, Customer, CombinerCustomer
+from argo_connectors.config.customer import BDIIOpts, WebAPIOpts, AuthOpts, get_custconf
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
@@ -159,18 +159,15 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
-        if combuid:
-            self.Customer = CombinerCustomer.get_conf(combuid)
-        else:
-            self.Customer = Customer
+        self.Customer = get_custconf(combuid)
         toposcope = self.Customer.get_toposcope()
         if toposcope:
             self.SERVICE_ENDPOINTS_PI = self.Customer.get_topofeedendpoints() + toposcope
             self.SERVICE_GROUPS_PI = self.Customer.get_topofeedservicegroups() + toposcope
             self.SITES_PI = self.Customer.get_topofeedsites() + toposcope
         else:
-            self.SERVICE_ENDPOINTS_PI = Customer.get_topofeedendpoints()
-            self.SERVICE_GROUPS_PI = Customer.get_topofeedservicegroups()
+            self.SERVICE_ENDPOINTS_PI = self.Customer.get_topofeedendpoints()
+            self.SERVICE_GROUPS_PI = self.Customer.get_topofeedservicegroups()
             self.SITES_PI = self.Customer.get_topofeedsites()
         self.auth_opts = AuthOpts().opts
         self.webapi_opts = WebAPIOpts().opts

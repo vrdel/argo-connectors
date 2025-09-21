@@ -5,21 +5,17 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import Customer, CombinerCustomer
+from argo_connectors.config.customer import get_custconf
 
 
 class ParseSites(ParseHelpers):
     def __init__(self, logger, data, combuid=None):
         super().__init__(logger)
         self.logger = logger
-        if combuid:
-            self.Customer = CombinerCustomer.get_conf(combuid)
-        else:
-            self.Customer = Customer
+        self.Customer = get_custconf(combuid)
         self.data = data
         self.uidservendp = self.Customer.get_uidserviceendpoints()
         self.custname = self.Customer.get_custname()
-        print(self.Customer)
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
         self._sites = dict()
         self.notification_flag = self.Customer.get_notif_flag() or False
@@ -119,10 +115,7 @@ class ParseSites(ParseHelpers):
 class ParseServiceEndpoints(ParseHelpers):
     def __init__(self, logger, data=None, combuid=None):
         super().__init__(logger)
-        if combuid:
-            self.Customer = CombinerCustomer.get_conf(combuid)
-        else:
-            self.Customer = Customer
+        self.Customer = get_custconf(combuid)
         self.data = data
         self.custname = self.Customer.get_custname()
         self.uidservendp = self.Customer.get_uidserviceendpoints()
@@ -261,10 +254,7 @@ class ParseServiceEndpoints(ParseHelpers):
 class ParseServiceGroups(ParseHelpers):
     def __init__(self, logger, data, combuid=None):
         super().__init__(logger)
-        if combuid:
-            self.Customer = CombinerCustomer.get_conf(combuid)
-        else:
-            self.Customer = Customer
+        self.Customer = get_custconf(combuid)
         self.data = data
         self.uidservendp = self.Customer.get_uidserviceendpoints()
         self.custname = self.Customer.get_custname()

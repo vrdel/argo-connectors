@@ -568,5 +568,12 @@ class _CombinerCustomerConf():
         return self.combinit[combuid]
 
 
+def get_custconf(combuid):
+    if combuid:
+        return CombinerCustomer.get_conf(combuid)
+    else:
+        return Customer
+
+
 Customer = _CustomerConf('config/customer.py')
 CombinerCustomer = _CombinerCustomerConf('config/customer.py')
