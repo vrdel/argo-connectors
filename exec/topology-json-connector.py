@@ -68,7 +68,7 @@ def main():
     state = None
     logger.customer = custname
     uidservendp = confcust.get_uidserviceendpoints()
-    topofeed = confcust.get_topofeed()
+    topofeed = confcust.opt('TopoFeed')
 
     loop = asyncio.get_event_loop()
 

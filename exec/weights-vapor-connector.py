@@ -47,7 +47,7 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
 
-    VAPORPI = confcust.get_vaporpi()
+    VAPORPI = confcust.opt('Vaporpi')
     feeds = confcust.get_mapfeedjobs(sys.argv[0], deffeed=VAPORPI)
 
     loop = asyncio.get_event_loop()

@@ -173,7 +173,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.webapi_opts = WebAPIOpts().opts
         self.bdii_opts = BDIIOpts().opts
         self.custname = self.Customer.get_custname()
-        self.topofeed = self.Customer.get_topofeed()
+        self.topofeed = self.Customer.opt('TopoFeed')
         self.topofetchtype = self.Customer.get_topofetchtype()
         self.fixed_date = fixed_date
         self.uidservendp = self.Customer.get_uidserviceendpoints()

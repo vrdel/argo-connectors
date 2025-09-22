@@ -194,27 +194,28 @@ class _CustomerConf(Callable):
                 except (configparser.NoOptionError) as e:
                     raise ConnectorConfError(e.message)
 
-                self._cust.update({section: {'Jobs': custjobs, 'OutputDir':
-                                             custdir, 'Name': custname,
-                                             'DowntimesFeed': downtimesfeed,
-                                             'ServiceTypesFeed': servicetypesfeed,
-                                             'TopoFeed': topofeed,
-                                             'Vaporpi': vaporpi,
-                                             'TopoFeedEndpoints': topofeedendpoints,
-                                             'TopoFeedEndpointsExtensions': topofeedendpointsextensions,
-                                             'TopoFeedPaging': topofeedpaging,
-                                             'TopoFeedServiceGroups': topofeedservicegroups,
-                                             'TopoFeedSites': topofeedsites,
-                                             'TopoFetchType': topofetchtype,
-                                             'TopoScope': toposcope,
-                                             'TopoTiers': topotiers,
-                                             'TopoType': topotype,
-                                             'TopoUIDServiceEnpoints': topouidservendpoints,
-                                             'HonorNotificationFlag': notifflag,
-                                             'OIDCTokenEndpoint': oidctokenapi,
-                                             'OIDCRefreshToken': oidctoken,
-                                             'OIDCClientId': oidcclientid
-                                             }})
+                self._cust.update({section: {
+                    'Jobs': custjobs,
+                    'OutputDir': custdir, 'Name': custname,
+                    'DowntimesFeed': downtimesfeed,
+                    'ServiceTypesFeed': servicetypesfeed,
+                    'TopoFeed': topofeed,
+                    'Vaporpi': vaporpi,
+                    'TopoFeedEndpoints': topofeedendpoints,
+                    'TopoFeedEndpointsExtensions': topofeedendpointsextensions,
+                    'TopoFeedPaging': topofeedpaging,
+                    'TopoFeedServiceGroups': topofeedservicegroups,
+                    'TopoFeedSites': topofeedsites,
+                    'TopoFetchType': topofetchtype,
+                    'TopoScope': toposcope,
+                    'TopoTiers': topotiers,
+                    'TopoType': topotype,
+                    'TopoUIDServiceEnpoints': topouidservendpoints,
+                    'HonorNotificationFlag': notifflag,
+                    'OIDCTokenEndpoint': oidctokenapi,
+                    'OIDCRefreshToken': oidctoken,
+                    'OIDCClientId': oidcclientid
+                }})
                 if optopts:
                     auth, webapi, empty_data, bdii = {}, {}, {}, {}
                     for k, v in optopts.items():
@@ -394,14 +395,8 @@ class _CustomerConf(Callable):
                     target_option = options[option]
         return target_option
 
-    def get_downfeed(self):
-        return self._get_cust_options('DowntimesFeed')
-
-    def get_vaporpi(self):
-        return self._get_cust_options('Vaporpi')
-
-    def get_topofeed(self):
-        return self._get_cust_options('TopoFeed')
+    def opt(self, option):
+        return self._get_cust_options(option)
 
     def get_topofeedsites(self):
         return self._get_cust_options('TopoFeedSites')
