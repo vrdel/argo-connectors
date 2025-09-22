@@ -57,7 +57,7 @@ def main():
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
     topofeed = confcust.opt('TopoFeed')
-    uidservendp = confcust.get_uidserviceendpoints()
+    uidservendp = confcust.opt('TopoUIDServiceEndpoints')
     topofetchtype = confcust.get_topofetchtype()[0]
     tiers = confcust.get_topotiers()
     custname = confcust.get_custname()

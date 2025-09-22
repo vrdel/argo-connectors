@@ -64,7 +64,7 @@ def main():
         logger.error(exc)
         raise SystemExit(1)
 
-    uidservtype = confcust.get_uidserviceendpoints()
+    uidservtype = confcust.opt('TopoUIDServiceEndpoints')
 
     webapi_opts = get_webapi_opts(cglob, confcust)
 

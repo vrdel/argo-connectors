@@ -86,7 +86,7 @@ def main():
     elif toposcope and '&scope=' in toposcope:
         downtime_feed += toposcope
 
-    uidservtype = confcust.get_uidserviceendpoints()
+    uidservtype = confcust.opt('TopoUIDServiceEndpoints')
     webapi_opts = get_webapi_opts(cglob, confcust)
 
     loop = asyncio.get_event_loop()

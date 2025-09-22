@@ -14,11 +14,11 @@ class ParseSites(ParseHelpers):
         self.logger = logger
         self.Customer = get_custconf(combuid)
         self.data = data
-        self.uidservendp = self.Customer.get_uidserviceendpoints()
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.custname = self.Customer.get_custname()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
         self._sites = dict()
-        self.notification_flag = self.Customer.get_notif_flag() or False
+        self.notification_flag = self.Customer.opt('HonorNotificationFlag') or False
         self._parse_data()
 
     def _parse_data(self):
@@ -118,9 +118,9 @@ class ParseServiceEndpoints(ParseHelpers):
         self.Customer = get_custconf(combuid)
         self.data = data
         self.custname = self.Customer.get_custname()
-        self.uidservendp = self.Customer.get_uidserviceendpoints()
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
-        self.notification_flag = self.Customer.get_notif_flag() or False
+        self.notification_flag = self.Customer.opt('HonorNotificationFlag')
         self._service_endpoints = dict()
         self._parse_data()
         self.maxDiff = None
@@ -256,10 +256,10 @@ class ParseServiceGroups(ParseHelpers):
         super().__init__(logger)
         self.Customer = get_custconf(combuid)
         self.data = data
-        self.uidservendp = self.Customer.get_uidserviceendpoints()
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.custname = self.Customer.get_custname()
         self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
-        self.notification_flag = self.Customer.get_notif_flag() or False
+        self.notification_flag = self.Customer.opt('HonorNotificationFlag')
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()
         self._parse_data()

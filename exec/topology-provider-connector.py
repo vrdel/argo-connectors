@@ -64,8 +64,8 @@ def main():
     webapi_opts = get_webapi_opts(cglob, confcust)
 
     logger.customer = custname
-    uidservendp = confcust.get_uidserviceendpoints()
-    topofeedpaging = confcust.get_topofeedpaging()
+    uidservendp = confcust.opt('TopoUIDServiceEndpoints')
+    topofeedpaging = confcust.opt('TopoFeedPaging')
 
     loop = asyncio.get_event_loop()
 

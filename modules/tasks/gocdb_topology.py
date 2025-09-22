@@ -176,9 +176,9 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.topofeed = self.Customer.opt('TopoFeed')
         self.topofetchtype = self.Customer.get_topofetchtype()
         self.fixed_date = fixed_date
-        self.uidservendp = self.Customer.get_uidserviceendpoints()
-        self.topofeedpaging = self.Customer.get_topofeedpaging()
-        self.notification_flag = self.Customer.get_notif_flag()
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
+        self.topofeedpaging = self.Customer.opt('TopoFeedPaging')
+        self.notification_flag = self.Customer.opt('HonorNotificationFlag')
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
         ldap_session = LDAPSessionWithRetry(self.logger, int(self.globopts['ConnectionRetry'.lower()]),

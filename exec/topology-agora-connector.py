@@ -58,7 +58,7 @@ def main():
     fetchtype = confcust.get_topofetchtype()[0]
     webapi_opts = get_webapi_opts(cglob, confcust)
     logger.customer = custname
-    uidservendp = confcust.get_uidserviceendpoints()
+    uidservendp = confcust.opt('TopoUIDServiceEndpoints')
 
     loop = asyncio.get_event_loop()
 

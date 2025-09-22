@@ -375,9 +375,6 @@ class _CustomerConf(Callable):
     def get_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']
 
-    def get_notif_flag(self):
-        return self._get_cust_options('HonorNotificationFlag')
-
     def _get_feed(self, job, key):
         try:
             feed = self._jobs[job][key]
@@ -396,10 +393,11 @@ class _CustomerConf(Callable):
         return target_option
 
     def opt(self, option):
-        return self._get_cust_options(option)
-
-    def get_topofeedpaging(self):
-        return eval(self._get_cust_options('TopoFeedPaging'))
+        ret_opt = self._get_cust_options(option)
+        if isinstance(ret_opt, str) and ret_opt in ['False', 'True']:
+            return eval(ret_opt)
+        else:
+            return ret_opt
 
     def get_topotiers(self):
         tiers = self._get_cust_options('TopoTiers')
@@ -414,13 +412,6 @@ class _CustomerConf(Callable):
         else:
             fetchtype = [fetchtype.lower()]
         return fetchtype
-
-    def get_uidserviceendpoints(self):
-        uidservend = self._get_cust_options('TopoUIDServiceEnpoints')
-        if isinstance(uidservend, str):
-            return eval(uidservend)
-        else:
-            return False
 
     def _is_paginated(self, job):
         paging = False
