@@ -160,7 +160,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.globopts = Global.options()
         self.connector_name = Global.caller
         self.Customer = get_custconf(combuid)
-        toposcope = self.Customer.get_toposcope()
+        toposcope = self.Customer.opt('TopoScope')
         if toposcope:
             self.SERVICE_ENDPOINTS_PI = self.Customer.opt('TopoFeedEndpoints') + toposcope
             self.SERVICE_GROUPS_PI = self.Customer.opt('TopoFeedServiceGroups') + toposcope

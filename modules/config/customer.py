@@ -398,23 +398,8 @@ class _CustomerConf(Callable):
     def opt(self, option):
         return self._get_cust_options(option)
 
-    def get_oidctoken(self):
-        return self._get_cust_options('OIDCRefreshToken')
-
-    def get_oidctokenapi(self):
-        return self._get_cust_options('OIDCTokenEndpoint')
-
-    def get_oidcclientid(self):
-        return self._get_cust_options('OIDCClientId')
-
-    def get_topofeedservicegroups(self):
-        return self._get_cust_options('TopoFeedServiceGroups')
-
     def get_topofeedpaging(self):
         return eval(self._get_cust_options('TopoFeedPaging'))
-
-    def get_toposcope(self):
-        return self._get_cust_options('TopoScope')
 
     def get_topotiers(self):
         tiers = self._get_cust_options('TopoTiers')

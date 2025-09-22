@@ -244,9 +244,9 @@ class TaskProviderTopology(object):
         topofeedextensions = self.confcust.opt('TopoFeedEndpointsExtensions')
         topofeedproviders = self.confcust.opt('TopoFeedServiceGroups')
         topofeedresources = self.confcust.opt('TopoFeedEndpoints')
-        oidctoken = self.confcust.get_oidctoken()
-        oidctokenapi = self.confcust.get_oidctokenapi()
-        oidcclientid = self.confcust.get_oidcclientid()
+        oidctoken = self.confcust.opt('OIDCRefreshTOken')
+        oidctokenapi = self.confcust.opt('OIDCTokenEndpoint')
+        oidcclientid = self.confcust.opt('OIDCClientId')
 
         access_token = None
 

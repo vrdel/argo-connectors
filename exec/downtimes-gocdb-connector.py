@@ -80,7 +80,7 @@ def main():
         raise SystemExit(1)
 
     downtime_feed = confcust.get_downfeed()
-    toposcope = confcust.get_toposcope()
+    toposcope = confcust.opt('TopoScope')
     if toposcope and '&scope=' not in toposcope:
         downtime_feed += '&scope={}'.format(toposcope)
     elif toposcope and '&scope=' in toposcope:
