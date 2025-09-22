@@ -42,14 +42,15 @@ def main():
             globopts = Global(sys.argv[0])
             if comb_globopts:
                 globopts.configure(comb_globopts)
-            topos = comb.get('combine')
-            if topos:
-                for topo in topos:
-                    which = topo.get('type', None)
+            topos_confs = comb.get('combine')
+            if topos_confs:
+                for topoconf in topos_confs:
+                    which = topoconf.get('type', None)
                     if not which:
                         raise ConnectorConfError('type is mandatory in topology combine')
                     combuid = f'{which}-{uuid.uuid4()}'
-                    confcust = CombinerCustomer(combuid, sys.argv[0])
+                    confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
+                    # confcust.configure(topoconf)
                     confcust.valid()
                     if which == 'gocdb':
                         coros.append(TaskGocdbTopology(logger, None, combuid).run())

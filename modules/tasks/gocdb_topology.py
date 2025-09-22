@@ -378,21 +378,23 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                                      parsed_servicegroups_contacts,
                                      group_groups, self.notification_flag)
 
-        await write_state(self.fixed_date, True)
+        if not self.combuid:
+            await write_state(self.fixed_date, True)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
-        # send concurrently to WEB-API in coroutines
-        if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-            await asyncio.gather(
-                self.send_webapi(group_groups, 'groups'),
-                self.send_webapi(group_endpoints, 'endpoints')
-            )
+        if not self.combuid:
+            # send concurrently to WEB-API in coroutines
+            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                await asyncio.gather(
+                    self.send_webapi(group_groups, 'groups'),
+                    self.send_webapi(group_endpoints, 'endpoints')
+                )
 
-        if eval(self.globopts['GeneralWriteJson'.lower()]):
-            write_json(self.logger, group_groups, group_endpoints,
-                       self.fixed_date)
+            if eval(self.globopts['GeneralWriteJson'.lower()]):
+                write_json(self.logger, group_groups, group_endpoints,
+                           self.fixed_date)
 
         self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(
             self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))

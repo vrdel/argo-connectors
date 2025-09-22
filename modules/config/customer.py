@@ -475,7 +475,10 @@ class _CustomerConf(Callable):
 
 
 class _CombinerCustomerConf():
-    def __init__(self, combuid=None, connector=None):
+    def __init__(self, connector=None, combuid=None, tenant_name=None):
+        self.combuid = combuid
+        self.tenant_name = tenant_name
+
         if not getattr(self, 'combinit', None):
             self.combinit = dict()
         if not connector:
@@ -483,9 +486,29 @@ class _CombinerCustomerConf():
         else:
             self.combinit[combuid] = _CustomerConf(connector)
 
-    def __call__(self, combuid=None, connector=None):
-        self.__init__(combuid, connector)
+        if tenant_name:
+            self._preconf_tenantname()
+
+    def __call__(self, connector=None, combuid=None, tenant_name=None):
+        self.__init__(connector, combuid, tenant_name)
         return self.combinit[combuid]
+
+    def _preconf_tenantname(self):
+        optdict = self.combinit[self.combuid]._cust
+        key_sample, key_orig = None, None
+        for key, value in optdict.items():
+            key_tenant, key_orig = key, key
+            break
+        key_sample = key_tenant.split('_')
+        new_key = f'{key_sample[0]}_{self.tenant_name}'
+        optdict[new_key] = optdict.pop(key_orig)
+        if not optdict[new_key].get('Name', None) or not optdict[new_key].get('OutputDir', None):
+            raise ConnectorConfError('Default configuration missing keys')
+        optdict[new_key]['Name'] = self.tenant_name
+        optdict[new_key]['OutputDir'] = optdict[new_key]['OutputDir'].replace(
+            key_sample[1],
+            self.tenant_name
+        )
 
     def get_conf(self, combuid):
         return self.combinit[combuid]
