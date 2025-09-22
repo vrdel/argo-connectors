@@ -59,7 +59,7 @@ def main():
     topofeed = confcust.opt('TopoFeed')
     uidservendp = confcust.opt('TopoUIDServiceEndpoints')
     topofetchtype = confcust.get_topofetchtype()[0]
-    tiers = confcust.get_topotiers()
+    tiers = confcust.opt('TopoTiers')
     custname = confcust.get_custname()
     logger.customer = custname
 

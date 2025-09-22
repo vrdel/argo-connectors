@@ -396,14 +396,11 @@ class _CustomerConf(Callable):
         ret_opt = self._get_cust_options(option)
         if isinstance(ret_opt, str) and ret_opt in ['False', 'True']:
             return eval(ret_opt)
+        elif ',' in ret_opt:
+            ret_opt_arr = [ret_opt.strip().lower() for op in ret_opt.split(',')]
+            return ret_opt_arr
         else:
             return ret_opt
-
-    def get_topotiers(self):
-        tiers = self._get_cust_options('TopoTiers')
-        if ',' in tiers:
-            tiers = [tier.strip().lower() for tier in tiers.split(',')]
-        return tiers
 
     def get_topofetchtype(self):
         fetchtype = self._get_cust_options('TopoFetchType')
