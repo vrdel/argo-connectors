@@ -29,12 +29,10 @@ class TaskProviderTopology(object):
         self.fixed_date = fixed_date
         self.fetchtype = fetchtype
 
-
     def parse_source_topo(self, resources, providers):
         topo = ParseAgoraTopo(self.logger, providers, resources, self.uidservendp)
 
         return topo.get_group_groups(), topo.get_group_endpoints()
-
 
     async def send_webapi(self, webapi_opts, data, topotype, fixed_date=None):
         webapi = WebAPI(self.connector_name, webapi_opts['webapihost'],
@@ -47,7 +45,6 @@ class TaskProviderTopology(object):
                         date=fixed_date)
 
         await webapi.send(data, topotype)
-
 
     async def fetch_data(self, feed):
         remote_topo = urlparse(feed)
@@ -69,10 +66,9 @@ class TaskProviderTopology(object):
             await session.close()
             raise exc
 
-
     async def run(self):
-        topofeedproviders = self.confcust.get_topofeedservicegroups()
-        topofeedresources = self.confcust.get_topofeedendpoints()
+        topofeedproviders = self.confcust.opt('TopoFeedServiceGroups')
+        topofeedresources = self.confcust.opt('TopoFeedEndpoints')
 
         coros = [
             self.fetch_data(topofeedresources),

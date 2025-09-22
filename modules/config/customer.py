@@ -398,15 +398,6 @@ class _CustomerConf(Callable):
     def opt(self, option):
         return self._get_cust_options(option)
 
-    def get_topofeedsites(self):
-        return self._get_cust_options('TopoFeedSites')
-
-    def get_topofeedendpoints(self):
-        return self._get_cust_options('TopoFeedEndpoints')
-
-    def get_topofeedendpointsextensions(self):
-        return self._get_cust_options('TopoFeedEndpointsExtensions')
-
     def get_oidctoken(self):
         return self._get_cust_options('OIDCRefreshToken')
 
