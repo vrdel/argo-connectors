@@ -53,7 +53,7 @@ def main():
     confcust.parse()
     confcust.make_dirstruct()
     confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    feed = confcust.get_servicesfeed()
+    feed = confcust.opt('ServiceTypesFeed') or confcust.opt('TopoFeed')
     custname = confcust.get_custname()
     logger.customer = confcust.get_custname()
 
@@ -83,6 +83,7 @@ def main():
 
     finally:
         loop.close()
+
 
 if __name__ == '__main__':
     main()
