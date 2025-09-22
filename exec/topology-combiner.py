@@ -50,7 +50,8 @@ def main():
                         raise ConnectorConfError('type is mandatory in topology combine')
                     combuid = f'{which}-{uuid.uuid4()}'
                     confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
-                    # confcust.configure(topoconf)
+                    confcust.configure(topoconf)
+                    import ipdb; ipdb.set_trace()
                     confcust.valid()
                     if which == 'gocdb':
                         coros.append(TaskGocdbTopology(logger, None, combuid).run())
@@ -65,7 +66,6 @@ def main():
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
         asyncio.run(write_state(None, False))
-
 
 
 if __name__ == '__main__':

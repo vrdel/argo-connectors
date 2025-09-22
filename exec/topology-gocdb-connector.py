@@ -52,7 +52,6 @@ def main():
 
     try:
         task = TaskGocdbTopology(logger, fixed_date)
-        # loop.run_until_complete(task.run())
         asyncio.run(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:

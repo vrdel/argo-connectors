@@ -473,6 +473,13 @@ class _CustomerConf(Callable):
         except KeyError:
             return False
 
+    def configure(self, newoptions):
+        exist_options = list(self._cust)
+        exist_options = self._cust[exist_options[0]]
+        for newopt in newoptions['config']:
+            if newopt in exist_options:
+                exist_options[newopt] = newoptions['config'][newopt]
+
 
 class _CombinerCustomerConf():
     def __init__(self, connector=None, combuid=None, tenant_name=None):
@@ -496,14 +503,18 @@ class _CombinerCustomerConf():
     def _preconf_tenantname(self):
         optdict = self.combinit[self.combuid]._cust
         key_sample, key_orig = None, None
+
         for key, value in optdict.items():
             key_tenant, key_orig = key, key
             break
+
         key_sample = key_tenant.split('_')
         new_key = f'{key_sample[0]}_{self.tenant_name}'
         optdict[new_key] = optdict.pop(key_orig)
+
         if not optdict[new_key].get('Name', None) or not optdict[new_key].get('OutputDir', None):
             raise ConnectorConfError('Default configuration missing keys')
+
         optdict[new_key]['Name'] = self.tenant_name
         optdict[new_key]['OutputDir'] = optdict[new_key]['OutputDir'].replace(
             key_sample[1],
