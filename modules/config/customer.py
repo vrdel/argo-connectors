@@ -440,26 +440,6 @@ class _CustomerConf(Callable):
 
         return eval(str(paginated))
 
-    def pass_uidserviceendpoints(self, job):
-        if not isinstance(job, set):
-            do_pass = False
-            try:
-                do_pass = eval(self._jobs[job]['TopoUIDServiceEndpoints'])
-            except KeyError:
-                pass
-
-            return do_pass
-        else:
-            ret = list()
-
-            for jb in job:
-                try:
-                    do_pass = eval(self._jobs[jb]['TopoUIDServiceEndpoints'])
-                    ret.append(do_pass)
-                except KeyError:
-                    ret.append(False)
-            return ret
-
     def get_mapfeedjobs(self, caller, name=None, deffeed=None):
         feeds = {}
         for c in self.get_customers():
