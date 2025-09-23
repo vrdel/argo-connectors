@@ -48,7 +48,7 @@ def main():
                     which = topoconf.get('type', None)
                     if not which:
                         raise ConnectorConfError('type is mandatory in topology combine')
-                    combuid = f'{which}-{uuid.uuid4()}'
+                    combuid = f'{which}-{topos_confs.index(topoconf) + 1}'
                     confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
                     confcust.configure(topoconf)
                     confcust.valid()
