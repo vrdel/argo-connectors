@@ -13,6 +13,7 @@ class ParseSites(ParseHelpers):
         super().__init__(logger)
         self.logger = logger
         self.Customer = get_custconf(combuid)
+        self.combuid = combuid
         self.data = data
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.custname = self.Customer.get_custname()
@@ -80,6 +81,8 @@ class ParseSites(ParseHelpers):
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing sites feed - %s' % (
                 self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            msg = module_class_name(self) + ' ID:' + self.combuid + ' Customer:%s : Error parsing sites feed - %s' % (
+                self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:
@@ -116,6 +119,7 @@ class ParseServiceEndpoints(ParseHelpers):
     def __init__(self, logger, data=None, combuid=None):
         super().__init__(logger)
         self.Customer = get_custconf(combuid)
+        self.combuid = combuid
         self.data = data
         self.custname = self.Customer.get_custname()
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
@@ -194,8 +198,12 @@ class ParseServiceEndpoints(ParseHelpers):
                         url)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
-            msg = module_class_name(self) + ' Customer:%s : Error parsing topology service endpoint feed - %s' % (
-                self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            if not self.combuid:
+                msg = module_class_name(self) + ' Customer:%s : Error parsing topology service endpoint feed - %s' % (
+                    self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            else:
+                msg = module_class_name(self) + ' ID:' + self.combuid + ' Customer:%s : Error parsing topology service endpoint feed - %s' % (
+                    self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:
@@ -255,6 +263,7 @@ class ParseServiceGroups(ParseHelpers):
     def __init__(self, logger, data, combuid=None):
         super().__init__(logger)
         self.Customer = get_custconf(combuid)
+        self.combuid = combuid
         self.data = data
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.custname = self.Customer.get_custname()
@@ -332,8 +341,12 @@ class ParseServiceGroups(ParseHelpers):
                         self._service_groups[group_id]['services'].append(tmps)
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError, XMLSyntaxError) as exc:
-            msg = module_class_name(self) + ' Customer:%s : Error parsing service groups feed - %s' % (
-                self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            if not self.combuid:
+                msg = module_class_name(self) + ' Customer:%s : Error parsing service groups feed - %s' % (
+                    self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+            else:
+                msg = module_class_name(self) + ' ID:' + self.combuid + ' Customer:%s : Error parsing service groups feed - %s' % (
+                    self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:

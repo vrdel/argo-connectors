@@ -22,6 +22,7 @@ from argo_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_connectors.mesh.storage_element_path import attach_sepath_topodata
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 from argo_connectors.parse.base import ParseHelpers
+from argo_connectors.utils import module_class_name
 
 
 def contains_exception(list):
@@ -400,5 +401,5 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(
                 self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
         else:
-            self.logger.info(str(self.__class__.__name__) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Type:%s ' % (','.join(
+            self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Type:%s ' % (','.join(
                 self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
