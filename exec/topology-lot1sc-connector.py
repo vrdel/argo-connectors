@@ -7,8 +7,8 @@ import sys
 import asyncio
 
 from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import CustomerConf
-from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
+from argo_connectors.config.customer import Customer
+from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError, ConnectorError, ConnectorConfError
 from argo_connectors.log import Logger
 from argo_connectors.tasks.common import write_state
 from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
@@ -16,30 +16,19 @@ from argo_connectors.utils import date_check
 
 logger = None
 
-globopts = {}
-custname = ''
-
-isok = True
-
-
-def get_webapi_opts(cglob, confcust):
-    webapi_custopts = confcust.get_webapiopts()
-    webapi_opts = cglob.merge_opts(webapi_custopts, 'webapi')
-    webapi_complete, missopt = cglob.is_complete(webapi_opts, 'webapi')
-    if not webapi_complete:
-        logger.error('Customer:%s %s options incomplete, missing %s' % (logger.customer, 'webapi', ' '.join(missopt)))
-        raise SystemExit(1)
-    return webapi_opts
-
 
 def main():
     global logger, globopts, confcust
     parser = argparse.ArgumentParser(description="""Fetch entities (ServiceGroups, Sites, Endpoints)
                                                     from LOT1 Service Catalogue topology feed for every customer and job listed in customer.conf
                                                     and write them in an appropriate place""")
-    parser.add_argument('-c', dest='custconf', nargs=1, metavar='customer.conf', help='path to customer configuration file', type=str, required=False)
-    parser.add_argument('-g', dest='gloconf', nargs=1, metavar='global.conf', help='path to global configuration file', type=str, required=False)
-    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY', help='write data for this date', type=str, required=False)
+    parser.add_argument('-c', dest='custconf', metavar='customer.conf',
+                        default=None, help='path to customer configuration file', type=str, required=False)
+    parser.add_argument('-g', dest='gloconf', metavar='global.conf',
+                        default=None, help='path to global configuration file',
+                        type=str, required=False)
+    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY',
+                        help='write data for this date', type=str, required=False)
     args = parser.parse_args()
     logger = Logger(os.path.basename(sys.argv[0]))
 
@@ -47,48 +36,29 @@ def main():
     if args.date and date_check(args.date):
         fixed_date = args.date
 
-    confpath = args.gloconf[0] if args.gloconf else None
-    cglob = Global(sys.argv[0], confpath)
-    globopts = cglob.parse()
-
-    confpath = args.custconf[0] if args.custconf else None
-    confcust = CustomerConf(sys.argv[0], confpath)
-    confcust.parse()
-    confcust.make_dirstruct()
-    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    topofeed = confcust.opt('TopoFeed')
-    uidservendp = confcust.opt('TopoUIDServiceEndpoints')
-    topofetchtype = confcust.get_topofetchtype()[0]
-    tiers = confcust.opt('TopoTiers')
-    custname = confcust.get_custname()
-    logger.customer = custname
-
-    webapi_opts = get_webapi_opts(cglob, confcust)
-
-    auth_custopts = confcust.get_authopts()
-    auth_opts = cglob.merge_opts(auth_custopts, 'authentication')
-    auth_complete, missing = cglob.is_complete(auth_opts, 'authentication')
-    if not auth_complete:
-        logger.error('%s options incomplete, missing %s' % ('authentication', ' '.join(missing)))
-        raise SystemExit(1)
-
-    loop = asyncio.get_event_loop()
+    confpath = args.gloconf if args.gloconf else None
 
     try:
-        task = TaskLot1ScTopology(
-            loop, logger, sys.argv[0], globopts, webapi_opts, confcust,
-            custname, topofeed, topofetchtype, fixed_date, uidservendp, tiers
-        )
-        loop.run_until_complete(task.run())
+        globopts = Global(sys.argv[0], confpath).options()
+        confpath = args.custconf if args.custconf else None
+        confcust = Customer(sys.argv[0], confpath)
+        confcust.valid()
 
-    except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
+    except ConnectorConfError as exc:
+        logger.error(exc)
+        raise SystemExit(1)
+
+    confcust.make_dirstruct()
+    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
+    logger.customer = confcust.get_custname()
+
+    try:
+        task = TaskLot1ScTopology(logger, fixed_date)
+        asyncio.run(task.run())
+
+    except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
-        loop.run_until_complete(
-            write_state(sys.argv[0], globopts, confcust, fixed_date, False)
-        )
-
-    finally:
-        loop.close()
+        asyncio.run(write_state(fixed_date, False))
 
 
 if __name__ == '__main__':

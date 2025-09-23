@@ -3,6 +3,8 @@ import asyncio
 
 from urllib.parse import urlparse
 
+from argo_connectors.config.glob import Global
+from argo_connectors.config.customer import get_custconf
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
 from argo_connectors.io.webapi import WebAPI
@@ -19,21 +21,20 @@ def contains_exception(list):
 
 
 class TaskLot1ScTopology(object):
-    def __init__(self, loop, logger, connector_name, globopts, webapi_opts,
-                 confcust, custname, topofeed, fetchtype, fixed_date,
-                 uidservendp, tiers):
-        self.event_loop = loop
+    def __init__(self, logger, fixed_date, combuid=None):
         self.logger = logger
-        self.connector_name = connector_name
-        self.globopts = globopts
-        self.webapi_opts = webapi_opts
-        self.confcust = confcust
-        self.custname = custname
-        self.topofeed = topofeed
-        self.fetchtype = fetchtype
+        self.connector_name = Global.caller
+        self.globopts = Global.options()
+        self.Customer = get_custconf(combuid)
+        self.webapi_opts = self.Customer.webapi_opts.opts
+        self.custname = self.Customer.get_custname()
+        self.topofeed = self.Customer.opt('TopoFeed')
+        self.topofetchtype = self.Customer.get_topofetchtype()
         self.fixed_date = fixed_date
-        self.uidservendp = uidservendp
-        self.tiers = tiers
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
+        self.tiers = self.Customer.opt('TopoTiers')
+        import ipdb; ipdb.set_trace()
+
 
     async def fetch_data(self, tier):
         remote_topo = urlparse(self.topofeed)
@@ -82,7 +83,7 @@ class TaskLot1ScTopology(object):
             group_groups += gg
             group_endpoints += ge
 
-        await write_state(self.connector_name, self.globopts, self.confcust, self.fixed_date, True)
+        await write_state(self.fixed_date, True)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
@@ -95,6 +96,7 @@ class TaskLot1ScTopology(object):
             )
 
         if eval(self.globopts['GeneralWriteJson'.lower()]):
-            write_json(self.logger, self.globopts, self.confcust, group_groups, group_endpoints, self.fixed_date)
+            write_json(self.logger, group_groups, group_endpoints,
+                       self.fixed_date)
 
         self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
