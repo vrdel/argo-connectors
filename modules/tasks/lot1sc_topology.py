@@ -29,12 +29,10 @@ class TaskLot1ScTopology(object):
         self.webapi_opts = self.Customer.webapi_opts.opts
         self.custname = self.Customer.get_custname()
         self.topofeed = self.Customer.opt('TopoFeed')
-        self.topofetchtype = self.Customer.get_topofetchtype()
+        self.fetchtype = self.Customer.get_topofetchtype()[0]
         self.fixed_date = fixed_date
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.tiers = self.Customer.opt('TopoTiers')
-        import ipdb; ipdb.set_trace()
-
 
     async def fetch_data(self, tier):
         remote_topo = urlparse(self.topofeed)

@@ -396,7 +396,7 @@ class _CustomerConf(object):
         if isinstance(ret_opt, str) and ret_opt in ['False', 'True']:
             return eval(ret_opt)
         elif isinstance(ret_opt, str) and ',' in ret_opt:
-            ret_opt_arr = [ret_opt.strip().lower() for op in ret_opt.split(',')]
+            ret_opt_arr = [op.strip().lower() for op in ret_opt.split(',')]
             return ret_opt_arr
         else:
             return ret_opt
