@@ -478,6 +478,11 @@ class _CustomerConf(object):
         for newopt in newoptions['config']:
             if newopt in exist_options:
                 exist_options[newopt] = newoptions['config'][newopt]
+            if newopt.lower().startswith('authentication'):
+                exist_options['AuthOpts'][newopt.lower()] = newoptions['config'][newopt]
+                self.auth_opts.opts[newopt.lower()] = newoptions['config'][newopt]
+            if newopt.lower().startswith('BDII'):
+                exist_options['BDIIOpts'][newopt.lower()] = newoptions['config'][newopt]
 
 
 class _CombinerCustomerConf(object):
