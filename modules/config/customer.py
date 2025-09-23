@@ -481,7 +481,7 @@ class _CustomerConf(Callable):
                 exist_options[newopt] = newoptions['config'][newopt]
 
 
-class _CombinerCustomerConf():
+class _CombinerCustomerConf(object):
     def __init__(self, connector=None, combuid=None, tenant_name=None):
         self.combuid = combuid
         self.tenant_name = tenant_name
@@ -501,7 +501,7 @@ class _CombinerCustomerConf():
         return self.combinit[combuid]
 
     def _preconf_tenantname(self):
-        optdict = self.combinit[self.combuid]._cust
+        optdict = copy.deepcopy(self.combinit[self.combuid]._cust)
         key_sample, key_orig = None, None
 
         for key, value in optdict.items():
@@ -520,6 +520,9 @@ class _CombinerCustomerConf():
             key_sample[1],
             self.tenant_name
         )
+
+        del self.combinit[self.combuid]._cust[key_orig]
+        self.combinit[self.combuid]._cust = optdict
 
     def get_conf(self, combuid):
         return self.combinit[combuid]

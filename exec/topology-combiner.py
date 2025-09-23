@@ -51,8 +51,8 @@ def main():
                     combuid = f'{which}-{uuid.uuid4()}'
                     confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
                     confcust.configure(topoconf)
-                    import ipdb; ipdb.set_trace()
                     confcust.valid()
+                    logger.customer = comb['tenant']
                     if which == 'gocdb':
                         coros.append(TaskGocdbTopology(logger, None, combuid).run())
 
