@@ -8,7 +8,6 @@ import re
 from argo_connectors.log import Logger
 from argo_connectors.config.glob import Global
 from argo_connectors.exceptions import ConnectorConfError
-from collections.abc import Callable
 
 
 class AuthOpts(object):
@@ -62,7 +61,7 @@ class BDIIOpts(object):
             return self.bdii_custopts
 
 
-class _CustomerConf(Callable):
+class _CustomerConf(object):
     """
        Class with parser for customer.conf and additional helper methods
     """

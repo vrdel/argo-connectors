@@ -2,13 +2,11 @@ import configparser
 import errno
 import os
 
-from collections.abc import Callable
-
 from argo_connectors.log import Logger
 from argo_connectors.exceptions import ConnectorConfError
 
 
-class _GlobalConf(Callable):
+class _GlobalConf(object):
     """
        Class represents parser for global.conf
     """
