@@ -36,7 +36,7 @@ jobs:
           ignore-unfixed: true
           format: 'sarif'  
           limit-severities-for-sarif: true #By default SARIF format enforces output of all vulnerabilities. To override this behavior set this parameter to true
-          severity: 'HIGH,CRITICAL'
+          severity: 'MEDIUM,LOW,UNKNOWN,HIGH,CRITICAL'
           output: trivy-results.sarif
           skip-dirs: website 
         continue-on-error: true  # still upload SARIF even if vulnerabilities exist
