@@ -396,5 +396,9 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                 write_json(self.logger, group_groups, group_endpoints,
                            self.fixed_date)
 
-        self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(
-            self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
+        if not self.combuid:
+            self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(
+                self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
+        else:
+            self.logger.info(str(self.__class__.__name__) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Type:%s ' % (','.join(
+                self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
