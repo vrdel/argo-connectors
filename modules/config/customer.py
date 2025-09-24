@@ -85,7 +85,7 @@ class _CustomerConf(object):
                     }
     _jobs, _jobattrs = {}, None
     _cust_optional = ['AuthenticationUsePlainHttpAuth',
-                      'TopoUIDServiceEnpoints', 'AuthenticationHttpUser',
+                      'TopoUIDServiceEndpoints', 'AuthenticationHttpUser',
                       'AuthenticationHttpPass', 'BDII', 'BDIIHost', 'BDIIPort',
                       'BDIIQueryBase', 'BDIIQueryFilterSRM',
                       'BDIIQueryAttributesSRM', 'BDIIQueryFilterSEPATH',
@@ -209,7 +209,7 @@ class _CustomerConf(object):
                     'TopoScope': toposcope,
                     'TopoTiers': topotiers,
                     'TopoType': topotype,
-                    'TopoUIDServiceEnpoints': topouidservendpoints,
+                    'TopoUIDServiceEndpoints': topouidservendpoints,
                     'HonorNotificationFlag': notifflag,
                     'OIDCTokenEndpoint': oidctokenapi,
                     'OIDCRefreshToken': oidctoken,
