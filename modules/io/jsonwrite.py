@@ -17,7 +17,7 @@ class JsonWriter(object):
                     f.write(json_data.encode())
 
                 return True, None
-            
+
             else:
                 json_data = json.dumps(self.data, indent=4)
 

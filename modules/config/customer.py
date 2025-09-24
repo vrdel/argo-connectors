@@ -67,31 +67,34 @@ class _CustomerConf(object):
     """
     _custattrs = None
     _cust = {}
-    _defjobattrs = {'topology-gocdb-connector.py': [''],
-                    'topology-json-connector.py': [''],
-                    'topology-csv-connector.py': [''],
-                    'topology-provider-connector.py': [''],
-                    'topology-combiner.py': [''],
-                    'topology-agora-connector.py': [''],
-                    'topology-lot1sc-connector.py': [''],
-                    'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
-                    'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
-                    'downtimes-csv-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
-                    'weights-vapor-connector.py': ['WeightsFeed',
-                                                   'TopoFetchType'],
-                    'service-types-gocdb-connector.py': ['ServiceTypesFeed'],
-                    'service-types-csv-connector.py': ['ServiceTypesFeed'],
-                    'service-types-json-connector.py': ['ServiceTypesFeed']
-                    }
+    _defjobattrs = {
+        'topology-gocdb-connector.py': [''],
+        'topology-json-connector.py': [''],
+        'topology-csv-connector.py': [''],
+        'topology-provider-connector.py': [''],
+        'topology-combiner.py': [''],
+        'topology-agora-connector.py': [''],
+        'topology-lot1sc-connector.py': [''],
+        'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
+        'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
+        'downtimes-csv-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
+        'weights-vapor-connector.py': ['WeightsFeed',
+                                       'TopoFetchType'],
+        'service-types-gocdb-connector.py': ['ServiceTypesFeed'],
+        'service-types-csv-connector.py': ['ServiceTypesFeed'],
+        'service-types-json-connector.py': ['ServiceTypesFeed']
+    }
     _jobs, _jobattrs = {}, None
-    _cust_optional = ['AuthenticationUsePlainHttpAuth',
-                      'TopoUIDServiceEndpoints', 'AuthenticationHttpUser',
-                      'AuthenticationHttpPass', 'BDII', 'BDIIHost', 'BDIIPort',
-                      'BDIIQueryBase', 'BDIIQueryFilterSRM',
-                      'BDIIQueryAttributesSRM', 'BDIIQueryFilterSEPATH',
-                      'BDIIQueryAttributesSEPATH', 'WebAPIToken',
-                      'WeightsEmpty', 'DowntimesEmpty', 'ServiceTypesFeed',
-                      'HonorNotificationFlag', 'TopoTiers']
+    _cust_optional = [
+        'AuthenticationUsePlainHttpAuth',
+        'TopoUIDServiceEndpoints', 'AuthenticationHttpUser',
+        'AuthenticationHttpPass', 'BDII', 'BDIIHost', 'BDIIPort',
+        'BDIIQueryBase', 'BDIIQueryFilterSRM',
+        'BDIIQueryAttributesSRM', 'BDIIQueryFilterSEPATH',
+        'BDIIQueryAttributesSEPATH', 'WebAPIToken',
+        'WeightsEmpty', 'DowntimesEmpty', 'ServiceTypesFeed',
+        'HonorNotificationFlag', 'TopoTiers'
+    ]
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
 
