@@ -73,7 +73,6 @@ class _CustomerConf(object):
         'topology-csv-connector.py': [''],
         'topology-provider-connector.py': [''],
         'topology-combiner.py': [''],
-        'topology-agora-connector.py': [''],
         'topology-lot1sc-connector.py': [''],
         'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
         'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],

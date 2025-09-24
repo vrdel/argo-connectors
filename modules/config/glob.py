@@ -67,9 +67,6 @@ class _GlobalConf(object):
             'topology-lot1sc-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),
-            'topology-agora-connector.py':
-            self._merge_dict(self.shared_secopts,
-                             self.conf_topo_output),
             'downtimes-csv-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_downtimes_output),
