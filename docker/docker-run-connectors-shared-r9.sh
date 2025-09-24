@@ -32,6 +32,7 @@ docker run \
 -v "${CONNECTORS_SOURCE}"/docker/sdc-customer.conf:${VENV}/etc/sdc-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosc-customer-lot1prod.conf:${VENV}/etc/eosc-customer-lot1prod.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosc-customer-lot1stg.conf:${VENV}/etc/eosc-customer-lot1stg.conf:rw \
+-v "${CONNECTORS_SOURCE}"/docker/cessda-customer.conf:${VENV}/etc/cessda-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosccore-customer-lot1prod.conf:${VENV}/etc/eosccore-customer-lot1prod.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosccore-customer-lot1stg.conf:${VENV}/etc/eosccore-customer-lot1stg.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eoscbeyond-provider-customer.conf:${VENV}/etc/eoscbeyond-provider-customer.conf:rw \

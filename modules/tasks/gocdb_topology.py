@@ -157,6 +157,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
     def __init__(self, logger, fixed_date, combuid=None):
         TaskParseTopology.__init__(self, logger, combuid)
         super(TaskGocdbTopology, self).__init__(logger, combuid)
+        self.combuid = combuid
         self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
