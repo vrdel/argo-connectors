@@ -13,7 +13,6 @@ class LDAPSessionWithRetry(object):
         self.timeout = connection_timeout
         self.logger = logger
 
-
     async def search(self, host, port, base, filter, attributes):
         raised_exc = None
         n = 1
@@ -23,9 +22,9 @@ class LDAPSessionWithRetry(object):
             while n <= self.n_try:
                 try:
                     conn = await client.connect(True, timeout=float(self.timeout))
-                    res = await conn.search(base,
-                        bonsai.LDAPSearchScope.SUB, filter, attributes,
-                        timeout=float(self.timeout))
+                    res = await conn.search(base, bonsai.LDAPSearchScope.SUB,
+                                            filter, attributes,
+                                            timeout=float(self.timeout))
 
                     return res
 
