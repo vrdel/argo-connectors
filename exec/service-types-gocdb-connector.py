@@ -54,9 +54,7 @@ def main():
     logger.customer = confcust.get_custname()
 
     try:
-        task = TaskGocdbServiceTypes(
-            logger, fixed_date, args.initsync
-        )
+        task = TaskGocdbServiceTypes(logger, fixed_date, args.initsync)
         asyncio.run(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:

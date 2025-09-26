@@ -3,6 +3,8 @@ import asyncio
 
 from urllib.parse import urlparse
 
+from argo_connectors.config.glob import Global
+from argo_connectors.config.customer import get_custconf
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
 from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
@@ -20,19 +22,17 @@ def contains_exception(list):
 
 
 class TaskFlatServiceTypes(object):
-    def __init__(self, loop, logger, connector_name, globopts, auth_opts,
-                 webapi_opts, confcust, custname, feed, timestamp,
-                 is_csv=False, initsync=False):
+    def __init__(self, logger, fixed_date, is_csv=False, initsync=False,
+                 combuid=None):
         self.logger = logger
-        self.loop = loop
-        self.connector_name = connector_name
-        self.auth_opts = auth_opts
-        self.globopts = globopts
-        self.webapi_opts = webapi_opts
-        self.confcust = confcust
-        self.custname = custname
-        self.feed = feed
-        self.timestamp = timestamp
+        self.Customer = get_custconf(combuid)
+        self.connector_name = Global.caller
+        self.auth_opts = self.Customer.auth_opts.opts
+        self.globopts = Global.options()
+        self.webapi_opts = self.Customer.webapi_opts.opts
+        self.custname = self.Customer.get_custname()
+        self.feed = self.Customer.opt('ServiceTypesFeed') or self.Customer.opt('TopoFeed')
+        self.fixed_date = fixed_date
         self.is_csv = is_csv
         self.initsync = initsync
 
@@ -56,7 +56,7 @@ class TaskFlatServiceTypes(object):
                         int(self.globopts['ConnectionSleepRetry'.lower()]),
                         self.globopts['ConnectionRetryRandom'.lower()],
                         int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.timestamp)
+                        date=self.fixed_date)
         return await webapi.get('service-types', jsonret=False)
 
     async def send_webapi(self, data):
@@ -67,7 +67,7 @@ class TaskFlatServiceTypes(object):
                         int(self.globopts['ConnectionSleepRetry'.lower()]),
                         self.globopts['ConnectionRetryRandom'.lower()],
                         int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.timestamp)
+                        date=self.fixed_date)
         await webapi.send(data, 'service-types')
 
     def parse_webapi_poem(self, res):
@@ -85,7 +85,7 @@ class TaskFlatServiceTypes(object):
             if not self.initsync:
                 coros.append(self.fetch_webapi())
 
-            fetched_data = await asyncio.gather(*coros, loop=self.loop, return_exceptions=True)
+            fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
             exc_raised, exc = contains_exception(fetched_data)
             if exc_raised:
@@ -101,9 +101,9 @@ class TaskFlatServiceTypes(object):
             if not self.initsync:
                 service_types_poem = self.parse_webapi_poem(res_webapi)
                 service_types = service_types + service_types_poem
-                service_types = sorted(service_types,  key=lambda s: s['name'].lower())
+                service_types = sorted(service_types, key=lambda s: s['name'].lower())
 
-            await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, True)
+            await write_state(self.fixed_date, True)
 
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
                 await self.send_webapi(service_types)
@@ -112,4 +112,4 @@ class TaskFlatServiceTypes(object):
 
         except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))
-            await write_state(self.connector_name, self.globopts, self.confcust, self.timestamp, False)
+            await write_state(self.fixed_date, False)
