@@ -44,11 +44,11 @@ def write_metricprofile_json(logger, globopts, cust, job, confcust, fixed_date, 
         raise SystemExit(1)
 
 
-def write_downtimes_json(logger, globopts, confcust, dts, timestamp):
-    custdir = confcust.get_custdir()
+def write_downtimes_json(logger, dts, timestamp):
+    custdir = Customer.get_custdir()
     filename = filename_date(
-        logger, globopts['OutputDowntimes'.lower()], custdir, stamp=timestamp)
-    json_writer = JsonWriter(dts, filename, globopts['generalcompressjson'])
+        logger, Global.options()['OutputDowntimes'.lower()], custdir, stamp=timestamp)
+    json_writer = JsonWriter(dts, filename, Global.options()['generalcompressjson'])
     ret, excep = json_writer.write_json()
     if not ret:
         logger.error('Customer:{} {}'.format(logger.customer, repr(excep)))
