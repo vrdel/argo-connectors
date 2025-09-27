@@ -29,6 +29,7 @@ docker run \
 -v "${CONNECTORS_SOURCE}"/docker/egi-customer.conf:${VENV}/etc/egi-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eudat-customer.conf:${VENV}/etc/eudat-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/ni4os-customer.conf:${VENV}/etc/ni4os-customer.conf:rw \
+-v "${CONNECTORS_SOURCE}"/docker/neanias-customer.conf:${VENV}/etc/neanias-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/sdc-customer.conf:${VENV}/etc/sdc-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosc-customer-lot1prod.conf:${VENV}/etc/eosc-customer-lot1prod.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosc-customer-lot1stg.conf:${VENV}/etc/eosc-customer-lot1stg.conf:rw \
