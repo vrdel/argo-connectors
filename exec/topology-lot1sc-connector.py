@@ -36,9 +36,8 @@ def main():
     if args.date and date_check(args.date):
         fixed_date = args.date
 
-    confpath = args.gloconf if args.gloconf else None
-
     try:
+        confpath = args.gloconf if args.gloconf else None
         globopts = Global(sys.argv[0], confpath).options()
         confpath = args.custconf if args.custconf else None
         confcust = Customer(sys.argv[0], confpath)

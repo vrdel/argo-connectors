@@ -16,27 +16,24 @@ async def write_state(fixed_date, state):
         await state_write(jobstatedir, state)
 
 
-async def write_weights_metricprofile_state(connector_name, globopts, cust, job, confcust, fixed_date, state):
-    jobstatedir = confcust.get_fullstatedir(
-        globopts['InputStateSaveDir'.lower()], cust, job)
+async def write_weights_metricprofile_state(cust, job, fixed_date, state):
+    jobstatedir = Customer.get_fullstatedir(
+        Global.options()['InputStateSaveDir'.lower()], cust, job)
     if fixed_date:
-        await state_write(connector_name, jobstatedir, state,
-                          globopts['InputStateDays'.lower()],
-                          fixed_date.replace('-', '_'))
+        await state_write(jobstatedir, state, fixed_date.replace('-', '_'))
     else:
-        await state_write(connector_name, jobstatedir, state,
-                          globopts['InputStateDays'.lower()])
+        await state_write(jobstatedir, state)
 
 
-def write_metricprofile_json(logger, globopts, cust, job, confcust, fixed_date, fetched_profiles):
-    jobdir = confcust.get_fulldir(cust, job)
+def write_metricprofile_json(logger, cust, job, fixed_date, fetched_profiles):
+    jobdir = Customer.get_fulldir(cust, job)
     if fixed_date:
-        filename = filename_date(logger, globopts['OutputMetricProfile'.lower(
+        filename = filename_date(logger, Global.options()['OutputMetricProfile'.lower(
         )], jobdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(
-            logger, globopts['OutputMetricProfile'.lower()], jobdir)
-    json_writer = JsonWriter(fetched_profiles, filename, globopts['generalcompressjson'])
+            logger, Global.options()['OutputMetricProfile'.lower()], jobdir)
+    json_writer = JsonWriter(fetched_profiles, filename, Global.options()['generalcompressjson'])
     ret, excep = json_writer.write_json()
     if not ret:
         logger.error('Customer:%s Job:%s %s' %
@@ -55,16 +52,16 @@ def write_downtimes_json(logger, dts, timestamp):
         raise SystemExit(1)
 
 
-def write_weights_json(logger, globopts, cust, job, confcust, fixed_date, weights):
-    jobdir = confcust.get_fulldir(cust, job)
+def write_weights_json(logger, cust, job, fixed_date, weights):
+    jobdir = Customer.get_fulldir(cust, job)
     if fixed_date:
         filename = filename_date(
-            logger, globopts['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
+            logger, Global.options()['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
     else:
         filename = filename_date(
-            logger, globopts['OutputWeights'.lower()], jobdir)
+            logger, Global.options()['OutputWeights'.lower()], jobdir)
 
-    json_writer = JsonWriter(weights, filename, globopts['generalcompressjson'])
+    json_writer = JsonWriter(weights, filename, Global.options()['generalcompressjson'])
     ret, excep = json_writer.write_json()
     if not ret:
         logger.error('Customer:%s Job:%s %s' %
