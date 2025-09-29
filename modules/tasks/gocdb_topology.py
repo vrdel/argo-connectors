@@ -164,11 +164,11 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.Customer = get_custconf(combuid)
         toposcope = self.Customer.opt('TopoScope')
         if toposcope:
-            self.SERVICE_ENDPOINTS_PI = self.Customer.opt('TopoFeedEndpoints') + toposcope
+            self.SERVICE_ENDPOINTS_PI = (self.Customer.opt('TopoFeedServiceEndpoints') or self.Customer.opt('TopoFeedEndpoints')) + toposcope
             self.SERVICE_GROUPS_PI = self.Customer.opt('TopoFeedServiceGroups') + toposcope
             self.SITES_PI = self.Customer.opt('TopoFeedSites') + toposcope
         else:
-            self.SERVICE_ENDPOINTS_PI = self.Customer.opt('TopoFeedEndpoints')
+            self.SERVICE_ENDPOINTS_PI = self.Customer.opt('TopoFeedServiceEndpoints') or self.Customer.opt('TopoFeedEndpoints')
             self.SERVICE_GROUPS_PI = self.Customer.opt('TopoFeedServiceGroups')
             self.SITES_PI = self.Customer.opt('TopoFeedSites')
         self.auth_opts = self.Customer.auth_opts.opts

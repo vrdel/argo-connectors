@@ -231,9 +231,9 @@ class TaskProviderTopology(object):
         return access_token, refresh_token
 
     async def run(self):
-        topofeedextensions = self.Customer.opt('TopoFeedEndpointsExtensions')
+        topofeedextensions = self.Customer.opt('TopoFeedServiceEndpointsExtensions') or self.Customer.opt('TopoFeedEndpointsExtensions')
         topofeedproviders = self.Customer.opt('TopoFeedServiceGroups')
-        topofeedresources = self.Customer.opt('TopoFeedEndpoints')
+        topofeedresources = self.Customer.opt('TopoFeedServiceEndpoints') or self.Customer.opt('TopoFeedEndpoints')
         oidctoken = self.Customer.opt('OIDCRefreshTOken')
         oidctokenapi = self.Customer.opt('OIDCTokenEndpoint')
         oidcclientid = self.Customer.opt('OIDCClientId')
