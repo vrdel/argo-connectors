@@ -19,7 +19,7 @@ class TaskGocdbDowntimes(object):
         self.Customer = get_custconf(combuid)
         self.globopts = Global.options()
         self.auth_opts = self.Customer.auth_opts.opts
-        self.webapi_opts = self.Customer.webapi_opts.opts
+        self.webapi = WebAPI(logger, date=targetdate, combuid=combuid)
         self.custname = self.Customer.get_custname()
         downtime_feed = self.Customer.opt('DowntimesFeed')
         toposcope = self.Customer.opt('TopoScope')
@@ -64,17 +64,6 @@ class TaskGocdbDowntimes(object):
         gocdb = ParseDowntimes(self.logger, res, self.start, self.end, self.combuid)
         return gocdb.get_data()
 
-    async def send_webapi(self, dts):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.targetdate)
-        await webapi.send(dts, downtimes_component=True)
-
     async def run(self):
         # we don't have multiple tenant definitions in one
         # customer file so we can safely assume one tenant/customer
@@ -88,7 +77,7 @@ class TaskGocdbDowntimes(object):
         await write_state(self.timestamp, True)
 
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-            await self.send_webapi(dts)
+            await self.webapi.send(dts, downtimes_component=True)
 
         if dts or write_empty:
             cust = list(self.Customer.get_customers())[0]

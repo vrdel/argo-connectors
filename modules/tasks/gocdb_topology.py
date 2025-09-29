@@ -172,7 +172,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             self.SERVICE_GROUPS_PI = self.Customer.opt('TopoFeedServiceGroups')
             self.SITES_PI = self.Customer.opt('TopoFeedSites')
         self.auth_opts = self.Customer.auth_opts.opts
-        self.webapi_opts = self.Customer.webapi_opts.opts
+        self.webapi = WebAPI(logger, date=fixed_date, combuid=combuid)
         self.bdii_opts = self.Customer.bdii_opts.opts
         self.custname = self.Customer.get_custname()
         self.topofeed = self.Customer.opt('TopoFeed')
@@ -222,17 +222,6 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             res = await session.http_get(api)
 
             return res
-
-    async def send_webapi(self, data, topotype):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.fixed_date)
-        await webapi.send(data, topotype)
 
     async def run(self):
         fetched_sites, fetched_servicegroups, fetched_endpoints = None, None, None
@@ -390,8 +379,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             # send concurrently to WEB-API in coroutines
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
                 await asyncio.gather(
-                    self.send_webapi(group_groups, 'groups'),
-                    self.send_webapi(group_endpoints, 'endpoints')
+                    self.webapi.send(group_groups, 'groups'),
+                    self.webapi.send(group_endpoints, 'endpoints')
                 )
 
             if eval(self.globopts['GeneralWriteJson'.lower()]):

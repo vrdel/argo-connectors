@@ -23,9 +23,9 @@ class WebAPI(object):
         'service-types-json-connector.py': 'topology',
     }
 
-    def __init__(self, logger, retry,
-                 timeout=180, sleepretry=60, retryrandom=None, sleepretryrandom=None, report=None, endpoints_group=None,
-                 date=None, combuid=None):
+    def __init__(self, logger, retry, timeout=180, sleepretry=60,
+                 retryrandom=None, sleepretryrandom=None, report=None,
+                 endpoints_group=None, date=None, combuid=None):
         Customer = get_custconf(combuid)
         self.connector = os.path.basename(Global.caller)
         self.webapi_method = self.methods[self.connector]
