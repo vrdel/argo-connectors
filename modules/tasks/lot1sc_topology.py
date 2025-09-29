@@ -10,6 +10,7 @@ from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
+from argo_connectors.utils import module_class_name
 
 
 def contains_exception(list):
@@ -33,6 +34,7 @@ class TaskLot1ScTopology(object):
         self.fixed_date = fixed_date
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.tiers = self.Customer.opt('TopoTiers')
+        self.combuid = combuid
 
     async def fetch_data(self, tier):
         remote_topo = urlparse(self.topofeed)
@@ -68,6 +70,7 @@ class TaskLot1ScTopology(object):
         for tier in self.tiers:
             coros.append(self.fetch_data(tier))
         # fetch topology data concurrently in coroutines
+
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
         exc_raised, exc = contains_exception(fetched_data)
@@ -81,20 +84,25 @@ class TaskLot1ScTopology(object):
             group_groups += gg
             group_endpoints += ge
 
-        await write_state(self.fixed_date, True)
+        if not self.combuid:
+            await write_state(self.fixed_date, True)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
-        # send concurrently to WEB-API in coroutines
-        if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-            await asyncio.gather(
-                self.send_webapi(group_groups, 'groups'),
-                self.send_webapi(group_endpoints, 'endpoints')
-            )
+        if not self.combuid:
+            # send concurrently to WEB-API in coroutines
+            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                await asyncio.gather(
+                    self.send_webapi(group_groups, 'groups'),
+                    self.send_webapi(group_endpoints, 'endpoints')
+                )
 
-        if eval(self.globopts['GeneralWriteJson'.lower()]):
-            write_json(self.logger, group_groups, group_endpoints,
-                       self.fixed_date)
+            if eval(self.globopts['GeneralWriteJson'.lower()]):
+                write_json(self.logger, group_groups, group_endpoints,
+                           self.fixed_date)
 
-        self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+        if not self.combuid:
+            self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+        else:
+            self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))

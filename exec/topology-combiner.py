@@ -16,6 +16,7 @@ from argo_connectors.config.customer import CombinerCustomer
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
 from argo_connectors.tasks.common import write_state
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
+from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
 from argo_connectors.utils import date_check
 
 
@@ -55,6 +56,8 @@ def main():
                     logger.customer = comb['tenant']
                     if which == 'gocdb':
                         coros.append(TaskGocdbTopology(logger, None, combuid).run())
+                    elif which == 'lot1sc':
+                        coros.append(TaskLot1ScTopology(logger, None, combuid).run())
 
         except ConnectorConfError as exc:
             logger.error(exc)
