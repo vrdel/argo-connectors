@@ -92,7 +92,7 @@ class TaskGocdbServiceTypes(object):
             if not self.combuid:
                 self.logger.info('Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
             else:
-                self.logger.info(module_class_name(self) + 'ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
+                self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
 
         except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))

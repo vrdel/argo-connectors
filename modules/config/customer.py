@@ -365,7 +365,8 @@ class _CustomerConf(object):
         return jobs
 
     def get_customers(self):
-        return self._cust.keys()
+        if self._cust:
+            return self._cust.keys()
 
     def get_profiles(self, job):
         profiles = self._jobs[job]['Profiles'].split(',')
@@ -405,10 +406,15 @@ class _CustomerConf(object):
 
     def get_topofetchtype(self):
         fetchtype = self._get_cust_options('TopoFetchType')
-        if ',' in fetchtype:
-            fetchtype = [type.strip().lower() for type in fetchtype.split(',')]
+
+        if fetchtype:
+            if ',' in fetchtype:
+                fetchtype = [type.strip().lower() for type in fetchtype.split(',')]
+            else:
+                fetchtype = [fetchtype.lower()]
         else:
-            fetchtype = [fetchtype.lower()]
+            fetchtype = ['ServiceGroups']
+
         return fetchtype
 
     def _is_paginated(self, job):

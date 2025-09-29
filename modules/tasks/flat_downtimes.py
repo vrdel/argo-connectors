@@ -66,7 +66,7 @@ class TaskCsvDowntimes(object):
                     self.logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
                                      (self.Customer.get_custname(cust), self.targetdate, len(dts)))
                 else:
-                    self.logger.info(module_class_name(self) + 'ID:' + self.combuid + ' Customer:%s Fetched Date:%s Endpoints:%d' %
+                    self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:%s Fetched Date:%s Endpoints:%d' %
                                      (self.Customer.get_custname(cust), self.targetdate, len(dts)))
 
         except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:

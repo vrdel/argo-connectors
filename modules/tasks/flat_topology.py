@@ -97,4 +97,4 @@ class TaskFlatTopology(object):
         if not self.combuid:
             self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
         else:
-            self.logger.info(module_class_name(self) + 'ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
+            self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
