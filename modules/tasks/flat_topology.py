@@ -19,13 +19,13 @@ class TaskFlatTopology(object):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
-        self.webapi = WebAPI(logger, date=fixed_date, combuid=combuid)
         self.custname = self.Customer.get_custname()
         self.topofeed = self.Customer.opt('TopoFeed')
         self.topofetchtype = self.Customer.get_topofetchtype()[0]
         self.fixed_date = fixed_date
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.is_csv = is_csv
+        self.combuid = combuid
 
     def _is_feed(self, feed):
         data = urlparse(feed)
@@ -81,10 +81,12 @@ class TaskFlatTopology(object):
 
         # send concurrently to WEB-API in coroutines
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+            webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
             await asyncio.gather(
-                self.webapi.send(group_groups, 'groups'),
-                self.webapi.send(group_endpoints, 'endpoints')
+                webapi.send(group_groups, 'groups'),
+                webapi.send(group_endpoints, 'endpoints')
             )
+            await webapi.session.close()
 
         if eval(self.globopts['GeneralWriteJson'.lower()]):
             write_json(self.logger, group_groups, group_endpoints, self.fixed_date)

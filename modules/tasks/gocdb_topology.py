@@ -172,7 +172,6 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             self.SERVICE_GROUPS_PI = self.Customer.opt('TopoFeedServiceGroups')
             self.SITES_PI = self.Customer.opt('TopoFeedSites')
         self.auth_opts = self.Customer.auth_opts.opts
-        self.webapi = WebAPI(logger, date=fixed_date, combuid=combuid)
         self.bdii_opts = self.Customer.bdii_opts.opts
         self.custname = self.Customer.get_custname()
         self.topofeed = self.Customer.opt('TopoFeed')
@@ -378,10 +377,12 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         if not self.combuid:
             # send concurrently to WEB-API in coroutines
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
                 await asyncio.gather(
-                    self.webapi.send(group_groups, 'groups'),
-                    self.webapi.send(group_endpoints, 'endpoints')
+                    webapi.send(group_groups, 'groups'),
+                    webapi.send(group_endpoints, 'endpoints')
                 )
+                await webapi.session.close()
 
             if eval(self.globopts['GeneralWriteJson'.lower()]):
                 write_json(self.logger, group_groups, group_endpoints,

@@ -19,7 +19,6 @@ class TaskGocdbDowntimes(object):
         self.Customer = get_custconf(combuid)
         self.globopts = Global.options()
         self.auth_opts = self.Customer.auth_opts.opts
-        self.webapi = WebAPI(logger, date=targetdate, combuid=combuid)
         self.custname = self.Customer.get_custname()
         downtime_feed = self.Customer.opt('DowntimesFeed')
         toposcope = self.Customer.opt('TopoScope')
@@ -77,7 +76,8 @@ class TaskGocdbDowntimes(object):
         await write_state(self.timestamp, True)
 
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-            await self.webapi.send(dts, downtimes_component=True)
+            webapi = WebAPI(self.logger, date=self.targetdate, combuid=self.combuid)
+            await webapi.send(dts, downtimes_component=True)
 
         if dts or write_empty:
             cust = list(self.Customer.get_customers())[0]

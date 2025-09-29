@@ -23,9 +23,8 @@ class WebAPI(object):
         'service-types-json-connector.py': 'topology',
     }
 
-    def __init__(self, logger, retry, timeout=180, sleepretry=60,
-                 retryrandom=None, sleepretryrandom=None, report=None,
-                 endpoints_group=None, date=None, combuid=None):
+    def __init__(self, logger, report=None, endpoints_group=None, date=None,
+                 combuid=None):
         Customer = get_custconf(combuid)
         self.connector = os.path.basename(Global.caller)
         self.webapi_method = self.methods[self.connector]
@@ -37,11 +36,11 @@ class WebAPI(object):
         }
         self.report = report
         self.logger = logger
-        self.retry = int(Global.options()['ConnectionRetry'.lower()])
-        self.timeout = int(Global.options()['ConnectionTimeout'.lower()])
-        self.sleepretry = int(Global.options()['ConnectionSleepRetry'.lower()])
-        self.retryrandom = Global.options()['ConnectionRetryRandom'.lower()]
-        self.sleepretryrandom = int(Global.options()['ConnectionSleepRandomRetryMax'.lower()])
+        retry = int(Global.options()['ConnectionRetry'.lower()])
+        timeout = int(Global.options()['ConnectionTimeout'.lower()])
+        sleepretry = int(Global.options()['ConnectionSleepRetry'.lower()])
+        retryrandom = Global.options()['ConnectionRetryRandom'.lower()]
+        sleepretryrandom = int(Global.options()['ConnectionSleepRandomRetryMax'.lower()])
         self.retry_options = {
             'ConnectionRetry'.lower(): retry,
             'ConnectionTimeout'.lower(): timeout,
@@ -238,6 +237,3 @@ class WebAPI(object):
 
         except ConnectorHttpError:
             self.logger.error('Failed sent of data to WEB-API')
-
-        finally:
-            await self.session.close()

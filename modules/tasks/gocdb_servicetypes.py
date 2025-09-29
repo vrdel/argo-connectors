@@ -28,11 +28,11 @@ class TaskGocdbServiceTypes(object):
         self.feed = self.Customer.opt('ServiceTypesFeed') or self.Customer.opt('TopoFeed')
         self.connector_name = Global.caller
         self.globopts = Global.options()
-        self.webapi = WebAPI(logger, date=fixed_date, combuid=combuid)
         self.auth_opts = self.Customer.auth_opts.opts
         self.custname = self.Customer.get_custname()
         self.fixed_date = fixed_date
         self.initsync = initsync
+        self.combuid = combuid
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
@@ -44,17 +44,6 @@ class TaskGocdbServiceTypes(object):
                                                            feed_parts.path,
                                                            feed_parts.query))
         return res
-
-    async def fetch_webapi(self):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.fixed_date)
-        return await webapi.get('service-types', jsonret=False)
 
     def parse_source(self, res):
         gocdb = ParseGocdbServiceTypes(self.logger, res)
@@ -69,7 +58,8 @@ class TaskGocdbServiceTypes(object):
             coros = [self.fetch_data()]
 
             if not self.initsync:
-                coros.append(self.fetch_webapi())
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                coros.append(webapi.get('service-types', jsonret=False))
 
             fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
@@ -92,7 +82,10 @@ class TaskGocdbServiceTypes(object):
             await write_state(self.fixed_date, True)
 
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-                await self.webapi.send(service_types, 'service-types')
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                await webapi.send(service_types, 'service-types')
+                await webapi.session.close()
+
             self.logger.info('Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
 
         except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
