@@ -2,6 +2,8 @@ import datetime
 import os
 import json
 
+from argo_connectors.config.customer import get_custconf
+from argo_connectors.config.glob import Global
 from argo_connectors.utils import module_class_name
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.exceptions import ConnectorHttpError
@@ -21,24 +23,25 @@ class WebAPI(object):
         'service-types-json-connector.py': 'topology',
     }
 
-    def __init__(self, connector, host, token, logger, retry,
+    def __init__(self, logger, retry,
                  timeout=180, sleepretry=60, retryrandom=None, sleepretryrandom=None, report=None, endpoints_group=None,
-                 date=None):
-        self.connector = os.path.basename(connector)
+                 date=None, combuid=None):
+        Customer = get_custconf(combuid)
+        self.connector = os.path.basename(Global.caller)
         self.webapi_method = self.methods[self.connector]
-        self.host = host
-        self.token = token
+        self.host = Customer.webapi_opts.opts['webapihost']
+        self.token = Customer.webapi_opts.opts['webapitoken']
         self.headers = {
             'x-api-key': self.token,
             'Accept': 'application/json'
         }
         self.report = report
         self.logger = logger
-        self.retry = retry
-        self.timeout = timeout
-        self.sleepretry = sleepretry
-        self.retryrandom = retryrandom
-        self.sleepretryrandom = sleepretryrandom
+        self.retry = int(Global.options()['ConnectionRetry'.lower()])
+        self.timeout = int(Global.options()['ConnectionTimeout'.lower()])
+        self.sleepretry = int(Global.options()['ConnectionSleepRetry'.lower()])
+        self.retryrandom = Global.options()['ConnectionRetryRandom'.lower()]
+        self.sleepretryrandom = int(Global.options()['ConnectionSleepRandomRetryMax'.lower()])
         self.retry_options = {
             'ConnectionRetry'.lower(): retry,
             'ConnectionTimeout'.lower(): timeout,

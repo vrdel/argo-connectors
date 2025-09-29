@@ -19,7 +19,7 @@ class TaskFlatTopology(object):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
-        self.webapi_opts = self.Customer.webapi_opts.opts
+        self.webapi = WebAPI(logger, date=fixed_date, combuid=combuid)
         self.custname = self.Customer.get_custname()
         self.topofeed = self.Customer.opt('TopoFeed')
         self.topofetchtype = self.Customer.get_topofetchtype()[0]
@@ -59,17 +59,6 @@ class TaskFlatTopology(object):
 
         return group_groups, group_endpoints
 
-    async def send_webapi(self, data, topotype):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.fixed_date)
-        await webapi.send(data, topotype)
-
     async def run(self):
         if self._is_feed(self.topofeed):
             res = await self.fetch_data()
@@ -93,8 +82,8 @@ class TaskFlatTopology(object):
         # send concurrently to WEB-API in coroutines
         if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
             await asyncio.gather(
-                self.send_webapi(group_groups, 'groups'),
-                self.send_webapi(group_endpoints, 'endpoints')
+                self.webapi.send(group_groups, 'groups'),
+                self.webapi.send(group_endpoints, 'endpoints')
             )
 
         if eval(self.globopts['GeneralWriteJson'.lower()]):
