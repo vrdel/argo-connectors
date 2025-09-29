@@ -338,16 +338,20 @@ class _CustomerConf(object):
         else:
             return self._get_cust_options('Name')
 
-    def make_dirstruct(self, root=None):
+    def make_dirstruct(self, root=None, jobdir=True):
         dirs = []
         for cust in self._cust.keys():
             for job in self.get_jobs(cust):
                 if root:
-                    dirs.append(root + '/' + self.get_custname(cust) +
-                                '/' + self.get_jobdir(job))
+                    if jobdir:
+                        dirs.append(root + '/' + self.get_custname(cust) + '/' + self.get_jobdir(job))
+                    else:
+                        dirs.append(root + '/' + self.get_custname(cust))
                 else:
-                    dirs.append(self.get_custdir(cust) +
-                                '/' + self.get_jobdir(job))
+                    if jobdir:
+                        dirs.append(self.get_custdir(cust) + '/' + self.get_jobdir(job))
+                    else:
+                        dirs.append(self.get_custdir(cust) + '/' + self.get_custname(cust))
             for d in dirs:
                 try:
                     os.makedirs(d)
