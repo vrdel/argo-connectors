@@ -27,7 +27,6 @@ class TaskLot1ScTopology(object):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
-        self.webapi_opts = self.Customer.webapi_opts.opts
         self.custname = self.Customer.get_custname()
         self.topofeed = self.Customer.opt('TopoFeed')
         self.fetchtype = self.Customer.get_topofetchtype()[0]
@@ -53,17 +52,6 @@ class TaskLot1ScTopology(object):
         group_endpoints = topo.get_group_endpoints()
 
         return group_groups, group_endpoints
-
-    async def send_webapi(self, data, topotype):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.fixed_date)
-        await webapi.send(data, topotype)
 
     async def run(self):
         coros = list()
@@ -93,10 +81,12 @@ class TaskLot1ScTopology(object):
         if not self.combuid:
             # send concurrently to WEB-API in coroutines
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
                 await asyncio.gather(
-                    self.send_webapi(group_groups, 'groups'),
-                    self.send_webapi(group_endpoints, 'endpoints')
+                    webapi.send(group_groups, 'groups'),
+                    webapi.send(group_endpoints, 'endpoints')
                 )
+                await webapi.session.close()
 
             if eval(self.globopts['GeneralWriteJson'.lower()]):
                 write_json(self.logger, group_groups, group_endpoints,
