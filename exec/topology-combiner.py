@@ -23,8 +23,8 @@ from argo_connectors.utils import date_check
 
 
 async def runme(tasks):
-    foo = await asyncio.gather(*tasks)
-    print(foo)
+    fetched_data = await asyncio.gather(*tasks)
+    return fetched_data
 
 
 def main():
@@ -51,7 +51,7 @@ def main():
                     which = topoconf.get('type', None)
                     if not which:
                         raise ConnectorConfError('type is mandatory in topology combine')
-                    combuid = f'{which}-{topos_confs.index(topoconf) + 1}'
+                    combuid = f'{topos_confs.index(topoconf) + 1}-{which}'
                     confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
                     confcust.configure(topoconf)
                     confcust.valid()
@@ -72,7 +72,7 @@ def main():
             raise SystemExit(1)
 
     try:
-        asyncio.run(runme(coros))
+        data_fetched = asyncio.run(runme(coros))
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))

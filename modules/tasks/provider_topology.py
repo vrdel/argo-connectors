@@ -308,3 +308,5 @@ class TaskProviderTopology(object):
                 self.logger.info('Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
             else:
                 self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+
+                return group_groups, group_endpoints
