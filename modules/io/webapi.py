@@ -165,6 +165,7 @@ class WebAPI(object):
                                   (module_class_name(self), '_update',
                                    self.logger.customer, self.logger.job,
                                    content))
+                raise ConnectorHttpError()
 
     async def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
         id = None
@@ -175,6 +176,8 @@ class WebAPI(object):
         if status == 200:
             await self._send(api, data_send, self.connector)
             self.logger.info('Succesfully deleted and created new resource')
+        else:
+            raise ConnectorHttpError()
 
     async def get(self, api_path, jsonret):
         if api_path:
