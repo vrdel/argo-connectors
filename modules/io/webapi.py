@@ -113,6 +113,9 @@ class WebAPI(object):
                                   (module_class_name(self), '_send',
                                    self.logger.customer, self.logger.job,
                                    errormsg))
+
+            raise ConnectorHttpError()
+
         return status
 
     async def _get(self, api, jsonret=False):
