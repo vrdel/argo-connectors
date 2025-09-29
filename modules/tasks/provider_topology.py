@@ -15,6 +15,7 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.tasks.common import write_topo_json as write_json, write_state
+from argo_connectors.utils import module_class_name
 
 
 PROVIDER_TOKEN = 'var/spool/provider_token.json'
@@ -283,22 +284,27 @@ class TaskProviderTopology(object):
 
             attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
 
-            await write_state(self.fixed_date, True)
+            if not self.combuid:
+                await write_state(self.fixed_date, True)
 
             numge = len(group_endpoints)
             numgg = len(group_groups)
 
-            # send concurrently to WEB-API in coroutines
-            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
-                await asyncio.gather(
-                    webapi.send(group_groups, 'groups'),
-                    webapi.send(group_endpoints, 'endpoints')
-                )
-                await webapi.session.close()
+            if not self.combuid:
+                # send concurrently to WEB-API in coroutines
+                if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                    webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                    await asyncio.gather(
+                        webapi.send(group_groups, 'groups'),
+                        webapi.send(group_endpoints, 'endpoints')
+                    )
+                    await webapi.session.close()
 
-            if eval(self.globopts['GeneralWriteJson'.lower()]):
-                write_json(self.logger, group_groups, group_endpoints,
-                           self.fixed_date)
+                if eval(self.globopts['GeneralWriteJson'.lower()]):
+                    write_json(self.logger, group_groups, group_endpoints,
+                               self.fixed_date)
 
-            self.logger.info('Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+            if not self.combuid:
+                self.logger.info('Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+            else:
+                self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))

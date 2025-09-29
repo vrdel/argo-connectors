@@ -11,6 +11,7 @@ from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
+from argo_connectors.utils import module_class_name
 
 
 def contains_exception(list):
@@ -79,14 +80,19 @@ class TaskGocdbServiceTypes(object):
                 service_types = service_types + service_types_poem
                 service_types = sorted(service_types, key=lambda s: s['name'].lower())
 
-            await write_state(self.fixed_date, True)
+            if not self.combuid:
+                await write_state(self.fixed_date, True)
 
-            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
-                await webapi.send(service_types, 'service-types')
-                await webapi.session.close()
+            if not self.combuid:
+                if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                    webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                    await webapi.send(service_types, 'service-types')
+                    await webapi.session.close()
 
-            self.logger.info('Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
+            if not self.combuid:
+                self.logger.info('Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
+            else:
+                self.logger.info(module_class_name(self) + 'ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
 
         except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))

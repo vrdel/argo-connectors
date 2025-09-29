@@ -9,6 +9,7 @@ from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.parse.flat_downtimes import ParseDowntimes
 from argo_connectors.tasks.common import write_state, write_downtimes_json as write_json
+from argo_connectors.utils import module_class_name
 
 
 class TaskCsvDowntimes(object):
@@ -22,6 +23,7 @@ class TaskCsvDowntimes(object):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.timestamp = timestamp
+        self.combuid = combuid
 
     async def fetch_data(self):
         session = SessionWithRetry(self.logger,
@@ -35,17 +37,6 @@ class TaskCsvDowntimes(object):
         csv_downtimes = ParseDowntimes(self.logger, res, self.current_date)
         return csv_downtimes.get_data()
 
-    async def send_webapi(self, dts):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.targetdate)
-        await webapi.send(dts, downtimes_component=True)
-
     async def run(self):
         try:
             write_empty = self.Customer.send_empty(self.connector_name)
@@ -55,20 +46,28 @@ class TaskCsvDowntimes(object):
             else:
                 dts = []
 
-            await write_state(self.timestamp, True)
+            if not self.combuid:
+                await write_state(self.timestamp, True)
 
-            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-                await self.send_webapi(dts)
+            if not self.combuid:
+                if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                    webapi = WebAPI(self.logger, date=self.targetdate, combuid=self.combuid)
+                    await webapi.send(dts, downtimes_component=True)
+                    await webapi.session.close()
+
+                if eval(self.globopts['GeneralWriteJson'.lower()]):
+                    write_json(self.logger, dts, self.timestamp)
 
             # we don't have multiple tenant definitions in one
             # customer file so we can safely assume one tenant/customer
             if dts or write_empty:
                 cust = list(self.Customer.get_customers())[0]
-                self.logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
-                                 (self.Customer.get_custname(cust), self.targetdate, len(dts)))
-
-            if eval(self.globopts['GeneralWriteJson'.lower()]):
-                write_json(self.logger, dts, self.timestamp)
+                if not self.combuid:
+                    self.logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
+                                     (self.Customer.get_custname(cust), self.targetdate, len(dts)))
+                else:
+                    self.logger.info(module_class_name(self) + 'ID:' + self.combuid + ' Customer:%s Fetched Date:%s Endpoints:%d' %
+                                     (self.Customer.get_custname(cust), self.targetdate, len(dts)))
 
         except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))

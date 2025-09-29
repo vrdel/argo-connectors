@@ -8,6 +8,7 @@ from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.parse.gocdb_downtimes import ParseDowntimes
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_downtimes_json as write_json
+from argo_connectors.utils import module_class_name
 
 
 class TaskGocdbDowntimes(object):
@@ -43,18 +44,18 @@ class TaskGocdbDowntimes(object):
                                    custauth=self.auth_opts)
         if feed_parts.query:
             query_url = \
-            '{}://{}{}?{}&windowstart={}&windowend={}'.format(feed_parts.scheme,
-                                                              feed_parts.netloc,
-                                                              feed_parts.path,
-                                                              feed_parts.query,
-                                                              start_fmt,
-                                                              end_fmt)
+                '{}://{}{}?{}&windowstart={}&windowend={}'.format(feed_parts.scheme,
+                                                                  feed_parts.netloc,
+                                                                  feed_parts.path,
+                                                                  feed_parts.query,
+                                                                  start_fmt,
+                                                                  end_fmt)
         else:
             query_url = \
-            '{}://{}{}?windowstart={}&windowend={}'.format(feed_parts.scheme,
-                                                           feed_parts.netloc,
-                                                           feed_parts.path,
-                                                           start_fmt, end_fmt)
+                '{}://{}{}?windowstart={}&windowend={}'.format(feed_parts.scheme,
+                                                               feed_parts.netloc,
+                                                               feed_parts.path,
+                                                               start_fmt, end_fmt)
         res = await session.http_get(query_url)
 
         return res
@@ -73,17 +74,25 @@ class TaskGocdbDowntimes(object):
         else:
             dts = []
 
-        await write_state(self.timestamp, True)
+        if not self.combuid:
+            await write_state(self.timestamp, True)
 
-        if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-            webapi = WebAPI(self.logger, date=self.targetdate, combuid=self.combuid)
-            await webapi.send(dts, downtimes_component=True)
+        if not self.combuid:
+            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = WebAPI(self.logger, date=self.targetdate, combuid=self.combuid)
+                await webapi.send(dts, downtimes_component=True)
+                await webapi.session.close()
+
+            if eval(self.globopts['GeneralWriteJson'.lower()]):
+                write_json(self.logger, dts, self.timestamp)
 
         if dts or write_empty:
             cust = list(self.Customer.get_customers())[0]
-            self.logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
-                             (self.Customer.get_custname(cust),
-                              self.targetdate, len(dts)))
-
-        if eval(self.globopts['GeneralWriteJson'.lower()]):
-            write_json(self.logger, dts, self.timestamp)
+            if not self.combuid:
+                self.logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
+                                 (self.Customer.get_custname(cust),
+                                  self.targetdate, len(dts)))
+            else:
+                self.logger.info(module_class_name(self) + 'ID:' + self.combuid + ' Customer:%s Fetched Date:%s Endpoints:%d' %
+                                 (self.Customer.get_custname(cust),
+                                  self.targetdate, len(dts)))

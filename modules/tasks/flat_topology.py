@@ -11,6 +11,7 @@ from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.parse.flat_contacts import ParseContacts
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
+from argo_connectors.utils import module_class_name
 
 
 class TaskFlatTopology(object):
@@ -74,21 +75,26 @@ class TaskFlatTopology(object):
             except IOError as exc:
                 self.logger.error('Customer:%s : Problem opening %s - %s' % (self.logger.customer, self.topofeed, repr(exc)))
 
-        await write_state(self.fixed_date, True)
+        if not self.combuid:
+            await write_state(self.fixed_date, True)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
-        # send concurrently to WEB-API in coroutines
-        if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-            webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
-            await asyncio.gather(
-                webapi.send(group_groups, 'groups'),
-                webapi.send(group_endpoints, 'endpoints')
-            )
-            await webapi.session.close()
+        if not self.combuid:
+            # send concurrently to WEB-API in coroutines
+            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                await asyncio.gather(
+                    webapi.send(group_groups, 'groups'),
+                    webapi.send(group_endpoints, 'endpoints')
+                )
+                await webapi.session.close()
 
-        if eval(self.globopts['GeneralWriteJson'.lower()]):
-            write_json(self.logger, group_groups, group_endpoints, self.fixed_date)
+            if eval(self.globopts['GeneralWriteJson'.lower()]):
+                write_json(self.logger, group_groups, group_endpoints, self.fixed_date)
 
-        self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
+        if not self.combuid:
+            self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
+        else:
+            self.logger.info(module_class_name(self) + 'ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
