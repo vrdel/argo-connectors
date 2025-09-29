@@ -35,6 +35,7 @@ class TaskFlatServiceTypes(object):
         self.fixed_date = fixed_date
         self.is_csv = is_csv
         self.initsync = initsync
+        self.combuid = combuid
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
@@ -47,28 +48,6 @@ class TaskFlatServiceTypes(object):
                                                            feed_parts.query))
 
         return res
-
-    async def fetch_webapi(self):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.fixed_date)
-        return await webapi.get('service-types', jsonret=False)
-
-    async def send_webapi(self, data):
-        webapi = WebAPI(self.connector_name, self.webapi_opts['webapihost'],
-                        self.webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=self.fixed_date)
-        await webapi.send(data, 'service-types')
 
     def parse_webapi_poem(self, res):
         webapi = ParseWebApiServiceTypes(self.logger, res)
@@ -83,7 +62,8 @@ class TaskFlatServiceTypes(object):
             coros = [self.fetch_data()]
 
             if not self.initsync:
-                coros.append(self.fetch_webapi())
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                coros.append(webapi.get('service-types', jsonret=False))
 
             fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
@@ -106,7 +86,9 @@ class TaskFlatServiceTypes(object):
             await write_state(self.fixed_date, True)
 
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-                await self.send_webapi(service_types)
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                await webapi.send(service_types, 'service-types')
+                await webapi.session.close()
 
             self.logger.info('Customer:' + self.custname + ' Fetched Flat ServiceTypes:%d' % (len(service_types)))
 
