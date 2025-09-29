@@ -82,11 +82,11 @@ class TaskProviderTopology(object):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
-        self.webapi_opts = self.Customer.webapi_opts.opts
         self.paginated = self.Customer.opt('TopoFeedPaging')
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.fixed_date = fixed_date
         self.fetchtype = self.Customer.get_topofetchtype()[0]
+        self.combuid = combuid
 
     def parse_source_extensions(self, extensions, groupnames):
         resources_extended = ParseExtensions(self.logger, extensions, groupnames, self.uidservendp, self.logger.customer)
@@ -114,17 +114,6 @@ class TaskProviderTopology(object):
 
         else:
             return None
-
-    async def send_webapi(self, webapi_opts, data, topotype, fixed_date=None):
-        webapi = WebAPI(self.connector_name, webapi_opts['webapihost'],
-                        webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        date=fixed_date)
-        await webapi.send(data, topotype)
 
     async def fetch_data(self, feed, access_token):
         remote_topo = urlparse(feed)
@@ -301,10 +290,12 @@ class TaskProviderTopology(object):
 
             # send concurrently to WEB-API in coroutines
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
                 await asyncio.gather(
-                    self.send_webapi(self.webapi_opts, group_groups, 'groups', self.fixed_date),
-                    self.send_webapi(self.webapi_opts, group_endpoints, 'endpoints', self.fixed_date),
+                    webapi.send(group_groups, 'groups'),
+                    webapi.send(group_endpoints, 'endpoints')
                 )
+                await webapi.session.close()
 
             if eval(self.globopts['GeneralWriteJson'.lower()]):
                 write_json(self.logger, group_groups, group_endpoints,
