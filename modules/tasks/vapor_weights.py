@@ -32,18 +32,6 @@ class TaskVaporWeights(object):
         weights = ParseWeights(self.logger, res).get_data()
         return weights
 
-    async def send_webapi(self, weights, webapi_opts, job):
-        webapi = WebAPI(self.connector_name, webapi_opts['webapihost'],
-                        webapi_opts['webapitoken'], self.logger,
-                        int(self.globopts['ConnectionRetry'.lower()]),
-                        int(self.globopts['ConnectionTimeout'.lower()]),
-                        int(self.globopts['ConnectionSleepRetry'.lower()]),
-                        self.globopts['ConnectionRetryRandom'.lower()],
-                        int(self.globopts['ConnectionSleepRandomRetryMax'.lower()]),
-                        report=Customer.get_jobdir(job), endpoints_group='SITES',
-                        date=self.fixed_date)
-        await webapi.send(weights)
-
     async def run(self):
         for job, cust in self.jobcust:
             self.logger.customer = Customer.get_custname(cust)
@@ -57,10 +45,11 @@ class TaskVaporWeights(object):
                 res = await self.fetch_data()
                 weights = self.parse_source(res)
 
-            webapi_opts = Customer.webapi_opts.opts
-
             if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
-                await self.send_webapi(weights, webapi_opts, job)
+                webapi = WebAPI(self.logger, report=Customer.get_jobdir(job),
+                                endpoints_group='SITES', date=self.fixed_date)
+                await webapi.send(weights)
+                await webapi.session.close()
 
             if eval(self.globopts['GeneralWriteJson'.lower()]):
                 write_json(self.logger, cust, job, self.fixed_date, weights)
