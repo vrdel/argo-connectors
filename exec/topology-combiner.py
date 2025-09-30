@@ -18,11 +18,21 @@ from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
 from argo_connectors.tasks.flat_topology import TaskFlatTopology
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
+from argo_connectors.io.webapi import WebAPI
 
 
 async def fetch(tasks):
     fetched_data = await asyncio.gather(*tasks)
     return fetched_data
+
+
+async def webapi_send(logger, group_groups, group_endpoints, combuid):
+    webapi = WebAPI(logger, combuid=combuid)
+    await asyncio.gather(
+        webapi.send(group_groups, 'groups'),
+        webapi.send(group_endpoints, 'endpoints')
+    )
+    await webapi.session.close()
 
 
 def combine(topologies):
@@ -91,6 +101,9 @@ def main():
 
         if globopts.options()['GeneralWriteJson'.lower()]:
             write_json(logger, group_groups, group_endpoints, None, combuid)
+
+        if globopts.options()['GeneralPublishWebAPI'.lower()]:
+            asyncio.run(webapi_send(logger, group_groups, group_endpoints, combuid))
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
