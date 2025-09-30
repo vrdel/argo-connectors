@@ -94,6 +94,8 @@ def main():
         data_fetched = asyncio.run(fetch(coros))
         group_groups, group_endpoints = combine(data_fetched)
 
+        asyncio.run(write_state(None, True, combuid))
+
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
