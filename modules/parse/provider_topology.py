@@ -141,9 +141,11 @@ class ParseExtensions(ParseHelpers):
 
                 for group in extension['payload']['serviceCheck']:
                     gee = dict()
+                    urlpath_id = None
                     gee['type'] = 'SERVICEGROUPS'
                     gee['service'] = group['serviceType']
                     gee['group'] = self.groupnames[extension['resourceId']]
+
                     if self.uidservendp:
                         hostname = construct_fqdn(group['endpoint'])
                         urlpath_id = build_urlpath_id(group['endpoint'])
@@ -160,12 +162,14 @@ class ParseExtensions(ParseHelpers):
                         if not hostname:
                             hostname = group['endpoint']
                         gee['hostname'] = hostname
+
                     gee['tags'] = dict(
                         info_URL=group['endpoint'],
                         info_ID='{}_{}'.format(
                             extension['id'], urlpath_id) if urlpath_id else extension['id'],
                         info_groupname=self.groupnames[extension['resourceId']]
                     )
+
                     if self.uidservendp:
                         hostname = construct_fqdn(group['endpoint'])
                         if not hostname:

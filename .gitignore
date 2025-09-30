@@ -1,6 +1,6 @@
 __pycache__/
 .coverage
-*.conf
+docker/*.conf
 *.pem
 *.whl
 .ropeproject
