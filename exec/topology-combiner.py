@@ -4,8 +4,6 @@ import argparse
 import asyncio
 import os
 import sys
-import contextvars
-import uuid
 
 from argo_connectors.log import Logger
 from argo_connectors.config.combine import CombineConf
@@ -19,12 +17,22 @@ from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
 from argo_connectors.tasks.flat_topology import TaskFlatTopology
-from argo_connectors.utils import date_check
 
 
-async def runme(tasks):
+async def fetch(tasks):
     fetched_data = await asyncio.gather(*tasks)
     return fetched_data
+
+
+def combine(topologies):
+    joint_gg, joint_ge = list(), list()
+
+    for topo in topologies:
+        group_groups, group_endpoints = topo
+        joint_gg += group_groups
+        joint_ge += group_endpoints
+
+    return joint_gg, joint_ge
 
 
 def main():
@@ -72,7 +80,13 @@ def main():
             raise SystemExit(1)
 
     try:
-        data_fetched = asyncio.run(runme(coros))
+        data_fetched = asyncio.run(fetch(coros))
+        group_groups, group_endpoints = combine(data_fetched)
+
+        numge = len(group_endpoints)
+        numgg = len(group_groups)
+
+        logger.info('Customer:' + comb['tenant'] + ' Joined Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
