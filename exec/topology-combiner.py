@@ -17,6 +17,7 @@ from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
 from argo_connectors.tasks.flat_topology import TaskFlatTopology
+from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 
 
 async def fetch(tasks):
@@ -87,6 +88,9 @@ def main():
         numgg = len(group_groups)
 
         logger.info('Customer:' + comb['tenant'] + ' Joined Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
+
+        if globopts.options()['GeneralWriteJson'.lower()]:
+            write_json(logger, group_groups, group_endpoints, None, combuid)
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
