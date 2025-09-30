@@ -44,7 +44,7 @@ class TaskWebApiMetricProfile(object):
 
                 await write_state(self.cust, job, self.fixed_date, True)
 
-                if eval(self.globopts['GeneralWriteJson'.lower()]):
+                if self.globopts['GeneralWriteJson'.lower()]:
                     write_json(self.logger, self.cust, job, self.fixed_date, fetched_profiles)
 
                 self.logger.info('Customer:' + self.logger.customer + ' Job:' + job + ' Profiles:%s Tuples:%d' % (', '.join(profiles), len(fetched_profiles)))

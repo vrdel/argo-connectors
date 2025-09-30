@@ -45,13 +45,13 @@ class TaskVaporWeights(object):
                 res = await self.fetch_data()
                 weights = self.parse_source(res)
 
-            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+            if self.globopts['GeneralPublishWebAPI'.lower()]:
                 webapi = WebAPI(self.logger, report=Customer.get_jobdir(job),
                                 endpoints_group='SITES', date=self.fixed_date)
                 await webapi.send(weights)
                 await webapi.session.close()
 
-            if eval(self.globopts['GeneralWriteJson'.lower()]):
+            if self.globopts['GeneralWriteJson'.lower()]:
                 write_json(self.logger, cust, job, self.fixed_date, weights)
 
             await write_state(cust, job, self.fixed_date, True)

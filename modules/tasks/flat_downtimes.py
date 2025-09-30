@@ -50,12 +50,12 @@ class TaskCsvDowntimes(object):
                 await write_state(self.timestamp, True)
 
             if not self.combuid:
-                if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                if self.globopts['GeneralPublishWebAPI'.lower()]:
                     webapi = WebAPI(self.logger, date=self.targetdate, combuid=self.combuid)
                     await webapi.send(dts, downtimes_component=True)
                     await webapi.session.close()
 
-                if eval(self.globopts['GeneralWriteJson'.lower()]):
+                if self.globopts['GeneralWriteJson'.lower()]:
                     write_json(self.logger, dts, self.timestamp)
 
             # we don't have multiple tenant definitions in one

@@ -74,6 +74,7 @@ def write_weights_json(logger, cust, job, fixed_date, weights):
 def write_topo_json(logger, group_groups, group_endpoints, fixed_date, combuid=None):
     customer = get_custconf(combuid)
     custdir = customer.get_custdir()
+
     if fixed_date:
         filename = filename_date(logger,
                                  Global.options()['OutputTopologyGroupOfGroups'.lower()],
@@ -82,7 +83,7 @@ def write_topo_json(logger, group_groups, group_endpoints, fixed_date, combuid=N
         filename = filename_date(logger,
                                  Global.options()['OutputTopologyGroupOfGroups'.lower()],
                                  custdir)
-    json_writer = JsonWriter(group_groups, filename, Global.options()['generalcompressjson'])
+    json_writer = JsonWriter(group_groups, filename, Global.options()['GeneralCompressJson'.lower()])
     ret, excep = json_writer.write_json()
     if not ret:
         logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))
@@ -97,7 +98,7 @@ def write_topo_json(logger, group_groups, group_endpoints, fixed_date, combuid=N
                                  Global.options()['OutputTopologyGroupOfEndpoints'.lower()],
                                  custdir)
     json_writer = JsonWriter(group_endpoints, filename,
-                             Global.options()['generalcompressjson'])
+                             Global.options()['GeneralCompressJson'.lower()])
     ret, excep = json_writer.write_json()
     if not ret:
         logger.error('Customer:%s : %s' % (logger.customer, repr(excep)))

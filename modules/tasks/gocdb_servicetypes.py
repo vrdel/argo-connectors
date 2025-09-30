@@ -84,7 +84,7 @@ class TaskGocdbServiceTypes(object):
                 await write_state(self.fixed_date, True)
 
             if not self.combuid:
-                if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+                if self.globopts['GeneralPublishWebAPI'.lower()]:
                     webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
                     await webapi.send(service_types, 'service-types')
                     await webapi.session.close()

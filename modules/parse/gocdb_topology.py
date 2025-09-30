@@ -17,7 +17,7 @@ class ParseSites(ParseHelpers):
         self.data = data
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.custname = self.Customer.get_custname()
-        self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
+        self.pass_extensions = Global.options()['GeneralPassExtensions'.lower()]
         self._sites = dict()
         self.notification_flag = self.Customer.opt('HonorNotificationFlag') or False
         self._parse_data()
@@ -123,7 +123,7 @@ class ParseServiceEndpoints(ParseHelpers):
         self.data = data
         self.custname = self.Customer.get_custname()
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
-        self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
+        self.pass_extensions = Global.options()['GeneralPassExtensions'.lower()]
         self.notification_flag = self.Customer.opt('HonorNotificationFlag')
         self._service_endpoints = dict()
         self._parse_data()
@@ -267,7 +267,7 @@ class ParseServiceGroups(ParseHelpers):
         self.data = data
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.custname = self.Customer.get_custname()
-        self.pass_extensions = eval(Global.options()['GeneralPassExtensions'.lower()])
+        self.pass_extensions = Global.options()['GeneralPassExtensions'.lower()]
         self.notification_flag = self.Customer.opt('HonorNotificationFlag')
         # group_groups and group_endpoints components for ServiceGroup topology
         self._service_groups = dict()

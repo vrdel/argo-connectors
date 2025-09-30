@@ -143,7 +143,7 @@ class _GlobalConf(object):
     def _one_active(self, options):
         loweropts = self._lowercase_dict(options)
 
-        lval = [eval(self._options[k]) for k in self._concat_sectopt(loweropts)]
+        lval = [self._options[k] for k in self._concat_sectopt(loweropts)]
 
         if any(lval):
             return True
@@ -182,7 +182,10 @@ class _GlobalConf(object):
                                         in optget):
                                     raise ConnectorConfError('No DATE placeholder in %s' % opt)
 
-                                self._options.update({(sect + opt).lower(): optget})
+                                if optget in ['True', 'False']:
+                                    self._options.update({(sect + opt).lower(): eval(optget)})
+                                else:
+                                    self._options.update({(sect + opt).lower(): optget})
 
                             except configparser.NoOptionError as e:
                                 s = e.section.lower()

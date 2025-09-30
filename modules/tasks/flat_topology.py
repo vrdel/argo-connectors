@@ -83,7 +83,7 @@ class TaskFlatTopology(object):
 
         if not self.combuid:
             # send concurrently to WEB-API in coroutines
-            if eval(self.globopts['GeneralPublishWebAPI'.lower()]):
+            if self.globopts['GeneralPublishWebAPI'.lower()]:
                 webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
                 await asyncio.gather(
                     webapi.send(group_groups, 'groups'),
@@ -91,7 +91,7 @@ class TaskFlatTopology(object):
                 )
                 await webapi.session.close()
 
-            if eval(self.globopts['GeneralWriteJson'.lower()]):
+            if self.globopts['GeneralWriteJson'.lower()]:
                 write_json(self.logger, group_groups, group_endpoints, self.fixed_date)
 
         if not self.combuid:
