@@ -394,3 +394,5 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         else:
             self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Type:%s ' % (','.join(
                 self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
+
+            return group_groups, group_endpoints
