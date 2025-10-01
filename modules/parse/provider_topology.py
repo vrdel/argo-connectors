@@ -24,6 +24,10 @@ def build_urlpath_id(http_endpoint):
         return None
 
 
+def clean_id(idslash):
+    return idslash.replace('/', '-').replace('.', '-')
+
+
 class ParseResources(ParseHelpers):
     def __init__(self, logger, data=None, keys=[], custname=None):
         super(ParseResources, self).__init__(logger)
@@ -133,7 +137,7 @@ class ParseExtensions(ParseHelpers):
                 json_data = self.data
 
             for extension in json_data['results']:
-                if extension['resourceId'] not in self.groupnames:
+                if clean_id(extension['resourceId']) not in self.groupnames:
                     continue
 
                 if 'serviceCheck' not in extension['payload']:
@@ -144,7 +148,7 @@ class ParseExtensions(ParseHelpers):
                     urlpath_id = None
                     gee['type'] = 'SERVICEGROUPS'
                     gee['service'] = group['serviceType']
-                    gee['group'] = self.groupnames[extension['resourceId']]
+                    gee['group'] = self.groupnames[clean_id(extension['resourceId'])]
 
                     if self.uidservendp:
                         hostname = construct_fqdn(group['endpoint'])
@@ -153,10 +157,10 @@ class ParseExtensions(ParseHelpers):
                             hostname = group['endpoint']
                         if urlpath_id:
                             gee['hostname'] = '{}_{}_{}'.format(
-                                hostname, extension['id'], urlpath_id)
+                                hostname, clean_id(extension['id']), urlpath_id)
                         else:
                             gee['hostname'] = '{}_{}'.format(
-                                hostname, extension['id'])
+                                hostname, clean_id(extension['id']))
                     else:
                         hostname = construct_fqdn(group['endpoint'])
                         if not hostname:
@@ -166,8 +170,8 @@ class ParseExtensions(ParseHelpers):
                     gee['tags'] = dict(
                         info_URL=group['endpoint'],
                         info_ID='{}_{}'.format(
-                            extension['id'], urlpath_id) if urlpath_id else extension['id'],
-                        info_groupname=self.groupnames[extension['resourceId']]
+                            clean_id(extension['id']), urlpath_id) if urlpath_id else clean_id(extension['id']),
+                        info_groupname=self.groupnames[clean_id(extension['resourceId'])]
                     )
 
                     if self.uidservendp:
@@ -218,10 +222,10 @@ class ParseTopo(object):
                     provider_tags = [tag.strip()
                                      for tag in provider['provider_tag']]
                     gge['tags'] = dict(provider_tags=', '.join(
-                        provider_tags), info_projectid=provider['id'])
+                        provider_tags), info_projectid=clean_id(provider['id']))
                 else:
                     gge['tags'] = dict(
-                        info_projectid=provider['id'].strip())
+                        info_projectid=clean_id(provider['id'].strip()))
                 gg.append(gge)
                 providers_added.update(
                     {provider['id'].strip(): resource['id'].strip()})
@@ -240,7 +244,7 @@ class ParseTopo(object):
             gee['service'] = resource['hardcoded_service']
             gee['group'] = resource['name']
             if self.uidservendp:
-                gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), remove_non_utf(resource['id']))
+                gee['hostname'] = '{}_{}'.format(construct_fqdn(resource['webpage']), clean_id(remove_non_utf(resource['id'])))
             else:
                 gee['hostname'] = construct_fqdn(resource['webpage'])
             if resource.get('resource_tag', False):
@@ -250,11 +254,11 @@ class ParseTopo(object):
                     continue
                 gee['tags'] = dict(service_tags=', '.join(resource_tags),
                                    info_URL=resource['webpage'].strip(),
-                                   info_ID=resource['id'].strip(),
+                                   info_ID=clean_id(resource['id'].strip()),
                                    info_groupname=resource['name'].strip())
             else:
                 gee['tags'] = dict(info_URL=resource['webpage'].strip(),
-                                   info_ID=resource['id'].strip(),
+                                   info_ID=clean_id(resource['id'].strip()),
                                    info_groupname=resource['name'].strip())
             if self.uidservendp:
                 gee['tags'].update(
