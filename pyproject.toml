@@ -9,6 +9,7 @@ bonsai = "*"
 lxml = "*"
 requests = "*"
 unidecode = "*"
+pyyaml = "*"
 
 [tool.poetry.group.devel]
 optional = true
@@ -46,7 +47,8 @@ packages = [
 	'argo_connectors.io',
 	'argo_connectors.parse',
 	'argo_connectors.mesh',
-	'argo_connectors.tasks'
+	'argo_connectors.tasks',
+	'argo_connectors.config'
 ]
 include-package-data = true
 
@@ -56,10 +58,11 @@ argo_connectors = "modules"
 "argo_connectors.parse" = "modules/parse"
 "argo_connectors.mesh" = "modules/mesh"
 "argo_connectors.tasks" = "modules/tasks"
+"argo_connectors.config" = "modules/config"
 
 [tool.setuptools.data-files]
 "" = ["pyproject.toml", "poetry.lock"]
-"etc" = ["etc/*.conf.template"]
+"etc" = ["etc/customer.conf", "etc/global.conf"]
 "usr/bin" = ["exec/*.py"]
 "var/log/" = ["helpers/empty"]
 "var/spool/" = ["helpers/empty"]

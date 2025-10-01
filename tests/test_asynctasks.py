@@ -118,11 +118,11 @@ class TopologyProvider(unittest.TestCase):
         globopts = mocked_globopts
         webapiopts = mock.Mock()
         confcust = mock.Mock()
-        confcust.get_topofeedservicegroups.return_value = 'http://topo.feed.providers.com'
-        confcust.get_topofeedendpoints.return_value = 'http://topo.feed.resources.com'
-        confcust.get_oidctoken.return_value = 'oidctoken'
-        confcust.get_oidcclientid.return_value = 'clientid'
-        confcust.get_oidctokenapi.return_value = 'oidctokenapi'
+        confcust.opt('TopoFeedServiceGroups').return_value = 'http://topo.feed.providers.com'
+        confcust.opt('TopoFeedEndpoints').return_value = 'http://topo.feed.resources.com'
+        confcust.opt('OIDCRefreshToken').return_value = 'oidctoken'
+        confcust.opt('OIDCClientId').return_value = 'clientid'
+        confcust.opt('ODICTokenEndpoint').return_value = 'oidctokenapi'
         topofeedpaging = False
         uidservendp = False
         fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')

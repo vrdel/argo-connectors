@@ -2,6 +2,8 @@ import datetime
 import os
 import json
 
+from argo_connectors.config.customer import get_custconf
+from argo_connectors.config.glob import Global
 from argo_connectors.utils import module_class_name
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.exceptions import ConnectorHttpError
@@ -14,32 +16,32 @@ class WebAPI(object):
         'topology-gocdb-connector.py': 'topology',
         'topology-csv-connector.py': 'topology',
         'topology-provider-connector.py': 'topology',
+        'topology-combiner.py': 'topology',
         'topology-json-connector.py': 'topology',
-        'topology-agora-connector.py': 'topology',
         'weights-vapor-connector.py': 'weights',
         'service-types-gocdb-connector.py': 'topology',
         'service-types-csv-connector.py': 'topology',
         'service-types-json-connector.py': 'topology',
     }
 
-    def __init__(self, connector, host, token, logger, retry,
-                 timeout=180, sleepretry=60, retryrandom=None, sleepretryrandom=None, report=None, endpoints_group=None,
-                 date=None):
-        self.connector = os.path.basename(connector)
+    def __init__(self, logger, report=None, endpoints_group=None, date=None,
+                 combuid=None):
+        Customer = get_custconf(combuid)
+        self.connector = os.path.basename(Global.caller)
         self.webapi_method = self.methods[self.connector]
-        self.host = host
-        self.token = token
+        self.host = Customer.webapi_opts.opts['webapihost']
+        self.token = Customer.webapi_opts.opts['webapitoken']
         self.headers = {
             'x-api-key': self.token,
             'Accept': 'application/json'
         }
         self.report = report
         self.logger = logger
-        self.retry = retry
-        self.timeout = timeout
-        self.sleepretry = sleepretry
-        self.retryrandom = retryrandom
-        self.sleepretryrandom = sleepretryrandom
+        retry = int(Global.options()['ConnectionRetry'.lower()])
+        timeout = int(Global.options()['ConnectionTimeout'.lower()])
+        sleepretry = int(Global.options()['ConnectionSleepRetry'.lower()])
+        retryrandom = Global.options()['ConnectionRetryRandom'.lower()]
+        sleepretryrandom = int(Global.options()['ConnectionSleepRandomRetryMax'.lower()])
         self.retry_options = {
             'ConnectionRetry'.lower(): retry,
             'ConnectionTimeout'.lower(): timeout,
@@ -112,6 +114,7 @@ class WebAPI(object):
                                   (module_class_name(self), '_send',
                                    self.logger.customer, self.logger.job,
                                    errormsg))
+
         return status
 
     async def _get(self, api, jsonret=False):
@@ -164,6 +167,7 @@ class WebAPI(object):
                                   (module_class_name(self), '_update',
                                    self.logger.customer, self.logger.job,
                                    content))
+                raise ConnectorHttpError()
 
     async def _delete_and_resend(self, api, data_send, topo_component, downtimes_component):
         id = None
@@ -174,6 +178,8 @@ class WebAPI(object):
         if status == 200:
             await self._send(api, data_send, self.connector)
             self.logger.info('Succesfully deleted and created new resource')
+        else:
+            raise ConnectorHttpError()
 
     async def get(self, api_path, jsonret):
         if api_path:
@@ -236,6 +242,3 @@ class WebAPI(object):
 
         except ConnectorHttpError:
             self.logger.error('Failed sent of data to WEB-API')
-
-        finally:
-            await self.session.close()
