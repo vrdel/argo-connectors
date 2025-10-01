@@ -729,8 +729,8 @@ class ParseEoscProvider(unittest.TestCase):
         self.group_endpoints = eosc_topo.get_group_endpoints()
         self.id_groupname = buildmap_id2groupname(self.group_endpoints)
         fakemap_idgroupnames = {
-            '21.T15999/uxIE5y': '3rd-Party Data Security Assessment',
-            '21.T15999/xVQZOZ': 'Italian SuperComputing Resource Allocation - ISCRA'
+            '21-T15999-uxIE5y': '3rd-Party Data Security Assessment',
+            '21-T15999-xVQZOZ': 'Italian SuperComputing Resource Allocation - ISCRA'
         }
         eosc_topo_extensions = ParseExtensions(logger, resource_extensions, fakemap_idgroupnames, True, CUSTOMER_NAME)
         self.extensions = eosc_topo_extensions.get_extensions()
@@ -742,7 +742,7 @@ class ParseEoscProvider(unittest.TestCase):
                 'group': 'CINECA',
                 'subgroup': ' Italian SuperComputing Resource Allocation - ISCRA',
                 'tags': {
-                    'info_projectid': '21.T15999/llB2t3',
+                    'info_projectid': '21-T15999-llB2t3',
                     'provider_tags': 'High Performance Computing'
                 },
                 'type': 'PROJECT'
@@ -751,7 +751,7 @@ class ParseEoscProvider(unittest.TestCase):
                 'group': 'ICTLC',
                 'subgroup': '3rd-Party Data Security Assessment',
                 'tags': {
-                    'info_projectid': '21.T15999/kKG7EL'
+                    'info_projectid': '21-T15999-kKG7EL'
                 },
                 'type': 'PROJECT'
             }
@@ -761,11 +761,11 @@ class ParseEoscProvider(unittest.TestCase):
         self.assertEqual(self.extensions, [
             {
                 'group': '3rd-Party Data Security Assessment',
-                'hostname': 'example.com_cti/8wEjbu',
+                'hostname': 'example.com_cti-8wEjbu',
                 'service': 'eu.eosc.generic.json',
                 'tags': {
                     'hostname': 'example.com',
-                    'info_ID': 'cti/8wEjbu',
+                    'info_ID': 'cti-8wEjbu',
                     'info_URL': 'https://example.com',
                     'info_groupname': '3rd-Party Data Security Assessment'
                 },
@@ -773,11 +773,11 @@ class ParseEoscProvider(unittest.TestCase):
             },
             {
                 'group': 'Italian SuperComputing Resource Allocation - ISCRA',
-                'hostname': 'www.google.com_cti/qykSlW',
+                'hostname': 'www.google.com_cti-qykSlW',
                 'service': 'eu.eosc.argo.mon',
                 'tags': {
                     'hostname': 'www.google.com',
-                    'info_ID': 'cti/qykSlW',
+                    'info_ID': 'cti-qykSlW',
                     'info_URL': 'https://www.google.com',
                     'info_groupname': 'Italian SuperComputing Resource Allocation - '
                                       'ISCRA'
@@ -790,11 +790,11 @@ class ParseEoscProvider(unittest.TestCase):
         self.assertEqual(self.group_endpoints, [
             {
                 'group': '3rd-Party Data Security Assessment',
-                'hostname': 'ictlc.com_21.T15999/uxIE5y',
+                'hostname': 'ictlc.com_21-T15999-uxIE5y',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'ictlc.com',
-                    'info_ID': '21.T15999/uxIE5y',
+                    'info_ID': '21-T15999-uxIE5y',
                     'info_URL': 'https://ictlc.com/ICTLC_2023_3rd-Party%20Data%20Security%20Assessment.pdf',
                     'info_groupname': '3rd-Party Data Security Assessment',
                     'service_tags': 'Cybersecurity, Supply Chain, Supply Chain '
@@ -804,11 +804,11 @@ class ParseEoscProvider(unittest.TestCase):
             },
             {
                 'group': ' Italian SuperComputing Resource Allocation - ISCRA',
-                'hostname': 'www.hpc.cineca.it_21.T15999/xVQZOZ',
+                'hostname': 'www.hpc.cineca.it_21-T15999-xVQZOZ',
                 'service': 'eu.eosc.portal.services.url',
                 'tags': {
                     'hostname': 'www.hpc.cineca.it',
-                    'info_ID': '21.T15999/xVQZOZ',
+                    'info_ID': '21-T15999-xVQZOZ',
                     'info_URL': 'https://www.hpc.cineca.it/services/iscra',
                     'info_groupname': 'Italian SuperComputing Resource Allocation - '
                                       'ISCRA'
@@ -819,23 +819,23 @@ class ParseEoscProvider(unittest.TestCase):
 
     def test_idGroupname(self):
         self.assertEqual(self.id_groupname, {
-            '21.T15999/uxIE5y': '3rd-Party Data Security Assessment',
-            '21.T15999/xVQZOZ': 'Italian SuperComputing Resource Allocation - ISCRA'
+            '21-T15999-uxIE5y': '3rd-Party Data Security Assessment',
+            '21-T15999-xVQZOZ': 'Italian SuperComputing Resource Allocation - ISCRA'
         })
 
     def test_meshContactsProviders(self):
         sample_resources_contacts = {
-            'ictlc.com+21.T15999/uxIE5y': ['foo@bar.com']
+            'ictlc.com+21-T15999-uxIE5y': ['foo@bar.com']
         }
 
         attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
         self.assertEqual(self.group_endpoints[0], {
             'group': '3rd-Party Data Security Assessment',
-            'hostname': 'ictlc.com_21.T15999/uxIE5y',
+            'hostname': 'ictlc.com_21-T15999-uxIE5y',
             'service': 'eu.eosc.portal.services.url',
             'tags': {
                 'hostname': 'ictlc.com',
-                'info_ID': '21.T15999/uxIE5y',
+                'info_ID': '21-T15999-uxIE5y',
                 'info_URL': 'https://ictlc.com/ICTLC_2023_3rd-Party%20Data%20Security%20Assessment.pdf',
                 'info_groupname': '3rd-Party Data Security Assessment',
                 'service_tags': 'Cybersecurity, Supply Chain, Supply Chain '
