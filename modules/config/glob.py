@@ -52,6 +52,8 @@ class _GlobalConf(object):
                                                self.conf_state,
                                                self.conf_webapi)
         self.secopts = {
+            'connectors-probe':
+            self._merge_dict(self.shared_secopts),
             'topology-gocdb-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),
