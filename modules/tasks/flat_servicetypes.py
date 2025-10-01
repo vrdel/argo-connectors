@@ -10,7 +10,7 @@ from argo_connectors.parse.flat_servicetypes import ParseFlatServiceTypes
 from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state
-erom argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError, ConnectorError
+from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError, ConnectorError
 from argo_connectors.utils import module_class_name
 
 
