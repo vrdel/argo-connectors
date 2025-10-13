@@ -44,6 +44,7 @@ classifiers = [
 [tool.setuptools]
 packages = [
 	'argo_connectors',
+	'argo_connectors.exe',
 	'argo_connectors.io',
 	'argo_connectors.parse',
 	'argo_connectors.mesh',
@@ -55,6 +56,7 @@ include-package-data = true
 [tool.setuptools.package-dir]
 argo_connectors = "modules"
 "argo_connectors.io" = "modules/io"
+"argo_connectors.exe" = "modules/exe"
 "argo_connectors.parse" = "modules/parse"
 "argo_connectors.mesh" = "modules/mesh"
 "argo_connectors.tasks" = "modules/tasks"
