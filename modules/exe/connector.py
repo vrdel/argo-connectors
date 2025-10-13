@@ -1,22 +1,24 @@
 import argparse
 import os
 
+from argo_connectors.config.customer import Customer
+from argo_connectors.config.glob import Global
 from argo_connectors.log import Logger
 from argo_connectors.utils import date_check
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
 
 
 class ExecConnector:
-    def __init__(self, description, task, initial_arg=False,
-                 initial_arg_help='', exe_script=''):
+    def __init__(self, description, initial_arg=False, initial_arg_help='',
+                 exe_script=''):
         self.description = description
-        self.task = task
         self.initial_arg = initial_arg
         self.initial_arg_help = initial_arg_help
         self.exe_script = exe_script
         self.args = None
         self.fixed_date = None
-        self.confpath = None
-        self.__main()
+        self.logger = None
+        self._main()
 
     def _setargs(self):
         parser = argparse.ArgumentParser(description=self.description)
@@ -38,9 +40,19 @@ class ExecConnector:
         if args.date and date_check(args.date):
             self.fixed_date = args.date
 
-        if args.gloconf:
-            self.confpath = args.gloconf
-
     def _main(self):
         self._setargs()
         self.logger = Logger(os.path.basename(self.exe_script))
+
+        try:
+            globopts = Global(self.exe_script, self.args.gloconf).options()
+            confcust = Customer(self.exe_script, self.args.custconf)
+            confcust.valid()
+
+        except ConnectorConfError as exc:
+            self.logger.error(exc)
+            raise SystemExit(1)
+
+        confcust.make_dirstruct()
+        confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
+        self.logger.customer = confcust.get_custname()

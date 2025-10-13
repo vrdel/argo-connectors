@@ -14,6 +14,7 @@ class AuthOpts(object):
     def __init__(self):
         auth_custopts = Customer._get_cust_options('AuthOpts')
         self.auth_opts = Global.merge_opts(auth_custopts, 'authentication')
+
         auth_complete, missing = Global.is_complete(self.auth_opts, 'authentication')
         self.missing = None
         if not auth_complete:
