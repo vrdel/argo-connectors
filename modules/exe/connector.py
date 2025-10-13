@@ -10,7 +10,7 @@ from argo_connectors.exceptions import ConnectorError, ConnectorParseError, Conn
 
 class ExecConnector:
     def __init__(self, description, initial_arg=False, initial_arg_help='',
-                 exe_script=''):
+                 exe_script='', date_required=False):
         self.description = description
         self.initial_arg = initial_arg
         self.initial_arg_help = initial_arg_help
@@ -20,6 +20,7 @@ class ExecConnector:
         self.logger = None
         self.config_customer = None
         self.config_global = None
+        self.date_required = date_required
         self._main()
 
     def _setargs(self):
@@ -36,7 +37,7 @@ class ExecConnector:
                             default=None, help='path to global configuration file',
                             type=str, required=False)
         parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY',
-                            help='write data for this date', type=str, required=False)
+                            help='write data for this date', type=str, required=self.date_required)
         self.args = args = parser.parse_args()
 
         if args.date and date_check(args.date):
