@@ -18,6 +18,8 @@ class ExecConnector:
         self.args = None
         self.fixed_date = None
         self.logger = None
+        self.config_customer = None
+        self.config_global = None
         self._main()
 
     def _setargs(self):
@@ -48,6 +50,8 @@ class ExecConnector:
             globopts = Global(self.exe_script, self.args.gloconf).options()
             confcust = Customer(self.exe_script, self.args.custconf)
             confcust.valid()
+            self.config_customer = confcust
+            self.config_global = globopts
 
         except ConnectorConfError as exc:
             self.logger.error(exc)
