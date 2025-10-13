@@ -75,7 +75,6 @@ class _CustomerConf(object):
         'topology-provider-connector.py': [''],
         'topology-combiner.py': [''],
         'topology-lot1sc-connector.py': [''],
-        'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
         'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
         'downtimes-csv-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
         'weights-vapor-connector.py': ['WeightsFeed',
