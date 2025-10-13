@@ -17,7 +17,6 @@ from argo_connectors.utils import date_check
 
 
 def main():
-    global logger, globopts
     parser = argparse.ArgumentParser(description='Fetch service types from GOCDB')
     parser.add_argument('-c', dest='custconf', metavar='customer.conf',
                         default=None, help='path to customer configuration file',
