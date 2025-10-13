@@ -11,7 +11,7 @@ from argo_connectors.tasks.common import write_state
 
 def main():
     conn_exec = ExecConnector(
-        description="Fetch service types from GOCDB",
+        description="Fetch service types from GOCDB and send it to WEB-API",
         initial_arg=True,
         initial_arg_help="Initial sync of service types",
         exe_script=sys.argv[0]
