@@ -76,14 +76,16 @@ def main():
                     confcust.make_dirstruct(jobdir=False)
                     confcust.make_dirstruct(globopts.options()['InputStateSaveDir'.lower()], jobdir=False)
                     logger.customer = comb['tenant']
-                    if which == 'gocdb':
+                    if which.lower() == 'gocdb':
                         coros.append(TaskGocdbTopology(logger, None, combuid).run())
-                    elif which == 'lot1sc':
+                    elif which.lower() == 'lot1sc':
                         coros.append(TaskLot1ScTopology(logger, None, combuid).run())
-                    elif which == 'provider':
+                    elif which.lower() == 'provider':
                         coros.append(TaskProviderTopology(logger, None, combuid).run())
-                    elif which == 'csv':
+                    elif which.lower() == 'csv':
                         coros.append(TaskFlatTopology(logger, None, True, combuid=combuid).run())
+            else:
+                raise ConnectorConfError('combine key mandatory')
 
         except ConnectorConfError as exc:
             logger.error(exc)
