@@ -12,10 +12,8 @@ from argo_connectors.config.glob import Global
 from argo_connectors.config.customer import CombinerCustomer
 
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
-from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
-from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
-from argo_connectors.tasks.provider_topology import TaskProviderTopology
-from argo_connectors.tasks.flat_topology import TaskFlatTopology
+from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
+from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 from argo_connectors.io.webapi import WebAPI
 
@@ -46,7 +44,7 @@ def combine(topologies):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="""Combiner that calls topology tasks specified in YAML file, joins their data, record it in JSON file and push it to WEB-API""")
+    parser = argparse.ArgumentParser(description="""Combiner that calls service-types tasks specified in YAML file, joins their data, record it in JSON file and push it to WEB-API""")
     parser.add_argument('-c', dest='yamlconf', metavar='combine.yml',
                         help='path to YAML file', type=str, required=True)
     args = parser.parse_args()
@@ -63,29 +61,25 @@ def main():
             globopts = Global(sys.argv[0])
             if comb_globopts:
                 globopts.configure(comb_globopts)
-            topos_confs = comb.get('combine')
-            if topos_confs:
-                for topoconf in topos_confs:
-                    which = topoconf.get('type', None)
+            servtype_confs = comb.get('combine')
+            if servtype_confs:
+                for st in servtype_confs:
+                    which = st.get('type', None)
                     if not which:
-                        raise ConnectorConfError('type is mandatory in topology combine')
-                    combuid = f'{topos_confs.index(topoconf) + 1}-{which}'
+                        raise ConnectorConfError('type is mandatory in service-types combine')
+                    combuid = f'{servtype_confs.index(st) + 1}-{which}'
                     confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
-                    confcust.configure(topoconf)
+                    confcust.configure(st)
                     confcust.valid()
                     confcust.make_dirstruct(jobdir=False)
                     confcust.make_dirstruct(globopts.options()['InputStateSaveDir'.lower()], jobdir=False)
                     logger.customer = comb['tenant']
                     if which.lower() == 'gocdb':
-                        coros.append(TaskGocdbTopology(logger, None, combuid).run())
-                    elif which.lower() == 'lot1sc':
-                        coros.append(TaskLot1ScTopology(logger, None, combuid).run())
-                    elif which.lower() == 'provider':
-                        coros.append(TaskProviderTopology(logger, None, combuid).run())
+                        coros.append(TaskGocdbServiceTypes(logger, None, combuid).run())
                     elif which.lower() == 'csv':
-                        coros.append(TaskFlatTopology(logger, None, True, combuid=combuid).run())
+                        coros.append(TaskFlatServiceTypes(logger, None, True, combuid=combuid).run())
                     elif which.lower() == 'json':
-                        coros.append(TaskFlatTopology(logger, None, False, combuid=combuid).run())
+                        coros.append(TaskFlatServiceTypes(logger, None, False, combuid=combuid).run())
             else:
                 raise ConnectorConfError('combine key mandatory')
 
@@ -95,20 +89,7 @@ def main():
 
     try:
         data_fetched = asyncio.run(fetch(coros))
-        group_groups, group_endpoints = combine(data_fetched)
-
-        asyncio.run(write_state(None, True, combuid))
-
-        numge = len(group_endpoints)
-        numgg = len(group_groups)
-
-        logger.info('Customer:' + comb['tenant'] + ' Joined Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
-
-        if globopts.options()['GeneralWriteJson'.lower()]:
-            write_json(logger, group_groups, group_endpoints, None, combuid)
-
-        if globopts.options()['GeneralPublishWebAPI'.lower()]:
-            asyncio.run(webapi_send(logger, group_groups, group_endpoints, combuid))
+        import ipdb; ipdb.set_trace()
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
