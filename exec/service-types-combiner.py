@@ -75,11 +75,17 @@ def main():
                     confcust.make_dirstruct(globopts.options()['InputStateSaveDir'.lower()], jobdir=False)
                     logger.customer = comb['tenant']
                     if which.lower() == 'gocdb':
-                        coros.append(TaskGocdbServiceTypes(logger, None, combuid).run())
+                        coros.append(TaskGocdbServiceTypes(logger, None,
+                                                           initsync=False,
+                                                           combuid=combuid).run())
                     elif which.lower() == 'csv':
-                        coros.append(TaskFlatServiceTypes(logger, None, True, combuid=combuid).run())
+                        coros.append(TaskFlatServiceTypes(logger, None, True,
+                                                          initsync=False,
+                                                          combuid=combuid).run())
                     elif which.lower() == 'json':
-                        coros.append(TaskFlatServiceTypes(logger, None, False, combuid=combuid).run())
+                        coros.append(TaskFlatServiceTypes(logger, None, False,
+                                                          initsync=False,
+                                                          combuid=combuid).run())
             else:
                 raise ConnectorConfError('combine key mandatory')
 
@@ -89,7 +95,6 @@ def main():
 
     try:
         data_fetched = asyncio.run(fetch(coros))
-        import ipdb; ipdb.set_trace()
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))

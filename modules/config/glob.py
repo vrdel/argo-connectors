@@ -59,6 +59,9 @@ class _GlobalConf(object):
             'topology-combiner.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),
+            'service-types-combiner.py':
+            self._merge_dict(self.shared_secopts,
+                             self.conf_topo_output),
             'topology-json-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),
