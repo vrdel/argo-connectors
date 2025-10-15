@@ -96,4 +96,7 @@ class TaskGocdbServiceTypes(object):
 
         except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
             self.logger.error(repr(exc))
-            await write_state(self.fixed_date, False)
+            if not self.combuid:
+                await write_state(self.fixed_date, False)
+            else:
+                raise ConnectorError(repr(exc)) from exc
