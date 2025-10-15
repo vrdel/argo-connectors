@@ -15,8 +15,6 @@ async def state_write(statedir, state, date=None):
 
     if 'topology' in Global.caller:
         filenamebase = 'topology-ok'
-    elif 'metricprofile' in Global.caller:
-        filenamebase = 'metricprofile-ok'
     elif 'weights' in Global.caller:
         filenamebase = 'weights-ok'
     elif 'downtimes' in Global.caller:
