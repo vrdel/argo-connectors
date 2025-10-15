@@ -96,3 +96,4 @@ class TaskGocdbDowntimes(object):
                 self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:%s Fetched Date:%s Endpoints:%d' %
                                  (self.Customer.get_custname(cust),
                                   self.targetdate, len(dts)))
+                return dts

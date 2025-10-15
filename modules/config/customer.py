@@ -74,6 +74,7 @@ class _CustomerConf(object):
         'topology-csv-connector.py': [''],
         'topology-provider-connector.py': [''],
         'topology-combiner.py': [''],
+        'downtimes-combiner.py': [''],
         'service-types-combiner.py': [''],
         'topology-lot1sc-connector.py': [''],
         'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
