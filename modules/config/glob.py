@@ -25,6 +25,7 @@ class _GlobalConf(object):
                                    'TopologyGroupOfGroups']}
     conf_downtimes_output = {'Output': ['Downtimes']}
     conf_weights_output = {'Output': ['Weights']}
+    conf_servicetypes_output = {'Output': ['ServiceTypes']}
 
     def __call__(self, caller=None, confpath=None, **kwargs):
         if caller:
@@ -61,7 +62,7 @@ class _GlobalConf(object):
                              self.conf_topo_output),
             'service-types-combiner.py':
             self._merge_dict(self.shared_secopts,
-                             self.conf_topo_output),
+                             self.conf_servicetypes_output),
             'topology-json-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),
@@ -84,11 +85,14 @@ class _GlobalConf(object):
             self._merge_dict(self.shared_secopts,
                              self.conf_topo_output),
             'service-types-gocdb-connector.py':
-            self._merge_dict(self.shared_secopts),
+            self._merge_dict(self.shared_secopts,
+                             self.conf_servicetypes_output),
             'service-types-csv-connector.py':
-            self._merge_dict(self.shared_secopts),
+            self._merge_dict(self.shared_secopts,
+                             self.conf_servicetypes_output),
             'service-types-json-connector.py':
-            self._merge_dict(self.shared_secopts),
+            self._merge_dict(self.shared_secopts,
+                             self.conf_servicetypes_output),
         }
 
         try:

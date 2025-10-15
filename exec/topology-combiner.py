@@ -64,12 +64,13 @@ def main():
             if comb_globopts:
                 globopts.configure(comb_globopts)
             topos_confs = comb.get('combine')
+            n = 1
             if topos_confs:
                 for topoconf in topos_confs:
                     which = topoconf.get('type', None)
                     if not which:
                         raise ConnectorConfError('type is mandatory in topology combine')
-                    combuid = f'{topos_confs.index(topoconf) + 1}-{which}'
+                    combuid = f'{n}-{which}'
                     confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
                     confcust.configure(topoconf)
                     confcust.valid()
@@ -86,6 +87,7 @@ def main():
                         coros.append(TaskFlatTopology(logger, None, True, combuid=combuid).run())
                     elif which.lower() == 'json':
                         coros.append(TaskFlatTopology(logger, None, False, combuid=combuid).run())
+                    n += 1
             else:
                 raise ConnectorConfError('combine key mandatory')
 

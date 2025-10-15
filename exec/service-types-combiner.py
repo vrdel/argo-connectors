@@ -14,7 +14,7 @@ from argo_connectors.config.customer import CombinerCustomer
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
-from argo_connectors.tasks.common import write_state
+from argo_connectors.tasks.common import write_state, write_servicetypes_json as write_json
 from argo_connectors.io.webapi import WebAPI
 
 
@@ -57,14 +57,15 @@ def main():
             if comb_globopts:
                 globopts.configure(comb_globopts)
             servtype_confs = comb.get('combine')
+            n = 1
             if servtype_confs:
-                for st in servtype_confs:
-                    which = st.get('type', None)
+                for st_conf in servtype_confs:
+                    which = st_conf.get('type', None)
                     if not which:
                         raise ConnectorConfError('type is mandatory in service-types combine')
-                    combuid = f'{servtype_confs.index(st) + 1}-{which}'
+                    combuid = f'{n}-{which}'
                     confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
-                    confcust.configure(st)
+                    confcust.configure(st_conf)
                     confcust.valid()
                     confcust.make_dirstruct(jobdir=False)
                     confcust.make_dirstruct(globopts.options()['InputStateSaveDir'.lower()], jobdir=False)
@@ -81,6 +82,7 @@ def main():
                         coros.append(TaskFlatServiceTypes(logger, None, False,
                                                           initsync=False,
                                                           combuid=combuid).run())
+                    n += 1
             else:
                 raise ConnectorConfError('combine key mandatory')
 
@@ -97,7 +99,8 @@ def main():
 
         logger.info('Customer:' + comb['tenant'] + ' Joined ServiceTypes:%d' % (numst))
 
-        # TODO: write_json()
+        if globopts.options()['GeneralWriteJson'.lower()]:
+            write_json(logger, servicetypes, None, combuid)
 
         if globopts.options()['GeneralPublishWebAPI'.lower()]:
             asyncio.run(webapi_send(logger, servicetypes, combuid))

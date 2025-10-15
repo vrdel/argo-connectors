@@ -38,6 +38,18 @@ def write_downtimes_json(logger, dts, timestamp, combuid=None):
         raise SystemExit(1)
 
 
+def write_servicetypes_json(logger, servicetypes, timestamp, combuid=None):
+    customer = get_custconf(combuid)
+    custdir = customer.get_custdir()
+    filename = filename_date(
+        logger, Global.options()['OutputServiceTypes'.lower()], custdir, stamp=timestamp)
+    json_writer = JsonWriter(servicetypes, filename, Global.options()['generalcompressjson'])
+    ret, excep = json_writer.write_json()
+    if not ret:
+        logger.error('Customer:{} {}'.format(logger.customer, repr(excep)))
+        raise SystemExit(1)
+
+
 def write_weights_json(logger, cust, job, fixed_date, weights):
     jobdir = Customer.get_fulldir(cust, job)
     if fixed_date:
