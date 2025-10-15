@@ -14,7 +14,7 @@ from argo_connectors.config.customer import CombinerCustomer
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
-from argo_connectors.tasks.common import write_state, write_topo_json as write_json
+from argo_connectors.tasks.common import write_state
 from argo_connectors.io.webapi import WebAPI
 
 
@@ -23,24 +23,19 @@ async def fetch(tasks):
     return fetched_data
 
 
-async def webapi_send(logger, group_groups, group_endpoints, combuid):
+async def webapi_send(logger, servicetypes, combuid):
     webapi = WebAPI(logger, combuid=combuid)
-    await asyncio.gather(
-        webapi.send(group_groups, 'groups'),
-        webapi.send(group_endpoints, 'endpoints')
-    )
+    await webapi.send(servicetypes, 'service-types')
     await webapi.session.close()
 
 
-def combine(topologies):
-    joint_gg, joint_ge = list(), list()
+def combine(servicetypes):
+    joint_servicetypes = list()
 
-    for topo in topologies:
-        group_groups, group_endpoints = topo
-        joint_gg += group_groups
-        joint_ge += group_endpoints
+    for st in servicetypes:
+        joint_servicetypes += st
 
-    return joint_gg, joint_ge
+    return joint_servicetypes
 
 
 def main():
@@ -95,6 +90,17 @@ def main():
 
     try:
         data_fetched = asyncio.run(fetch(coros))
+        servicetypes = combine(data_fetched)
+        asyncio.run(write_state(None, True, combuid))
+
+        numst = len(servicetypes)
+
+        logger.info('Customer:' + comb['tenant'] + ' Joined ServiceTypes:%d' % (numst))
+
+        # TODO: write_json()
+
+        if globopts.options()['GeneralPublishWebAPI'.lower()]:
+            asyncio.run(webapi_send(logger, servicetypes, combuid))
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
         logger.error(repr(exc))
