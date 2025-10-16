@@ -1,19 +1,11 @@
 #!/usr/bin/env python
 
-import argparse
 import asyncio
-import os
 import sys
-
-from argo_connectors.log import Logger
-from argo_connectors.config.combine import CombineConf
 
 from argo_connectors.exe.combiner import ExecCombiner
 
-from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import CombinerCustomer
-
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
@@ -57,15 +49,20 @@ def main():
 
     for task in combine_exec.tasks:
         if task['type'] == 'gocdb':
-            coros.append(TaskGocdbTopology(combine_exec.logger, None, task['id']).run())
+            coros.append(TaskGocdbTopology(combine_exec.logger, None,
+                                           task['id']).run())
         elif task['type'] == 'lot1sc':
-            coros.append(TaskLot1ScTopology(combine_exec.logger, None, task['id']).run())
+            coros.append(TaskLot1ScTopology(combine_exec.logger, None,
+                                            task['id']).run())
         elif task['type'] == 'provider':
-            coros.append(TaskProviderTopology(combine_exec.logger, None, task['id']).run())
+            coros.append(TaskProviderTopology(combine_exec.logger, None,
+                                              task['id']).run())
         elif task['type'] == 'csv':
-            coros.append(TaskFlatTopology(combine_exec.logger, None, True, combuid=task['id']).run())
+            coros.append(TaskFlatTopology(combine_exec.logger, None, True,
+                                          combuid=task['id']).run())
         elif task['type'] == 'json':
-            coros.append(TaskFlatTopology(combine_exec.logger, None, False, combuid=task['id']).run())
+            coros.append(TaskFlatTopology(combine_exec.logger, None, False,
+                                          combuid=task['id']).run())
 
     try:
         data_fetched = asyncio.run(fetch(coros))
