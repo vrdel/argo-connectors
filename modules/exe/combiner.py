@@ -5,7 +5,7 @@ from argo_connectors.log import Logger
 from argo_connectors.config.combine import CombineConf
 from argo_connectors.config.glob import Global
 from argo_connectors.config.customer import CombinerCustomer
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
+from argo_connectors.exceptions import ConnectorConfError
 
 
 class ExecCombiner:
@@ -14,7 +14,7 @@ class ExecCombiner:
         self.combiner = combiner
         self.exe_script = exe_script
         self.args = None
-        self.logger = None
+        self._logger = None
         self.tasks = list()
         self.globopts = None
         self.tenant_name = None
@@ -28,7 +28,7 @@ class ExecCombiner:
 
     def _main(self):
         self._setargs()
-        self.logger = Logger(os.path.basename(self.exe_script))
+        self._logger = Logger(os.path.basename(self.exe_script))
         combopts = CombineConf(self.exe_script, self.args.yamlconf).parse()
 
         for comb in combopts:
@@ -51,7 +51,7 @@ class ExecCombiner:
                         confcust.valid()
                         confcust.make_dirstruct(jobdir=False)
                         confcust.make_dirstruct(self.globopts.options()['InputStateSaveDir'.lower()], jobdir=False)
-                        self.logger.customer = self.tenant_name
+                        self._logger.customer = self.tenant_name
                         key = which.lower()
                         self.tasks.append({
                             'type': key,
@@ -62,5 +62,5 @@ class ExecCombiner:
                     raise ConnectorConfError('combine key mandatory')
 
             except ConnectorConfError as exc:
-                self.logger.error(exc)
+                self._logger.error(exc)
                 raise SystemExit(1)
