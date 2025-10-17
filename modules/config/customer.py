@@ -14,6 +14,7 @@ class AuthOpts(object):
     def __init__(self):
         auth_custopts = Customer._get_cust_options('AuthOpts')
         self.auth_opts = Global.merge_opts(auth_custopts, 'authentication')
+
         auth_complete, missing = Global.is_complete(self.auth_opts, 'authentication')
         self.missing = None
         if not auth_complete:
@@ -73,8 +74,9 @@ class _CustomerConf(object):
         'topology-csv-connector.py': [''],
         'topology-provider-connector.py': [''],
         'topology-combiner.py': [''],
+        'downtimes-combiner.py': [''],
+        'service-types-combiner.py': [''],
         'topology-lot1sc-connector.py': [''],
-        'metricprofile-webapi-connector.py': ['MetricProfileNamespace'],
         'downtimes-gocdb-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
         'downtimes-csv-connector.py': ['DowntimesFeed', 'TopoUIDServiceEndpoints'],
         'weights-vapor-connector.py': ['WeightsFeed',
@@ -245,13 +247,12 @@ class _CustomerConf(object):
             for job in self._cust[cust]['Jobs']:
                 if config.has_section(job):
                     try:
-                        profiles = config.get(job, 'Profiles')
                         dirname = config.get(job, 'Dirname')
                     except configparser.NoOptionError as e:
                         raise ConnectorConfError(e.message)
 
                     self._jobs.update(
-                        {job: {'Profiles': profiles, 'Dirname': dirname}})
+                        {job: {'Dirname': dirname}})
                     if self._jobattrs:
                         for attr in self._jobattrs:
                             if config.has_option(job, attr):
@@ -373,12 +374,6 @@ class _CustomerConf(object):
     def get_customers(self):
         if self._cust:
             return self._cust.keys()
-
-    def get_profiles(self, job):
-        profiles = self._jobs[job]['Profiles'].split(',')
-        for i, p in enumerate(profiles):
-            profiles[i] = p.strip()
-        return profiles
 
     def get_fetchtype(self, job):
         return self._jobs[job]['TopoFetchType']

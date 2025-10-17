@@ -1,65 +1,29 @@
 #!/usr/bin/env python
 
-import argparse
-import datetime
-import os
 import sys
-
 import asyncio
 
-from argo_connectors.config.customer import Customer
-from argo_connectors.config.glob import Global
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
-from argo_connectors.log import Logger
+from argo_connectors.exe.connector import ExecConnector
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
 from argo_connectors.tasks.common import write_state
-from argo_connectors.utils import date_check
 
 
 def main():
-    global logger, globopts
-    parser = argparse.ArgumentParser(description='Fetch service types from GOCDB')
-    parser.add_argument('-c', dest='custconf', metavar='customer.conf',
-                        default=None, help='path to customer configuration file',
-                        type=str, required=False)
-    parser.add_argument('--initial', dest='initsync', help='initial sync of service types',
-                        action='store_true', default=False,
-                        required=False)
-    parser.add_argument('-g', dest='gloconf', metavar='global.conf',
-                        default=None, help='path to global configuration file',
-                        type=str, required=False)
-    parser.add_argument('-d', dest='date', metavar='YEAR-MONTH-DAY',
-                        help='write data for this date', type=str, required=False)
-    args = parser.parse_args()
-    logger = Logger(os.path.basename(sys.argv[0]))
-
-    fixed_date = None
-    if args.date and date_check(args.date):
-        fixed_date = args.date
-
-    confpath = args.gloconf if args.gloconf else None
+    conn_exec = ExecConnector(
+        description="Fetch service types from GOCDB and send it to WEB-API",
+        initial_arg=True,
+        initial_arg_help="Initial sync of service types",
+        exe_script=sys.argv[0]
+    )
 
     try:
-        globopts = Global(sys.argv[0], confpath).options()
-        confpath = args.custconf if args.custconf else None
-        confcust = Customer(sys.argv[0], confpath)
-        confcust.valid()
-
-    except ConnectorConfError as exc:
-        logger.error(exc)
-        raise SystemExit(1)
-
-    confcust.make_dirstruct()
-    confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-    logger.customer = confcust.get_custname()
-
-    try:
-        task = TaskGocdbServiceTypes(logger, fixed_date, args.initsync)
+        task = TaskGocdbServiceTypes(conn_exec.logger, conn_exec.fixed_date, conn_exec.args.initsync)
         asyncio.run(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
-        logger.error(repr(exc))
-        asyncio.run(write_state(fixed_date, False))
+        conn_exec.logger.error(repr(exc))
+        asyncio.run(write_state(conn_exec.fixed_date, False))
 
 
 if __name__ == '__main__':
