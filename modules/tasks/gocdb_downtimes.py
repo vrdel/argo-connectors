@@ -9,12 +9,12 @@ from argo_connectors.parse.gocdb_downtimes import ParseDowntimes
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_downtimes_json as write_json
 from argo_connectors.utils import module_class_name
+from argo_connectors.log import Logger
 
 
 class TaskGocdbDowntimes(object):
-    def __init__(self, logger, start, end, targetdate, timestamp,
+    def __init__(self, start, end, targetdate, timestamp,
                  combuid=None):
-        self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
         self.Customer = get_custconf(combuid)
@@ -59,7 +59,7 @@ class TaskGocdbDowntimes(object):
         return res
 
     def parse_source(self, res):
-        gocdb = ParseDowntimes(self.logger, res, self.start, self.end, self.combuid)
+        gocdb = ParseDowntimes(res, self.start, self.end, self.combuid)
         return gocdb.get_data()
 
     async def run(self):
@@ -82,16 +82,16 @@ class TaskGocdbDowntimes(object):
                 await webapi.session.close()
 
             if self.globopts['GeneralWriteJson'.lower()]:
-                write_json(self.logger, dts, self.timestamp)
+                write_json(dts, self.timestamp)
 
         if dts or write_empty:
             cust = list(self.Customer.get_customers())[0]
             if not self.combuid:
-                self.logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
+                Logger.info('Customer:%s Fetched Date:%s Endpoints:%d' %
                                  (self.Customer.get_custname(cust),
                                   self.targetdate, len(dts)))
             else:
-                self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:%s Fetched Date:%s Endpoints:%d' %
+                Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:%s Fetched Date:%s Endpoints:%d' %
                                  (self.Customer.get_custname(cust),
                                   self.targetdate, len(dts)))
                 return dts
