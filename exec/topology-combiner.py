@@ -1,18 +1,11 @@
 #!/usr/bin/env python
 
-import argparse
 import asyncio
-import os
 import sys
 
-from argo_connectors.log import Logger
-from argo_connectors.config.combine import CombineConf
+from argo_connectors.exe.combiner import ExecCombiner
 
-from argo_connectors.config.glob import Global
-from argo_connectors.config.customer import CombinerCustomer
-
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError, ConnectorConfError
-from argo_connectors.tasks.common import write_state
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
 from argo_connectors.tasks.lot1sc_topology import TaskLot1ScTopology
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
@@ -47,69 +40,50 @@ def combine(topologies):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="""Combiner that calls topology tasks specified in YAML file, joins their data, record it in JSON file and push it to WEB-API""")
-    parser.add_argument('-c', dest='yamlconf', metavar='combine.yml',
-                        help='path to YAML file', type=str, required=True)
-    args = parser.parse_args()
-
-    logger = Logger(os.path.basename(sys.argv[0]))
-
-    combopts = CombineConf(sys.argv[0], args.yamlconf).parse()
-
+    combine_exec = ExecCombiner(
+        description="""Combiner that calls topology tasks specified in YAML file, joins their data, record it in JSON file and push it to WEB-API""",
+        exe_script=sys.argv[0],
+        combiner='topology'
+    )
     coros = list()
 
-    for comb in combopts:
-        try:
-            comb_globopts = comb.get('config', None)
-            globopts = Global(sys.argv[0])
-            if comb_globopts:
-                globopts.configure(comb_globopts)
-            topos_confs = comb.get('combine')
-            if topos_confs:
-                for topoconf in topos_confs:
-                    which = topoconf.get('type', None)
-                    if not which:
-                        raise ConnectorConfError('type is mandatory in topology combine')
-                    combuid = f'{topos_confs.index(topoconf) + 1}-{which}'
-                    confcust = CombinerCustomer(sys.argv[0], combuid, comb['tenant'])
-                    confcust.configure(topoconf)
-                    confcust.valid()
-                    confcust.make_dirstruct(jobdir=False)
-                    confcust.make_dirstruct(globopts.options()['InputStateSaveDir'.lower()], jobdir=False)
-                    logger.customer = comb['tenant']
-                    if which == 'gocdb':
-                        coros.append(TaskGocdbTopology(logger, None, combuid).run())
-                    elif which == 'lot1sc':
-                        coros.append(TaskLot1ScTopology(logger, None, combuid).run())
-                    elif which == 'provider':
-                        coros.append(TaskProviderTopology(logger, None, combuid).run())
-                    elif which == 'csv':
-                        coros.append(TaskFlatTopology(logger, None, True, combuid=combuid).run())
-
-        except ConnectorConfError as exc:
-            logger.error(exc)
-            raise SystemExit(1)
+    for task in combine_exec.tasks:
+        if task['type'] == 'gocdb':
+            coros.append(TaskGocdbTopology(combine_exec.logger, None,
+                                           task['id']).run())
+        elif task['type'] == 'lot1sc':
+            coros.append(TaskLot1ScTopology(combine_exec.logger, None,
+                                            task['id']).run())
+        elif task['type'] == 'provider':
+            coros.append(TaskProviderTopology(combine_exec.logger, None,
+                                              task['id']).run())
+        elif task['type'] == 'csv':
+            coros.append(TaskFlatTopology(combine_exec.logger, None, True,
+                                          combuid=task['id']).run())
+        elif task['type'] == 'json':
+            coros.append(TaskFlatTopology(combine_exec.logger, None, False,
+                                          combuid=task['id']).run())
 
     try:
         data_fetched = asyncio.run(fetch(coros))
         group_groups, group_endpoints = combine(data_fetched)
 
-        asyncio.run(write_state(None, True, combuid))
+        asyncio.run(write_state(None, True, task['id']))
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
 
-        logger.info('Customer:' + comb['tenant'] + ' Joined Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
+        combine_exec.logger.info('Customer:' + combine_exec.tenant_name + ' Joined Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
-        if globopts.options()['GeneralWriteJson'.lower()]:
-            write_json(logger, group_groups, group_endpoints, None, combuid)
+        if combine_exec.globopts.options()['GeneralWriteJson'.lower()]:
+            write_json(combine_exec.logger, group_groups, group_endpoints, None, task['id'])
 
-        if globopts.options()['GeneralPublishWebAPI'.lower()]:
-            asyncio.run(webapi_send(logger, group_groups, group_endpoints, combuid))
+        if combine_exec.globopts.options()['GeneralPublishWebAPI'.lower()]:
+            asyncio.run(webapi_send(combine_exec.logger, group_groups, group_endpoints, task['id']))
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
-        logger.error(repr(exc))
-        asyncio.run(write_state(None, False, combuid))
+        combine_exec.logger.error(repr(exc))
+        asyncio.run(write_state(None, False, task['id']))
 
 
 if __name__ == '__main__':
