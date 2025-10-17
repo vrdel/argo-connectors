@@ -10,6 +10,7 @@ from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 from argo_connectors.exceptions import ConnectorError
 from argo_connectors.utils import module_class_name
+from argo_connectors.log import Logger
 
 
 def contains_exception(list):
@@ -20,9 +21,8 @@ def contains_exception(list):
     return (False, None)
 
 
-class TaskLot1ScTopology(object):
-    def __init__(self, logger, fixed_date, combuid=None):
-        self.logger = logger
+class TaskLot1ScTopology():
+    def __init__(self, fixed_date, combuid=None):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
@@ -89,12 +89,12 @@ class TaskLot1ScTopology(object):
                 await webapi.session.close()
 
             if self.globopts['GeneralWriteJson'.lower()]:
-                write_json(self.logger, group_groups, group_endpoints,
+                write_json(group_groups, group_endpoints,
                            self.fixed_date)
 
         if not self.combuid:
-            self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+            Logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
         else:
-            self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+            Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
 
             return group_groups, group_endpoints
