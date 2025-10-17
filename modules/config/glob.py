@@ -2,7 +2,6 @@ import configparser
 import errno
 import os
 
-from argo_connectors.log import Logger
 from argo_connectors.exceptions import ConnectorConfError
 
 
@@ -38,7 +37,6 @@ class _GlobalConf(object):
         self.caller = caller
         self.optional = dict()
 
-        self.logger = Logger(str(self.__class__))
         self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/global.conf" if not confpath else confpath
 
         self._checkpath = kwargs['checkpath'] if 'checkpath' \
