@@ -1,4 +1,3 @@
-import json
 import asyncio
 
 from urllib.parse import urlparse
@@ -9,7 +8,7 @@ from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
+from argo_connectors.exceptions import ConnectorError
 from argo_connectors.utils import module_class_name
 
 
@@ -46,8 +45,9 @@ class TaskLot1ScTopology(object):
         return res
 
     def parse_source_topo(self, res, tier):
-        topo = ParseLot1ScEndpoints(self.logger, res, self.uidservendp,
-                                    self.fetchtype, tier)
+        topo = ParseLot1ScEndpoints(res, self.uidservendp,
+                                    self.fetchtype,
+                                    tier)
         group_groups = topo.get_group_groups()
         group_endpoints = topo.get_group_endpoints()
 
