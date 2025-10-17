@@ -20,7 +20,7 @@ async def fetch(tasks):
 
 
 async def webapi_send(logger, group_groups, group_endpoints, combuid):
-    webapi = WebAPI(logger, combuid=combuid)
+    webapi = WebAPI(combuid=combuid)
     await asyncio.gather(
         webapi.send(group_groups, 'groups'),
         webapi.send(group_endpoints, 'endpoints')

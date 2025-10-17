@@ -84,7 +84,7 @@ class TaskFlatTopology(object):
         if not self.combuid:
             # send concurrently to WEB-API in coroutines
             if self.globopts['GeneralPublishWebAPI'.lower()]:
-                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                 await asyncio.gather(
                     webapi.send(group_groups, 'groups'),
                     webapi.send(group_endpoints, 'endpoints')

@@ -50,7 +50,7 @@ class TaskCsvDowntimes(object):
 
             if not self.combuid:
                 if self.globopts['GeneralPublishWebAPI'.lower()]:
-                    webapi = WebAPI(self.logger, date=self.targetdate, combuid=self.combuid)
+                    webapi = WebAPI(date=self.targetdate, combuid=self.combuid)
                     await webapi.send(dts, downtimes_component=True)
                     await webapi.session.close()
 

@@ -19,7 +19,7 @@ async def fetch(tasks):
 
 
 async def webapi_send(logger, downtimes, combuid):
-    webapi = WebAPI(logger, combuid=combuid)
+    webapi = WebAPI(combuid=combuid)
     await webapi.send(downtimes, 'downtimes')
     await webapi.session.close()
 

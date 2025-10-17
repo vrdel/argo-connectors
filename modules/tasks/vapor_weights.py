@@ -46,7 +46,7 @@ class TaskVaporWeights(object):
                 weights = self.parse_source(res)
 
             if self.globopts['GeneralPublishWebAPI'.lower()]:
-                webapi = WebAPI(self.logger, report=Customer.get_jobdir(job),
+                webapi = WebAPI(report=Customer.get_jobdir(job),
                                 endpoints_group='SITES', date=self.fixed_date)
                 await webapi.send(weights)
                 await webapi.session.close()

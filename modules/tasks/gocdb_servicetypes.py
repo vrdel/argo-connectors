@@ -58,7 +58,7 @@ class TaskGocdbServiceTypes(object):
             coros = [self.fetch_data()]
 
             if not self.initsync:
-                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                 coros.append(webapi.get('service-types', jsonret=False))
 
             fetched_data = await asyncio.gather(*coros, return_exceptions=True)
@@ -84,7 +84,7 @@ class TaskGocdbServiceTypes(object):
 
             if not self.combuid:
                 if self.globopts['GeneralPublishWebAPI'.lower()]:
-                    webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                    webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                     await webapi.send(service_types, 'service-types')
                     await webapi.session.close()
 
