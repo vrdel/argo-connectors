@@ -7,6 +7,7 @@ from argo_connectors.exe.connector import ExecConnector
 from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_connectors.tasks.vapor_weights import TaskVaporWeights
 from argo_connectors.tasks.common import write_weights_metricprofile_state as write_state
+from argo_connectors.log import Logger
 
 
 def main():
@@ -26,15 +27,15 @@ def main():
         sjobs = set(map(lambda jc: jc[0], jobcust))
         jobs = list(sjobs)[0] if len(
             sjobs) == 1 else '({0})'.format(','.join(sjobs))
-        conn_exec.logger.job = jobs
-        conn_exec.logger.customer = customers
+        Logger.job = jobs
+        Logger.customer = customers
 
         try:
-            task = TaskVaporWeights(conn_exec.logger, jobcust, conn_exec.fixed_date)
+            task = TaskVaporWeights(jobcust, conn_exec.fixed_date)
             asyncio.run(task.run())
 
         except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
-            conn_exec.logger.error(repr(exc))
+            Logger.error(repr(exc))
             for job, cust in jobcust:
                 asyncio.run(write_state(conn_exec.fixed_date, True))
 

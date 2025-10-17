@@ -8,11 +8,11 @@ from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.parse.vapor import ParseWeights
 from argo_connectors.tasks.common import write_weights_metricprofile_state as write_state, write_weights_json as write_json
+from argo_connectors.log import Logger
 
 
 class TaskVaporWeights(object):
-    def __init__(self, logger, jobcust, fixed_date):
-        self.logger = logger
+    def __init__(self, jobcust, fixed_date):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.feed = Customer.opt('Vaporpi')
@@ -29,13 +29,13 @@ class TaskVaporWeights(object):
         return res
 
     def parse_source(self, res):
-        weights = ParseWeights(self.logger, res).get_data()
+        weights = ParseWeights(res).get_data()
         return weights
 
     async def run(self):
         for job, cust in self.jobcust:
-            self.logger.customer = Customer.get_custname(cust)
-            self.logger.job = job
+            Logger.customer = Customer.get_custname(cust)
+            Logger.job = job
 
             write_empty = Customer.send_empty(self.connector_name, cust)
 
@@ -52,7 +52,7 @@ class TaskVaporWeights(object):
                 await webapi.session.close()
 
             if self.globopts['GeneralWriteJson'.lower()]:
-                write_json(self.logger, cust, job, self.fixed_date, weights)
+                write_json(cust, job, self.fixed_date, weights)
 
             await write_state(cust, job, self.fixed_date, True)
 
@@ -60,7 +60,7 @@ class TaskVaporWeights(object):
             custs = set([cust for job, cust in self.jobcust])
             for cust in custs:
                 jobs = [job for job, lcust in self.jobcust if cust == lcust]
-                self.logger.info('Customer:%s Jobs:%s Sites:%d' %
+                Logger.info('Customer:%s Jobs:%s Sites:%d' %
                                  (Customer.get_custname(cust), jobs[0]
                                      if len(jobs) == 1 else
                                      '({0})'.format(','.join(jobs)),

@@ -55,11 +55,11 @@ def write_servicetypes_json(servicetypes, timestamp, combuid=None):
 def write_weights_json(cust, job, fixed_date, weights):
     jobdir = Customer.get_fulldir(cust, job)
     if fixed_date:
-        filename = filename_date(
-            Logger, Global.options()['OutputWeights'.lower()], jobdir, fixed_date.replace('-', '_'))
+        filename = filename_date(Global.options()['OutputWeights'.lower()],
+                                 jobdir, fixed_date.replace('-', '_'))
     else:
-        filename = filename_date(
-            Logger, Global.options()['OutputWeights'.lower()], jobdir)
+        filename = filename_date(Global.options()['OutputWeights'.lower()],
+                                 jobdir)
 
     json_writer = JsonWriter(weights, filename, Global.options()['generalcompressjson'])
     ret, excep = json_writer.write_json()
