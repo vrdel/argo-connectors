@@ -33,7 +33,7 @@ def datestamp(daysback=None):
     return str(dateback.strftime('%Y_%m_%d'))
 
 
-def filename_date(logger, option, path, stamp=None):
+def filename_date(option, path, stamp=None):
     stamp = stamp if stamp else datestamp(daysback)
     filename = path + re.sub(r'DATE(.\w+)$', r'%s\1' % stamp, option)
 

@@ -7,6 +7,7 @@ from argo_connectors.exe.connector import ExecConnector
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.common import write_state
 from argo_connectors.tasks.gocdb_topology import TaskGocdbTopology
+from argo_connectors.log import Logger
 
 
 def main():
@@ -17,11 +18,11 @@ def main():
     )
 
     try:
-        task = TaskGocdbTopology(conn_exec.logger, conn_exec.fixed_date)
+        task = TaskGocdbTopology(conn_exec.fixed_date)
         asyncio.run(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
-        conn_exec.logger.error(repr(exc))
+        Logger.error(repr(exc))
         asyncio.run(write_state(conn_exec.fixed_date, False))
 
 
