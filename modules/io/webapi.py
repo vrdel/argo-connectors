@@ -52,7 +52,7 @@ class WebAPI(object):
         }
         self.endpoints_group = endpoints_group
         self.date = date or self._construct_datenow()
-        self.session = SessionWithRetry(self.logger, module_class_name(self),
+        self.session = SessionWithRetry(module_class_name(self),
                                         self.retry_options, verbose_ret=True,
                                         handle_session_close=True)
 

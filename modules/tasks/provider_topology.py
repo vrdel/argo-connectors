@@ -118,7 +118,7 @@ class TaskProviderTopology(object):
 
     async def fetch_data(self, feed, access_token):
         remote_topo = urlparse(feed)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
+        session = SessionWithRetry(self.logger.customer, self.globopts, handle_session_close=True)
 
         if access_token:
             headers = {
@@ -189,7 +189,7 @@ class TaskProviderTopology(object):
 
     async def token_fetch(self, oidcclientid, oidctoken, oidcapi):
         token_endpoint = urlparse(oidcapi)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
+        session = SessionWithRetry(self.logger.customer, self.globopts, handle_session_close=True)
 
         data = 'grant_type=refresh_token&refresh_token={0}'.format(oidctoken)
         data += '&client_id={0}&scope=openid%20email%20profile'.format(oidcclientid)

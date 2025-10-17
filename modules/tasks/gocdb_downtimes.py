@@ -38,10 +38,8 @@ class TaskGocdbDowntimes(object):
         feed_parts = urlparse(self.feed)
         start_fmt = self.start.strftime("%Y-%m-%d")
         end_fmt = self.end.strftime("%Y-%m-%d")
-        session = SessionWithRetry(self.logger,
-                                   os.path.basename(self.connector_name),
-                                   self.globopts,
-                                   custauth=self.auth_opts)
+        session = SessionWithRetry(os.path.basename(self.connector_name),
+                                   self.globopts, custauth=self.auth_opts)
         if feed_parts.query:
             query_url = \
                 '{}://{}{}?{}&windowstart={}&windowend={}'.format(feed_parts.scheme,

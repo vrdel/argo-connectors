@@ -194,9 +194,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         if self.topofeedpaging:
             count, cursor = 1, 0
             while count != 0:
-                session = SessionWithRetry(self.logger,
-                                           os.path.basename(
-                                               self.connector_name),
+                session = SessionWithRetry(os.path.basename(self.connector_name),
                                            self.globopts,
                                            custauth=self.auth_opts)
                 res = await session.http_get('{}&next_cursor={}'.format(api,
@@ -215,8 +213,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             return filter_multiple_tags(''.join(fetched_data))
 
         else:
-            session = SessionWithRetry(self.logger,
-                                       os.path.basename(self.connector_name),
+            session = SessionWithRetry(os.path.basename(self.connector_name),
                                        self.globopts, custauth=self.auth_opts)
             res = await session.http_get(api)
 

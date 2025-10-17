@@ -26,8 +26,7 @@ class TaskCsvDowntimes(object):
         self.combuid = combuid
 
     async def fetch_data(self):
-        session = SessionWithRetry(self.logger,
-                                   os.path.basename(self.connector_name),
+        session = SessionWithRetry(os.path.basename(self.connector_name),
                                    self.globopts)
         res = await session.http_get(self.feed)
 
