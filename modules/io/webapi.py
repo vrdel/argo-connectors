@@ -38,18 +38,6 @@ class WebAPI(object):
             'Accept': 'application/json'
         }
         self.report = report
-        retry = int(Global.options()['ConnectionRetry'.lower()])
-        timeout = int(Global.options()['ConnectionTimeout'.lower()])
-        sleepretry = int(Global.options()['ConnectionSleepRetry'.lower()])
-        retryrandom = Global.options()['ConnectionRetryRandom'.lower()]
-        sleepretryrandom = int(Global.options()['ConnectionSleepRandomRetryMax'.lower()])
-        self.retry_options = {
-            'ConnectionRetry'.lower(): retry,
-            'ConnectionTimeout'.lower(): timeout,
-            'ConnectionSleepRetry'.lower(): sleepretry,
-            'ConnectionRetryRandom'.lower(): retryrandom,
-            'ConnectionSleepRandomRetryMax'.lower(): sleepretryrandom
-        }
         self.endpoints_group = endpoints_group
         self.date = date or self._construct_datenow()
         self.session = SessionWithRetry(verbose_ret=True,
