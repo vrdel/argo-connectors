@@ -1,14 +1,14 @@
 from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.log import Logger
 from argo_connectors.parse.base import ParseHelpers
-from argo_connectors.utils import  construct_fqdn
+from argo_connectors.utils import construct_fqdn
 
 
 class ParseFlatEndpoints(ParseHelpers):
-    def __init__(self, logger, data, project, uidservendp=False,
+    def __init__(self, data, project, uidservendp=False,
                  fetchtype='ServiceGroups', is_csv=False, scope=None):
         self.uidservendp = uidservendp
         self.fetchtype = fetchtype
-        self.logger = logger
         self.project = project
         self.is_csv = is_csv
         self.scope = scope if scope else project
@@ -44,7 +44,7 @@ class ParseFlatEndpoints(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             feedtype = 'CSV' if self.is_csv else 'JSON'
-            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (Logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
     def get_groupendpoints(self):
@@ -76,5 +76,5 @@ class ParseFlatEndpoints(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             feedtype = 'CSV' if self.is_csv else 'JSON'
-            msg = 'Customer:%s : Error parsing %s feed - %s' % (self.logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
+            msg = 'Customer:%s : Error parsing %s feed - %s' % (Logger.customer, feedtype, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)

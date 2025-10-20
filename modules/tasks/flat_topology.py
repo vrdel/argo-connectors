@@ -12,11 +12,11 @@ from argo_connectors.parse.flat_contacts import ParseContacts
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 from argo_connectors.utils import module_class_name
+from argo_connectors.log import Logger
 
 
 class TaskFlatTopology(object):
-    def __init__(self, logger, fixed_date, is_csv=False, combuid=None):
-        self.logger = logger
+    def __init__(self, fixed_date, is_csv=False, combuid=None):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
@@ -52,7 +52,7 @@ class TaskFlatTopology(object):
         return res
 
     def parse_source_topo(self, res):
-        topo = ParseFlatEndpoints(self.logger, res, self.custname,
+        topo = ParseFlatEndpoints(res, self.custname,
                                   self.uidservendp, self.topofetchtype,
                                   self.is_csv, scope=self.custname)
         group_groups = topo.get_groupgroups()
@@ -64,8 +64,8 @@ class TaskFlatTopology(object):
         if self._is_feed(self.topofeed):
             res = await self.fetch_data()
             group_groups, group_endpoints = self.parse_source_topo(res)
-            contacts = ParseContacts(self.logger, res, self.uidservendp, self.is_csv).get_contacts()
-            attach_contacts_topodata(self.logger, contacts, group_endpoints)
+            contacts = ParseContacts(res, self.uidservendp, self.is_csv).get_contacts()
+            attach_contacts_topodata(contacts, group_endpoints)
 
         elif not self._is_feed(self.topofeed) and not self.is_csv:
             try:
@@ -73,7 +73,7 @@ class TaskFlatTopology(object):
                     js = json.load(fp)
                     group_groups, group_endpoints = self.parse_source_topo(js)
             except IOError as exc:
-                self.logger.error('Customer:%s : Problem opening %s - %s' % (self.logger.customer, self.topofeed, repr(exc)))
+                Logger.error('Customer:%s : Problem opening %s - %s' % (Logger.customer, self.topofeed, repr(exc)))
 
         if not self.combuid:
             await write_state(self.fixed_date, True)
@@ -92,11 +92,11 @@ class TaskFlatTopology(object):
                 await webapi.session.close()
 
             if self.globopts['GeneralWriteJson'.lower()]:
-                write_json(self.logger, group_groups, group_endpoints, self.fixed_date)
+                write_json(group_groups, group_endpoints, self.fixed_date)
 
         if not self.combuid:
-            self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
+            Logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
         else:
-            self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
+            Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.topofetchtype, numgg))
 
             return group_groups, group_endpoints
