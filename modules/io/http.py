@@ -5,17 +5,18 @@ import random
 
 from aiohttp import client_exceptions, http_exceptions, ClientSession
 
+from argo_connectors.config.glob import Global
 from argo_connectors.exceptions import ConnectorHttpError
 from argo_connectors.log import Logger
 from argo_connectors.utils import module_class_name
 
 
-def build_ssl_settings(globopts):
+def build_ssl_settings():
     try:
-        sslcontext = ssl.create_default_context(capath=globopts['AuthenticationCAPath'.lower()],
-                                                cafile=globopts['AuthenticationCAFile'.lower()])
-        sslcontext.load_cert_chain(globopts['AuthenticationHostCert'.lower()],
-                                   globopts['AuthenticationHostKey'.lower()])
+        sslcontext = ssl.create_default_context(capath=Global.options()['AuthenticationCAPath'.lower()],
+                                                cafile=Global.options()['AuthenticationCAFile'.lower()])
+        sslcontext.load_cert_chain(Global.options()['AuthenticationHostCert'.lower()],
+                                   Global.options()['AuthenticationHostKey'.lower()])
 
         return sslcontext
 
@@ -23,17 +24,17 @@ def build_ssl_settings(globopts):
         return None
 
 
-def build_connection_retry_settings(globopts):
-    retry = int(globopts['ConnectionRetry'.lower()])
-    timeout = int(globopts['ConnectionTimeout'.lower()])
+def build_connection_retry_settings():
+    retry = int(Global.options()['ConnectionRetry'.lower()])
+    timeout = int(Global.options()['ConnectionTimeout'.lower()])
     return (retry, timeout)
 
 
 class SessionWithRetry(object):
-    def __init__(self, globopts, token=None, custauth=None,
+    def __init__(self, token=None, custauth=None,
                  verbose_ret=False, handle_session_close=False):
-        self.ssl_context = build_ssl_settings(globopts)
-        n_try, client_timeout = build_connection_retry_settings(globopts)
+        self.ssl_context = build_ssl_settings()
+        n_try, client_timeout = build_connection_retry_settings()
         client_timeout = aiohttp.ClientTimeout(total=client_timeout,
                                                connect=client_timeout, sock_connect=client_timeout,
                                                sock_read=client_timeout)
@@ -49,7 +50,6 @@ class SessionWithRetry(object):
             self.custauth = None
         self.verbose_ret = verbose_ret
         self.handle_session_close = handle_session_close
-        self.globopts = globopts
         self.erroneous_statuses = [404]
 
     async def _http_method(self, method, url, data=None, headers=None):
@@ -63,11 +63,11 @@ class SessionWithRetry(object):
                 'Accept': 'application/json'
             })
         try:
-            connct_rty_rnd = self.globopts['ConnectionRetryRandom'.lower()]
+            connct_rty_rnd = Global.options()['ConnectionRetryRandom'.lower()]
             if connct_rty_rnd == 'True':
-                sleepsecs = float(random.randint(0, float(self.globopts['ConnectionSleepRandomRetryMax'.lower()])))
+                sleepsecs = float(random.randint(0, float(Global.options()['ConnectionSleepRandomRetryMax'.lower()])))
             else:
-                sleepsecs = float(self.globopts['ConnectionSleepRetry'.lower()])
+                sleepsecs = float(Global.options()['ConnectionSleepRetry'.lower()])
 
             while n <= self.n_try:
                 if n > 1:
