@@ -238,7 +238,5 @@ class WebAPI(object):
             elif status == 409:
                 await self._update(api, data_send)
 
-            Logger.info('Data succesfully sent to WEB-API')
-
         except ConnectorHttpError:
             Logger.error('Failed sent of data to WEB-API')
