@@ -8,6 +8,14 @@ num_excp_expand = 0
 daysback = 1
 
 
+def has_exception(list):
+    for a in list:
+        if isinstance(a, Exception):
+            return (True, a)
+
+    return (False, None)
+
+
 def date_check(arg):
     if re.search("[0-9]{4}-[0-9]{2}-[0-9]{2}", arg):
         return True

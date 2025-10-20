@@ -16,18 +16,10 @@ from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.tasks.common import write_topo_json as write_json, write_state
-from argo_connectors.utils import module_class_name
+from argo_connectors.utils import module_class_name, has_exception
 
 
 PROVIDER_TOKEN = 'var/spool/provider_token.json'
-
-
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
 
 
 class find_next_paging_cursor_count(ParseHelpers, Callable):
@@ -262,7 +254,7 @@ class TaskProviderTopology:
         # fetch topology data concurrently in coroutines
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
-        exc_raised, exc = contains_exception(fetched_data)
+        exc_raised, exc = has_exception(fetched_data)
         if exc_raised:
             raise ConnectorError(repr(exc))
 

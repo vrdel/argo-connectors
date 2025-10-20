@@ -12,15 +12,7 @@ from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
 from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
 from argo_connectors.tasks.common import write_state, write_servicetypes_json as write_json
-from argo_connectors.utils import module_class_name
-
-
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
+from argo_connectors.utils import module_class_name, has_exception
 
 
 class TaskGocdbServiceTypes(object):
@@ -62,7 +54,7 @@ class TaskGocdbServiceTypes(object):
 
             fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
-            exc_raised, exc = contains_exception(fetched_data)
+            exc_raised, exc = has_exception(fetched_data)
             if exc_raised:
                 raise ConnectorError(repr(exc))
 

@@ -11,16 +11,8 @@ from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_servicetypes_json as write_json
 from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError, ConnectorError
-from argo_connectors.utils import module_class_name
+from argo_connectors.utils import module_class_name, has_exception
 from argo_connectors.log import Logger
-
-
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
 
 
 class TaskFlatServiceTypes:
@@ -66,7 +58,7 @@ class TaskFlatServiceTypes:
 
             fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
-            exc_raised, exc = contains_exception(fetched_data)
+            exc_raised, exc = has_exception(fetched_data)
             if exc_raised:
                 raise ConnectorError(repr(exc))
 
