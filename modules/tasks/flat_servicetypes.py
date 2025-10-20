@@ -12,6 +12,7 @@ from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_servicetypes_json as write_json
 from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError, ConnectorError
 from argo_connectors.utils import module_class_name
+from argo_connectors.log import Logger
 
 
 def contains_exception(list):
@@ -23,9 +24,8 @@ def contains_exception(list):
 
 
 class TaskFlatServiceTypes(object):
-    def __init__(self, logger, fixed_date, is_csv=False, initsync=False,
+    def __init__(self, fixed_date, is_csv=False, initsync=False,
                  combuid=None):
-        self.logger = logger
         self.Customer = get_custconf(combuid)
         self.connector_name = Global.caller
         self.auth_opts = self.Customer.auth_opts.opts
@@ -50,11 +50,11 @@ class TaskFlatServiceTypes(object):
         return res
 
     def parse_webapi_poem(self, res):
-        webapi = ParseWebApiServiceTypes(self.logger, res)
+        webapi = ParseWebApiServiceTypes(res)
         return webapi.get_data(tag='poem')
 
     def parse_source(self, res):
-        flat_servtypes = ParseFlatServiceTypes(self.logger, res, self.is_csv)
+        flat_servtypes = ParseFlatServiceTypes(res, self.is_csv)
         return flat_servtypes.get_data()
 
     async def run(self):
@@ -93,16 +93,16 @@ class TaskFlatServiceTypes(object):
                     await webapi.session.close()
 
                 if self.globopts['GeneralWriteJson'.lower()]:
-                    write_json(self.logger, service_types,
+                    write_json(service_types,
                                self.fixed_date)
 
             if not self.combuid:
-                self.logger.info('Customer:' + self.custname + ' Fetched Flat ServiceTypes:%d' % (len(service_types)))
+                Logger.info('Customer:' + self.custname + ' Fetched Flat ServiceTypes:%d' % (len(service_types)))
             else:
-                self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Flat ServiceTypes:%d' % (len(service_types)))
+                Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Flat ServiceTypes:%d' % (len(service_types)))
 
                 return service_types
 
         except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
-            self.logger.error(repr(exc))
+            Logger.error(repr(exc))
             await write_state(self.fixed_date, False)
