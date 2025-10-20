@@ -21,7 +21,7 @@ class TaskVaporWeights(object):
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
-        session = SessionWithRetry(self.globopts)
+        session = SessionWithRetry()
         res = await session.http_get('{}://{}{}'.format(feed_parts.scheme,
                                                         feed_parts.netloc,
                                                         feed_parts.path))

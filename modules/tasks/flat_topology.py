@@ -38,7 +38,7 @@ class TaskFlatTopology(object):
 
     async def fetch_data(self):
         remote_topo = urlparse(self.topofeed)
-        session = SessionWithRetry(self.globopts)
+        session = SessionWithRetry()
         if remote_topo.query:
             res = await \
                 session.http_get('{}://{}{}?{}'.format(remote_topo.scheme,

@@ -208,7 +208,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             return filter_multiple_tags(''.join(fetched_data))
 
         else:
-            session = SessionWithRetry(self.globopts, custauth=self.auth_opts)
+            session = SessionWithRetry(custauth=self.auth_opts)
             res = await session.http_get(api)
 
             return res

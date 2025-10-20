@@ -37,7 +37,7 @@ class TaskGocdbServiceTypes(object):
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
-        session = SessionWithRetry(self.globopts, custauth=self.auth_opts)
+        session = SessionWithRetry(custauth=self.auth_opts)
         res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
                                                            feed_parts.netloc,
                                                            feed_parts.path,

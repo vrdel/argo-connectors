@@ -23,7 +23,7 @@ def contains_exception(list):
     return (False, None)
 
 
-class TaskFlatServiceTypes(object):
+class TaskFlatServiceTypes:
     def __init__(self, fixed_date, is_csv=False, initsync=False,
                  combuid=None):
         self.Customer = get_custconf(combuid)
@@ -40,7 +40,7 @@ class TaskFlatServiceTypes(object):
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
-        session = SessionWithRetry(self.globopts, custauth=self.auth_opts)
+        session = SessionWithRetry(custauth=self.auth_opts)
         res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
                                                            feed_parts.netloc,
                                                            feed_parts.path,
