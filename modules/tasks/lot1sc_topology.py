@@ -36,7 +36,7 @@ class TaskLot1ScTopology():
 
     async def fetch_data(self, tier):
         remote_topo = urlparse(self.topofeed)
-        session = SessionWithRetry(self.custname, self.globopts)
+        session = SessionWithRetry(self.globopts)
         res = await \
             session.http_get('{}://{}{}?{}{}'.format(remote_topo.scheme,
                                                      remote_topo.netloc,

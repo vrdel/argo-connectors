@@ -30,7 +30,7 @@ def build_connection_retry_settings(globopts):
 
 
 class SessionWithRetry(object):
-    def __init__(self, msgprefix, globopts, token=None, custauth=None,
+    def __init__(self, globopts, token=None, custauth=None,
                  verbose_ret=False, handle_session_close=False):
         self.ssl_context = build_ssl_settings(globopts)
         n_try, client_timeout = build_connection_retry_settings(globopts)
