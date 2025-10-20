@@ -1,10 +1,10 @@
 from urllib.parse import urlparse
 from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.log import Logger
 from argo_connectors.parse.base import ParseHelpers
-from argo_connectors.utils import filename_date, module_class_name, construct_fqdn, remove_non_utf
+from argo_connectors.utils import module_class_name, construct_fqdn, remove_non_utf
 
 import uuid
-import json
 
 SERVICE_NAME_WEBPAGE = 'eu.eosc.portal.services.url'
 
@@ -29,8 +29,8 @@ def clean_id(idslash):
 
 
 class ParseResources(ParseHelpers):
-    def __init__(self, logger, data=None, keys=[], custname=None):
-        super(ParseResources, self).__init__(logger)
+    def __init__(self, data=None, keys=[], custname=None):
+        super(ParseResources, self).__init__()
         self.data = data
         self._keys = keys
         self.custname = custname
@@ -70,7 +70,7 @@ class ParseResources(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources feed - %s' % (
-                self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+                Logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:
@@ -78,8 +78,8 @@ class ParseResources(ParseHelpers):
 
 
 class ParseProviders(ParseHelpers):
-    def __init__(self, logger, data, custname):
-        super(ParseProviders, self).__init__(logger)
+    def __init__(self, data, custname):
+        super(ParseProviders, self).__init__()
         self.data = data
         self.custname = custname
         self._providers = list()
@@ -106,7 +106,7 @@ class ParseProviders(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Providers feed - %s' % (
-                self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+                Logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:
@@ -120,8 +120,8 @@ class ParseProviders(ParseHelpers):
 
 
 class ParseExtensions(ParseHelpers):
-    def __init__(self, logger, data=None, groupnames=None, uidservendp=True, custname=None):
-        super(ParseExtensions, self).__init__(logger)
+    def __init__(self, data=None, groupnames=None, uidservendp=True, custname=None):
+        super(ParseExtensions, self).__init__()
         self.data = data
         self.custname = custname
         self.uidservendp = uidservendp
@@ -183,7 +183,7 @@ class ParseExtensions(ParseHelpers):
 
         except (KeyError, IndexError, TypeError, AttributeError, AssertionError) as exc:
             msg = module_class_name(self) + ' Customer:%s : Error parsing EOSC Resources Extensions feed - %s' % (
-                self.logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
+                Logger.customer, repr(exc).replace('\'', '').replace('\"', ''))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:
@@ -193,12 +193,12 @@ class ParseExtensions(ParseHelpers):
         return self._extensions
 
 
-class ParseTopo(object):
-    def __init__(self, logger, providers, resources, uidservendp, custname):
+class ParseTopo:
+    def __init__(self, providers, resources, uidservendp, custname):
         self.uidservendp = uidservendp
-        self.providers = ParseProviders(logger, providers, custname)
-        self.resources = ParseResources(
-            logger, resources, ['horizontalService'], custname)
+        self.providers = ParseProviders(providers, custname)
+        self.resources = ParseResources(resources, ['horizontalService'],
+                                        custname)
         self.maxDiff = None
 
     def get_group_groups(self):
