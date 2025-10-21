@@ -3,28 +3,20 @@ import asyncio
 
 from urllib.parse import urlparse
 
-from argo_connectors.config.glob import Global
 from argo_connectors.config.customer import get_custconf
+from argo_connectors.config.glob import Global
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.io.http import SessionWithRetry
+from argo_connectors.io.webapi import WebAPI
+from argo_connectors.log import Logger
 from argo_connectors.parse.gocdb_servicetypes import ParseGocdbServiceTypes
 from argo_connectors.parse.webapi_servicetypes import ParseWebApiServiceTypes
-from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_servicetypes_json as write_json
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
-from argo_connectors.utils import module_class_name
-
-
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
+from argo_connectors.utils import module_class_name, has_exception
 
 
 class TaskGocdbServiceTypes(object):
-    def __init__(self, logger, fixed_date, initsync, combuid=None):
-        self.logger = logger
+    def __init__(self, fixed_date, initsync, combuid=None):
         self.Customer = get_custconf(combuid)
         self.feed = self.Customer.opt('ServiceTypesFeed') or self.Customer.opt('TopoFeed')
         self.connector_name = Global.caller
@@ -37,9 +29,7 @@ class TaskGocdbServiceTypes(object):
 
     async def fetch_data(self):
         feed_parts = urlparse(self.feed)
-        session = SessionWithRetry(self.logger,
-                                   os.path.basename(self.connector_name),
-                                   self.globopts, custauth=self.auth_opts)
+        session = SessionWithRetry(custauth=self.auth_opts)
         res = await session.http_get('{}://{}{}?{}'.format(feed_parts.scheme,
                                                            feed_parts.netloc,
                                                            feed_parts.path,
@@ -47,11 +37,11 @@ class TaskGocdbServiceTypes(object):
         return res
 
     def parse_source(self, res):
-        gocdb = ParseGocdbServiceTypes(self.logger, res)
+        gocdb = ParseGocdbServiceTypes(res)
         return gocdb.get_data()
 
     def parse_webapi_poem(self, res):
-        webapi = ParseWebApiServiceTypes(self.logger, res)
+        webapi = ParseWebApiServiceTypes(res)
         return webapi.get_data(tag='poem')
 
     async def run(self):
@@ -59,12 +49,12 @@ class TaskGocdbServiceTypes(object):
             coros = [self.fetch_data()]
 
             if not self.initsync:
-                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                 coros.append(webapi.get('service-types', jsonret=False))
 
             fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
-            exc_raised, exc = contains_exception(fetched_data)
+            exc_raised, exc = has_exception(fetched_data)
             if exc_raised:
                 raise ConnectorError(repr(exc))
 
@@ -85,23 +75,23 @@ class TaskGocdbServiceTypes(object):
 
             if not self.combuid:
                 if self.globopts['GeneralPublishWebAPI'.lower()]:
-                    webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                    webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                     await webapi.send(service_types, 'service-types')
                     await webapi.session.close()
 
                 if self.globopts['GeneralWriteJson'.lower()]:
-                    write_json(self.logger, service_types,
+                    write_json(service_types,
                                self.fixed_date)
 
             if not self.combuid:
-                self.logger.info('Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
+                Logger.info('Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
             else:
-                self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
+                Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched GOCDB ServiceTypes:%d' % (len(service_types)))
 
                 return service_types
 
         except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
-            self.logger.error(repr(exc))
+            Logger.error(repr(exc))
             if not self.combuid:
                 await write_state(self.fixed_date, False)
             else:

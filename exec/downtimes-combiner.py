@@ -10,6 +10,7 @@ from argo_connectors.exceptions import ConnectorError, ConnectorParseError, Conn
 from argo_connectors.tasks.gocdb_downtimes import TaskGocdbDowntimes
 from argo_connectors.tasks.flat_downtimes import TaskCsvDowntimes
 from argo_connectors.tasks.common import write_state, write_downtimes_json as write_json
+from argo_connectors.log import Logger
 from argo_connectors.io.webapi import WebAPI
 
 
@@ -18,8 +19,8 @@ async def fetch(tasks):
     return fetched_data
 
 
-async def webapi_send(logger, downtimes, combuid):
-    webapi = WebAPI(logger, combuid=combuid)
+async def webapi_send(downtimes, combuid):
+    webapi = WebAPI(combuid=combuid)
     await webapi.send(downtimes, 'downtimes')
     await webapi.session.close()
 
@@ -51,17 +52,16 @@ def main():
         end = end.replace(hour=23, minute=59, second=59)
 
     except ValueError as exc:
-        combine_exec.logger.error(exc)
+        Logger.error(exc)
         raise SystemExit(1)
 
     for task in combine_exec.tasks:
         if task['type'] == 'gocdb':
-            coros.append(TaskGocdbDowntimes(combine_exec.logger, start, end,
-                                            current_date,
+            coros.append(TaskGocdbDowntimes(start, end, current_date,
                                             timestamp,
                                             combuid=task['id']).run())
         elif task['type'] == 'csv':
-            coros.append(TaskCsvDowntimes(combine_exec.logger, start, end,
+            coros.append(TaskCsvDowntimes(start, end,
                                           current_date, timestamp,
                                           combuid=task['id']).run())
 
@@ -72,16 +72,16 @@ def main():
 
         numst = len(downtimes)
 
-        combine_exec.logger.info('Customer:' + combine_exec.tenant_name + ' Joined Downtimes:%d' % (numst))
+        Logger.info('Customer:' + combine_exec.tenant_name + ' Joined Downtimes:%d' % (numst))
 
         if combine_exec.globopts.options()['GeneralWriteJson'.lower()]:
-            write_json(combine_exec.logger, downtimes, None, task['id'])
+            write_json(downtimes, None, task['id'])
 
         if combine_exec.globopts.options()['GeneralPublishWebAPI'.lower()]:
-            asyncio.run(webapi_send(combine_exec.logger, downtimes, task['id']))
+            asyncio.run(webapi_send(downtimes, task['id']))
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
-        combine_exec.logger.error(repr(exc))
+        Logger.error(repr(exc))
         asyncio.run(write_state(None, False, task['id']))
 
 

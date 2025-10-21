@@ -3,14 +3,12 @@ import json
 from io import StringIO
 from lxml.etree import XMLSyntaxError
 
-from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.log import Logger
+from argo_connectors.utils import module_class_name
 
 
-class ParseHelpers(object):
-    def __init__(self, logger, *args, **kwargs):
-        self.logger = logger
-
+class ParseHelpers():
     def parse_extensions(self, extensions_node):
         extensions_dict = dict()
 
@@ -67,45 +65,45 @@ class ParseHelpers(object):
     def parse_xml(self, data):
         try:
             if data is None:
-                if getattr(self.logger, 'job', False):
+                if getattr(Logger, 'job', False):
                     raise ConnectorParseError("{} Customer:{} Job:{} : No XML data fetched".format(
-                        module_class_name(self), self.logger.customer, self.logger.job))
+                        module_class_name(self), Logger.customer, Logger.job))
                 else:
                     raise ConnectorParseError("{} Customer:{} : No XML data fetched".format(
-                        module_class_name(self), self.logger.customer))
+                        module_class_name(self), Logger.customer))
 
             return data
 
         except XMLSyntaxError:
             msg = '{} Customer:{} : Error parsing XML feed - {}'.format(
-                module_class_name(self), self.logger.customer, repr(exc))
+                module_class_name(self), Logger.customer, repr(exc))
             raise ConnectorParseError(msg)
 
         except Exception as exc:
             msg = '{} Customer:{} : Error - {}'.format(
-                module_class_name(self), self.logger.customer, repr(exc))
+                module_class_name(self), Logger.customer, repr(exc))
             raise ConnectorParseError(msg)
 
     def parse_json(self, data):
         try:
             if data is None:
-                if getattr(self.logger, 'job', False):
+                if getattr(Logger, 'job', False):
                     raise ConnectorParseError("{} Customer:{} Job:{} : No JSON data fetched".format(
-                        module_class_name(self), self.logger.customer, self.logger.job))
+                        module_class_name(self), Logger.customer, Logger.job))
                 else:
                     raise ConnectorParseError("{} Customer:{} : No JSON data fetched".format(
-                        module_class_name(self), self.logger.customer))
+                        module_class_name(self), Logger.customer))
 
             return json.loads(data)
 
         except ValueError as exc:
             msg = '{} Customer:{} : Error parsing JSON feed - {}'.format(
-                module_class_name(self), self.logger.customer, repr(exc))
+                module_class_name(self), Logger.customer, repr(exc))
             raise ConnectorParseError(msg)
 
         except Exception as exc:
             msg = '{} Customer:{} : Error - {}'.format(
-                module_class_name(self), self.logger.customer, repr(exc))
+                module_class_name(self), Logger.customer, repr(exc))
             raise ConnectorParseError(msg)
 
     def csv_to_json(self, data):
@@ -130,6 +128,6 @@ class ParseHelpers(object):
 
         if not results:
             msg = '{} Customer:{} : Error parsing CSV feed - empty data'.format(
-                module_class_name(self), self.logger.customer)
+                module_class_name(self), Logger.customer)
             raise ConnectorParseError(msg)
         return results

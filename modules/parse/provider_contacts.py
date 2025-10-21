@@ -1,11 +1,9 @@
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import construct_fqdn, remove_non_utf
-from urllib.parse import urlparse
 
 
 class ParseProvidersContacts(ParseHelpers):
-    def __init__(self, logger, data):
-        self.logger = logger
+    def __init__(self, data):
         self.data = data
 
         self._provider_contacts = list()
@@ -29,8 +27,7 @@ class ParseProvidersContacts(ParseHelpers):
 
 
 class ParseResourcesContacts(ParseHelpers):
-    def __init__(self, logger, data):
-        self.logger = logger
+    def __init__(self, data):
         self.data = data
 
         self._resource_contacts = dict()

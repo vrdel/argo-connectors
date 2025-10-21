@@ -45,7 +45,7 @@ class ExecConnector:
 
     def _main(self):
         self._setargs()
-        self.logger = Logger(os.path.basename(self.exe_script))
+        self._logger = Logger(os.path.basename(self.exe_script))
 
         try:
             globopts = Global(self.exe_script, self.args.gloconf).options()
@@ -55,9 +55,9 @@ class ExecConnector:
             self.config_global = globopts
 
         except ConnectorConfError as exc:
-            self.logger.error(exc)
+            self._logger.error(exc)
             raise SystemExit(1)
 
         confcust.make_dirstruct()
         confcust.make_dirstruct(globopts['InputStateSaveDir'.lower()])
-        self.logger.customer = confcust.get_custname()
+        self._logger.customer = confcust.get_custname()

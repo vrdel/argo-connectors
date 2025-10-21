@@ -8,6 +8,7 @@ from argo_connectors.exe.connector import ExecConnector
 from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_connectors.tasks.flat_downtimes import TaskCsvDowntimes
 from argo_connectors.tasks.common import write_state
+from argo_connectors.log import Logger
 
 
 def main():
@@ -24,15 +25,15 @@ def main():
         current_date = current_date.replace(hour=0, minute=0, second=0)
 
     except ValueError as exc:
-        conn_exec.logger.error(exc)
+        Logger.error(exc)
         raise SystemExit(1)
 
     try:
-        task = TaskCsvDowntimes(conn_exec.logger, current_date, conn_exec.args.date, timestamp)
+        task = TaskCsvDowntimes(current_date, conn_exec.args.date, timestamp)
         asyncio.run(task.run())
 
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
-        conn_exec.logger.error(repr(exc))
+        Logger.error(repr(exc))
         asyncio.run(write_state(timestamp, False))
 
 

@@ -109,7 +109,6 @@ class _CustomerConf(object):
     def __init__(self, caller, confpath=None, combiner=None, **kwargs):
         self.caller = caller
         self.combiner = combiner
-        self.logger = Logger(str(self.__class__))
         self._filename = f"{os.environ['VIRTUAL_ENV']}/etc/customer.conf" if not confpath else confpath
         try:
             if not kwargs:
@@ -265,18 +264,18 @@ class _CustomerConf(object):
         isok = True
 
         if not self.auth_opts:
-            self.logger.error('%s options incomplete, missing %s' %
-                              ('authentication', ' '.join(self.auth_opts.missing)))
+            Logger.error('%s options incomplete, missing %s' %
+                         ('authentication', ' '.join(self.auth_opts.missing)))
             isok = False
 
         if not self.webapi_opts.opts:
-            self.logger.error('%s options incomplete, missing %s' %
-                              ('webapi', ' '.join(self.webapi_opts.missing)))
+            Logger.error('%s options incomplete, missing %s' %
+                         ('webapi', ' '.join(self.webapi_opts.missing)))
             isok = False
 
         if self.bdii_opts.missing:
-            self.logger.error('%s options incomplete, missing %s' %
-                              ('bdii', ' '.join(self.bdii_opts.missing)))
+            Logger.error('%s options incomplete, missing %s' %
+                         ('bdii', ' '.join(self.bdii_opts.missing)))
             isok = False
 
         if not isok:

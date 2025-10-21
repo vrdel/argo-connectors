@@ -1,6 +1,5 @@
-from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.parse.base import ParseHelpers
-from argo_connectors.utils import construct_fqdn, remove_non_utf
+from argo_connectors.utils import construct_fqdn
 
 import uuid
 
@@ -13,11 +12,10 @@ def build_service_endpoint_id(service_name, service_type):
 
 
 class ParseLot1ScEndpoints(ParseHelpers):
-    def __init__(self, logger, data, uidservendp=False,
+    def __init__(self, data, uidservendp=False,
                  fetchtype='ServiceGroups', tier=1):
         self.uidservendp = uidservendp
         self.fetchtype = fetchtype
-        self.logger = logger
         self.tier = tier
         self.data = data
         if type(data) == str:

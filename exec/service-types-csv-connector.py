@@ -3,10 +3,11 @@
 import sys
 import asyncio
 
-from argo_connectors.exe.connector import ExecConnector
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
-from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
+from argo_connectors.exe.connector import ExecConnector
+from argo_connectors.log import Logger
 from argo_connectors.tasks.common import write_state
+from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 
 
 def main():
@@ -18,12 +19,12 @@ def main():
     )
 
     try:
-        task = TaskFlatServiceTypes(conn_exec.logger, conn_exec.fixed_date, is_csv=True,
+        task = TaskFlatServiceTypes(conn_exec.fixed_date, is_csv=True,
                                     initsync=conn_exec.args.initsync)
         asyncio.run(task.run())
 
     except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
-        conn_exec.logger.error(repr(exc))
+        Logger.error(repr(exc))
         asyncio.run(write_state(conn_exec.fixed_date, False))
 
 

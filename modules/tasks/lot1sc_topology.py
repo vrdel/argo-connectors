@@ -1,4 +1,3 @@
-import json
 import asyncio
 
 from urllib.parse import urlparse
@@ -9,21 +8,13 @@ from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.tasks.common import write_state, write_topo_json as write_json
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
-from argo_connectors.utils import module_class_name
+from argo_connectors.exceptions import ConnectorError
+from argo_connectors.utils import module_class_name, has_exception
+from argo_connectors.log import Logger
 
 
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
-
-
-class TaskLot1ScTopology(object):
-    def __init__(self, logger, fixed_date, combuid=None):
-        self.logger = logger
+class TaskLot1ScTopology():
+    def __init__(self, fixed_date, combuid=None):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
@@ -37,7 +28,7 @@ class TaskLot1ScTopology(object):
 
     async def fetch_data(self, tier):
         remote_topo = urlparse(self.topofeed)
-        session = SessionWithRetry(self.logger, self.custname, self.globopts)
+        session = SessionWithRetry()
         res = await \
             session.http_get('{}://{}{}?{}{}'.format(remote_topo.scheme,
                                                      remote_topo.netloc,
@@ -46,8 +37,9 @@ class TaskLot1ScTopology(object):
         return res
 
     def parse_source_topo(self, res, tier):
-        topo = ParseLot1ScEndpoints(self.logger, res, self.uidservendp,
-                                    self.fetchtype, tier)
+        topo = ParseLot1ScEndpoints(res, self.uidservendp,
+                                    self.fetchtype,
+                                    tier)
         group_groups = topo.get_group_groups()
         group_endpoints = topo.get_group_endpoints()
 
@@ -61,7 +53,7 @@ class TaskLot1ScTopology(object):
 
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
-        exc_raised, exc = contains_exception(fetched_data)
+        exc_raised, exc = has_exception(fetched_data)
         if exc_raised:
             raise ConnectorError(repr(exc))
 
@@ -81,7 +73,7 @@ class TaskLot1ScTopology(object):
         if not self.combuid:
             # send concurrently to WEB-API in coroutines
             if self.globopts['GeneralPublishWebAPI'.lower()]:
-                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                 await asyncio.gather(
                     webapi.send(group_groups, 'groups'),
                     webapi.send(group_endpoints, 'endpoints')
@@ -89,12 +81,12 @@ class TaskLot1ScTopology(object):
                 await webapi.session.close()
 
             if self.globopts['GeneralWriteJson'.lower()]:
-                write_json(self.logger, group_groups, group_endpoints,
+                write_json(group_groups, group_endpoints,
                            self.fixed_date)
 
         if not self.combuid:
-            self.logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+            Logger.info('Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
         else:
-            self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+            Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
 
             return group_groups, group_endpoints
