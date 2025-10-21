@@ -3,8 +3,9 @@
 import sys
 import asyncio
 
-from argo_connectors.exe.connector import ExecConnector
 from argo_connectors.exceptions import ConnectorError, ConnectorHttpError, ConnectorParseError
+from argo_connectors.exe.connector import ExecConnector
+from argo_connectors.log import Logger
 from argo_connectors.tasks.common import write_state
 from argo_connectors.tasks.provider_topology import TaskProviderTopology
 
@@ -17,11 +18,11 @@ def main():
     )
 
     try:
-        task = TaskProviderTopology(conn_exec.logger, conn_exec.fixed_date)
+        task = TaskProviderTopology(conn_exec.fixed_date)
         asyncio.run(task.run())
 
     except (ConnectorError, ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
-        conn_exec.logger.error(repr(exc))
+        Logger.error(repr(exc))
         asyncio.run(write_state(conn_exec.fixed_date, False))
 
 

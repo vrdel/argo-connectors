@@ -5,41 +5,33 @@ import os
 from collections import Callable
 from urllib.parse import urlparse
 
-from argo_connectors.config.glob import Global
 from argo_connectors.config.customer import get_custconf
+from argo_connectors.config.glob import Global
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.webapi import WebAPI
+from argo_connectors.log import Logger
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 from argo_connectors.tasks.common import write_topo_json as write_json, write_state
-from argo_connectors.utils import module_class_name
+from argo_connectors.utils import module_class_name, has_exception
 
 
 PROVIDER_TOKEN = 'var/spool/provider_token.json'
 
 
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
-
-
 class find_next_paging_cursor_count(ParseHelpers, Callable):
-    def __init__(self, logger, res):
+    def __init__(self, res):
         self.res = res
-        self.logger = logger
 
     def __call__(self):
         try:
             return self._parse()
         except (ConnectorParseError, KeyError) as exc:
-            self.logger.error(repr(exc))
-            self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(self.res.replace('\r\n', '').replace('\n', '')))
+            Logger.error(repr(exc))
+            Logger.error("Tried to parse (512 chars): %.512s" % ''.join(self.res.replace('\r\n', '').replace('\n', '')))
             raise ConnectorParseError(exc)
 
     def _parse(self):
@@ -77,9 +69,8 @@ def join_resources(left, right):
     })
 
 
-class TaskProviderTopology(object):
-    def __init__(self, logger, fixed_date, combuid=None):
-        self.logger = logger
+class TaskProviderTopology:
+    def __init__(self, fixed_date, combuid=None):
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.Customer = get_custconf(combuid)
@@ -90,12 +81,12 @@ class TaskProviderTopology(object):
         self.combuid = combuid
 
     def parse_source_extensions(self, extensions, groupnames):
-        resources_extended = ParseExtensions(self.logger, extensions, groupnames, self.uidservendp, self.logger.customer)
+        resources_extended = ParseExtensions(extensions, groupnames, self.uidservendp, Logger.customer)
 
         return resources_extended.get_extensions()
 
     def parse_source_topo(self, resources, providers):
-        topo = ParseTopo(self.logger, providers, resources, self.uidservendp, self.logger.customer)
+        topo = ParseTopo(providers, resources, self.uidservendp, Logger.customer)
 
         return topo.get_group_groups(), topo.get_group_endpoints()
 
@@ -118,7 +109,7 @@ class TaskProviderTopology(object):
 
     async def fetch_data(self, feed, access_token):
         remote_topo = urlparse(feed)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
+        session = SessionWithRetry(handle_session_close=True)
 
         if access_token:
             headers = {
@@ -141,7 +132,7 @@ class TaskProviderTopology(object):
 
         if self.paginated:
             try:
-                next_cursor = find_next_paging_cursor_count(self.logger, res)
+                next_cursor = find_next_paging_cursor_count(res)
                 total, from_index, to_index = next_cursor()
                 fetched_results = filter_out_results(res)
                 num = to_index - from_index
@@ -155,7 +146,7 @@ class TaskProviderTopology(object):
                                                                                 from_index,
                                                                                 num), headers=headers)
                     fetched_results = fetched_results + filter_out_results(res)
-                    next_cursor = find_next_paging_cursor_count(self.logger, res)
+                    next_cursor = find_next_paging_cursor_count(res)
                     total, from_index, to_index = next_cursor()
                     num = to_index - from_index
                     from_index = to_index
@@ -169,7 +160,7 @@ class TaskProviderTopology(object):
 
         else:
             try:
-                next_cursor = find_next_paging_cursor_count(self.logger, res)
+                next_cursor = find_next_paging_cursor_count(res)
                 total, from_index, to_index = next_cursor()
                 num = total
                 from_index = 0
@@ -189,7 +180,7 @@ class TaskProviderTopology(object):
 
     async def token_fetch(self, oidcclientid, oidctoken, oidcapi):
         token_endpoint = urlparse(oidcapi)
-        session = SessionWithRetry(self.logger, self.logger.customer, self.globopts, handle_session_close=True)
+        session = SessionWithRetry(handle_session_close=True)
 
         data = 'grant_type=refresh_token&refresh_token={0}'.format(oidctoken)
         data += '&client_id={0}&scope=openid%20email%20profile'.format(oidcclientid)
@@ -263,7 +254,7 @@ class TaskProviderTopology(object):
         # fetch topology data concurrently in coroutines
         fetched_data = await asyncio.gather(*coros, return_exceptions=True)
 
-        exc_raised, exc = contains_exception(fetched_data)
+        exc_raised, exc = has_exception(fetched_data)
         if exc_raised:
             raise ConnectorError(repr(exc))
 
@@ -274,7 +265,7 @@ class TaskProviderTopology(object):
 
         if fetched_resources and fetched_providers:
             group_groups, group_endpoints = self.parse_source_topo(fetched_resources, fetched_providers)
-            endpoints_contacts = ParseResourcesContacts(self.logger, fetched_resources).get_contacts()
+            endpoints_contacts = ParseResourcesContacts(fetched_resources).get_contacts()
 
             if topofeedextensions:
                 group_endpoints_extended = self.parse_source_extensions(
@@ -282,7 +273,7 @@ class TaskProviderTopology(object):
                 )
                 group_endpoints = group_endpoints + group_endpoints_extended
 
-            attach_contacts_topodata(self.logger, endpoints_contacts, group_endpoints)
+            attach_contacts_topodata(endpoints_contacts, group_endpoints)
 
             if not self.combuid:
                 await write_state(self.fixed_date, True)
@@ -293,7 +284,7 @@ class TaskProviderTopology(object):
             if not self.combuid:
                 # send concurrently to WEB-API in coroutines
                 if self.globopts['GeneralPublishWebAPI'.lower()]:
-                    webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                    webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                     await asyncio.gather(
                         webapi.send(group_groups, 'groups'),
                         webapi.send(group_endpoints, 'endpoints')
@@ -301,12 +292,12 @@ class TaskProviderTopology(object):
                     await webapi.session.close()
 
                 if self.globopts['GeneralWriteJson'.lower()]:
-                    write_json(self.logger, group_groups, group_endpoints,
+                    write_json(group_groups, group_endpoints,
                                self.fixed_date)
 
             if not self.combuid:
-                self.logger.info('Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+                Logger.info('Customer:' + Logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
             else:
-                self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
+                Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + Logger.customer + ' Fetched Endpoints:%d' % (numge) + ' Groups(%s):%d' % (self.fetchtype, numgg))
 
                 return group_groups, group_endpoints

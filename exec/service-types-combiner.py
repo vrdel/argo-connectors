@@ -18,7 +18,7 @@ async def fetch(tasks):
 
 
 async def webapi_send(logger, servicetypes, combuid):
-    webapi = WebAPI(logger, combuid=combuid)
+    webapi = WebAPI(combuid=combuid)
     await webapi.send(servicetypes, 'service-types')
     await webapi.session.close()
 

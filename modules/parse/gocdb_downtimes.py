@@ -6,11 +6,11 @@ from argo_connectors.utils import module_class_name
 from argo_connectors.config.customer import get_custconf
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.parse.base import ParseHelpers
+from argo_connectors.log import Logger
 
 
 class ParseDowntimes(ParseHelpers):
-    def __init__(self, logger, data, start, end, combuid=None):
-        self.logger = logger
+    def __init__(self, data, start, end, combuid=None):
         self.Customer = get_custconf(combuid)
         self.data = data
         self.start = start
@@ -77,7 +77,7 @@ class ParseDowntimes(ParseHelpers):
 
         except (KeyError, IndexError, AttributeError, TypeError, AssertionError, XMLSyntaxError) as exc:
             msg = '{} Customer:{} : Error parsing downtimes feed - {}'.format(
-                module_class_name(self), self.logger.customer, repr(exc))
+                module_class_name(self), Logger.customer, repr(exc))
             raise ConnectorParseError(msg)
 
         except ConnectorParseError as exc:

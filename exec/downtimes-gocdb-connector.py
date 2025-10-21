@@ -8,6 +8,7 @@ from argo_connectors.exe.connector import ExecConnector
 from argo_connectors.exceptions import ConnectorHttpError, ConnectorParseError
 from argo_connectors.tasks.gocdb_downtimes import TaskGocdbDowntimes
 from argo_connectors.tasks.common import write_state
+from argo_connectors.log import Logger
 
 
 def main():
@@ -26,15 +27,15 @@ def main():
         end = end.replace(hour=23, minute=59, second=59)
 
     except ValueError as exc:
-        conn_exec.logger.error(exc)
+        Logger.error(exc)
         raise SystemExit(1)
 
     try:
-        task = TaskGocdbDowntimes(conn_exec.logger, start, end, conn_exec.args.date, timestamp)
+        task = TaskGocdbDowntimes(start, end, conn_exec.args.date, timestamp)
         asyncio.run(task.run())
 
     except (ConnectorHttpError, ConnectorParseError, KeyboardInterrupt) as exc:
-        conn_exec.logger.error(repr(exc))
+        Logger.error(repr(exc))
         asyncio.run(write_state(timestamp, False))
 
 

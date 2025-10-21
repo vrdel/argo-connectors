@@ -9,28 +9,21 @@ from urllib.parse import urlparse
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from argo_connectors.config.glob import Global
 from argo_connectors.config.customer import get_custconf
-from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
-from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
+from argo_connectors.config.glob import Global
+from argo_connectors.exceptions import ConnectorError, ConnectorParseError
 from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.ldap import LDAPSessionWithRetry
 from argo_connectors.io.webapi import WebAPI
+from argo_connectors.log import Logger
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_connectors.mesh.storage_element_path import attach_sepath_topodata
-from argo_connectors.tasks.common import write_state, write_topo_json as write_json
 from argo_connectors.parse.base import ParseHelpers
-from argo_connectors.utils import module_class_name
-
-
-def contains_exception(list):
-    for a in list:
-        if isinstance(a, Exception):
-            return (True, a)
-
-    return (False, None)
+from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
+from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_connectors.tasks.common import write_state, write_topo_json as write_json
+from argo_connectors.utils import module_class_name, has_exception
 
 
 def filter_multiple_tags(data):
@@ -63,16 +56,15 @@ def filter_multiple_tags(data):
 
 
 class find_next_paging_cursor_count(ParseHelpers, Callable):
-    def __init__(self, logger, res):
+    def __init__(self, res):
         self.res = res
-        self.logger = logger
 
     def __call__(self):
         try:
             return self._parse()
         except ConnectorParseError as exc:
-            self.logger.error(repr(exc))
-            self.logger.error("Tried to parse (512 chars): %.512s" % ''.join(
+            Logger.error(repr(exc))
+            Logger.error("Tried to parse (512 chars): %.512s" % ''.join(
                 self.res.replace('\r\n', '').replace('\n', '')))
             raise ConnectorParseError(exc)
 
@@ -97,68 +89,65 @@ class find_next_paging_cursor_count(ParseHelpers, Callable):
 
 
 class TaskParseTopology(object):
-    def __init__(self, logger, combuid):
-        self.logger = logger
+    def __init__(self, combuid):
         self.combuid = combuid
 
     def parse_source_servicegroups(self, res):
-        group_groups = ParseServiceGroups(self.logger, res, self.combuid).get_group_groups()
-        group_endpoints = ParseServiceGroups(self.logger, res, self.combuid).get_group_endpoints()
+        group_groups = ParseServiceGroups(res, self.combuid).get_group_groups()
+        group_endpoints = ParseServiceGroups(res, self.combuid).get_group_endpoints()
 
         return group_groups, group_endpoints
 
     def parse_source_endpoints(self, res):
-        group_endpoints = ParseServiceEndpoints(self.logger, res, self.combuid).get_group_endpoints()
+        group_endpoints = ParseServiceEndpoints(res, self.combuid).get_group_endpoints()
 
         return group_endpoints
 
     def parse_source_sites(self, res):
-        group_groups = ParseSites(self.logger, res, self.combuid).get_group_groups()
+        group_groups = ParseSites(res, self.combuid).get_group_groups()
 
         return group_groups
 
 
 # basic function wrappers used to avoid class TaskParseTopology pickle
 # in ProcessPoolExecutor
-def parse_endpoints(logger, custname, data, combuid):
-    task = TaskParseTopology(logger, combuid)
+def parse_endpoints(custname, data, combuid):
+    task = TaskParseTopology(combuid)
     return task.parse_source_endpoints(data)
 
 
-def parse_sites(logger, custname, data, combuid):
-    task = TaskParseTopology(logger, combuid)
+def parse_sites(custname, data, combuid):
+    task = TaskParseTopology(combuid)
     return task.parse_source_sites(data)
 
 
-def parse_servicegroups(logger, custname, data, combuid):
-    task = TaskParseTopology(logger, combuid)
+def parse_servicegroups(custname, data, combuid):
+    task = TaskParseTopology(combuid)
     return task.parse_source_servicegroups(data)
 
 
 class TaskParseContacts(object):
-    def __init__(self, logger, combuid):
-        self.logger = logger
+    def __init__(self, combuid):
         self.combuid = combuid
 
     def parse_siteswith_contacts(self, res):
-        contacts = ParseSitesWithContacts(self.logger, res)
+        contacts = ParseSitesWithContacts(res)
         return contacts.get_contacts()
 
     def parse_servicegroups_contacts(self, res):
-        contacts = ParseServiceGroupWithContacts(self.logger, res)
+        contacts = ParseServiceGroupWithContacts(res)
         return contacts.get_contacts()
 
     def parse_serviceendpoints_contacts(self, res):
-        contacts = ParseServiceEndpointContacts(self.logger, res)
+        contacts = ParseServiceEndpointContacts(res)
         return contacts.get_contacts()
 
 
 class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
-    def __init__(self, logger, fixed_date, combuid=None):
-        TaskParseTopology.__init__(self, logger, combuid)
-        super(TaskGocdbTopology, self).__init__(logger, combuid)
+    def __init__(self, fixed_date, combuid=None):
+        TaskParseTopology.__init__(self, combuid)
+        super(TaskGocdbTopology, self).__init__(combuid)
         self.combuid = combuid
-        self.logger = logger
         self.globopts = Global.options()
         self.connector_name = Global.caller
         self.Customer = get_custconf(combuid)
@@ -182,7 +171,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.notification_flag = self.Customer.opt('HonorNotificationFlag')
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
-        ldap_session = LDAPSessionWithRetry(self.logger, int(self.globopts['ConnectionRetry'.lower()]),
+        ldap_session = LDAPSessionWithRetry(Logger, int(self.globopts['ConnectionRetry'.lower()]),
                                             int(self.globopts['ConnectionSleepRetry'.lower()]), int(self.globopts['ConnectionTimeout'.lower()]))
 
         res = await ldap_session.search(host, port, base, filter, attributes)
@@ -194,17 +183,13 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         if self.topofeedpaging:
             count, cursor = 1, 0
             while count != 0:
-                session = SessionWithRetry(self.logger,
-                                           os.path.basename(
-                                               self.connector_name),
-                                           self.globopts,
+                session = SessionWithRetry(self.globopts,
                                            custauth=self.auth_opts)
                 res = await session.http_get('{}&next_cursor={}'.format(api,
                                                                         cursor))
 
                 try:
-                    next_cursor = find_next_paging_cursor_count(
-                        self.logger, res)
+                    next_cursor = find_next_paging_cursor_count(res)
                     count, cursor = next_cursor()
                     fetched_data.append(res)
 
@@ -215,9 +200,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
             return filter_multiple_tags(''.join(fetched_data))
 
         else:
-            session = SessionWithRetry(self.logger,
-                                       os.path.basename(self.connector_name),
-                                       self.globopts, custauth=self.auth_opts)
+            session = SessionWithRetry(custauth=self.auth_opts)
             res = await session.http_get(api)
 
             return res
@@ -272,22 +255,22 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         elif 'servicegroups' in self.topofetchtype:
             fetched_servicegroups = fetched_topology[1]
 
-        exc_raised, exc = contains_exception(fetched_topology)
+        exc_raised, exc = has_exception(fetched_topology)
         if exc_raised:
             raise ConnectorError(repr(exc))
 
         # proces data in parallel using multiprocessing
         executor = ProcessPoolExecutor(max_workers=3)
         parse_workers = list()
-        exe_parse_source_endpoints = partial(parse_endpoints, self.logger,
+        exe_parse_source_endpoints = partial(parse_endpoints,
                                              self.custname,
                                              fetched_endpoints,
                                              self.combuid)
         exe_parse_source_servicegroups = partial(parse_servicegroups,
-                                                 self.logger, self.custname,
+                                                 self.custname,
                                                  fetched_servicegroups,
                                                  self.combuid)
-        exe_parse_source_sites = partial(parse_sites, self.logger,
+        exe_parse_source_sites = partial(parse_sites,
                                          self.custname, fetched_sites,
                                          self.combuid)
 
@@ -334,9 +317,9 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         # check if we fetched SRM port info and attach it appropriate endpoint
         # data
         if self.bdii_opts:
-            attach_srmport_topodata(self.logger, self.bdii_opts['bdiiqueryattributessrm'].split(
+            attach_srmport_topodata(self.bdii_opts['bdiiqueryattributessrm'].split(
                 ' ')[0], fetched_bdii[0], group_endpoints)
-            attach_sepath_topodata(self.logger, self.bdii_opts['bdiiqueryattributessepath'].split(
+            attach_sepath_topodata(self.bdii_opts['bdiiqueryattributessepath'].split(
                 ' ')[0], fetched_bdii[1], group_endpoints)
 
         # parse contacts from fetched service endpoints topology, if there are
@@ -348,12 +331,10 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         attach_contacts_workers = [
             loop.run_in_executor(executor, partial(attach_contacts_topodata,
-                                                   self.logger,
                                                    parsed_site_contacts,
                                                    group_groups,
                                                    self.notification_flag)),
             loop.run_in_executor(executor, partial(attach_contacts_topodata,
-                                                   self.logger,
                                                    parsed_serviceendpoint_contacts,
                                                    group_endpoints,
                                                    self.notification_flag))
@@ -364,8 +345,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         if fetched_servicegroups:
             parsed_servicegroups_contacts = self.parse_servicegroups_contacts(fetched_servicegroups)
-            attach_contacts_topodata(self.logger,
-                                     parsed_servicegroups_contacts,
+            attach_contacts_topodata(parsed_servicegroups_contacts,
                                      group_groups, self.notification_flag)
 
         if not self.combuid:
@@ -377,7 +357,7 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         if not self.combuid:
             # send concurrently to WEB-API in coroutines
             if self.globopts['GeneralPublishWebAPI'.lower()]:
-                webapi = WebAPI(self.logger, date=self.fixed_date, combuid=self.combuid)
+                webapi = WebAPI(date=self.fixed_date, combuid=self.combuid)
                 await asyncio.gather(
                     webapi.send(group_groups, 'groups'),
                     webapi.send(group_endpoints, 'endpoints')
@@ -385,14 +365,14 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
                 await webapi.session.close()
 
             if self.globopts['GeneralWriteJson'.lower()]:
-                write_json(self.logger, group_groups, group_endpoints,
+                write_json(group_groups, group_endpoints,
                            self.fixed_date)
 
         if not self.combuid:
-            self.logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(
+            Logger.info('Customer:' + self.custname + ' Type:%s ' % (','.join(
                 self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
         else:
-            self.logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Type:%s ' % (','.join(
+            Logger.info(module_class_name(self) + ' ID:' + self.combuid + ' Customer:' + self.custname + ' Type:%s ' % (','.join(
                 self.topofetchtype)) + 'Fetched Endpoints:%d' % (numge) + ' Groups:%d' % (numgg))
 
             return group_groups, group_endpoints
