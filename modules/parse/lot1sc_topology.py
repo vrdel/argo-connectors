@@ -80,6 +80,7 @@ class ParseLot1ScEndpoints(ParseHelpers):
                                             if self.uidservendp:
                                                 se_uid = build_service_endpoint_id(endpoint.get('name', ''), service)
                                                 gee['tags']['info_ID'] = se_uid
+                                                gee['tags']['hostname'] = construct_fqdn(endpoint.get('url', ''))
                                                 gee['hostname'] = '{}_{}'.format(construct_fqdn(endpoint.get('url', '')), se_uid)
                                             else:
                                                 gee['hostname'] = construct_fqdn(endpoint.get('url', ''))
