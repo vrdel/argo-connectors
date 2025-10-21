@@ -4,14 +4,14 @@ import bonsai
 
 from argo_connectors.utils import module_class_name
 from argo_connectors.exceptions import ConnectorHttpError
+from argo_connectors.log import Logger
 
 
-class LDAPSessionWithRetry(object):
-    def __init__(self, logger, retry_attempts, retry_sleep, connection_timeout):
+class LDAPSessionWithRetry:
+    def __init__(self, retry_attempts, retry_sleep, connection_timeout):
         self.n_try = retry_attempts
         self.retry_sleep_list = [(i + 1) * retry_sleep for i in range(retry_attempts)]
         self.timeout = connection_timeout
-        self.logger = logger
 
     async def search(self, host, port, base, filter, attributes):
         raised_exc = None
@@ -28,18 +28,17 @@ class LDAPSessionWithRetry(object):
 
                     return res
 
-
                 except Exception as exc:
-                    self.logger.error('from {}.search() - {}'.format(module_class_name(self), repr(exc)))
+                    Logger.error('from {}.search() - {}'.format(module_class_name(self), repr(exc)))
                     await asyncio.sleep(float(self.retry_sleep_list[n - 1]))
                     raised_exc = exc
 
-                self.logger.info(f'LDAP Connection try - {n}')
+                Logger.info(f'LDAP Connection try - {n}')
                 n += 1
 
             else:
-                self.logger.error('LDAP Connection retry exhausted')
+                Logger.error('LDAP Connection retry exhausted')
 
         except Exception as exc:
-            self.logger.error('from {}.search() - {}'.format(module_class_name(self), repr(exc)))
+            Logger.error('from {}.search() - {}'.format(module_class_name(self), repr(exc)))
             raise ConnectorHttpError()
