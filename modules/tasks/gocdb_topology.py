@@ -171,14 +171,12 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.notification_flag = self.Customer.opt('HonorNotificationFlag')
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
-        ldap_session = LDAPSessionWithRetry(Logger, int(self.globopts['ConnectionRetry'.lower()]),
-                                            int(self.globopts['ConnectionSleepRetry'.lower()]), int(self.globopts['ConnectionTimeout'.lower()]))
+        ldap_session = LDAPSessionWithRetry()
 
         res = await ldap_session.search(host, port, base, filter, attributes)
         return res
 
     async def fetch_data(self, api):
-        feed_parts = urlparse(api)
         fetched_data = list()
         if self.topofeedpaging:
             count, cursor = 1, 0
