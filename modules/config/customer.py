@@ -178,6 +178,9 @@ class _CustomerConf(object):
                         section, 'DowntimesFeed', fallback=None)
                     notifflag = config.getboolean(
                         section, 'HonorNotificationFlag', fallback=None)
+                    topotagserviceendpoints = config.get(section, 'TopoTagServiceEndpoints', fallback=dict())
+                    topotagsites = config.get(section, 'TopoTagSites', fallback=dict())
+                    topotagservicegroups = config.get(section, 'TopoTagServiceGroups', fallback=dict())
 
                     if not custdir.endswith('/'):
                         custdir = '{}/'.format(custdir)
@@ -214,6 +217,9 @@ class _CustomerConf(object):
                     'TopoScope': toposcope,
                     'TopoTiers': topotiers,
                     'TopoType': topotype,
+                    'TopoTagServiceEndpoints': topotagserviceendpoints,
+                    'TopoTagServiceGroups': topotagservicegroups,
+                    'TopoTagSites': topotagsites,
                     'TopoUIDServiceEndpoints': topouidservendpoints,
                     'HonorNotificationFlag': notifflag,
                     'OIDCTokenEndpoint': oidctokenapi,
@@ -483,6 +489,8 @@ class _CustomerConf(object):
     def configure(self, newoptions):
         exist_options = list(self._cust)
         exist_options = self._cust[exist_options[0]]
+        import ipdb; ipdb.set_trace()
+
         for newopt in newoptions['config']:
             if newopt in exist_options:
                 exist_options[newopt] = newoptions['config'][newopt]
