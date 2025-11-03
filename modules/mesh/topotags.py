@@ -23,3 +23,11 @@ async def attach_tags(groups, endpoints, tags_gg, tags_ge):
         groups, endpoints = await asyncio.gather(*attach_workers)
 
         return groups, endpoints
+
+    elif tags_gg:
+        changed_groups = _attach(groups, tags_gg)
+        return changed_groups, endpoints
+
+    elif tags_ge:
+        changed_endpoints = _attach(endpoints, tags_ge)
+        return groups, changed_endpoints
