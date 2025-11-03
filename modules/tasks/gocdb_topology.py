@@ -1,10 +1,8 @@
-import os
 import asyncio
 
 from lxml import etree
 
 from collections import Callable
-from urllib.parse import urlparse
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -19,6 +17,7 @@ from argo_connectors.log import Logger
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.mesh.srm_port import attach_srmport_topodata
 from argo_connectors.mesh.storage_element_path import attach_sepath_topodata
+from argo_connectors.mesh.topotags import attach_tags
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.gocdb_contacts import ParseServiceEndpointContacts, ParseSitesWithContacts, ParseServiceGroupWithContacts
 from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
@@ -169,6 +168,8 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.topofeedpaging = self.Customer.opt('TopoFeedPaging')
         self.notification_flag = self.Customer.opt('HonorNotificationFlag')
+        self.tags_ge = self.Customer.opt('TopoTagServiceEndpoints')
+        self.tags_gg = self.Customer.opt('TopoTagServiceGroups') + self.Customer.opt('TopoTagSites')
 
     async def fetch_ldap_data(self, host, port, base, filter, attributes):
         ldap_session = LDAPSessionWithRetry()
@@ -347,6 +348,12 @@ class TaskGocdbTopology(TaskParseContacts, TaskParseTopology):
 
         if not self.combuid:
             await write_state(self.fixed_date, True)
+
+        if self.tags_ge or self.tags_gg:
+            group_groups, group_endpoints = await attach_tags(group_groups,
+                                                              group_endpoints,
+                                                              self.tags_gg,
+                                                              self.tags_ge)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)
