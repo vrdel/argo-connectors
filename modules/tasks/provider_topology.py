@@ -12,6 +12,7 @@ from argo_connectors.io.http import SessionWithRetry
 from argo_connectors.io.webapi import WebAPI
 from argo_connectors.log import Logger
 from argo_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.mesh.topotags import attach_tags
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
@@ -79,6 +80,8 @@ class TaskProviderTopology:
         self.fixed_date = fixed_date
         self.fetchtype = self.Customer.get_topofetchtype()[0]
         self.combuid = combuid
+        self.tags_ge = self.Customer.opt('TopoTagServiceEndpoints')
+        self.tags_gg = self.Customer.opt('TopoTagServiceGroups') + self.Customer.opt('TopoTagSites')
 
     def parse_source_extensions(self, extensions, groupnames):
         resources_extended = ParseExtensions(extensions, groupnames, self.uidservendp, Logger.customer)
@@ -278,6 +281,11 @@ class TaskProviderTopology:
             if not self.combuid:
                 await write_state(self.fixed_date, True)
 
+            if self.tags_ge or self.tags_gg:
+                group_groups, group_endpoints = await attach_tags(group_groups,
+                                                                  group_endpoints,
+                                                                  self.tags_gg,
+                                                                  self.tags_ge)
             numge = len(group_endpoints)
             numgg = len(group_groups)
 
