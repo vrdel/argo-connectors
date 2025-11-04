@@ -1,3 +1,4 @@
+from argo_connectors.config.customer import get_custconf
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.log import Logger
 from argo_connectors.parse.base import ParseHelpers
@@ -5,13 +6,13 @@ from argo_connectors.utils import construct_fqdn
 
 
 class ParseFlatEndpoints(ParseHelpers):
-    def __init__(self, data, project, uidservendp=False,
-                 fetchtype='ServiceGroups', is_csv=False, scope=None):
-        self.uidservendp = uidservendp
-        self.fetchtype = fetchtype
-        self.project = project
+    def __init__(self, data, is_csv=False, combuid=None):
+        self.Customer = get_custconf(combuid)
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
+        self.fetchtype = self.Customer.get_topofetchtype()[0]
+        self.project = self.Customer.get_custname()
+        self.scope = self.Customer.get_custname()
         self.is_csv = is_csv
-        self.scope = scope if scope else project
         try:
             if is_csv:
                 self.data = self.csv_to_json(data)

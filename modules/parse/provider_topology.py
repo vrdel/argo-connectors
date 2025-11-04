@@ -198,7 +198,7 @@ class ParseExtensions(ParseHelpers):
         return self._extensions
 
 
-class ParseTopo():
+class ParseTopo:
     def __init__(self, providers, resources, combuid=None):
         self.Customer = get_custconf(combuid)
         self.combuid = combuid

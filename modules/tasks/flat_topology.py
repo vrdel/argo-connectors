@@ -16,7 +16,7 @@ from argo_connectors.tasks.common import write_state, write_topo_json as write_j
 from argo_connectors.utils import module_class_name
 
 
-class TaskFlatTopology(object):
+class TaskFlatTopology:
     def __init__(self, fixed_date, is_csv=False, combuid=None):
         self.connector_name = Global.caller
         self.globopts = Global.options()
@@ -55,9 +55,7 @@ class TaskFlatTopology(object):
         return res
 
     def parse_source_topo(self, res):
-        topo = ParseFlatEndpoints(res, self.custname,
-                                  self.uidservendp, self.topofetchtype,
-                                  self.is_csv, scope=self.custname)
+        topo = ParseFlatEndpoints(res, self.is_csv, self.combuid)
         group_groups = topo.get_groupgroups()
         group_endpoints = topo.get_groupendpoints()
 
