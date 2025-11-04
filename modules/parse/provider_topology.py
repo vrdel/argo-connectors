@@ -31,7 +31,7 @@ def clean_id(idslash):
 
 
 class ParseResources(ParseHelpers):
-    def __init__(self, data=None, keys=[], custname=None, combuid=None):
+    def __init__(self, data=None, keys=[], combuid=None):
         super(ParseResources, self).__init__()
         self.data = data
         self._keys = keys
