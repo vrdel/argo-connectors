@@ -96,7 +96,7 @@ class ParseSites(ParseHelpers):
 
         for group in group_list:
             tmpg = dict()
-            tmpg['type'] = 'NGI'
+            tmpg['type'] = self.topo_type('gg', 'Sites')
             tmpg['group'] = group['ngi']
             tmpg['subgroup'] = group['site']
             if self.notification_flag:
@@ -217,7 +217,7 @@ class ParseServiceEndpoints(ParseHelpers):
 
         for group in group_list:
             tmpg = dict()
-            tmpg['type'] = 'SITES'
+            tmpg['type'] = self.topo_type('ge', 'Sites')
             tmpg['group'] = group['site']
             tmpg['service'] = group['type']
             if self.notification_flag:
@@ -360,7 +360,7 @@ class ParseServiceGroups(ParseHelpers):
         for group in group_list:
             for service in group['services']:
                 tmpg = dict()
-                tmpg['type'] = 'SERVICEGROUPS'
+                tmpg['type'] = self.topo_type('ge', 'ServiceGroups')
                 tmpg['group'] = group['name']
                 tmpg['service'] = service['type']
                 if self.notification_flag:
@@ -403,7 +403,7 @@ class ParseServiceGroups(ParseHelpers):
 
         for group in group_list:
             tmpg = dict()
-            tmpg['type'] = 'PROJECT'
+            tmpg['type'] = self.topo_type('gg', 'ServiceGroups')
             tmpg['group'] = self.custname
             if self.notification_flag:
                 tmpg['notifications'] = {

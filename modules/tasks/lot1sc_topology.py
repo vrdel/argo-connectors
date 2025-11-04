@@ -2,15 +2,16 @@ import asyncio
 
 from urllib.parse import urlparse
 
-from argo_connectors.config.glob import Global
 from argo_connectors.config.customer import get_custconf
-from argo_connectors.io.http import SessionWithRetry
-from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
-from argo_connectors.io.webapi import WebAPI
-from argo_connectors.tasks.common import write_state, write_topo_json as write_json
+from argo_connectors.config.glob import Global
 from argo_connectors.exceptions import ConnectorError
-from argo_connectors.utils import module_class_name, has_exception
+from argo_connectors.io.http import SessionWithRetry
+from argo_connectors.io.webapi import WebAPI
 from argo_connectors.log import Logger
+from argo_connectors.mesh.topotags import attach_tags
+from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
+from argo_connectors.tasks.common import write_state, write_topo_json as write_json
+from argo_connectors.utils import module_class_name, has_exception
 
 
 class TaskLot1ScTopology():
@@ -25,6 +26,9 @@ class TaskLot1ScTopology():
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.tiers = self.Customer.opt('TopoTiers')
         self.combuid = combuid
+        self.tags_ge = self.Customer.opt('TopoTagServiceEndpoints')
+        self.tags_gg = self.Customer.opt('TopoTagServiceGroups') + self.Customer.opt('TopoTagSites')
+        self.toposetype = self.Customer.opt('TopoSetType')
 
     async def fetch_data(self, tier):
         remote_topo = urlparse(self.topofeed)
@@ -37,9 +41,7 @@ class TaskLot1ScTopology():
         return res
 
     def parse_source_topo(self, res, tier):
-        topo = ParseLot1ScEndpoints(res, self.uidservendp,
-                                    self.fetchtype,
-                                    tier)
+        topo = ParseLot1ScEndpoints(res, tier, self.combuid)
         group_groups = topo.get_group_groups()
         group_endpoints = topo.get_group_endpoints()
 
@@ -66,6 +68,12 @@ class TaskLot1ScTopology():
 
         if not self.combuid:
             await write_state(self.fixed_date, True)
+
+        if self.tags_ge or self.tags_gg:
+            group_groups, group_endpoints = await attach_tags(group_groups,
+                                                              group_endpoints,
+                                                              self.tags_gg,
+                                                              self.tags_ge)
 
         numge = len(group_endpoints)
         numgg = len(group_groups)

@@ -1,5 +1,4 @@
 import configparser
-import contextvars
 import errno
 import os
 import copy
@@ -178,6 +177,10 @@ class _CustomerConf(object):
                         section, 'DowntimesFeed', fallback=None)
                     notifflag = config.getboolean(
                         section, 'HonorNotificationFlag', fallback=None)
+                    topotagserviceendpoints = config.get(section, 'TopoTagServiceEndpoints', fallback=list())
+                    topotagsites = config.get(section, 'TopoTagSites', fallback=list())
+                    topotagservicegroups = config.get(section, 'TopoTagServiceGroups', fallback=list())
+                    toposettype = config.get(section, 'TopoSetType', fallback='')
 
                     if not custdir.endswith('/'):
                         custdir = '{}/'.format(custdir)
@@ -214,6 +217,10 @@ class _CustomerConf(object):
                     'TopoScope': toposcope,
                     'TopoTiers': topotiers,
                     'TopoType': topotype,
+                    'TopoSetType': toposettype,
+                    'TopoTagServiceEndpoints': topotagserviceendpoints or list(),
+                    'TopoTagServiceGroups': topotagservicegroups or list(),
+                    'TopoTagSites': topotagsites or list(),
                     'TopoUIDServiceEndpoints': topouidservendpoints,
                     'HonorNotificationFlag': notifflag,
                     'OIDCTokenEndpoint': oidctokenapi,
@@ -413,7 +420,7 @@ class _CustomerConf(object):
             else:
                 fetchtype = [fetchtype.lower()]
         else:
-            fetchtype = ['ServiceGroups']
+            fetchtype = ['ServiceGroups'.lower()]
 
         return fetchtype
 
@@ -483,6 +490,7 @@ class _CustomerConf(object):
     def configure(self, newoptions):
         exist_options = list(self._cust)
         exist_options = self._cust[exist_options[0]]
+
         for newopt in newoptions['config']:
             if newopt in exist_options:
                 exist_options[newopt] = newoptions['config'][newopt]

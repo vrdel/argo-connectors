@@ -9,6 +9,30 @@ from argo_connectors.utils import module_class_name
 
 
 class ParseHelpers():
+    def topo_type(self, ask, explicit_type=None):
+        if self.Customer.opt('TopoSetType'):
+            topotype = [self.Customer.opt('TopoSetType').lower()]
+        else:
+            topotype = [ft.lower() for ft in self.Customer.get_topofetchtype()]
+
+        if len(topotype) == 1:
+            if 'Sites'.lower() in topotype and ask == 'gg':
+                return 'ngi'.upper()
+            elif 'Sites'.lower() in topotype and ask == 'ge':
+                return 'sites'.upper()
+            elif 'ServiceGroups'.lower() in topotype and ask == 'gg':
+                return 'project'.upper()
+            elif 'ServiceGroups'.lower() in topotype and ask == 'ge':
+                return 'servicegroups'.upper()
+
+        elif len(topotype) == 2 and explicit_type:
+            if explicit_type.lower() == 'Sites'.lower() and ask == 'gg':
+                return 'ngi'.upper()
+            elif explicit_type.lower() == 'ServiceGroups'.lower() and ask == 'gg':
+                return 'project'.upper()
+            elif explicit_type.lower() in ['Sites'.lower(), 'ServiceGroups'.lower()] and ask == 'ge':
+                return explicit_type.upper()
+
     def parse_extensions(self, extensions_node):
         extensions_dict = dict()
 
