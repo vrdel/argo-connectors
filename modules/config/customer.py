@@ -181,6 +181,7 @@ class _CustomerConf(object):
                     topotagserviceendpoints = config.get(section, 'TopoTagServiceEndpoints', fallback=list())
                     topotagsites = config.get(section, 'TopoTagSites', fallback=list())
                     topotagservicegroups = config.get(section, 'TopoTagServiceGroups', fallback=list())
+                    toposettype = config.get(section, 'TopoSetType', fallback='')
 
                     if not custdir.endswith('/'):
                         custdir = '{}/'.format(custdir)
@@ -217,6 +218,7 @@ class _CustomerConf(object):
                     'TopoScope': toposcope,
                     'TopoTiers': topotiers,
                     'TopoType': topotype,
+                    'TopoSetType': toposettype,
                     'TopoTagServiceEndpoints': topotagserviceendpoints or list(),
                     'TopoTagServiceGroups': topotagservicegroups or list(),
                     'TopoTagSites': topotagsites or list(),
