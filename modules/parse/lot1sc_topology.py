@@ -16,7 +16,6 @@ class ParseLot1ScEndpoints(ParseHelpers):
     def __init__(self, data, tier, combuid):
         self.Customer = get_custconf(combuid)
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
-        self.fetchtype = self.Customer.get_topofetchtype()[0]
         self.tier = tier
         self.data = data
         if type(data) == str:
@@ -45,7 +44,7 @@ class ParseLot1ScEndpoints(ParseHelpers):
                     if srname not in self._service_name_exist:
                         continue
 
-                    gge['type'] = 'PROJECT'
+                    gge['type'] = self.topo_type('gg')
                     gge['group'] = prname
                     gge['subgroup'] = srname
                     gge['tags'] = dict()
@@ -70,7 +69,7 @@ class ParseLot1ScEndpoints(ParseHelpers):
                                     if service_types:
                                         for service in service_types:
                                             gee = dict()
-                                            gee['type'] = self.fetchtype.upper()
+                                            gee['type'] = self.topo_type('ge')
                                             gee['group'] = srname
                                             gee['tags'] = dict()
                                             gee['tags']['site_name'] = site_name

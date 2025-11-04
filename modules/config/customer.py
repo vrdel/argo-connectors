@@ -1,5 +1,4 @@
 import configparser
-import contextvars
 import errno
 import os
 import copy
@@ -421,7 +420,7 @@ class _CustomerConf(object):
             else:
                 fetchtype = [fetchtype.lower()]
         else:
-            fetchtype = ['ServiceGroups']
+            fetchtype = ['ServiceGroups'.lower()]
 
         return fetchtype
 
