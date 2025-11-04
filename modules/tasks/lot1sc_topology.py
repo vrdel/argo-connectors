@@ -28,6 +28,7 @@ class TaskLot1ScTopology():
         self.combuid = combuid
         self.tags_ge = self.Customer.opt('TopoTagServiceEndpoints')
         self.tags_gg = self.Customer.opt('TopoTagServiceGroups') + self.Customer.opt('TopoTagSites')
+        self.toposetype = self.Customer.opt('TopoSetType')
 
     async def fetch_data(self, tier):
         remote_topo = urlparse(self.topofeed)
@@ -40,9 +41,7 @@ class TaskLot1ScTopology():
         return res
 
     def parse_source_topo(self, res, tier):
-        topo = ParseLot1ScEndpoints(res, self.uidservendp,
-                                    self.fetchtype,
-                                    tier)
+        topo = ParseLot1ScEndpoints(res, tier, self.combuid)
         group_groups = topo.get_group_groups()
         group_endpoints = topo.get_group_endpoints()
 

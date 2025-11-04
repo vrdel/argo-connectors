@@ -1,3 +1,4 @@
+from argo_connectors.config.customer import get_custconf
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import construct_fqdn
 
@@ -12,10 +13,10 @@ def build_service_endpoint_id(service_name, service_type):
 
 
 class ParseLot1ScEndpoints(ParseHelpers):
-    def __init__(self, data, uidservendp=False,
-                 fetchtype='ServiceGroups', tier=1):
-        self.uidservendp = uidservendp
-        self.fetchtype = fetchtype
+    def __init__(self, data, tier, combuid):
+        self.Customer = get_custconf(combuid)
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
+        self.fetchtype = self.Customer.get_topofetchtype()[0]
         self.tier = tier
         self.data = data
         if type(data) == str:
