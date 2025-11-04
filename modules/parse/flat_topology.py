@@ -9,7 +9,6 @@ class ParseFlatEndpoints(ParseHelpers):
     def __init__(self, data, is_csv=False, combuid=None):
         self.Customer = get_custconf(combuid)
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
-        self.fetchtype = self.Customer.get_topofetchtype()[0]
         self.project = self.Customer.get_custname()
         self.scope = self.Customer.get_custname()
         self.is_csv = is_csv
@@ -30,7 +29,7 @@ class ParseFlatEndpoints(ParseHelpers):
             for entity in self.data:
                 tmp_dict = dict()
 
-                tmp_dict['type'] = 'PROJECT'
+                tmp_dict['type'] = self.topo_type('gg')
                 tmp_dict['group'] = self.project
                 tmp_dict['subgroup'] = entity['SITENAME-SERVICEGROUP']
                 tmp_dict['tags'] = {'monitored': '1', 'scope': self.scope}
@@ -55,7 +54,7 @@ class ParseFlatEndpoints(ParseHelpers):
             for entity in self.data:
                 tmp_dict = dict()
 
-                tmp_dict['type'] = self.fetchtype.upper()
+                tmp_dict['type'] = self.topo_type('ge')
                 tmp_dict['group'] = entity['SITENAME-SERVICEGROUP']
                 tmp_dict['service'] = entity['SERVICE_TYPE']
                 info_url = entity['URL']
