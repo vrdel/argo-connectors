@@ -84,12 +84,12 @@ class TaskProviderTopology:
         self.tags_gg = self.Customer.opt('TopoTagServiceGroups') + self.Customer.opt('TopoTagSites')
 
     def parse_source_extensions(self, extensions, groupnames):
-        resources_extended = ParseExtensions(extensions, groupnames, self.uidservendp, Logger.customer)
+        resources_extended = ParseExtensions(extensions, groupnames, self.combuid)
 
         return resources_extended.get_extensions()
 
     def parse_source_topo(self, resources, providers):
-        topo = ParseTopo(providers, resources, self.uidservendp, Logger.customer)
+        topo = ParseTopo(providers, resources, self.combuid)
 
         return topo.get_group_groups(), topo.get_group_endpoints()
 

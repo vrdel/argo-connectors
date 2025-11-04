@@ -1,4 +1,6 @@
 from urllib.parse import urlparse
+
+from argo_connectors.config.customer import get_custconf
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.log import Logger
 from argo_connectors.parse.base import ParseHelpers
@@ -29,11 +31,12 @@ def clean_id(idslash):
 
 
 class ParseResources(ParseHelpers):
-    def __init__(self, data=None, keys=[], custname=None):
+    def __init__(self, data=None, keys=[], custname=None, combuid=None):
         super(ParseResources, self).__init__()
         self.data = data
         self._keys = keys
-        self.custname = custname
+        self.Customer = get_custconf(combuid)
+        self.custname = self.Customer.get_custname()
         self._resources = list()
         self._parse_data()
 
@@ -78,10 +81,11 @@ class ParseResources(ParseHelpers):
 
 
 class ParseProviders(ParseHelpers):
-    def __init__(self, data, custname):
+    def __init__(self, data, combuid=None):
         super(ParseProviders, self).__init__()
         self.data = data
-        self.custname = custname
+        self.Customer = get_custconf(combuid)
+        self.custname = self.Customer.get_custname()
         self._providers = list()
         self._parse_data()
         self.unique_names = set()
@@ -120,11 +124,12 @@ class ParseProviders(ParseHelpers):
 
 
 class ParseExtensions(ParseHelpers):
-    def __init__(self, data=None, groupnames=None, uidservendp=True, custname=None):
+    def __init__(self, data=None, groupnames=None, combuid=None):
         super(ParseExtensions, self).__init__()
         self.data = data
-        self.custname = custname
-        self.uidservendp = uidservendp
+        self.Customer = get_custconf(combuid)
+        self.custname = self.Customer.get_custname()
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self._extensions = list()
         self.groupnames = groupnames
         self._parse_data()
@@ -146,7 +151,7 @@ class ParseExtensions(ParseHelpers):
                 for group in extension['payload']['serviceCheck']:
                     gee = dict()
                     urlpath_id = None
-                    gee['type'] = 'SERVICEGROUPS'
+                    gee['type'] = self.topo_type('ge')
                     gee['service'] = group['serviceType']
                     gee['group'] = self.groupnames[clean_id(extension['resourceId'])]
 
@@ -193,12 +198,13 @@ class ParseExtensions(ParseHelpers):
         return self._extensions
 
 
-class ParseTopo:
-    def __init__(self, providers, resources, uidservendp, custname):
-        self.uidservendp = uidservendp
-        self.providers = ParseProviders(providers, custname)
-        self.resources = ParseResources(resources, ['horizontalService'],
-                                        custname)
+class ParseTopo():
+    def __init__(self, providers, resources, combuid=None):
+        self.Customer = get_custconf(combuid)
+        self.combuid = combuid
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
+        self.providers = ParseProviders(providers, self.combuid)
+        self.resources = ParseResources(resources, ['horizontalService'], self.combuid)
         self.maxDiff = None
 
     def get_group_groups(self):
@@ -215,7 +221,7 @@ class ParseTopo:
                 if (providers_added.get(provider['id'], False) and
                         providers_added[provider['id']] == resource['id']):
                     continue
-                gge['type'] = 'PROJECT'
+                gge['type'] = self.providers.topo_type('gg')
                 gge['group'] = provider['abbr']
                 gge['subgroup'] = resource['name']
                 if provider.get('provider_tag', False):
@@ -240,7 +246,7 @@ class ParseTopo:
             if resource['provider'] not in unique_providers:
                 continue
             gee = dict()
-            gee['type'] = 'SERVICEGROUPS'
+            gee['type'] = self.resources.topo_type('ge')
             gee['service'] = resource['hardcoded_service']
             gee['group'] = resource['name']
             if self.uidservendp:
