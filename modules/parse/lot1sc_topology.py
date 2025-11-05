@@ -1,3 +1,4 @@
+from argo_connectors.config.customer import get_custconf
 from argo_connectors.parse.base import ParseHelpers
 from argo_connectors.utils import construct_fqdn
 
@@ -12,10 +13,9 @@ def build_service_endpoint_id(service_name, service_type):
 
 
 class ParseLot1ScEndpoints(ParseHelpers):
-    def __init__(self, data, uidservendp=False,
-                 fetchtype='ServiceGroups', tier=1):
-        self.uidservendp = uidservendp
-        self.fetchtype = fetchtype
+    def __init__(self, data, tier, combuid):
+        self.Customer = get_custconf(combuid)
+        self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.tier = tier
         self.data = data
         if type(data) == str:
@@ -44,7 +44,7 @@ class ParseLot1ScEndpoints(ParseHelpers):
                     if srname not in self._service_name_exist:
                         continue
 
-                    gge['type'] = 'PROJECT'
+                    gge['type'] = self.topo_type('gg')
                     gge['group'] = prname
                     gge['subgroup'] = srname
                     gge['tags'] = dict()
@@ -69,7 +69,7 @@ class ParseLot1ScEndpoints(ParseHelpers):
                                     if service_types:
                                         for service in service_types:
                                             gee = dict()
-                                            gee['type'] = self.fetchtype.upper()
+                                            gee['type'] = self.topo_type('ge')
                                             gee['group'] = srname
                                             gee['tags'] = dict()
                                             gee['tags']['site_name'] = site_name
