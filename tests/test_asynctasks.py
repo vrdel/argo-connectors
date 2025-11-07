@@ -7,6 +7,9 @@ import json
 
 import mock
 
+from argo_connectors.config.glob import Global
+from argo_connectors.log import Logger
+from argo_connectors.config.customer import Customer
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 from argo_connectors.tasks.flat_downtimes import TaskCsvDowntimes
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
@@ -516,41 +519,32 @@ class DowntimesCsv(unittest.TestCase):
         logger = mock.Mock()
         logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        mocked_globopts = dict(generalpublishwebapi='True',
-                               generalwritejson='True',
-                               outputdowntimes='downtimes_DATE.json',
-                               )
-        globopts = mocked_globopts
-        webapiopts = mock.Mock()
-        authopts = mock.Mock()
+        _ = Global('downtimes-csv-connector.py')
+        _ = Customer('downtimes-csv-connector.py')
+        _ = Logger(f'{__name__}.{__class__.__name__}')
         confcust = mock.Mock()
         confcust.send_empty.return_value = False
         confcust.get_customers.return_value = ['CUSTOMERFOO', 'CUSTOMERBAR']
         confcust.get_custdir.return_value = '/some/path'
-        custname = CUSTOMER_NAME
-        feed = 'https://downtimes-csv.com/api/fetch'
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
-        current_date = datetime.datetime.now()
+        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
         self.downtimes_flat = TaskCsvDowntimes(
-            self.loop,
-            logger,
-            'test_asynctasks_downtimesflat',
-            globopts,
-            webapiopts,
-            confcust,
-            custname,
-            feed,
             current_date,
-            True,
             current_date,
-            timestamp
+            timestamp,
+            combuid=None
         )
+        self.downtimes_flat.globopts['GeneralPublishWebAPI'.lower()] = True
         self.maxDiff = None
 
+    @mock.patch('argo_connectors.tasks.flat_downtimes.WebAPI')
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_json')
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_state')
     @async_test
-    async def test_StepsSuccessRun(self, mock_writestate, mock_writejson):
+    async def test_StepsSuccessRun(self, mock_writestate, mock_writejson, mock_webapi):
+        web_api = mock_webapi.return_value
+        web_api.send = mock.AsyncMock()
+        web_api.session = mock.AsyncMock()
         self.downtimes_flat.fetch_data = mock.AsyncMock()
         self.downtimes_flat.fetch_data.side_effect = ['data_downtimes']
         self.downtimes_flat.send_webapi = mock.AsyncMock()
@@ -560,15 +554,12 @@ class DowntimesCsv(unittest.TestCase):
         self.assertTrue(self.downtimes_flat.parse_source.called)
         self.downtimes_flat.parse_source.assert_called_with('data_downtimes')
         self.assertEqual(
-            mock_writestate.call_args[0][0], 'test_asynctasks_downtimesflat')
-        self.assertEqual(
-            mock_writestate.call_args[0][3], self.downtimes_flat.timestamp)
-        self.assertTrue(mock_writestate.call_args[0][4])
+            mock_writestate.call_args[0][0], self.downtimes_flat.timestamp)
+        self.assertTrue(mock_writestate.call_args[0][1])
         self.assertTrue(mock_writejson.called, True)
         self.assertEqual(
-            mock_writejson.call_args[0][4], datetime.datetime.now().strftime('%Y_%m_%d'))
-        self.assertTrue(self.downtimes_flat.send_webapi.called)
-        self.assertTrue(self.downtimes_flat.logger.info.called)
+            mock_writejson.call_args[0][1], datetime.datetime.now().strftime('%Y_%m_%d'))
+        self.assertTrue(web_api.send.called)
 
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_state')
     @async_test
