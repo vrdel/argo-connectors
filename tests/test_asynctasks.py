@@ -440,54 +440,57 @@ class ServiceTypesGocdb(unittest.TestCase):
 
 class ServiceTypesFlat(unittest.TestCase):
     def setUp(self):
-        logger = mock.Mock()
-        logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        mocked_globopts = dict(generalpublishwebapi='True')
-        globopts = mocked_globopts
-        webapiopts = mock.Mock()
-        authopts = mock.Mock()
-        confcust = mock.Mock()
-        custname = CUSTOMER_NAME
-        feed = 'https://service-types.com/api/fetch'
+        _ = Global('service-types-csv-connector.py')
+        _ = Customer('service-types-csv-connector.py')
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
         self.services_flat = TaskFlatServiceTypes(
-            self.loop,
-            logger,
-            'test_asynctasks_servicetypesflat',
-            globopts,
-            authopts,
-            webapiopts,
-            confcust,
-            custname,
-            feed,
             timestamp
         )
+        self.services_flat.globopts['GeneralPublishWebAPI'.lower()] = True
         self.maxDiff = None
 
+    @mock.patch('argo_connectors.tasks.flat_servicetypes.WebAPI')
+    @mock.patch('argo_connectors.tasks.flat_servicetypes.write_json')
     @mock.patch('argo_connectors.tasks.flat_servicetypes.write_state')
     @async_test
-    async def test_StepsSuccessRun(self, mock_writestate):
+    async def test_StepsSuccessRun(self, mock_writestate, mock_writejson, mock_webapi):
+        service_type_1 = {
+            'name': 'service.type.1',
+            'description': 'description 1',
+            'tags': []
+
+        }
+        service_type_2 = {
+            'name': 'service.type.2',
+            'description': 'description 2',
+            'tags': []
+        }
+        web_api = mock_webapi.return_value
+        web_api.get = mock.AsyncMock()
+        web_api.send = mock.AsyncMock()
+        web_api.session = mock.AsyncMock()
+        web_api.get.return_value = [service_type_2]
         self.services_flat.fetch_data = mock.AsyncMock()
-        self.services_flat.fetch_data.side_effect = ['data_servicetypes']
-        self.services_flat.send_webapi = mock.AsyncMock()
-        self.services_flat.fetch_webapi = mock.AsyncMock()
-        self.services_flat.fetch_webapi.side_effect = [
-            'data_webapi_servicetypes']
-        self.services_flat.send_webapi = mock.AsyncMock()
+        self.services_flat.fetch_data.side_effect = [service_type_1]
         self.services_flat.parse_source = mock.MagicMock()
+        self.services_flat.parse_source.return_value = [service_type_1]
         self.services_flat.parse_webapi_poem = mock.MagicMock()
+        self.services_flat.parse_webapi_poem.return_value = [service_type_2]
         await self.services_flat.run()
         self.assertTrue(self.services_flat.fetch_data.called)
         self.assertTrue(self.services_flat.parse_source.called)
-        self.services_flat.parse_source.assert_called_with('data_servicetypes')
+        self.services_flat.parse_source.assert_called_with(service_type_1)
+        self.assertEqual(mock_writestate.call_args[0][0],
+                         self.services_flat.fixed_date)
+        self.assertTrue(mock_writestate.call_args[0][1])
+        self.assertTrue(web_api.send.called)
+        self.assertTrue(mock_writejson.called)
         self.assertEqual(
-            mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesflat')
-        self.assertEqual(
-            mock_writestate.call_args[0][3], self.services_flat.timestamp)
-        self.assertTrue(mock_writestate.call_args[0][4])
-        self.assertTrue(self.services_flat.send_webapi.called)
-        self.assertTrue(self.services_flat.logger.info.called)
+            mock_writejson.call_args[0][0], [service_type_1, service_type_2]
+        )
 
     @mock.patch('argo_connectors.tasks.flat_servicetypes.write_state')
     @async_test
@@ -516,16 +519,10 @@ class ServiceTypesFlat(unittest.TestCase):
 
 class DowntimesCsv(unittest.TestCase):
     def setUp(self):
-        logger = mock.Mock()
-        logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
         _ = Global('downtimes-csv-connector.py')
         _ = Customer('downtimes-csv-connector.py')
         _ = Logger(f'{__name__}.{__class__.__name__}')
-        confcust = mock.Mock()
-        confcust.send_empty.return_value = False
-        confcust.get_customers.return_value = ['CUSTOMERFOO', 'CUSTOMERBAR']
-        confcust.get_custdir.return_value = '/some/path'
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
         current_date = datetime.datetime.now().strftime('%Y-%m-%d')
         self.downtimes_flat = TaskCsvDowntimes(
