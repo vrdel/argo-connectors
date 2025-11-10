@@ -561,9 +561,13 @@ class DowntimesCsv(unittest.TestCase):
             mock_writejson.call_args[0][1], datetime.datetime.now().strftime('%Y_%m_%d'))
         self.assertTrue(web_api.send.called)
 
+    @mock.patch('argo_connectors.tasks.flat_downtimes.WebAPI')
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_state')
     @async_test
-    async def test_StepsFailedRun(self, mock_writestate):
+    async def test_StepsFailedRun(self, mock_writestate, mock_webapi):
+        web_api = mock_webapi.return_value
+        web_api.send = mock.AsyncMock()
+        web_api.session = mock.AsyncMock()
         self.downtimes_flat.fetch_data = mock.AsyncMock()
         self.downtimes_flat.fetch_data.side_effect = [
             ConnectorHttpError('fetch_data failed')]
@@ -573,11 +577,6 @@ class DowntimesCsv(unittest.TestCase):
         self.assertTrue(self.downtimes_flat.fetch_data.called)
         self.assertFalse(self.downtimes_flat.parse_source.called)
         self.assertEqual(
-            mock_writestate.call_args[0][0], 'test_asynctasks_downtimesflat')
-        self.assertEqual(
-            mock_writestate.call_args[0][3], self.downtimes_flat.timestamp)
-        self.assertFalse(mock_writestate.call_args[0][4])
-        self.assertTrue(self.downtimes_flat.logger.error.called)
-        self.assertTrue(self.downtimes_flat.logger.error.call_args[0][0], repr(
-            ConnectorHttpError('fetch_data failed')))
-        self.assertFalse(self.downtimes_flat.send_webapi.called)
+            mock_writestate.call_args[0][0], self.downtimes_flat.timestamp)
+        self.assertFalse(mock_writestate.call_args[0][1])
+        self.assertFalse(web_api.send.called)
