@@ -114,34 +114,20 @@ class TestFindNextPagingCursorCount(unittest.TestCase):
 
 class TopologyProvider(unittest.TestCase):
     def setUp(self):
-        logger = mock.Mock()
-        logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        mocked_globopts = dict(generalpublishwebapi='False', generalwritejson='False')
-        globopts = mocked_globopts
-        webapiopts = mock.Mock()
-        confcust = mock.Mock()
-        confcust.opt('TopoFeedServiceGroups').return_value = 'http://topo.feed.providers.com'
-        confcust.opt('TopoFeedEndpoints').return_value = 'http://topo.feed.resources.com'
-        confcust.opt('OIDCRefreshToken').return_value = 'oidctoken'
-        confcust.opt('OIDCClientId').return_value = 'clientid'
-        confcust.opt('ODICTokenEndpoint').return_value = 'oidctokenapi'
-        topofeedpaging = False
-        uidservendp = False
+        _ = Global('topology-provider-connector.py')
+        _ = Customer('topology-provider-connector.py')
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
         fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
-        fetchtype = 'ServiceGroups'
         self.topo_provider = TaskProviderTopology(
-            self.loop,
-            logger,
-            'test_asynctasks_topologyprovider',
-            globopts,
-            webapiopts,
-            confcust,
-            topofeedpaging,
-            uidservendp,
-            fixed_date,
-            fetchtype
+            fixed_date
         )
+        self.topo_provider.Customer.custopts['TopoFeedServiceGroups'] = 'http://topo.feed.providers.com'
+        self.topo_provider.Customer.custopts['TopoFeedEndpoints'] = 'http://topo.feed.resources.com'
+        self.topo_provider.Customer.custopts['OIDCRefreshToken'] = 'oidctoken'
+        self.topo_provider.Customer.custopts['OIDCClientId'] = 'clientid'
+        self.topo_provider.Customer.custopts['OIDCTokenEndpoint'] = 'oidctokenapi'
 
     @mock.patch.object(ParseHelpers, 'parse_json')
     @mock.patch('argo_connectors.tasks.provider_topology.TaskProviderTopology.token_fetch')
@@ -206,6 +192,7 @@ class TopologyProvider(unittest.TestCase):
         self.assertTrue(type(excep), ConnectorParseError)
         self.assertTrue('Could not extract OIDC Access token' in excep.msg)
 
+    @mock.patch('argo_connectors.tasks.provider_topology.write_json')
     @mock.patch('argo_connectors.tasks.provider_topology.write_state')
     @mock.patch('argo_connectors.tasks.provider_topology.buildmap_id2groupname')
     @mock.patch('argo_connectors.tasks.provider_topology.ParseResourcesContacts')
@@ -219,7 +206,8 @@ class TopologyProvider(unittest.TestCase):
                                      mock_buildsslsettings,
                                      mock_buildconnretry, mock_attachcontacts,
                                      mock_parseresourcecontacts,
-                                     mock_buildmapid2group, mock_writestate):
+                                     mock_buildmapid2group, mock_writestate,
+                                     mock_writejson):
         mock_fetchdata.return_value = 'OK JSON data'
         mock_httppost.return_value = json.dumps(
             {
@@ -237,6 +225,7 @@ class TopologyProvider(unittest.TestCase):
         self.assertTrue(self.topo_provider.store_refresh_token.called)
         self.topo_provider.store_refresh_token.assert_called_with('oidctoken', 'NEW_REFRESH_TOKEN')
 
+    @mock.patch('argo_connectors.tasks.provider_topology.write_json')
     @mock.patch('argo_connectors.tasks.provider_topology.json.loads')
     @mock.patch('argo_connectors.tasks.provider_topology.open')
     @mock.patch('argo_connectors.tasks.provider_topology.os.path.exists')
@@ -254,7 +243,8 @@ class TopologyProvider(unittest.TestCase):
                                     mock_attachcontacts,
                                     mock_parseresourcecontacts,
                                     mock_buildmapid2group, mock_writestate,
-                                    mock_pathexists, mock_open, mock_jsonloads):
+                                    mock_pathexists, mock_open, mock_jsonloads,
+                                    mock_writejson):
         mock_fetchdata.return_value = 'OK JSON data'
         mock_jsonloads.return_value = {
             'prev': 'PREVIOUS_REFRESH_TOKEN',
