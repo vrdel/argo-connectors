@@ -274,167 +274,80 @@ class TopologyProvider(unittest.TestCase):
 
 class ServiceTypesGocdb(unittest.TestCase):
     def setUp(self):
-        logger = mock.Mock()
-        logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        mocked_globopts = dict(generalpublishwebapi='True')
-        globopts = mocked_globopts
-        webapiopts = mock.Mock()
-        authopts = mock.Mock()
-        confcust = mock.Mock()
-        custname = CUSTOMER_NAME
-        initsync = False
-        feed = 'https://service-types.com/api/fetch'
+        _ = Global('service-types-gocdb-connector.py')
+        _ = Customer('service-types-gocdb-connector.py')
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d')
         self.services_gocdb = TaskGocdbServiceTypes(
-            self.loop,
-            logger,
-            'test_asynctasks_servicetypesgocdb',
-            globopts,
-            authopts,
-            webapiopts,
-            confcust,
-            custname,
-            feed,
             timestamp,
-            initsync
         )
+        self.services_gocdb.globopts['GeneralPublishWebAPI'.lower()] = True
         self.maxDiff = None
 
+    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.WebAPI')
+    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_json')
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
-    async def test_StepsSuccessRun(self, mock_writestate):
+    async def test_StepsSuccessRun(self, mock_writestate, mock_writejson, mock_webapi):
+        service_type_1 = {
+            'name': 'service.type.1',
+            'description': 'description 1',
+            'tags': ['topology']
+
+        }
+        service_type_2 = {
+            'name': 'service.type.2',
+            'description': 'description 2',
+            'tags': ['poem']
+        }
+        web_api = mock_webapi.return_value
+        web_api.get = mock.AsyncMock()
+        web_api.send = mock.AsyncMock()
+        web_api.session = mock.AsyncMock()
+        web_api.get.return_value = [service_type_2]
         self.services_gocdb.fetch_data = mock.AsyncMock()
-        self.services_gocdb.fetch_data.side_effect = ['data_servicetypes']
-        self.services_gocdb.fetch_webapi = mock.AsyncMock()
-        self.services_gocdb.fetch_webapi.side_effect = [
-            'data_webapi_servicetypes']
-        self.services_gocdb.send_webapi = mock.AsyncMock()
+        self.services_gocdb.fetch_data.side_effect = [service_type_1]
         self.services_gocdb.parse_source = mock.MagicMock()
+        self.services_gocdb.parse_source.return_value = [service_type_1]
         self.services_gocdb.parse_webapi_poem = mock.MagicMock()
+        self.services_gocdb.parse_webapi_poem.return_value = [service_type_2]
         await self.services_gocdb.run()
-        self.assertTrue(self.services_gocdb.fetch_webapi.called)
         self.assertTrue(self.services_gocdb.fetch_data.called)
         self.assertTrue(self.services_gocdb.parse_source.called)
-        self.services_gocdb.parse_source.assert_called_with(
-            'data_servicetypes')
+        self.services_gocdb.parse_source.assert_called_with(service_type_1)
+        self.assertEqual(mock_writestate.call_args[0][0],
+                         self.services_gocdb.fixed_date)
+        self.assertTrue(mock_writestate.call_args[0][1])
+        self.assertTrue(web_api.send.called)
+        self.assertTrue(mock_writejson.called)
         self.assertEqual(
-            mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesgocdb')
-        self.assertEqual(
-            mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
-        self.assertTrue(mock_writestate.call_args[0][4])
-        self.assertTrue(self.services_gocdb.send_webapi.called)
-        self.assertTrue(self.services_gocdb.logger.info.called)
+            mock_writejson.call_args[0][0], [service_type_1, service_type_2]
+        )
 
+    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.WebAPI')
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
     @async_test
-    async def test_StepsCombinedServiceTypes(self, mock_writestate):
-        self.services_gocdb.fetch_data = mock.AsyncMock()
-        self.services_gocdb.fetch_webapi = mock.AsyncMock()
-        self.services_gocdb.parse_source = mock.Mock()
-        self.services_gocdb.parse_webapi_poem = mock.Mock()
-        self.services_gocdb.parse_source.return_value = [
-            {
-                'name': 'service.type.one',
-                'description': 'service description one',
-                'tags': ['topology']
-            },
-            {
-                'name': 'service.type.two',
-                'description': 'service description two',
-                'tags': ['topology']
-            },
-            {
-                'name': 'service.type.three',
-                'description': 'service description three',
-                'tags': ['topology']
-            }
-        ]
-        self.services_gocdb.parse_webapi_poem.return_value = [
-            {
-                'name': 'service.type.four',
-                'description': 'service description four',
-                'tags': ['poem']
-            },
-            {
-                'name': 'service.type.five',
-                'description': 'service description five',
-                'tags': ['poem']
-            }
-        ]
-        self.services_gocdb.send_webapi = mock.AsyncMock()
-        await self.services_gocdb.run()
-        self.assertTrue(self.services_gocdb.send_webapi.called)
-        self.services_gocdb.send_webapi.assert_called_with([
-            {
-                'name': 'service.type.five',
-                'description': 'service description five',
-                'tags': ['poem']
-            },
-            {
-                'name': 'service.type.four',
-                'description': 'service description four',
-                'tags': ['poem']
-            },
-            {
-                'name': 'service.type.one',
-                'description': 'service description one',
-                'tags': ['topology']
-            },
-            {
-                'name': 'service.type.three',
-                'description': 'service description three',
-                'tags': ['topology']
-            },
-            {
-                'name': 'service.type.two',
-                'description': 'service description two',
-                'tags': ['topology']
-            }
-        ])
-
-    @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
-    @async_test
-    async def test_StepsFailedRun(self, mock_writestate):
+    async def test_StepsFailedRun(self, mock_writestate, mock_webapi):
+        web_api = mock_webapi.return_value
+        web_api.get = mock.AsyncMock()
+        web_api.send = mock.AsyncMock()
+        web_api.session = mock.AsyncMock()
         self.services_gocdb.fetch_data = mock.AsyncMock()
         self.services_gocdb.fetch_data.side_effect = [
-            ConnectorHttpError('fetch_data failed')]
+            ConnectorHttpError('fetch_data failed')
+        ]
         self.services_gocdb.send_webapi = mock.AsyncMock()
         self.services_gocdb.parse_source = mock.MagicMock()
         self.services_gocdb.fetch_webapi = mock.AsyncMock()
-        self.services_gocdb.fetch_webapi.side_effect = [
-            'data_webapi_servicetypes']
+        self.services_gocdb.fetch_webapi.side_effect = ['data_webapi_servicetypes']
         await self.services_gocdb.run()
         self.assertTrue(self.services_gocdb.fetch_data.called)
         self.assertFalse(self.services_gocdb.parse_source.called)
-        self.assertEqual(
-            mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesgocdb')
-        self.assertEqual(
-            mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
-        self.assertFalse(mock_writestate.call_args[0][4])
-        self.assertTrue(self.services_gocdb.logger.error.called)
-        self.assertEqual(self.services_gocdb.logger.error.call_args[0][0], repr(
-            ConnectorError("ConnectorHttpError('fetch_data failed')")))
-        self.assertFalse(self.services_gocdb.send_webapi.called)
-
-        self.services_gocdb.fetch_data = mock.AsyncMock()
-        self.services_gocdb.fetch_data.side_effect = ['data_servicetypes']
-        self.services_gocdb.send_webapi = mock.AsyncMock()
-        self.services_gocdb.parse_source = mock.MagicMock()
-        self.services_gocdb.fetch_webapi = mock.AsyncMock()
-        self.services_gocdb.fetch_webapi.side_effect = [
-            ConnectorHttpError('fetch_webapi_data failed')]
-        await self.services_gocdb.run()
-        self.assertTrue(self.services_gocdb.fetch_data.called)
-        self.assertFalse(self.services_gocdb.parse_source.called)
-        self.assertEqual(
-            mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesgocdb')
-        self.assertEqual(
-            mock_writestate.call_args[0][3], self.services_gocdb.timestamp)
-        self.assertFalse(mock_writestate.call_args[0][4])
-        self.assertTrue(self.services_gocdb.logger.error.called)
-        self.assertEqual(self.services_gocdb.logger.error.call_args[0][0], repr(
-            ConnectorError("ConnectorHttpError('fetch_webapi_data failed')")))
+        self.assertEqual(mock_writestate.call_args[0][0],
+                         self.services_gocdb.fixed_date)
+        self.assertFalse(mock_writestate.call_args[0][1])
         self.assertFalse(self.services_gocdb.send_webapi.called)
 
 
