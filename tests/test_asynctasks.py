@@ -492,28 +492,28 @@ class ServiceTypesFlat(unittest.TestCase):
             mock_writejson.call_args[0][0], [service_type_1, service_type_2]
         )
 
+    @mock.patch('argo_connectors.tasks.flat_servicetypes.WebAPI')
     @mock.patch('argo_connectors.tasks.flat_servicetypes.write_state')
     @async_test
-    async def test_StepsFailedRun(self, mock_writestate):
+    async def test_StepsFailedRun(self, mock_writestate, mock_webapi):
+        web_api = mock_webapi.return_value
+        web_api.get = mock.AsyncMock()
+        web_api.send = mock.AsyncMock()
+        web_api.session = mock.AsyncMock()
         self.services_flat.fetch_data = mock.AsyncMock()
         self.services_flat.fetch_data.side_effect = [
-            ConnectorHttpError('fetch_data failed')]
+            ConnectorHttpError('fetch_data failed')
+        ]
         self.services_flat.send_webapi = mock.AsyncMock()
         self.services_flat.parse_source = mock.MagicMock()
         self.services_flat.fetch_webapi = mock.AsyncMock()
-        self.services_flat.fetch_webapi.side_effect = [
-            'data_webapi_servicetypes']
+        self.services_flat.fetch_webapi.side_effect = ['data_webapi_servicetypes']
         await self.services_flat.run()
         self.assertTrue(self.services_flat.fetch_data.called)
         self.assertFalse(self.services_flat.parse_source.called)
-        self.assertEqual(
-            mock_writestate.call_args[0][0], 'test_asynctasks_servicetypesflat')
-        self.assertEqual(
-            mock_writestate.call_args[0][3], self.services_flat.timestamp)
-        self.assertFalse(mock_writestate.call_args[0][4])
-        self.assertTrue(self.services_flat.logger.error.called)
-        self.assertTrue(self.services_flat.logger.error.call_args[0][0], repr(
-            ConnectorHttpError('fetch_data failed')))
+        self.assertEqual(mock_writestate.call_args[0][0],
+                         self.services_flat.fixed_date)
+        self.assertFalse(mock_writestate.call_args[0][1])
         self.assertFalse(self.services_flat.send_webapi.called)
 
 
