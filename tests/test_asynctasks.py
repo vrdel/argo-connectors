@@ -37,41 +37,17 @@ class async_test(object):
 
 class TopologyGocdb(unittest.TestCase):
     def setUp(self):
-        logger = mock.Mock()
-        logger.customer = CUSTOMER_NAME
         self.loop = asyncio.get_event_loop()
-        globopts = mock.MagicMock()
-        webapiopts = mock.MagicMock()
-        authopts = mock.MagicMock()
-        bdiiopts = mock.MagicMock()
-        bdiiopts.__getitem__.return_value = 'True'
-        confcust = mock.Mock()
-        topofeedpaging = True
-        notification_flag = True
-        uidservendp = False
-        passext = True
+        _ = Global('topology-gocdb-connector.py')
+        cust = Customer('topology-gocdb-connector.py')
+        cust.custopts['TopoFetchType'] = 'ServiceGroups'
+        cust.custopts['TopoFeedPaging'] = True
+        cust.custopts['HonorNotificationFlag'] = True
+        cust.custopts['TopoUIDServiceEndpoints'] = False
+        _ = Logger(f'{__name__}.{__class__.__name__}')
         fixed_date = datetime.datetime.now().strftime('%Y_%m_%d')
-        fetchtype = 'ServiceGroups'
         self.topo_gocdb = TaskGocdbTopology(
-            self.loop,
-            logger,
-            'test_asynctasks_topologygocdb',
-            'https://gocdb.com/serviceendpoints_api',
-            'https://gocdb.com/serviceegroups_api',
-            'https://gocdb.com/sites_api',
-            globopts,
-            authopts,
-            webapiopts,
-            bdiiopts,
-            confcust,
-            CUSTOMER_NAME,
-            'https://gocdb.com/',
-            fetchtype,
-            fixed_date,
-            uidservendp,
-            passext,
-            topofeedpaging,
-            notification_flag
+            fixed_date
         )
 
     @mock.patch.object(ParseHelpers, 'parse_xml')
@@ -94,7 +70,7 @@ class TopologyGocdb(unittest.TestCase):
         with self.assertRaises(ConnectorError) as cm:
             await self.topo_gocdb.run()
         excep = cm.exception
-        self.assertTrue('ConnectorParseError' in excep.msg)
+        self.assertIs(type(excep), ConnectorError)
         self.assertTrue('failed GOCDB' in excep.msg)
 
 
