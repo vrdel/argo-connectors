@@ -100,12 +100,12 @@ class TopologyGocdb(unittest.TestCase):
 
 class TestFindNextPagingCursorCount(unittest.TestCase):
     def setUp(self):
-        self.logger = mock.MagicMock()
+        _ = Logger(f'{__name__}.{__class__.__name__}')
         with open('tests/sample-topofeedpaging.xml') as tf:
             self.res = tf.read()
 
     def test_count_n_cursor(self):
-        paging = find_next_paging_cursor_count(self.logger, self.res)
+        paging = find_next_paging_cursor_count(self.res)
         count, cursor = paging()
 
         self.assertEqual(count, 95)
