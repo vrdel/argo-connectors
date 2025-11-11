@@ -720,14 +720,20 @@ class ParseSitesTest(unittest.TestCase):
 
 class ParseEoscProvider(unittest.TestCase):
     def setUp(self):
+        _ = Global('topology-provider-connector.py')
+        cust = Customer('topology-provider-connector.py')
+        cust.custopts['TopoType'] = 'EOSC'
+        cust.custopts['TopoFetchType'] = 'ServiceGroups'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
         with open('tests/sample-public-service.json', encoding='utf-8') as feed_file:
             resources = feed_file.read()
         with open('tests/sample-public-provider.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
         with open('tests/sample-provider-configurationtemplateinstance.json', encoding='utf-8') as feed_file:
             resource_extensions = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
+        eosc_topo = ParseTopo(providers, resources)
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
         self.id_groupname = buildmap_id2groupname(self.group_endpoints)
@@ -735,7 +741,7 @@ class ParseEoscProvider(unittest.TestCase):
             '21-T15999-uxIE5y': '3rd-Party Data Security Assessment',
             '21-T15999-xVQZOZ': 'Italian SuperComputing Resource Allocation - ISCRA'
         }
-        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, fakemap_idgroupnames, True, CUSTOMER_NAME)
+        eosc_topo_extensions = ParseExtensions(resource_extensions, fakemap_idgroupnames)
         self.extensions = eosc_topo_extensions.get_extensions()
         self.maxDiff = None
 
@@ -831,7 +837,7 @@ class ParseEoscProvider(unittest.TestCase):
             'ictlc.com+21-T15999-uxIE5y': ['foo@bar.com']
         }
 
-        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
+        attach_contacts_topodata(sample_resources_contacts, self.group_endpoints)
         self.assertEqual(self.group_endpoints[0], {
             'group': '3rd-Party Data Security Assessment',
             'hostname': 'ictlc.com_21-T15999-uxIE5y',
@@ -849,9 +855,8 @@ class ParseEoscProvider(unittest.TestCase):
         })
 
     def test_FailedEoscProviderTopology(self):
-        logger.customer = CUSTOMER_NAME
         with self.assertRaises(ConnectorParseError) as cm:
-            eosc_topo = ParseTopo(logger, 'FAILED_DATA', 'FAILED_DATA', True, CUSTOMER_NAME)
+            eosc_topo = ParseTopo('FAILED_DATA', 'FAILED_DATA')
             self.group_groups = eosc_topo.get_group_groups()
             self.group_endpoints = eosc_topo.get_group_endpoints()
         excep = cm.exception
