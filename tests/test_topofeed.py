@@ -1,15 +1,15 @@
 import unittest
 
-
 from argo_connectors.config.customer import Customer
 from argo_connectors.config.glob import Global
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.log import Logger
 from argo_connectors.mesh.contacts import attach_contacts_topodata
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
+from argo_connectors.parse.gocdb_topology import ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
+
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
