@@ -35,15 +35,27 @@ def get_group(group_endpoints, group_name):
 
 class ParseServiceEndpointsTest(unittest.TestCase):
     def setUp(self):
+        glob = Global('topology-gocdb-connector.py')
+        cust = Customer('topology-gocdb-connector.py')
+        cust.custopts['TopoType'] = 'GOCDB'
+        cust.custopts['TopoFetchType'] = 'Sites'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['TopoFeedServiceEndpointsExtensions'] = False
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
+
         with open('tests/sample-service_endpoint.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
-        self.group_endpoints = parse_service_endpoints.get_group_endpoints()
-        self.maxDiff = None
 
-        parse_service_endpoints_ext = ParseServiceEndpoints(logger, self.content, 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        glob.options()['GeneralPassExtensions'.lower()] = False
+        parse_service_endpoints = ParseServiceEndpoints(self.content)
+        self.group_endpoints = parse_service_endpoints.get_group_endpoints()
+
+        glob.options()['GeneralPassExtensions'.lower()] = True
+        parse_service_endpoints_ext = ParseServiceEndpoints(self.content)
         self.group_endpoints_ext = parse_service_endpoints_ext.get_group_endpoints()
+
+        self.maxDiff = None
 
     def test_LenEndpoints(self):
         self.assertEqual(len(self.group_endpoints), 4)  # Parsed correct number of endpoint groups
@@ -51,9 +63,10 @@ class ParseServiceEndpointsTest(unittest.TestCase):
     def test_DataEndpoints(self):
         self.assertEqual(self.group_endpoints[0], {
             'group': 'AZ-IFAN',
-            'hostname': 'ce.physics.science.az',
+            'hostname': 'ce.physics.science.az_1555G0',
             'service': 'CREAM-CE',
             'tags': {'info_HOSTDN': '/DC=ORG/DC=SEE-GRID/O=Hosts/O=Institute of Physics of ANAS/CN=ce.physics.science.az',
+                     'hostname': 'ce.physics.science.az',
                      'info_ID': '1555G0',
                      'info_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
                      'info_service_endpoint_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
@@ -63,11 +76,12 @@ class ParseServiceEndpointsTest(unittest.TestCase):
             'type': 'SITES'
         }, {
             'group': 'RAL-LCG2',
-            'hostname': 'arc-ce01.gridpp.rl.ac.uk',
+            'hostname': 'arc-ce01.gridpp.rl.ac.uk_782G0',
             'service': 'gLite-APEL',
             'tags': {'info_HOSTDN': '/C=UK/O=eScience/OU=CLRC/L=RAL/CN=arc-ce01.gridpp.rl.ac.uk',
                      'info_ID': '782G0',
                      'monitored': '1',
+                     'hostname': 'arc-ce01.gridpp.rl.ac.uk',
                      'production': '1',
                      'scope': 'EGI, wlcg, tier1, alice, atlas, cms, lhcb'},
             'type': 'SITES'
@@ -162,7 +176,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
     def test_ConnectorParseErrorException(self):
         # Assert proper exception is thrown if empty xml is given to the function
         with self.assertRaises(ConnectorParseError) as cm:
-            ParseServiceEndpoints(logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
+            ParseServiceEndpoints('')
         excep = cm.exception
         self.assertTrue('endpoint feed' in excep.msg)
         self.assertTrue('XMLSyntaxError' in excep.msg)
@@ -170,7 +184,6 @@ class ParseServiceEndpointsTest(unittest.TestCase):
 
 class MeshSitesAndContacts(unittest.TestCase):
     def setUp(self):
-        logger.customer = CUSTOMER_NAME
         self.maxDiff = None
         self.notification_flag = True
         self.sample_sites_data = [
@@ -235,7 +248,7 @@ class MeshSitesAndContacts(unittest.TestCase):
         }
 
     def test_SitesAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_sites_contacts,
+        attach_contacts_topodata(self.sample_sites_contacts,
                                  self.sample_sites_data,
                                  self.notification_flag)
         self.assertEqual(self.sample_sites_data[0], {
@@ -260,7 +273,7 @@ class MeshSitesAndContacts(unittest.TestCase):
         })
 
     def test_SitesAndContactsNoHonorNotificationFlag(self):
-        attach_contacts_topodata(logger, self.sample_sites_contacts,
+        attach_contacts_topodata(self.sample_sites_contacts,
                                  self.sample_sites_data,
                                  False)
         self.assertEqual(self.sample_sites_data[0], {
@@ -287,7 +300,6 @@ class MeshSitesAndContacts(unittest.TestCase):
 
 class MeshServiceGroupsAndContacts(unittest.TestCase):
     def setUp(self):
-        logger.customer = CUSTOMER_NAME
         self.maxDiff = None
         self.notification_flag = True
         self.sample_servicegroups_data = [
@@ -322,7 +334,7 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
         }
 
     def test_ServiceGroupsAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
+        attach_contacts_topodata(self.sample_servicegroup_contacts,
                                  self.sample_servicegroups_data, self.notification_flag)
         self.assertEqual(self.sample_servicegroups_data[0], {
             'group': 'EGI',
@@ -339,7 +351,7 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
         })
 
     def test_ServiceGroupsAndContactsNoHonorNotificationFlag(self):
-        attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
+        attach_contacts_topodata(self.sample_servicegroup_contacts,
                                  self.sample_servicegroups_data, False)
         self.assertEqual(self.sample_servicegroups_data[1], {
             'group': 'EGI',
@@ -358,7 +370,6 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
 
 class MeshServiceEndpointsAndContacts(unittest.TestCase):
     def setUp(self):
-        logger.customer = CUSTOMER_NAME
         self.maxDiff = None
         self.notfication_flag = True
         self.sample_serviceendpoints_data = [
@@ -397,7 +408,7 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
         }
 
     def test_ServiceEndpointsAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_serviceendpoints_contacts,
+        attach_contacts_topodata(self.sample_serviceendpoints_contacts,
                                  self.sample_serviceendpoints_data, self.notfication_flag)
         self.assertEqual(self.sample_serviceendpoints_data[0], {
             'group': 'GROUP1',
@@ -435,9 +446,8 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-topo.csv') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
 
-        self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
+        self.topology = ParseFlatEndpoints(self.content, CUSTOMER_NAME,
                                            uidservendp=True,
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=True)
@@ -509,7 +519,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
 
     def test_FailedCsvTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_topology = ParseFlatEndpoints(logger, 'FAILED_DATA',
+            self.failed_topology = ParseFlatEndpoints('FAILED_DATA',
                                                       CUSTOMER_NAME,
                                                       uidservendp=True,
                                                       fetchtype='ServiceGroups',
@@ -523,9 +533,8 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-topo.json') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
 
-        self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
+        self.topology = ParseFlatEndpoints(self.content, CUSTOMER_NAME,
                                            uidservendp=True,
                                            fetchtype='ServiceGroups',
                                            scope=CUSTOMER_NAME, is_csv=False)
@@ -580,7 +589,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
 
     def test_FailedJsonTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_topology = ParseFlatEndpoints(logger, 'FAILED_DATA',
+            self.failed_topology = ParseFlatEndpoints('FAILED_DATA',
                                                       CUSTOMER_NAME,
                                                       uidservendp=True,
                                                       fetchtype='ServiceGroups',
@@ -595,8 +604,7 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-service_endpoint_biomed.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
+        parse_service_endpoints = ParseServiceEndpoints(self.content, CUSTOMER_NAME)
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
 
     def test_BiomedEndpoints(self):
@@ -632,9 +640,8 @@ class ParseSitesBiomed(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-sites_biomed.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
         self.notification_flag = False
-        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
+        parse_sites = ParseSites(self.content, CUSTOMER_NAME, False,
                                  False, self.notification_flag)
         self.group_groups = parse_sites.get_group_groups()
 
@@ -663,9 +670,8 @@ class ParseSitesTest(unittest.TestCase):
     def setUp(self):
         with open('tests/sample-site.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
         self.notification_flag = True
-        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
+        parse_sites = ParseSites(self.content, CUSTOMER_NAME, False,
                                  False, self.notification_flag)
         self.group_groups = parse_sites.get_group_groups()
         self.maxDiff = None
