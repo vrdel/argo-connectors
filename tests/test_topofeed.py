@@ -606,9 +606,19 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
 
 class ParseServiceEndpointsBiomed(unittest.TestCase):
     def setUp(self):
+        glob = Global('topology-gocdb-connector.py')
+        glob.options()['GeneralPassExtensions'.lower()] = False
+        cust = Customer('topology-gocdb-connector.py')
+        cust.custopts['TopoType'] = 'CSV'
+        cust.custopts['TopoFetchType'] = 'Sites'
+        cust.custopts['TopoUIDServiceEndpoints'] = False
+        cust.custopts['Name'] = 'CUSTOMERFOO'
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = 'CUSTOMERFOO'
         with open('tests/sample-service_endpoint_biomed.xml') as feed_file:
             self.content = feed_file.read()
-        parse_service_endpoints = ParseServiceEndpoints(self.content, CUSTOMER_NAME)
+        parse_service_endpoints = ParseServiceEndpoints(self.content)
+        self.maxDiff = None
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
 
     def test_BiomedEndpoints(self):
