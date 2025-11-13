@@ -533,13 +533,19 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
 
 class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def setUp(self):
+        _ = Global('topology-csv-connector.py')
+        cust = Customer('topology-csv-connector.py')
+        cust.custopts['TopoType'] = 'CSV'
+        cust.custopts['TopoFetchType'] = 'ServiceGroups'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['Name'] = 'CUSTOMERFOO'
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = 'CUSTOMERFOO'
         with open('tests/sample-topo.json') as feed_file:
             self.content = feed_file.read()
 
-        self.topology = ParseFlatEndpoints(self.content, CUSTOMER_NAME,
-                                           uidservendp=True,
-                                           fetchtype='ServiceGroups',
-                                           scope=CUSTOMER_NAME, is_csv=False)
+        self.topology = ParseFlatEndpoints(self.content,
+                                           is_csv=False)
 
     def test_JsonTopology(self):
         group_groups = self.topology.get_groupgroups()
@@ -592,10 +598,6 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def test_FailedJsonTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
             self.failed_topology = ParseFlatEndpoints('FAILED_DATA',
-                                                      CUSTOMER_NAME,
-                                                      uidservendp=True,
-                                                      fetchtype='ServiceGroups',
-                                                      scope=CUSTOMER_NAME,
                                                       is_csv=False)
         excep = cm.exception
         self.assertTrue('JSON feed' in excep.msg)
