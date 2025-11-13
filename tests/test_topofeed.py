@@ -1,14 +1,16 @@
 import unittest
 
-from argo_connectors.log import Logger
-from argo_connectors.parse.gocdb_topology import ParseServiceGroups, ParseServiceEndpoints, ParseSites
-from argo_connectors.parse.flat_topology import ParseFlatEndpoints
-from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
-from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
+from argo_connectors.config.customer import Customer
+from argo_connectors.config.glob import Global
 from argo_connectors.exceptions import ConnectorParseError
+from argo_connectors.log import Logger
 from argo_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.parse.flat_topology import ParseFlatEndpoints
+from argo_connectors.parse.gocdb_topology import ParseServiceEndpoints, ParseSites
+from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
+from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
 
-logger = Logger('test_topofeed.py')
+
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
 
@@ -33,15 +35,27 @@ def get_group(group_endpoints, group_name):
 
 class ParseServiceEndpointsTest(unittest.TestCase):
     def setUp(self):
+        glob = Global('topology-gocdb-connector.py')
+        cust = Customer('topology-gocdb-connector.py')
+        cust.custopts['TopoType'] = 'GOCDB'
+        cust.custopts['TopoFetchType'] = 'Sites'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['TopoFeedServiceEndpointsExtensions'] = False
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
+
         with open('tests/sample-service_endpoint.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
-        self.group_endpoints = parse_service_endpoints.get_group_endpoints()
-        self.maxDiff = None
 
-        parse_service_endpoints_ext = ParseServiceEndpoints(logger, self.content, 'CUSTOMERFOO', uid=True, pass_extensions=True)
+        glob.options()['GeneralPassExtensions'.lower()] = False
+        parse_service_endpoints = ParseServiceEndpoints(self.content)
+        self.group_endpoints = parse_service_endpoints.get_group_endpoints()
+
+        glob.options()['GeneralPassExtensions'.lower()] = True
+        parse_service_endpoints_ext = ParseServiceEndpoints(self.content)
         self.group_endpoints_ext = parse_service_endpoints_ext.get_group_endpoints()
+
+        self.maxDiff = None
 
     def test_LenEndpoints(self):
         self.assertEqual(len(self.group_endpoints), 4)  # Parsed correct number of endpoint groups
@@ -49,9 +63,10 @@ class ParseServiceEndpointsTest(unittest.TestCase):
     def test_DataEndpoints(self):
         self.assertEqual(self.group_endpoints[0], {
             'group': 'AZ-IFAN',
-            'hostname': 'ce.physics.science.az',
+            'hostname': 'ce.physics.science.az_1555G0',
             'service': 'CREAM-CE',
             'tags': {'info_HOSTDN': '/DC=ORG/DC=SEE-GRID/O=Hosts/O=Institute of Physics of ANAS/CN=ce.physics.science.az',
+                     'hostname': 'ce.physics.science.az',
                      'info_ID': '1555G0',
                      'info_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
                      'info_service_endpoint_URL': 'ce.physics.science.az:8443/cream-pbs-ops',
@@ -61,11 +76,12 @@ class ParseServiceEndpointsTest(unittest.TestCase):
             'type': 'SITES'
         }, {
             'group': 'RAL-LCG2',
-            'hostname': 'arc-ce01.gridpp.rl.ac.uk',
+            'hostname': 'arc-ce01.gridpp.rl.ac.uk_782G0',
             'service': 'gLite-APEL',
             'tags': {'info_HOSTDN': '/C=UK/O=eScience/OU=CLRC/L=RAL/CN=arc-ce01.gridpp.rl.ac.uk',
                      'info_ID': '782G0',
                      'monitored': '1',
+                     'hostname': 'arc-ce01.gridpp.rl.ac.uk',
                      'production': '1',
                      'scope': 'EGI, wlcg, tier1, alice, atlas, cms, lhcb'},
             'type': 'SITES'
@@ -160,7 +176,7 @@ class ParseServiceEndpointsTest(unittest.TestCase):
     def test_ConnectorParseErrorException(self):
         # Assert proper exception is thrown if empty xml is given to the function
         with self.assertRaises(ConnectorParseError) as cm:
-            ParseServiceEndpoints(logger, '', 'CUSTOMERFOO', uid=True, pass_extensions=True)
+            ParseServiceEndpoints('')
         excep = cm.exception
         self.assertTrue('endpoint feed' in excep.msg)
         self.assertTrue('XMLSyntaxError' in excep.msg)
@@ -168,7 +184,6 @@ class ParseServiceEndpointsTest(unittest.TestCase):
 
 class MeshSitesAndContacts(unittest.TestCase):
     def setUp(self):
-        logger.customer = CUSTOMER_NAME
         self.maxDiff = None
         self.notification_flag = True
         self.sample_sites_data = [
@@ -233,7 +248,7 @@ class MeshSitesAndContacts(unittest.TestCase):
         }
 
     def test_SitesAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_sites_contacts,
+        attach_contacts_topodata(self.sample_sites_contacts,
                                  self.sample_sites_data,
                                  self.notification_flag)
         self.assertEqual(self.sample_sites_data[0], {
@@ -258,7 +273,7 @@ class MeshSitesAndContacts(unittest.TestCase):
         })
 
     def test_SitesAndContactsNoHonorNotificationFlag(self):
-        attach_contacts_topodata(logger, self.sample_sites_contacts,
+        attach_contacts_topodata(self.sample_sites_contacts,
                                  self.sample_sites_data,
                                  False)
         self.assertEqual(self.sample_sites_data[0], {
@@ -285,7 +300,6 @@ class MeshSitesAndContacts(unittest.TestCase):
 
 class MeshServiceGroupsAndContacts(unittest.TestCase):
     def setUp(self):
-        logger.customer = CUSTOMER_NAME
         self.maxDiff = None
         self.notification_flag = True
         self.sample_servicegroups_data = [
@@ -320,7 +334,7 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
         }
 
     def test_ServiceGroupsAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
+        attach_contacts_topodata(self.sample_servicegroup_contacts,
                                  self.sample_servicegroups_data, self.notification_flag)
         self.assertEqual(self.sample_servicegroups_data[0], {
             'group': 'EGI',
@@ -337,7 +351,7 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
         })
 
     def test_ServiceGroupsAndContactsNoHonorNotificationFlag(self):
-        attach_contacts_topodata(logger, self.sample_servicegroup_contacts,
+        attach_contacts_topodata(self.sample_servicegroup_contacts,
                                  self.sample_servicegroups_data, False)
         self.assertEqual(self.sample_servicegroups_data[1], {
             'group': 'EGI',
@@ -356,7 +370,6 @@ class MeshServiceGroupsAndContacts(unittest.TestCase):
 
 class MeshServiceEndpointsAndContacts(unittest.TestCase):
     def setUp(self):
-        logger.customer = CUSTOMER_NAME
         self.maxDiff = None
         self.notfication_flag = True
         self.sample_serviceendpoints_data = [
@@ -395,7 +408,7 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
         }
 
     def test_ServiceEndpointsAndContacts(self):
-        attach_contacts_topodata(logger, self.sample_serviceendpoints_contacts,
+        attach_contacts_topodata(self.sample_serviceendpoints_contacts,
                                  self.sample_serviceendpoints_data, self.notfication_flag)
         self.assertEqual(self.sample_serviceendpoints_data[0], {
             'group': 'GROUP1',
@@ -431,18 +444,23 @@ class MeshServiceEndpointsAndContacts(unittest.TestCase):
 
 class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
     def setUp(self):
+        _ = Global('topology-csv-connector.py')
+        cust = Customer('topology-csv-connector.py')
+        cust.custopts['TopoType'] = 'CSV'
+        cust.custopts['TopoFetchType'] = 'ServiceGroups'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['Name'] = 'CUSTOMERFOO'
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = 'CUSTOMERFOO'
         with open('tests/sample-topo.csv') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
 
-        self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
-                                           uidservendp=True,
-                                           fetchtype='ServiceGroups',
-                                           scope=CUSTOMER_NAME, is_csv=True)
+        self.topology = ParseFlatEndpoints(self.content, is_csv=True)
         self.maxDiff = None
 
     def test_CsvTopology(self):
         group_groups = self.topology.get_groupgroups()
+
         self.assertEqual(group_groups, [
             {
                 'group': 'CUSTOMERFOO',
@@ -507,11 +525,7 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
 
     def test_FailedCsvTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_topology = ParseFlatEndpoints(logger, 'FAILED_DATA',
-                                                      CUSTOMER_NAME,
-                                                      uidservendp=True,
-                                                      fetchtype='ServiceGroups',
-                                                      scope=CUSTOMER_NAME,
+            self.failed_topology = ParseFlatEndpoints('FAILED_DATA',
                                                       is_csv=True)
         excep = cm.exception
         self.assertTrue('CSV feed' in excep.msg)
@@ -519,14 +533,19 @@ class ParseServiceEndpointsAndServiceGroupsCsv(unittest.TestCase):
 
 class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
     def setUp(self):
+        _ = Global('topology-csv-connector.py')
+        cust = Customer('topology-csv-connector.py')
+        cust.custopts['TopoType'] = 'CSV'
+        cust.custopts['TopoFetchType'] = 'ServiceGroups'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['Name'] = 'CUSTOMERFOO'
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = 'CUSTOMERFOO'
         with open('tests/sample-topo.json') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
 
-        self.topology = ParseFlatEndpoints(logger, self.content, CUSTOMER_NAME,
-                                           uidservendp=True,
-                                           fetchtype='ServiceGroups',
-                                           scope=CUSTOMER_NAME, is_csv=False)
+        self.topology = ParseFlatEndpoints(self.content,
+                                           is_csv=False)
 
     def test_JsonTopology(self):
         group_groups = self.topology.get_groupgroups()
@@ -578,11 +597,7 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
 
     def test_FailedJsonTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            self.failed_topology = ParseFlatEndpoints(logger, 'FAILED_DATA',
-                                                      CUSTOMER_NAME,
-                                                      uidservendp=True,
-                                                      fetchtype='ServiceGroups',
-                                                      scope=CUSTOMER_NAME,
+            self.failed_topology = ParseFlatEndpoints('FAILED_DATA',
                                                       is_csv=False)
         excep = cm.exception
         self.assertTrue('JSON feed' in excep.msg)
@@ -591,10 +606,19 @@ class ParseServiceEndpointsAndServiceGroupsJson(unittest.TestCase):
 
 class ParseServiceEndpointsBiomed(unittest.TestCase):
     def setUp(self):
+        glob = Global('topology-gocdb-connector.py')
+        glob.options()['GeneralPassExtensions'.lower()] = False
+        cust = Customer('topology-gocdb-connector.py')
+        cust.custopts['TopoType'] = 'CSV'
+        cust.custopts['TopoFetchType'] = 'Sites'
+        cust.custopts['TopoUIDServiceEndpoints'] = False
+        cust.custopts['Name'] = 'CUSTOMERFOO'
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = 'CUSTOMERFOO'
         with open('tests/sample-service_endpoint_biomed.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        parse_service_endpoints = ParseServiceEndpoints(logger, self.content, CUSTOMER_NAME)
+        parse_service_endpoints = ParseServiceEndpoints(self.content)
+        self.maxDiff = None
         self.group_endpoints = parse_service_endpoints.get_group_endpoints()
 
     def test_BiomedEndpoints(self):
@@ -628,12 +652,18 @@ class ParseServiceEndpointsBiomed(unittest.TestCase):
 
 class ParseSitesBiomed(unittest.TestCase):
     def setUp(self):
+        glob = Global('topology-gocdb-connector.py')
+        glob.options()['GeneralPassExtensions'.lower()] = False
+        cust = Customer('topology-gocdb-connector.py')
+        cust.custopts['TopoType'] = 'CSV'
+        cust.custopts['TopoFetchType'] = 'Sites'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['Name'] = 'CUSTOMERFOO'
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = 'CUSTOMERFOO'
         with open('tests/sample-sites_biomed.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        self.notification_flag = False
-        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
-                                 False, self.notification_flag)
+        parse_sites = ParseSites(self.content)
         self.group_groups = parse_sites.get_group_groups()
 
     def test_BiomedSites(self):
@@ -659,12 +689,20 @@ class ParseSitesBiomed(unittest.TestCase):
 
 class ParseSitesTest(unittest.TestCase):
     def setUp(self):
+        glob = Global('topology-gocdb-connector.py')
+        glob.options()['GeneralPassExtensions'.lower()] = False
+        cust = Customer('topology-gocdb-connector.py')
+        cust.custopts['TopoType'] = 'CSV'
+        cust.custopts['TopoFetchType'] = 'Sites'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['Name'] = 'CUSTOMERFOO'
+        cust.custopts['HonorNotificationFlag'] = True
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = 'CUSTOMERFOO'
         with open('tests/sample-site.xml') as feed_file:
             self.content = feed_file.read()
-        logger.customer = CUSTOMER_NAME
         self.notification_flag = True
-        parse_sites = ParseSites(logger, self.content, CUSTOMER_NAME, False,
-                                 False, self.notification_flag)
+        parse_sites = ParseSites(self.content)
         self.group_groups = parse_sites.get_group_groups()
         self.maxDiff = None
 
@@ -717,14 +755,20 @@ class ParseSitesTest(unittest.TestCase):
 
 class ParseEoscProvider(unittest.TestCase):
     def setUp(self):
+        _ = Global('topology-provider-connector.py')
+        cust = Customer('topology-provider-connector.py')
+        cust.custopts['TopoType'] = 'EOSC'
+        cust.custopts['TopoFetchType'] = 'ServiceGroups'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
         with open('tests/sample-public-service.json', encoding='utf-8') as feed_file:
             resources = feed_file.read()
         with open('tests/sample-public-provider.json', encoding='utf-8') as feed_file:
             providers = feed_file.read()
         with open('tests/sample-provider-configurationtemplateinstance.json', encoding='utf-8') as feed_file:
             resource_extensions = feed_file.read()
-        logger.customer = CUSTOMER_NAME
-        eosc_topo = ParseTopo(logger, providers, resources, True, CUSTOMER_NAME)
+        eosc_topo = ParseTopo(providers, resources)
         self.group_groups = eosc_topo.get_group_groups()
         self.group_endpoints = eosc_topo.get_group_endpoints()
         self.id_groupname = buildmap_id2groupname(self.group_endpoints)
@@ -732,7 +776,7 @@ class ParseEoscProvider(unittest.TestCase):
             '21-T15999-uxIE5y': '3rd-Party Data Security Assessment',
             '21-T15999-xVQZOZ': 'Italian SuperComputing Resource Allocation - ISCRA'
         }
-        eosc_topo_extensions = ParseExtensions(logger, resource_extensions, fakemap_idgroupnames, True, CUSTOMER_NAME)
+        eosc_topo_extensions = ParseExtensions(resource_extensions, fakemap_idgroupnames)
         self.extensions = eosc_topo_extensions.get_extensions()
         self.maxDiff = None
 
@@ -828,7 +872,7 @@ class ParseEoscProvider(unittest.TestCase):
             'ictlc.com+21-T15999-uxIE5y': ['foo@bar.com']
         }
 
-        attach_contacts_topodata(logger, sample_resources_contacts, self.group_endpoints)
+        attach_contacts_topodata(sample_resources_contacts, self.group_endpoints)
         self.assertEqual(self.group_endpoints[0], {
             'group': '3rd-Party Data Security Assessment',
             'hostname': 'ictlc.com_21-T15999-uxIE5y',
@@ -846,9 +890,8 @@ class ParseEoscProvider(unittest.TestCase):
         })
 
     def test_FailedEoscProviderTopology(self):
-        logger.customer = CUSTOMER_NAME
         with self.assertRaises(ConnectorParseError) as cm:
-            eosc_topo = ParseTopo(logger, 'FAILED_DATA', 'FAILED_DATA', True, CUSTOMER_NAME)
+            eosc_topo = ParseTopo('FAILED_DATA', 'FAILED_DATA')
             self.group_groups = eosc_topo.get_group_groups()
             self.group_endpoints = eosc_topo.get_group_endpoints()
         excep = cm.exception
@@ -858,11 +901,17 @@ class ParseEoscProvider(unittest.TestCase):
 
 class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
     def setUp(self):
+        _ = Global('topology-lot1sc-connector.py')
+        cust = Customer('topology-lot1sc-connector.py')
+        cust.custopts['TopoType'] = 'LOT1SC'
+        cust.custopts['TopoFetchType'] = 'ServiceGroups'
+        cust.custopts['TopoUIDServiceEndpoints'] = True
+        logger = Logger(f'{__name__}.{__class__.__name__}')
+        logger.customer = CUSTOMER_NAME
         with open('tests/sample-lot1sc.json', encoding='utf-8') as feed_file:
             providers_endpoints = feed_file.read()
-        logger.customer = CUSTOMER_NAME
         self.maxDiff = None
-        lot1sc_topo = ParseLot1ScEndpoints(logger, providers_endpoints, uidservendp=True)
+        lot1sc_topo = ParseLot1ScEndpoints(providers_endpoints, 2)
         self.group_groups = lot1sc_topo.get_group_groups()
         self.group_endpoints = lot1sc_topo.get_group_endpoints()
 
@@ -873,7 +922,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'subgroup': 'Test service for datasource 4-6',
                 'type': 'PROJECT',
                 'tags': {
-                    'tier': 1
+                    'tier': 2
                 }
             },
             {
@@ -881,7 +930,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'subgroup': 'Virtual Machines',
                 'type': 'PROJECT',
                 'tags': {
-                    'tier': 1
+                    'tier': 2
                 }
             }]
         )
@@ -893,11 +942,12 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'testUrlEndpoint.com_f17e599f-095d-373e-bcfe-4fb017acf5d5',
                 'service': 'service.type.1',
                 'tags': {
+                    'hostname': 'testUrlEndpoint.com',
                     'info_ID': 'f17e599f-095d-373e-bcfe-4fb017acf5d5',
                     'info_URL': 'https://testUrlEndpoint.com',
                     'service_name': 'FTS web console',
                     'site_name': 'PSNC',
-                    'tier': 1
+                    'tier': 2
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -906,10 +956,11 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'test.claudius.cloud.psnc.pl_bdb09405-f227-3cd6-b8fd-c19c52a3a354',
                 'service': 'service.type.1',
                 'tags': {
+                    'hostname': 'test.claudius.cloud.psnc.pl',
                     'info_ID': 'bdb09405-f227-3cd6-b8fd-c19c52a3a354',
                     'info_URL': 'https://test.claudius.cloud.psnc.pl/',
                     'service_name': 'OpenStack Horizon Dashboard',
-                    'site_name': 'PSNC', 'tier': 1
+                    'site_name': 'PSNC', 'tier': 2
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -918,10 +969,11 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'test.claudius.cloud.psnc.pl_749deefd-e633-385a-805a-3fd64b80dbe4',
                 'service': 'service.type.2',
                 'tags': {
+                    'hostname': 'test.claudius.cloud.psnc.pl',
                     'info_ID': '749deefd-e633-385a-805a-3fd64b80dbe4',
                     'info_URL': 'https://test.claudius.cloud.psnc.pl/',
                     'service_name': 'OpenStack Horizon Dashboard',
-                    'site_name': 'PSNC', 'tier': 1
+                    'site_name': 'PSNC', 'tier': 2
                 },
                 'type': 'SERVICEGROUPS'},
             {
@@ -929,11 +981,12 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'test.claudius.cloud.psnc.pl_7caacfa4-5bca-34fc-80eb-386e0579b0e9',
                 'service': 'service.type.2',
                 'tags': {
+                    'hostname': 'test.claudius.cloud.psnc.pl',
                     'info_ID': '7caacfa4-5bca-34fc-80eb-386e0579b0e9',
                     'info_URL':
                     'https://test.claudius.cloud.psnc.pl:5000',
                     'service_name': 'OpenStack API', 'site_name': 'PSNC',
-                    'tier': 1
+                    'tier': 2
                 },
                 'type': 'SERVICEGROUPS'},
             {
@@ -941,11 +994,12 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'test.claudius.cloud.psnc.pl_8cbe072d-1975-3ca3-bc74-fa2591c99b07',
                 'service': 'service.type.1',
                 'tags': {
+                    'hostname': 'test.claudius.cloud.psnc.pl',
                     'info_ID': '8cbe072d-1975-3ca3-bc74-fa2591c99b07',
                     'info_URL': 'https://test.claudius.cloud.psnc.pl:5000/v3/auth/OS-FEDERATION/identity_providers/testing.eosc-federation.eu_openid/protocols/openid/websso',
                     'service_name': 'OpenStack Horizon Dashboard GUI Redirection',
                     'site_name': 'PSNC',
-                    'tier': 1
+                    'tier': 2
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -954,11 +1008,12 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'openstack.testing.safedc.services_bdb09405-f227-3cd6-b8fd-c19c52a3a354',
                 'service': 'service.type.1',
                 'tags': {
+                    'hostname': 'openstack.testing.safedc.services',
                     'info_ID': 'bdb09405-f227-3cd6-b8fd-c19c52a3a354',
                     'info_URL': 'https://openstack.testing.safedc.services/',
                     'service_name': 'OpenStack Horizon Dashboard',
                     'site_name': 'Safespring',
-                    'tier': 1
+                    'tier': 2
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -967,11 +1022,12 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'openstack.testing.safedc.services_dd81e46a-6d98-3258-be69-2929d162dc18',
                 'service': 'service.type.3',
                 'tags': {
+                    'hostname': 'openstack.testing.safedc.services',
                     'info_ID': 'dd81e46a-6d98-3258-be69-2929d162dc18',
                     'info_URL': 'https://openstack.testing.safedc.services/',
                     'service_name': 'OpenStack Horizon Dashboard',
                     'site_name': 'Safespring',
-                    'tier': 1
+                    'tier': 2
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -980,11 +1036,12 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'hostname': 'openstack.testing.safedc.services_8e57a57f-c6fb-3dea-b586-2871f908776c',
                 'service': 'service.type.2',
                 'tags': {
+                    'hostname': 'openstack.testing.safedc.services',
                     'info_ID': '8e57a57f-c6fb-3dea-b586-2871f908776c',
                     'info_URL': 'https://openstack.testing.safedc.services:5000/identity/v3/auth/OS-FEDERATION/identity_providers/proxy.testing.eosc-federation.eu/protocols/openid/websso',
                     'service_name': 'OpenStack Horizon Dashboard GUI Redirection',
                     'site_name': 'Safespring',
-                    'tier': 1
+                    'tier': 2
                 },
                 'type': 'SERVICEGROUPS'
             }
@@ -993,7 +1050,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
 
     def test_FailedParseLot1ScTopology(self):
         with self.assertRaises(ConnectorParseError) as cm:
-            lot1sc_topo = ParseLot1ScEndpoints(logger, 'FAILED_DATA', 'FAILED_DATA', False)
+            lot1sc_topo = ParseLot1ScEndpoints('FAILED_DATA', 'FAILED_DATA', False)
             self.group_groups = lot1sc_topo.get_group_groups()
             self.group_endpoints = lot1sc_topo.get_group_endpoints()
         excep = cm.exception

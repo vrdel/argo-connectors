@@ -16,7 +16,7 @@ from argo_connectors.utils import module_class_name, has_exception
 
 
 class TaskGocdbServiceTypes(object):
-    def __init__(self, fixed_date, initsync, combuid=None):
+    def __init__(self, fixed_date, initsync=False, combuid=None):
         self.Customer = get_custconf(combuid)
         self.feed = self.Customer.opt('ServiceTypesFeed') or self.Customer.opt('TopoFeed')
         self.connector_name = Global.caller

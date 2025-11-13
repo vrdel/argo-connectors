@@ -411,6 +411,11 @@ class _CustomerConf(object):
         else:
             return ret_opt
 
+    @property
+    def custopts(self):
+        for (option, value) in self._cust.items():
+            return self._cust[option]
+
     def get_topofetchtype(self):
         fetchtype = self._get_cust_options('TopoFetchType')
 
