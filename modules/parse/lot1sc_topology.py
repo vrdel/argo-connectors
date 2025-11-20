@@ -13,7 +13,7 @@ def build_service_endpoint_id(service_name, service_type):
 
 
 class ParseLot1ScEndpoints(ParseHelpers):
-    def __init__(self, data, tier, combuid):
+    def __init__(self, data, tier, combuid=None):
         self.Customer = get_custconf(combuid)
         self.uidservendp = self.Customer.opt('TopoUIDServiceEndpoints')
         self.tier = tier
