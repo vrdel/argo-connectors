@@ -1,6 +1,7 @@
 import yaml
 import os
 
+from argo_connectors.exceptions import ConnectorConfError
 from argo_connectors.log import Logger
 
 
@@ -11,8 +12,8 @@ class CombineConf(object):
 
     def parse(self):
         if not os.path.exists(self.confpath):
-            Logger.error('Could not find %s' % self._filename)
-            raise SystemExit(1)
+            Logger.error('Could not find %s' % self.confpath)
+            raise ConnectorConfError('Could not find %s' % self.confpath)
 
         yaml_data = None
         with open(self.confpath, 'r') as file:
