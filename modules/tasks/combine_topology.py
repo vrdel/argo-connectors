@@ -10,34 +10,19 @@ from argo_connectors.tasks.provider_topology import TaskProviderTopology
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 
 
-async def fetch(tasks):
-    fetched_data = await asyncio.gather(*tasks)
-    return fetched_data
-
-
-async def webapi_send(group_groups, group_endpoints, combuid):
-    webapi = WebAPI(combuid=combuid)
-    await asyncio.gather(
-        webapi.send(group_groups, 'groups'),
-        webapi.send(group_endpoints, 'endpoints')
-    )
-    await webapi.session.close()
-
-
-def combine(topologies):
-    joint_gg, joint_ge = list(), list()
-
-    for topo in topologies:
-        group_groups, group_endpoints = topo
-        joint_gg += group_groups
-        joint_ge += group_endpoints
-
-    return joint_gg, joint_ge
-
-
 class TaskCombineTopology:
     def __init__(self, combine_exec):
         self.combine_exec = combine_exec
+
+    def combine(self, topologies):
+        joint_gg, joint_ge = list(), list()
+
+        for topo in topologies:
+            group_groups, group_endpoints = topo
+            joint_gg += group_groups
+            joint_ge += group_endpoints
+
+        return joint_gg, joint_ge
 
     async def run(self):
         coros = list()
@@ -57,8 +42,8 @@ class TaskCombineTopology:
                                               combuid=task['id']).run())
 
         try:
-            data_fetched = await fetch(coros)
-            group_groups, group_endpoints = combine(data_fetched)
+            data_fetched = await asyncio.gather(*coros)
+            group_groups, group_endpoints = self.combine(data_fetched)
 
             await write_state(None, True, task['id'])
 
@@ -71,7 +56,12 @@ class TaskCombineTopology:
                 write_json(group_groups, group_endpoints, None, task['id'])
 
             if self.combine_exec.globopts.options()['GeneralPublishWebAPI'.lower()]:
-                asyncio.run(webapi_send(group_groups, group_endpoints, task['id']))
+                webapi = WebAPI(combuid=task['id'])
+                await asyncio.gather(
+                    webapi.send(group_groups, 'groups'),
+                    webapi.send(group_endpoints, 'endpoints')
+                )
+                await webapi.session.close()
 
         except (ConnectorError, ConnectorParseError, ConnectorHttpError, KeyboardInterrupt) as exc:
             Logger.error(repr(exc))
