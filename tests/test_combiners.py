@@ -22,6 +22,7 @@ class CombinerTopology(unittest.IsolatedAsyncioTestCase):
         )
         self.topo_combine = TaskCombineTopology(exec_combiner)
 
+    @mock.patch('argo_connectors.tasks.combine_topology.write_state')
     @mock.patch('argo_connectors.tasks.lot1sc_topology.attach_tags')
     @mock.patch('argo_connectors.tasks.combine_topology.TaskLot1ScTopology.parse_source_topo')
     @mock.patch('argo_connectors.tasks.combine_topology.TaskGocdbTopology.fetch_ldap_data')
@@ -29,7 +30,7 @@ class CombinerTopology(unittest.IsolatedAsyncioTestCase):
     @mock.patch('argo_connectors.tasks.combine_topology.TaskLot1ScTopology.fetch_data')
     async def test_ParseTasks(self, mock_fetchlot1sc, mock_fetchgocdb,
                               mock_fetchgocdbldap, mock_parselot1sc,
-                              mock_attachtagslot1sc):
+                              mock_attachtagslot1sc, mock_writestate):
         mock_fetchlot1sc.return_value = 'LOT1SC data'
         mock_fetchgocdb.return_value = 'GOCDB data'
         mock_fetchgocdbldap.return_value = 'GOCDB LDAP data'
@@ -51,6 +52,8 @@ class CombinerTopology(unittest.IsolatedAsyncioTestCase):
             ['parsed LOT1SC group endpoints', 'parsed LOT1SC group endpoints'],
             [{'scope': 'EXCHANGE'}], [{'scope': 'EXCHANGE'}]
         )
+        self.assertTrue(mock_writestate.called)
+        self.assertFalse(mock_writestate.call_args[0][1])
 
     def tearDown(self):
         self.patcher1.stop()
