@@ -7,7 +7,7 @@ from argo_connectors.exe.combiner import ExecCombiner
 from argo_connectors.tasks.combine_topology import TaskCombineTopology
 
 
-class CombinerTopology(unittest.TestCase):
+class CombinerTopology(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.maxDiff = None
         self.patcher1 = patch('argo_connectors.exe.combiner.argparse.ArgumentParser.parse_args')
@@ -22,8 +22,35 @@ class CombinerTopology(unittest.TestCase):
         )
         self.topo_combine = TaskCombineTopology(exec_combiner)
 
-    def test_ParseTasks(self):
-        pass
+    @mock.patch('argo_connectors.tasks.lot1sc_topology.attach_tags')
+    @mock.patch('argo_connectors.tasks.combine_topology.TaskLot1ScTopology.parse_source_topo')
+    @mock.patch('argo_connectors.tasks.combine_topology.TaskGocdbTopology.fetch_ldap_data')
+    @mock.patch('argo_connectors.tasks.combine_topology.TaskGocdbTopology.fetch_data')
+    @mock.patch('argo_connectors.tasks.combine_topology.TaskLot1ScTopology.fetch_data')
+    async def test_ParseTasks(self, mock_fetchlot1sc, mock_fetchgocdb,
+                              mock_fetchgocdbldap, mock_parselot1sc,
+                              mock_attachtagslot1sc):
+        mock_fetchlot1sc.return_value = 'LOT1SC data'
+        mock_fetchgocdb.return_value = 'GOCDB data'
+        mock_fetchgocdbldap.return_value = 'GOCDB LDAP data'
+        mock_parselot1sc.return_value = ['parsed LOT1SC group groups'], ['parsed LOT1SC group endpoints']
+        self.assertListEqual(
+            [
+                {'type': 'gocdb', 'id': '1-gocdb'},
+                {'type': 'lot1sc', 'id': '2-lot1sc'}
+            ],
+            self.topo_combine.combine_exec.tasks
+        )
+        mock_attachtagslot1sc.return_value = (
+            'parsed LOT1SC group groups with tags',
+            'parsed LOT1SC group endpoints with tags'
+        )
+        await self.topo_combine.run()
+        mock_attachtagslot1sc.assert_called_with(
+            ['parsed LOT1SC group groups', 'parsed LOT1SC group groups'],
+            ['parsed LOT1SC group endpoints', 'parsed LOT1SC group endpoints'],
+            [{'scope': 'EXCHANGE'}], [{'scope': 'EXCHANGE'}]
+        )
 
     def tearDown(self):
         self.patcher1.stop()
