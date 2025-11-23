@@ -15,18 +15,6 @@ logger = Logger('test_topofeed.py')
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
 
-class async_test(object):
-    """
-    Decorator to create asyncio context for asyncio methods or functions.
-    """
-    def __init__(self, test_method):
-        self.test_method = test_method
-
-    def __call__(self, *args, **kwargs):
-        test_obj = args[0]
-        test_obj.loop.run_until_complete(self.test_method(*args, **kwargs))
-
-
 class mockHttpGetEmpty(mock.AsyncMock):
     async def __aenter__(self, *args, **kwargs):
         mock_obj = mock.AsyncMock()
@@ -81,7 +69,7 @@ class mockHttpErroneousStatuses(mock.AsyncMock):
         pass
 
 
-class ConnectorsHttpRetry(unittest.TestCase):
+class ConnectorsHttpRetry(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
         glob = Global('topology-gocdb-connector.py')
@@ -98,7 +86,6 @@ class ConnectorsHttpRetry(unittest.TestCase):
 
     # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockHttpGetEmpty)
-    @async_test
     async def test_ConnectorEmptyRetry(self, mocked_get):
         path = '/url_path'
         with self.assertRaises(ConnectorHttpError) as cm:
@@ -110,7 +97,6 @@ class ConnectorsHttpRetry(unittest.TestCase):
 
     # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockConnectionProblem)
-    @async_test
     async def test_ConnectorConnectionRetry(self, mocked_get):
         path = '/url_path'
         with self.assertRaises(ConnectorHttpError) as cm:
@@ -121,7 +107,6 @@ class ConnectorsHttpRetry(unittest.TestCase):
 
     # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockProtocolProblem)
-    @async_test
     async def test_ConnectorProtocolError(self, mocked_protocolerror):
         path = '/url_path'
         with self.assertRaises(ConnectorHttpError) as cm:
@@ -133,7 +118,6 @@ class ConnectorsHttpRetry(unittest.TestCase):
 
     # @unittest.skip("skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockHttpAcceptableStatuses)
-    @async_test
     async def test_ConnectorHttpAcceptable(self, mocked_httpstatuses):
         path = '/url_path'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
@@ -141,7 +125,6 @@ class ConnectorsHttpRetry(unittest.TestCase):
 
     # @unittest.skip("demonstrating skipping")
     @mock.patch('aiohttp.ClientSession.get', side_effect=mockHttpErroneousStatuses)
-    @async_test
     async def test_ConnectorHttpErroneous(self, mocked_httperrorstatuses):
         path = '/url_path'
         res = await self.session.http_get('{}://{}{}'.format('http', 'localhost', path))
@@ -152,4 +135,3 @@ class ConnectorsHttpRetry(unittest.TestCase):
     def tearDown(self):
         async def run():
             await self.session.close()
-        self.loop.run_until_complete(run())
