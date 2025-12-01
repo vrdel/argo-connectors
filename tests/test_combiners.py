@@ -11,10 +11,12 @@ class CombinerTopology(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.maxDiff = None
         self.patcher1 = patch('argo_connectors.exe.combiner.argparse.ArgumentParser.parse_args')
+        self.patcher2 = patch('argo_connectors.config.customer._CustomerConf.make_dirstruct')
         argmock = mock.Mock()
         argmock.yamlconf = 'tests/sample-combine.yml'
         mock_parseargs = self.patcher1.start()
         mock_parseargs.return_value = argmock
+        _ = self.patcher2.start()
         exec_combiner = ExecCombiner(
             description="""Combiner tests""",
             exe_script="topology-combiner.py",
@@ -57,6 +59,7 @@ class CombinerTopology(unittest.IsolatedAsyncioTestCase):
 
     def tearDown(self):
         self.patcher1.stop()
+        self.patcher2.stop()
 
 
 if __name__ == '__main__':
