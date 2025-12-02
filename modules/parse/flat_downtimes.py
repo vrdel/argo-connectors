@@ -5,8 +5,7 @@ from argo_connectors.utils import construct_fqdn
 
 
 class ParseDowntimes(ParseHelpers):
-    def __init__(self, logger, data, current_date, uid=False):
-        self.logger = logger
+    def __init__(self, data, current_date, uid=False):
         self.data = self.csv_to_json(data)
         self.start = current_date
         self.end = current_date.replace(hour=23, minute=59, second=59)

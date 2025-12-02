@@ -12,18 +12,19 @@ from argo_connectors.log import Logger
 
 class WebAPI(object):
     methods = {
+        'downtimes-combiner.py': 'downtimes',
         'downtimes-csv-connector.py': 'downtimes',
         'downtimes-gocdb-connector.py': 'downtimes',
-        'topology-gocdb-connector.py': 'topology',
-        'topology-csv-connector.py': 'topology',
-        'topology-provider-connector.py': 'topology',
-        'topology-combiner.py': 'topology',
         'service-types-combiner.py': 'topology',
-        'topology-json-connector.py': 'topology',
-        'weights-vapor-connector.py': 'weights',
-        'service-types-gocdb-connector.py': 'topology',
         'service-types-csv-connector.py': 'topology',
+        'service-types-gocdb-connector.py': 'topology',
         'service-types-json-connector.py': 'topology',
+        'topology-combiner.py': 'topology',
+        'topology-csv-connector.py': 'topology',
+        'topology-gocdb-connector.py': 'topology',
+        'topology-json-connector.py': 'topology',
+        'topology-provider-connector.py': 'topology',
+        'weights-vapor-connector.py': 'weights',
     }
 
     def __init__(self, report=None, endpoints_group=None, date=None,
