@@ -5,6 +5,7 @@
   tenant: EOSC
   config:
     WebAPI_Token: SAMPLE_TOKEN1
+    WebAPI_Host: API.HOST.HR
   combine:
     - config:
         TopoFeedPaging: false

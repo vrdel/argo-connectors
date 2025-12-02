@@ -54,6 +54,8 @@ class CombinerTopology(unittest.IsolatedAsyncioTestCase):
             ['parsed LOT1SC group endpoints', 'parsed LOT1SC group endpoints'],
             [{'scope': 'EXCHANGE'}], [{'scope': 'EXCHANGE'}]
         )
+        self.assertEqual(self.topo_combine.combine_exec.globopts.options()['webapitoken'], 'SAMPLE_TOKEN1')
+        self.assertEqual(self.topo_combine.combine_exec.globopts.options()['webapihost'], 'API.HOST.HR')
         self.assertTrue(mock_writestate.called)
         self.assertFalse(mock_writestate.call_args[0][1])
 
