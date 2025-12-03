@@ -932,8 +932,39 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'tags': {
                     'tier': 2
                 }
-            }]
-        )
+            },
+            {
+                'group': 'Test 20/11 14.41',
+                'subgroup': 'Test Interactive Notebooks',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'},
+            {
+                'group': 'Test 20/11 14.41',
+                'subgroup': 'Test File Sync and Share',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'Test 20/11 14.41',
+                'subgroup': 'Test HPC',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'Test 20/11 14.41',
+                'subgroup': 'Test Cloud Container Platform',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'
+            }
+        ])
 
     def test_groupEndpoints(self):
         self.assertEqual(self.group_endpoints, [
