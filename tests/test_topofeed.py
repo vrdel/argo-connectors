@@ -934,14 +934,14 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 }
             },
             {
-                'group': 'Test 20/11 14.41',
+                'group': 'Test 20-11 14.41',
                 'subgroup': 'Test Interactive Notebooks',
                 'tags': {
                     'tier': 2
                 },
                 'type': 'PROJECT'},
             {
-                'group': 'Test 20/11 14.41',
+                'group': 'Test 20-11 14.41',
                 'subgroup': 'Test File Sync and Share',
                 'tags': {
                     'tier': 2
@@ -949,7 +949,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'type': 'PROJECT'
             },
             {
-                'group': 'Test 20/11 14.41',
+                'group': 'Test 20-11 14.41',
                 'subgroup': 'Test HPC',
                 'tags': {
                     'tier': 2
@@ -957,7 +957,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'type': 'PROJECT'
             },
             {
-                'group': 'Test 20/11 14.41',
+                'group': 'Test 20-11 14.41',
                 'subgroup': 'Test Cloud Container Platform',
                 'tags': {
                     'tier': 2
