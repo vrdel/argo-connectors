@@ -58,6 +58,9 @@ class BDIIOpts(object):
         if self.missing:
             return None
         else:
+            for key, value in self.bdii_custopts.items():
+                if isinstance(value, str) and value in ['False', 'True']:
+                    self.bdii_custopts[key] = eval(value)
             return self.bdii_custopts
 
 

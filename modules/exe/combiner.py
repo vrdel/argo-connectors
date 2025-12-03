@@ -28,8 +28,15 @@ class ExecCombiner:
 
     def _main(self):
         self._setargs()
+
         self._logger = Logger(os.path.basename(self.exe_script))
-        combopts = CombineConf(self.exe_script, self.args.yamlconf).parse()
+
+        try:
+            combopts = CombineConf(self.exe_script, self.args.yamlconf).parse()
+
+        except ConnectorConfError as exc:
+            self._logger.error(exc)
+            raise SystemExit(1)
 
         for comb in combopts:
             try:

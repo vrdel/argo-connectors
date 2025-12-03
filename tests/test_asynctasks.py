@@ -1,6 +1,5 @@
 import unittest
 
-import unittest
 import asyncio
 import datetime
 import json
@@ -22,22 +21,8 @@ from argo_connectors.parse.base import ParseHelpers
 CUSTOMER_NAME = 'CUSTOMERFOO'
 
 
-class async_test(object):
-    """
-    Decorator to create asyncio context for asyncio methods or functions.
-    """
-
-    def __init__(self, test_method):
-        self.test_method = test_method
-
-    def __call__(self, *args, **kwargs):
-        test_obj = args[0]
-        test_obj.loop.run_until_complete(self.test_method(*args, **kwargs))
-
-
-class TopologyGocdb(unittest.TestCase):
+class TopologyGocdb(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.loop = asyncio.get_event_loop()
         _ = Global('topology-gocdb-connector.py')
         cust = Customer('topology-gocdb-connector.py')
         cust.custopts['TopoFetchType'] = 'ServiceGroups'
@@ -55,7 +40,6 @@ class TopologyGocdb(unittest.TestCase):
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.gocdb_topology.TaskGocdbTopology.fetch_ldap_data')
     @mock.patch('argo_connectors.tasks.gocdb_topology.SessionWithRetry.http_get')
-    @async_test
     async def test_failedNextCursor(self, mock_httpget, mock_fetchldap,
                                     mock_buildsslsettings,
                                     mock_buildconnretry, mock_parsexml):
@@ -74,7 +58,7 @@ class TopologyGocdb(unittest.TestCase):
         self.assertTrue('failed GOCDB' in excep.msg)
 
 
-class TestFindNextPagingCursorCount(unittest.TestCase):
+class TestFindNextPagingCursorCount(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         _ = Logger(f'{__name__}.{__class__.__name__}')
         with open('tests/sample-topofeedpaging.xml') as tf:
@@ -88,9 +72,8 @@ class TestFindNextPagingCursorCount(unittest.TestCase):
         self.assertEqual(cursor, '134')
 
 
-class TopologyProvider(unittest.TestCase):
+class TopologyProvider(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.loop = asyncio.get_event_loop()
         _ = Global('topology-provider-connector.py')
         _ = Customer('topology-provider-connector.py')
         logger = Logger(f'{__name__}.{__class__.__name__}')
@@ -104,6 +87,7 @@ class TopologyProvider(unittest.TestCase):
         self.topo_provider.Customer.custopts['OIDCRefreshToken'] = 'oidctoken'
         self.topo_provider.Customer.custopts['OIDCClientId'] = 'clientid'
         self.topo_provider.Customer.custopts['OIDCTokenEndpoint'] = 'oidctokenapi'
+        self.topo_provider.globopts['GeneralPublishWebAPI'.lower()] = False
 
     @mock.patch.object(ParseHelpers, 'parse_json')
     @mock.patch('argo_connectors.tasks.provider_topology.TaskProviderTopology.token_fetch')
@@ -111,7 +95,6 @@ class TopologyProvider(unittest.TestCase):
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_post')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_get')
-    @async_test
     async def test_failedNextCursor(self, mock_httpget, mock_httppost, mock_buildsslsettings,
                                     mock_buildconnretry, mock_tokenfetch, mock_parsejson):
         mock_httpget.return_value = 'garbled JSON data'
@@ -136,7 +119,6 @@ class TopologyProvider(unittest.TestCase):
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_post')
     @mock.patch.object(TaskProviderTopology, 'fetch_data')
-    @async_test
     async def test_failedAccessToken(self, mock_fetchdata, mock_httppost,
                                      mock_buildsslsettings,
                                      mock_buildconnretry):
@@ -154,7 +136,6 @@ class TopologyProvider(unittest.TestCase):
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_post')
     @mock.patch.object(TaskProviderTopology, 'fetch_data')
-    @async_test
     async def test_failedAccessToken2(self, mock_fetchdata, mock_httppost,
                                       mock_buildsslsettings,
                                       mock_buildconnretry):
@@ -177,7 +158,6 @@ class TopologyProvider(unittest.TestCase):
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_post')
     @mock.patch.object(TaskProviderTopology, 'fetch_data')
-    @async_test
     async def test_RefreshTokenStore(self, mock_fetchdata, mock_httppost,
                                      mock_buildsslsettings,
                                      mock_buildconnretry, mock_attachcontacts,
@@ -213,7 +193,6 @@ class TopologyProvider(unittest.TestCase):
     @mock.patch('argo_connectors.io.http.build_ssl_settings')
     @mock.patch('argo_connectors.tasks.provider_topology.SessionWithRetry.http_post')
     @mock.patch.object(TaskProviderTopology, 'fetch_data')
-    @async_test
     async def test_RefreshTokenRead(self, mock_fetchdata, mock_httppost,
                                     mock_buildsslsettings, mock_buildconnretry,
                                     mock_attachcontacts,
@@ -238,9 +217,8 @@ class TopologyProvider(unittest.TestCase):
         self.topo_provider.token_fetch.assert_called_with('clientid', 'NEXT_REFRESH_TOKEN', 'oidctokenapi')
 
 
-class ServiceTypesGocdb(unittest.TestCase):
+class ServiceTypesGocdb(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.loop = asyncio.get_event_loop()
         _ = Global('service-types-gocdb-connector.py')
         _ = Customer('service-types-gocdb-connector.py')
         logger = Logger(f'{__name__}.{__class__.__name__}')
@@ -255,7 +233,6 @@ class ServiceTypesGocdb(unittest.TestCase):
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.WebAPI')
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_json')
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
-    @async_test
     async def test_StepsSuccessRun(self, mock_writestate, mock_writejson, mock_webapi):
         service_type_1 = {
             'name': 'service.type.1',
@@ -294,7 +271,6 @@ class ServiceTypesGocdb(unittest.TestCase):
 
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.WebAPI')
     @mock.patch('argo_connectors.tasks.gocdb_servicetypes.write_state')
-    @async_test
     async def test_StepsFailedRun(self, mock_writestate, mock_webapi):
         web_api = mock_webapi.return_value
         web_api.get = mock.AsyncMock()
@@ -317,9 +293,8 @@ class ServiceTypesGocdb(unittest.TestCase):
         self.assertFalse(self.services_gocdb.send_webapi.called)
 
 
-class ServiceTypesFlat(unittest.TestCase):
+class ServiceTypesFlat(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.loop = asyncio.get_event_loop()
         _ = Global('service-types-csv-connector.py')
         _ = Customer('service-types-csv-connector.py')
         logger = Logger(f'{__name__}.{__class__.__name__}')
@@ -334,7 +309,6 @@ class ServiceTypesFlat(unittest.TestCase):
     @mock.patch('argo_connectors.tasks.flat_servicetypes.WebAPI')
     @mock.patch('argo_connectors.tasks.flat_servicetypes.write_json')
     @mock.patch('argo_connectors.tasks.flat_servicetypes.write_state')
-    @async_test
     async def test_StepsSuccessRun(self, mock_writestate, mock_writejson, mock_webapi):
         service_type_1 = {
             'name': 'service.type.1',
@@ -373,7 +347,6 @@ class ServiceTypesFlat(unittest.TestCase):
 
     @mock.patch('argo_connectors.tasks.flat_servicetypes.WebAPI')
     @mock.patch('argo_connectors.tasks.flat_servicetypes.write_state')
-    @async_test
     async def test_StepsFailedRun(self, mock_writestate, mock_webapi):
         web_api = mock_webapi.return_value
         web_api.get = mock.AsyncMock()
@@ -396,9 +369,8 @@ class ServiceTypesFlat(unittest.TestCase):
         self.assertFalse(self.services_flat.send_webapi.called)
 
 
-class DowntimesCsv(unittest.TestCase):
+class DowntimesCsv(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.loop = asyncio.get_event_loop()
         _ = Global('downtimes-csv-connector.py')
         _ = Customer('downtimes-csv-connector.py')
         _ = Logger(f'{__name__}.{__class__.__name__}')
@@ -416,7 +388,6 @@ class DowntimesCsv(unittest.TestCase):
     @mock.patch('argo_connectors.tasks.flat_downtimes.WebAPI')
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_json')
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_state')
-    @async_test
     async def test_StepsSuccessRun(self, mock_writestate, mock_writejson, mock_webapi):
         web_api = mock_webapi.return_value
         web_api.send = mock.AsyncMock()
@@ -439,7 +410,6 @@ class DowntimesCsv(unittest.TestCase):
 
     @mock.patch('argo_connectors.tasks.flat_downtimes.WebAPI')
     @mock.patch('argo_connectors.tasks.flat_downtimes.write_state')
-    @async_test
     async def test_StepsFailedRun(self, mock_writestate, mock_webapi):
         web_api = mock_webapi.return_value
         web_api.send = mock.AsyncMock()
