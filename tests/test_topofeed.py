@@ -932,8 +932,39 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'tags': {
                     'tier': 2
                 }
-            }]
-        )
+            },
+            {
+                'group': 'Test 20-11 14.41',
+                'subgroup': 'Test Interactive Notebooks',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'},
+            {
+                'group': 'Test 20-11 14.41',
+                'subgroup': 'Test File Sync and Share',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'Test 20-11 14.41',
+                'subgroup': 'Test-HPC',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'
+            },
+            {
+                'group': 'Test 20-11 14.41',
+                'subgroup': 'Test Cloud Container Platform',
+                'tags': {
+                    'tier': 2
+                },
+                'type': 'PROJECT'
+            }
+        ])
 
     def test_groupEndpoints(self):
         self.assertEqual(self.group_endpoints, [
@@ -1044,8 +1075,203 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'tier': 2
                 },
                 'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Interactive Notebooks',
+                'hostname': 'notebooks-tst.cloud.cesnet.cz_ad3e3f67-36a3-3d7e-9f0f-d0cccad9d221',
+                'service': 'eu.eosc.interactive_notebooks.gui',
+                'tags': {
+                    'hostname': 'notebooks-tst.cloud.cesnet.cz',
+                    'info_ID': 'ad3e3f67-36a3-3d7e-9f0f-d0cccad9d221',
+                    'info_URL': 'https://notebooks-tst.cloud.cesnet.cz/',
+                    'service_name': 'Notebooks GUI',
+                    'site_name': 'CESNET',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Interactive Notebooks',
+                'hostname': 'notebooks-tst.cloud.cesnet.cz_cf3160b8-e297-32ba-9c87-014c17f02594',
+                'service': 'eu.eosc.interactive_notebooks.api',
+                'tags': {
+                    'hostname': 'notebooks-tst.cloud.cesnet.cz',
+                    'info_ID': 'cf3160b8-e297-32ba-9c87-014c17f02594',
+                    'info_URL': 'https://notebooks-tst.cloud.cesnet.cz/services/jwt',
+                    'service_name': 'Notebooks API',
+                    'site_name': 'CESNET',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Interactive Notebooks',
+                'hostname': 'notebooks-tst.cloud.cesnet.cz_5b3dd363-b3bc-3b93-bb99-f64570603f39',
+                'service': 'eu.eosc.interactive_notebooks.gui',
+                'tags': {
+                    'hostname': 'notebooks-tst.cloud.cesnet.cz',
+                    'info_ID': '5b3dd363-b3bc-3b93-bb99-f64570603f39',
+                    'info_URL': 'https://notebooks-tst.cloud.cesnet.cz/hub/oauth_login',
+                    'service_name': 'Notebooks GUI Redirection',
+                    'site_name': 'CESNET',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test File Sync and Share',
+                'hostname': 'ocis-testing.apps.bst2-test.paas.psnc.pl_cd201cab-7792-3024-b1ed-96c48fec1e43',
+                'service': 'eu.eosc.storage.gui',
+                'tags': {
+                    'hostname': 'ocis-testing.apps.bst2-test.paas.psnc.pl',
+                    'info_ID': 'cd201cab-7792-3024-b1ed-96c48fec1e43',
+                    'info_URL': 'https://ocis-testing.apps.bst2-test.paas.psnc.pl/',
+                    'service_name': 'OwnCloud GUI',
+                    'site_name': 'PSNC',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test File Sync and Share',
+                'hostname': 'ocis-testing.apps.bst2-test.paas.psnc.pl_26d1d2a9-0e55-31c1-b83d-1678db3ebeaa',
+                'service': 'eu.eosc.storage.gui',
+                'tags': {
+                    'hostname': 'ocis-testing.apps.bst2-test.paas.psnc.pl',
+                    'info_ID': '26d1d2a9-0e55-31c1-b83d-1678db3ebeaa',
+                    'info_URL': 'https://ocis-testing.apps.bst2-test.paas.psnc.pl/',
+                    'service_name': 'OwnCloud GUI Redirect',
+                    'site_name': 'PSNC',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test-HPC',
+                'hostname': 'www.hpc.grnet.gr_45b9f71a-742d-3176-86c8-523e258bbc7c',
+                'service': 'eu.eosc.hpc.access',
+                'tags': {
+                    'hostname': 'www.hpc.grnet.gr',
+                    'info_ID': '45b9f71a-742d-3176-86c8-523e258bbc7c',
+                    'info_URL': 'https://www.hpc.grnet.gr/en/',
+                    'service_name': 'HPC API',
+                    'site_name': 'GRNET',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'console.apps.dcw1-test.paas.psnc.pl_ff7d6732-d073-34c1-9d4d-7d76e7b7b134',
+                'service': 'eu.eosc.container_platform.gui',
+                'tags': {
+                    'hostname': 'console.apps.dcw1-test.paas.psnc.pl',
+                    'info_ID': 'ff7d6732-d073-34c1-9d4d-7d76e7b7b134',
+                    'info_URL': 'https://console.apps.dcw1-test.paas.psnc.pl/',
+                    'service_name': 'OKD Console',
+                    'site_name': 'PSNC',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'api.dcw1-test.paas.psnc.pl_cdca6940-8a67-3015-97c8-da262b9b3d15',
+                'service': 'eu.eosc.container_platform.api',
+                'tags': {
+                    'hostname': 'api.dcw1-test.paas.psnc.pl',
+                    'info_ID': 'cdca6940-8a67-3015-97c8-da262b9b3d15',
+                    'info_URL': 'https://api.dcw1-test.paas.psnc.pl:6443',
+                    'service_name': 'OKD API',
+                    'site_name': 'PSNC',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'dcw1-test.paas.psnc.pl_931f9020-0ff6-3640-bc7c-2be26af5e917',
+                'service': 'eu.eosc.container_platform.gui',
+                'tags': {
+                    'hostname': 'dcw1-test.paas.psnc.pl',
+                    'info_ID': '931f9020-0ff6-3640-bc7c-2be26af5e917',
+                    'info_URL': 'https://dcw1-test.paas.psnc.pl/',
+                    'service_name': 'OKD Console GUI Redirection',
+                    'site_name': 'PSNC',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'oauth-openshift.apps.dcw1-test.paas.psnc.pl_26f6dd63-e34d-37e9-8f96-256621c6ae9a',
+                'service': 'eu.eosc.container_platform.api',
+                'tags': {
+                    'hostname': 'oauth-openshift.apps.dcw1-test.paas.psnc.pl',
+                    'info_ID': '26f6dd63-e34d-37e9-8f96-256621c6ae9a',
+                    'info_URL': 'https://oauth-openshift.apps.dcw1-test.paas.psnc.pl/',
+                    'service_name': 'OKD OIDC Server',
+                    'site_name': 'PSNC',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'console-openshift-console.apps.okd01.saft.in_ff7d6732-d073-34c1-9d4d-7d76e7b7b134',
+                'service': 'eu.eosc.container_platform.gui',
+                'tags': {
+                    'hostname': 'console-openshift-console.apps.okd01.saft.in',
+                    'info_ID': 'ff7d6732-d073-34c1-9d4d-7d76e7b7b134',
+                    'info_URL': 'https://console-openshift-console.apps.okd01.saft.in/',
+                    'service_name': 'OKD Console',
+                    'site_name': 'Safespring',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'api.okd01.saft.in_cdca6940-8a67-3015-97c8-da262b9b3d15',
+                'service': 'eu.eosc.container_platform.api',
+                'tags': {
+                    'hostname': 'api.okd01.saft.in',
+                    'info_ID': 'cdca6940-8a67-3015-97c8-da262b9b3d15',
+                    'info_URL': 'https://api.okd01.saft.in:6443',
+                    'service_name': 'OKD API',
+                    'site_name': 'Safespring',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'console-openshift-console.apps.eosc-test.safedc.services_931f9020-0ff6-3640-bc7c-2be26af5e917',
+                'service': 'eu.eosc.container_platform.gui',
+                'tags': {
+                    'hostname': 'console-openshift-console.apps.eosc-test.safedc.services',
+                    'info_ID': '931f9020-0ff6-3640-bc7c-2be26af5e917',
+                    'info_URL': 'https://console-openshift-console.apps.eosc-test.safedc.services/',
+                    'service_name': 'OKD Console GUI Redirection',
+                    'site_name': 'Safespring',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
+            },
+            {
+                'group': 'Test Cloud Container Platform',
+                'hostname': 'oauth-openshift.apps.eosc-test.safedc.services_26f6dd63-e34d-37e9-8f96-256621c6ae9a',
+                'service': 'eu.eosc.container_platform.api',
+                'tags': {
+                    'hostname': 'oauth-openshift.apps.eosc-test.safedc.services',
+                    'info_ID': '26f6dd63-e34d-37e9-8f96-256621c6ae9a',
+                    'info_URL': 'https://oauth-openshift.apps.eosc-test.safedc.services/',
+                    'service_name': 'OKD OIDC Server',
+                    'site_name': 'Safespring',
+                    'tier': 2
+                },
+                'type': 'SERVICEGROUPS'
             }
-
         ])
 
     def test_FailedParseLot1ScTopology(self):
