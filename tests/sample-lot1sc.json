@@ -150,7 +150,7 @@
         },
         {
           "serviceId": "21.11161/kDB2v6",
-          "name": "Test HPC",
+          "name": "Test/HPC",
           "sites": [
             {
               "name": "GRNET",

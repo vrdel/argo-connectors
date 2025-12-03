@@ -950,7 +950,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
             },
             {
                 'group': 'Test 20-11 14.41',
-                'subgroup': 'Test HPC',
+                'subgroup': 'Test-HPC',
                 'tags': {
                     'tier': 2
                 },
@@ -1147,7 +1147,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             },
             {
-                'group': 'Test HPC',
+                'group': 'Test-HPC',
                 'hostname': 'www.hpc.grnet.gr_45b9f71a-742d-3176-86c8-523e258bbc7c',
                 'service': 'eu.eosc.hpc.access',
                 'tags': {
