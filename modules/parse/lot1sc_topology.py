@@ -35,11 +35,11 @@ class ParseLot1ScEndpoints(ParseHelpers):
         providers = self.data.get('result', None)
         if providers:
             for provider in providers:
-                gge = dict()
-                prname = provider.get('providerId', '')
+                prname = provider.get('providerId', '').replace('/', '-')
 
                 for service in provider.get('serviceMonitorings', list()):
-                    srname = service.get('name', '')
+                    gge = dict()
+                    srname = service.get('name', '').replace('/', '-')
 
                     if srname not in self._service_name_exist:
                         continue
@@ -57,7 +57,7 @@ class ParseLot1ScEndpoints(ParseHelpers):
         if providers:
             for provider in providers:
                 for service in provider.get('serviceMonitorings', list()):
-                    srname = service.get('name', '')
+                    srname = service.get('name', '').replace('/', '-')
                     sites = service.get('sites', list())
                     if sites:
                         for site in sites:
