@@ -7,7 +7,6 @@ aiofiles = "*"
 aiohttp = "*"
 bonsai = "*"
 lxml = "*"
-requests = "*"
 unidecode = "*"
 pyyaml = "*"
 
