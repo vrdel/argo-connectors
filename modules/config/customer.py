@@ -465,17 +465,20 @@ class _CustomerConf(object):
             for job in self.get_jobs(c):
                 if 'downtimes' in caller:
                     feedurl = self._get_feed(job, 'DowntimesFeed')
+                    if not feedurl:
+                        feedurl = deffeed
+                    if not feedurl and self.send_empty(caller, c):
+                        feedurl = 'empty'
                     if feedurl:
                         self._update_feeds(feeds, feedurl, job, c)
-                    else:
-                        feedurl = deffeed
-                        self._update_feeds(feeds, feedurl, job, c)
+
                 elif 'weights' in caller:
                     feedurl = self._get_feed(job, 'WeightsFeed')
-                    if feedurl:
-                        self._update_feeds(feeds, feedurl, job, c)
-                    else:
+                    if not feedurl:
                         feedurl = deffeed
+                    if not feedurl and self.send_empty(caller, c):
+                        feedurl = 'empty'
+                    if feedurl:
                         self._update_feeds(feeds, feedurl, job, c)
 
         return feeds
