@@ -42,7 +42,10 @@ class ParseResourcesContacts(ParseHelpers):
             if not feeddata.get('webpage', False):
                 continue
             key = '{}+{}'.format(construct_fqdn(feeddata['webpage']), remove_non_utf(feeddata['id']))
-            contacts = [contact['email'] for contact in feeddata['publicContacts']]
+            contacts = feeddata.get('publicContacts', [])
+            if len(contacts) > 1:
+                contacts = [contact['email'] for contact in feeddata['publicContacts']]
+
             if contacts:
                 self._resource_contacts[key] = contacts
 
