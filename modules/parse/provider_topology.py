@@ -60,6 +60,8 @@ class ParseResources(ParseHelpers):
                         tags.append(key)
                 if not feeddata.get('name', False):
                     continue
+                if not feeddata.get('resourceOrganisation'):
+                    continue
                 self._resources.append({
                     'id': feeddata['id'],
                     'hardcoded_service': SERVICE_NAME_WEBPAGE,
@@ -104,7 +106,7 @@ class ParseProviders(ParseHelpers):
                     'website': feeddata['website'],
                     'name': feeddata['name'],
                     'abbr': feeddata['abbreviation'],
-                    'provider_tag': feeddata['tags']
+                    'provider_tag': feeddata.get('tags', '')
                 })
             self.data = self._providers
 
