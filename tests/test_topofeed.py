@@ -1,14 +1,17 @@
 import unittest
+from urllib.parse import urlparse
 
 from argo_connectors.config.customer import Customer
 from argo_connectors.config.glob import Global
 from argo_connectors.exceptions import ConnectorParseError
 from argo_connectors.log import Logger
 from argo_connectors.mesh.contacts import attach_contacts_topodata
+from argo_connectors.parse.provider_contacts import ParseResourcesContacts
 from argo_connectors.parse.flat_topology import ParseFlatEndpoints
 from argo_connectors.parse.gocdb_topology import ParseServiceEndpoints, ParseSites
 from argo_connectors.parse.lot1sc_topology import ParseLot1ScEndpoints
 from argo_connectors.parse.provider_topology import ParseTopo, ParseExtensions, buildmap_id2groupname
+from argo_connectors.tasks.provider_topology import build_feed_url
 
 
 CUSTOMER_NAME = 'CUSTOMERFOO'
@@ -897,6 +900,86 @@ class ParseEoscProvider(unittest.TestCase):
         excep = cm.exception
         self.assertTrue('JSON feed' in excep.msg)
         self.assertTrue('JSONDecodeError' in excep.msg)
+
+    def test_wrappedProviderFeeds(self):
+        with open('tests/sample-private-resource.json', encoding='utf-8') as feed_file:
+            resources = feed_file.read()
+        with open('tests/sample-private-provider.json', encoding='utf-8') as feed_file:
+            providers = feed_file.read()
+
+        eosc_topo = ParseTopo(providers, resources)
+        group_groups = eosc_topo.get_group_groups()
+        group_endpoints = eosc_topo.get_group_endpoints()
+
+        self.assertEqual(group_groups[0], {
+            'group': 'SRCE',
+            'subgroup': '3DBionotes-WS-TEST',
+            'tags': {'info_projectid': 'srce'},
+            'type': 'PROJECT'
+        })
+        self.assertEqual(group_endpoints[0], {
+            'group': '3DBionotes-WS-TEST',
+            'hostname': '3dbionotes.cnb.csic.es_srce-3dbionotes',
+            'service': 'eu.eosc.portal.services.url',
+            'tags': {
+                'hostname': '3dbionotes.cnb.csic.es',
+                'info_ID': 'srce-3dbionotes',
+                'info_URL': 'https://3dbionotes.cnb.csic.es/',
+                'info_groupname': '3DBionotes-WS-TEST'
+            },
+            'type': 'SERVICEGROUPS'
+        })
+
+    def test_buildFeedUrlPreservesConfiguredQuery(self):
+        feed = urlparse('https://example.test/api/service/all?catalogue_id=eosc&type=all')
+
+        self.assertEqual(
+            build_feed_url(feed, {'from': 0, 'quantity': 100}),
+            'https://example.test/api/service/all?catalogue_id=eosc&type=all&from=0&quantity=100'
+        )
+
+    def test_ni4osProviderFeeds(self):
+        providers = {
+            'results': [
+                {
+                    'id': 'provider/1r5Y0e00',
+                    'abbreviation': 'UKIM, FCSE',
+                    'name': 'Ss. Cyril and Methodius University in Skopje, Faculty of Computer Science and Engineering',
+                    'website': 'https://finki.ukim.mk/',
+                    'tags': [],
+                    'publicContacts': ['default@example.com']
+                }
+            ]
+        }
+        resources = {
+            'results': [
+                {
+                    'id': 'service/1SrlhG00',
+                    'name': 'Schrodinger API',
+                    'webpage': 'https://schrodinger.chem-api.finki.ukim.mk/',
+                    'description': '<p>Schrodinger API</p>',
+                    'tags': [],
+                    'resourceOwner': 'provider/1r5Y0e00',
+                    'serviceProviders': ['provider/1r5Y0e00'],
+                    'publicContacts': ['default@example.com']
+                }
+            ]
+        }
+
+        eosc_topo = ParseTopo(providers, resources)
+        group_groups = eosc_topo.get_group_groups()
+        group_endpoints = eosc_topo.get_group_endpoints()
+        resource_contacts = ParseResourcesContacts(resources).get_contacts()
+
+        self.assertEqual(len(group_groups), 1)
+        self.assertEqual(len(group_endpoints), 1)
+        self.assertEqual(group_groups[0]['group'], 'UKIM, FCSE')
+        self.assertEqual(group_groups[0]['subgroup'], 'Schrodinger API')
+        self.assertEqual(group_endpoints[0]['group'], 'Schrodinger API')
+        self.assertEqual(group_endpoints[0]['tags']['info_ID'], 'service-1SrlhG00')
+        self.assertEqual(resource_contacts, {
+            'schrodinger.chem-api.finki.ukim.mk+service/1SrlhG00': ['default@example.com']
+        })
 
 
 class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
