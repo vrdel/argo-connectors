@@ -81,7 +81,8 @@ class ParseResources(ParseHelpers):
                     continue
                 self._resources.append({
                     'id': feeddata['id'],
-                    'hardcoded_service': SERVICE_NAME_WEBPAGE,
+                    'hardcoded_service': self.Customer.opt(
+                        'TopoDefaultServiceType') or SERVICE_NAME_WEBPAGE,
                     'name': feeddata['name'],
                     'provider': provider,
                     'webpage': feeddata['webpage'],
