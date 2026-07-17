@@ -38,6 +38,7 @@ docker run \
 -v "${CONNECTORS_SOURCE}"/docker/eosccore-customer-lot1prod.conf:${VENV}/etc/eosccore-customer-lot1prod.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eosccore-customer-lot1stg.conf:${VENV}/etc/eosccore-customer-lot1stg.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/eoscbeyond-provider-customer.conf:${VENV}/etc/eoscbeyond-provider-customer.conf:rw \
+-v "${CONNECTORS_SOURCE}"/docker/eoscbeyond-ni4os-provider-customer.conf:${VENV}/etc/eoscbeyond-ni4os-provider-customer.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/global-lot1prod.conf:${VENV}/etc/global-lot1prod.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/global-lot1stg.conf:${VENV}/etc/global-lot1stg.conf:rw \
 -v "${CONNECTORS_SOURCE}"/docker/global-lot1sc.conf:${VENV}/etc/global-lot1sc.conf:rw \
