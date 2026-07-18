@@ -89,20 +89,20 @@ class WebAPI(object):
                     msg = jsonret['status']['message']
                 else:
                     msg = jsonret['message']
-                Logger.error('%s %s() Customer:%s - HTTP POST %s' % (module_class_name(self),
-                                                                     '_send',
-                                                                     Logger.customer,
-                                                                     msg))
+                Logger.warning('%s %s() Customer:%s - HTTP POST %s' % (module_class_name(self),
+                                                                       '_send',
+                                                                       Logger.customer,
+                                                                       msg))
             else:
                 errormsg = json.loads(content)
                 if 'errors' in errormsg:
                     errormsg = errormsg['errors'][0]['details']
                 elif 'status' in errormsg:
                     errormsg = errormsg['status']['message']
-                Logger.error('%s %s() Customer:%s Job:%s - HTTP POST %s' %
-                             (module_class_name(self), '_send',
-                              Logger.customer, Logger.job,
-                              errormsg))
+                Logger.warning('%s %s() Customer:%s Job:%s - HTTP POST %s' %
+                               (module_class_name(self), '_send',
+                                Logger.customer, Logger.job,
+                                errormsg))
 
         return status
 
