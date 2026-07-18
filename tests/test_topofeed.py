@@ -763,6 +763,7 @@ class ParseEoscProvider(unittest.TestCase):
         cust.custopts['TopoType'] = 'EOSC'
         cust.custopts['TopoFetchType'] = 'ServiceGroups'
         cust.custopts['TopoUIDServiceEndpoints'] = True
+        cust.custopts['TopoDefaultServiceType'] = None
         logger = Logger(f'{__name__}.{__class__.__name__}')
         logger.customer = CUSTOMER_NAME
         with open('tests/sample-public-service.json', encoding='utf-8') as feed_file:
@@ -863,6 +864,22 @@ class ParseEoscProvider(unittest.TestCase):
                 'type': 'SERVICEGROUPS'
             }
         ])
+
+    def test_groupEndpointsConfiguredDefaultServiceType(self):
+        custom_service_type = 'eu.eosc.custom.default'
+        cust = Customer('topology-provider-connector.py')
+        cust.custopts['TopoDefaultServiceType'] = custom_service_type
+
+        with open('tests/sample-public-service.json', encoding='utf-8') as feed_file:
+            resources = feed_file.read()
+        with open('tests/sample-public-provider.json', encoding='utf-8') as feed_file:
+            providers = feed_file.read()
+
+        eosc_topo = ParseTopo(providers, resources)
+        group_endpoints = eosc_topo.get_group_endpoints()
+
+        self.assertEqual(group_endpoints[0]['service'], custom_service_type)
+        self.assertEqual(group_endpoints[1]['service'], custom_service_type)
 
     def test_idGroupname(self):
         self.assertEqual(self.id_groupname, {

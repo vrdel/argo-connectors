@@ -96,7 +96,7 @@ class _CustomerConf(object):
         'BDIIQueryAttributesSRM', 'BDIIQueryFilterSEPATH',
         'BDIIQueryAttributesSEPATH', 'WebAPIToken',
         'WeightsEmpty', 'DowntimesEmpty', 'ServiceTypesFeed',
-        'HonorNotificationFlag', 'TopoTiers'
+        'HonorNotificationFlag', 'TopoTiers', 'TopoDefaultServiceType'
     ]
     tenantdir = ''
     deftopofeed = 'https://goc.egi.eu/gocdbpi/'
@@ -154,6 +154,8 @@ class _CustomerConf(object):
                     topofeed = config.get(section, 'TopoFeed', fallback=None)
                     vaporpi = config.get(section, 'Vaporpi', fallback=None)
                     topotype = config.get(section, 'TopoType')
+                    topodefaultservicetype = config.get(
+                        section, 'TopoDefaultServiceType', fallback=None)
                     topouidservendpoints = config.get(
                         section, 'TopoUIDServiceEndpoints', fallback=False)
                     toposcope = config.get(section, 'TopoScope', fallback=None)
@@ -220,6 +222,7 @@ class _CustomerConf(object):
                     'TopoScope': toposcope,
                     'TopoTiers': topotiers,
                     'TopoType': topotype,
+                    'TopoDefaultServiceType': topodefaultservicetype,
                     'TopoSetType': toposettype,
                     'TopoTagServiceEndpoints': topotagserviceendpoints or list(),
                     'TopoTagServiceGroups': topotagservicegroups or list(),
