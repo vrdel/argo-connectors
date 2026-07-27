@@ -4,6 +4,7 @@ from argo_connectors.io.webapi import WebAPI
 from argo_connectors.log import Logger
 from argo_connectors.tasks.flat_servicetypes import TaskFlatServiceTypes
 from argo_connectors.tasks.gocdb_servicetypes import TaskGocdbServiceTypes
+from argo_connectors.tasks.lot1sc_servicetypes import TaskLot1ScServiceTypes
 from argo_connectors.tasks.common import write_state, write_servicetypes_json as write_json
 from argo_connectors.exceptions import ConnectorError, ConnectorParseError, ConnectorHttpError
 
@@ -28,6 +29,9 @@ class TaskCombineServiceTypes:
             if task['type'] == 'gocdb':
                 coros.append(TaskGocdbServiceTypes(None, initsync=False,
                                                    combuid=task['id']).run())
+            elif task['type'] == 'lot1sc':
+                coros.append(TaskLot1ScServiceTypes(None, initsync=False,
+                                                    combuid=task['id']).run())
             elif task['type'] == 'csv':
                 coros.append(TaskFlatServiceTypes(None, True, initsync=False,
                                                   combuid=task['id']).run())
