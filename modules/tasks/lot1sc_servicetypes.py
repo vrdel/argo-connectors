@@ -20,7 +20,7 @@ class TaskLot1ScServiceTypes:
         self.connector_name = Global.caller
         self.globopts = Global.options()
         self.custname = self.Customer.get_custname()
-        self.topofeed = self.Customer.opt('TopoFeed')
+        self.feed = self.Customer.opt('ServiceTypesFeed') or self.Customer.opt('TopoFeed')
         self.tiers = self.Customer.opt('TopoTiers')
         if isinstance(self.tiers, str):
             self.tiers = [self.tiers]
@@ -29,7 +29,7 @@ class TaskLot1ScServiceTypes:
         self.combuid = combuid
 
     async def fetch_data(self, tier):
-        remote_topo = urlparse(self.topofeed)
+        remote_topo = urlparse(self.feed)
         session = SessionWithRetry()
         return await session.http_get('{}://{}{}?{}{}'.format(remote_topo.scheme,
                                                               remote_topo.netloc,
