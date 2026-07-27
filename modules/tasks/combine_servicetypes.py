@@ -16,9 +16,15 @@ class TaskCombineServiceTypes:
 
     def combine(self, servicetypes):
         joint_servicetypes = list()
+        added_names = set()
 
-        for st in servicetypes:
-            joint_servicetypes += st
+        for feed_servicetypes in servicetypes:
+            for servicetype in feed_servicetypes:
+                name = servicetype['name']
+                if name in added_names:
+                    continue
+                joint_servicetypes.append(servicetype)
+                added_names.add(name)
 
         return joint_servicetypes
 
