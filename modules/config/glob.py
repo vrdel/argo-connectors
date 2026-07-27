@@ -91,6 +91,9 @@ class _GlobalConf(object):
             'service-types-gocdb-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_servicetypes_output),
+            'service-types-lot1sc-connector.py':
+            self._merge_dict(self.shared_secopts,
+                             self.conf_servicetypes_output),
             'service-types-csv-connector.py':
             self._merge_dict(self.shared_secopts,
                              self.conf_servicetypes_output),

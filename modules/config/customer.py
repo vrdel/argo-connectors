@@ -84,6 +84,7 @@ class _CustomerConf(object):
         'weights-vapor-connector.py': ['WeightsFeed',
                                        'TopoFetchType'],
         'service-types-gocdb-connector.py': ['ServiceTypesFeed'],
+        'service-types-lot1sc-connector.py': [''],
         'service-types-csv-connector.py': ['ServiceTypesFeed'],
         'service-types-json-connector.py': ['ServiceTypesFeed']
     }
