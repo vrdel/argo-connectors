@@ -22,7 +22,7 @@ class TaskLot1ScServiceTypes:
         self.custname = self.Customer.get_custname()
         self.feed = self.Customer.opt('ServiceTypesFeed') or self.Customer.opt('TopoFeed')
         self.tiers = self.Customer.opt('TopoTiers')
-        if isinstance(self.tiers, str):
+        if not isinstance(self.tiers, list):
             self.tiers = [self.tiers]
         self.fixed_date = fixed_date
         self.initsync = initsync
