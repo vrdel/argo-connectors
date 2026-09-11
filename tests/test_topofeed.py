@@ -1022,7 +1022,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'subgroup': 'Test service for datasource 4-6',
                 'type': 'PROJECT',
                 'tags': {
-                    'tier': 2
+                    'tier': '2'
                 }
             },
             {
@@ -1030,21 +1030,22 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'subgroup': 'Virtual Machines',
                 'type': 'PROJECT',
                 'tags': {
-                    'tier': 2
+                    'tier': '2'
                 }
             },
             {
                 'group': 'Test 20-11 14.41',
                 'subgroup': 'Test Interactive Notebooks',
                 'tags': {
-                    'tier': 2
+                    'tier': '2'
                 },
-                'type': 'PROJECT'},
+                'type': 'PROJECT'
+            },
             {
                 'group': 'Test 20-11 14.41',
                 'subgroup': 'Test File Sync and Share',
                 'tags': {
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'PROJECT'
             },
@@ -1052,7 +1053,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'group': 'Test 20-11 14.41',
                 'subgroup': 'Test-HPC',
                 'tags': {
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'PROJECT'
             },
@@ -1060,7 +1061,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                 'group': 'Test 20-11 14.41',
                 'subgroup': 'Test Cloud Container Platform',
                 'tags': {
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'PROJECT'
             }
@@ -1078,7 +1079,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://testUrlEndpoint.com',
                     'service_name': 'FTS web console',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1091,7 +1092,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_ID': 'bdb09405-f227-3cd6-b8fd-c19c52a3a354',
                     'info_URL': 'https://test.claudius.cloud.psnc.pl/',
                     'service_name': 'OpenStack Horizon Dashboard',
-                    'site_name': 'PSNC', 'tier': 2
+                    'site_name': 'PSNC', 'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1104,7 +1105,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_ID': '749deefd-e633-385a-805a-3fd64b80dbe4',
                     'info_URL': 'https://test.claudius.cloud.psnc.pl/',
                     'service_name': 'OpenStack Horizon Dashboard',
-                    'site_name': 'PSNC', 'tier': 2
+                    'site_name': 'PSNC', 'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'},
             {
@@ -1117,7 +1118,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL':
                     'https://test.claudius.cloud.psnc.pl:5000',
                     'service_name': 'OpenStack API', 'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'},
             {
@@ -1130,7 +1131,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://test.claudius.cloud.psnc.pl:5000/v3/auth/OS-FEDERATION/identity_providers/testing.eosc-federation.eu_openid/protocols/openid/websso',
                     'service_name': 'OpenStack Horizon Dashboard GUI Redirection',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1144,7 +1145,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://openstack.testing.safedc.services/',
                     'service_name': 'OpenStack Horizon Dashboard',
                     'site_name': 'Safespring',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1158,7 +1159,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://openstack.testing.safedc.services/',
                     'service_name': 'OpenStack Horizon Dashboard',
                     'site_name': 'Safespring',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1172,7 +1173,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://openstack.testing.safedc.services:5000/identity/v3/auth/OS-FEDERATION/identity_providers/proxy.testing.eosc-federation.eu/protocols/openid/websso',
                     'service_name': 'OpenStack Horizon Dashboard GUI Redirection',
                     'site_name': 'Safespring',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1186,7 +1187,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://notebooks-tst.cloud.cesnet.cz/',
                     'service_name': 'Notebooks GUI',
                     'site_name': 'CESNET',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1200,7 +1201,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://notebooks-tst.cloud.cesnet.cz/services/jwt',
                     'service_name': 'Notebooks API',
                     'site_name': 'CESNET',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1214,7 +1215,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://notebooks-tst.cloud.cesnet.cz/hub/oauth_login',
                     'service_name': 'Notebooks GUI Redirection',
                     'site_name': 'CESNET',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1228,7 +1229,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://ocis-testing.apps.bst2-test.paas.psnc.pl/',
                     'service_name': 'OwnCloud GUI',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1242,7 +1243,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://ocis-testing.apps.bst2-test.paas.psnc.pl/',
                     'service_name': 'OwnCloud GUI Redirect',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1256,7 +1257,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://www.hpc.grnet.gr/en/',
                     'service_name': 'HPC API',
                     'site_name': 'GRNET',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1270,7 +1271,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://console.apps.dcw1-test.paas.psnc.pl/',
                     'service_name': 'OKD Console',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1284,7 +1285,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://api.dcw1-test.paas.psnc.pl:6443',
                     'service_name': 'OKD API',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1298,7 +1299,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://dcw1-test.paas.psnc.pl/',
                     'service_name': 'OKD Console GUI Redirection',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1312,7 +1313,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://oauth-openshift.apps.dcw1-test.paas.psnc.pl/',
                     'service_name': 'OKD OIDC Server',
                     'site_name': 'PSNC',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1326,7 +1327,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://console-openshift-console.apps.okd01.saft.in/',
                     'service_name': 'OKD Console',
                     'site_name': 'Safespring',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1340,7 +1341,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://api.okd01.saft.in:6443',
                     'service_name': 'OKD API',
                     'site_name': 'Safespring',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1354,7 +1355,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://console-openshift-console.apps.eosc-test.safedc.services/',
                     'service_name': 'OKD Console GUI Redirection',
                     'site_name': 'Safespring',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             },
@@ -1368,7 +1369,7 @@ class ParseLot1ServiceCatalogueTopology(unittest.TestCase):
                     'info_URL': 'https://oauth-openshift.apps.eosc-test.safedc.services/',
                     'service_name': 'OKD OIDC Server',
                     'site_name': 'Safespring',
-                    'tier': 2
+                    'tier': '2'
                 },
                 'type': 'SERVICEGROUPS'
             }
